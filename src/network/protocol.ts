@@ -9,7 +9,8 @@ export interface Player {
 export type Message =
   | { v: 1; type: "hello"; player: Player }
   | { v: 1; type: "toggle"; index: number; sequence: number }
-  | { v: 1; type: "state"; grid: GridState; players: Player[] };
+  | { v: 1; type: "ping" | "pong"; id: number }
+  | { v: 1; type: "state"; grid: GridState; players: Player[]; ack?: number };
 const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 const integer = (value: unknown): value is number =>
@@ -28,6 +29,8 @@ export function parseMessage(raw: unknown): Message | null {
     const m: unknown = JSON.parse(raw);
     if (!record(m) || m.v !== VERSION) return null;
     if (m.type === "hello" && validPlayer(m.player)) return m as Message;
+    if ((m.type === "ping" || m.type === "pong") && integer(m.id))
+      return m as Message;
     if (
       m.type === "toggle" &&
       integer(m.index) &&
@@ -37,6 +40,7 @@ export function parseMessage(raw: unknown): Message | null {
       return m as Message;
     if (
       m.type === "state" &&
+      (m.ack === undefined || integer(m.ack)) &&
       record(m.grid) &&
       integer(m.grid.revision) &&
       Array.isArray(m.grid.cells) &&

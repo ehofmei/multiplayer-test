@@ -350,6 +350,70 @@ footer span {
 .pair-card h2 {
   margin: 10px 0;
 }
+.qr-display {
+  max-width: 340px;
+  margin: 12px auto;
+  text-align: center;
+}
+.pairing-body.has-code {
+  display: grid;
+  grid-template-columns: minmax(240px, 340px) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+.pair-controls {
+  min-width: 0;
+}
+.qr-display img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: white;
+  image-rendering: pixelated;
+}
+.qr-reader {
+  margin: 16px 0;
+}
+.image-import {
+  display: inline-block;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #cbd6c4;
+  border-radius: 11px;
+  cursor: pointer;
+  position: relative;
+  min-height: 48px;
+}
+.image-import input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  opacity: 0;
+}
+.image-import:focus-within {
+  outline: 3px solid #5e8c28;
+  outline-offset: 4px;
+}
+.image-import.unavailable {
+  opacity: 0.5;
+}
+.camera-panel {
+  margin-top: 12px;
+}
+.camera-panel video {
+  display: block;
+  width: min(100%, 480px);
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: #122c29;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+.text-fallback {
+  margin: 8px 0;
+  border-top: 1px solid #d5dcd4;
+}
 .pair-card textarea {
   display: block;
   margin: 10px 0;
@@ -392,6 +456,9 @@ dd {
   overflow-wrap: anywhere;
 }
 @media (max-width: 650px) {
+  .pairing-body.has-code {
+    display: block;
+  }
   main {
     padding: max(18px, env(safe-area-inset-top))
       max(16px, env(safe-area-inset-right))
@@ -445,6 +512,9 @@ dd {
 }
 
 @media (min-width: 651px) and (max-height: 800px) {
+  .qr-display {
+    max-width: 300px;
+  }
   .cell {
     padding: 6px;
     font-size: 16px;

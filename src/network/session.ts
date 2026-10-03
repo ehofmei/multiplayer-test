@@ -6,6 +6,8 @@ import {
   type Player,
 } from "./protocol";
 import { localSignal, parseSignal } from "./signaling";
+import { decodeSignal } from "./qr-signal";
+import { LatencyWindow, type LatencySummary } from "./latency";
 
 interface Link {
   id: string;
@@ -18,6 +20,13 @@ interface Link {
   sequence: number;
   timer?: ReturnType<typeof setTimeout>;
   introduction?: ReturnType<typeof setInterval>;
+  metrics?: ReturnType<typeof setInterval>;
+  probeId: number;
+  probe?: { id: number; started: number };
+  rtt: LatencyWindow;
+  taps: LatencyWindow;
+  pendingTaps: Map<number, number>;
+  missed: number;
 }
 export interface ConnectionInfo {
   id: string;
@@ -29,6 +38,9 @@ export interface ConnectionInfo {
   sent: number;
   received: number;
   lastMessage?: number;
+  rtt?: LatencySummary;
+  taps?: LatencySummary;
+  missed: number;
 }
 export interface Snapshot {
   grid: GridState;
@@ -73,6 +85,9 @@ export class Session {
         sent: l.sent,
         received: l.received,
         lastMessage: l.lastMessage,
+        rtt: l.rtt.summary(),
+        taps: l.taps.summary(),
+        missed: l.missed,
       })),
     };
   }
@@ -86,7 +101,18 @@ export class Session {
   }
   private makeLink(id: string): Link {
     const pc = new RTCPeerConnection({ iceServers: [] });
-    const link: Link = { id, pc, sent: 0, received: 0, sequence: -1 };
+    const link: Link = {
+      id,
+      pc,
+      sent: 0,
+      received: 0,
+      sequence: -1,
+      probeId: 0,
+      rtt: new LatencyWindow(),
+      taps: new LatencyWindow(),
+      pendingTaps: new Map(),
+      missed: 0,
+    };
     this.links.set(id, link);
     pc.onconnectionstatechange = () => {
       if (["failed", "disconnected", "closed"].includes(pc.connectionState))
@@ -184,6 +210,18 @@ export class Session {
     }
   }
   private receive(link: Link, message: Message) {
+    if (message.type === "ping" || message.type === "pong") {
+      if (!(this.role === "host" ? link.player : this.players.length)) return;
+      if (message.type === "ping")
+        this.send(link, { v: 1, type: "pong", id: message.id });
+      else if (link.probe?.id === message.id) {
+        const elapsed = performance.now() - link.probe.started;
+        if (elapsed <= 5_000) link.rtt.add(elapsed);
+        else link.missed++;
+        link.probe = undefined;
+      }
+      return;
+    }
     if (this.role === "host") {
       if (message.type === "hello") {
         if (link.player) {
@@ -209,6 +247,7 @@ export class Session {
         clearTimeout(link.timer);
         this.error = "";
         this.broadcast();
+        this.startMetrics(link);
       } else if (
         message.type === "toggle" &&
         link.player &&
@@ -230,6 +269,13 @@ export class Session {
       this.players = message.players;
       this.error = "";
       this.status = "Connected to host";
+      if (message.ack !== undefined) {
+        const started = link.pendingTaps.get(message.ack);
+        if (started !== undefined) link.taps.add(performance.now() - started);
+        for (const id of link.pendingTaps.keys())
+          if (id <= message.ack) link.pendingTaps.delete(id);
+      }
+      this.startMetrics(link);
     } else this.fail("Ignored an unexpected host message.");
   }
   private broadcast() {
@@ -244,20 +290,46 @@ export class Session {
       players: this.players,
     };
     for (const link of this.links.values()) {
-      if (link.player) this.send(link, message);
+      if (link.player)
+        this.send(link, {
+          ...message,
+          ...(link.sequence >= 0 ? { ack: link.sequence } : {}),
+        });
       // A failed send removes the peer and broadcasts a newer roster.
       if (!this.links.has(link.id)) return;
     }
     this.emit();
+  }
+  private startMetrics(link: Link) {
+    if (this.disposed || this.links.get(link.id) !== link) return;
+    if (link.metrics) return;
+    link.metrics = setInterval(() => {
+      const now = performance.now();
+      for (const [id, started] of link.pendingTaps)
+        if (now - started > 10_000) link.pendingTaps.delete(id);
+      if (link.probe && now - link.probe.started >= 5_000) {
+        link.missed++;
+        link.probe = undefined;
+      }
+      if (!link.probe && link.channel?.readyState === "open") {
+        link.probe = { id: ++link.probeId, started: now };
+        this.send(link, { v: 1, type: "ping", id: link.probe.id });
+      }
+      this.emit();
+    }, 1_000);
   }
   private drop(link: Link, reason: string) {
     if (!this.links.has(link.id)) return;
     this.links.delete(link.id);
     clearTimeout(link.timer);
     clearInterval(link.introduction);
+    clearInterval(link.metrics);
+    link.pendingTaps.clear();
+    link.probe = undefined;
     link.pc.onconnectionstatechange = null;
     link.pc.oniceconnectionstatechange = null;
     link.pc.onsignalingstatechange = null;
+    link.pc.ondatachannel = null;
     if (link.channel) {
       link.channel.onclose = null;
       link.channel.onerror = null;
@@ -294,7 +366,7 @@ export class Session {
   async answer(raw: string): Promise<string> {
     if (this.role !== "client")
       throw new Error("Only a client answers offers.");
-    const signal = parseSignal(raw, "offer");
+    const signal = await decodeSignal(raw, "offer");
     // Parse first so an invalid paste does not discard a working connection.
     for (const l of this.links.values()) this.drop(l, "Replacing connection.");
     this.grid = initialGrid();
@@ -321,7 +393,7 @@ export class Session {
   }
   async accept(raw: string) {
     if (this.role !== "host") throw new Error("Only the host accepts answers.");
-    const signal = parseSignal(raw, "answer");
+    const signal = await decodeSignal(raw, "answer");
     const link = this.links.get(signal.peer);
     if (signal.session !== this.id || !link)
       throw new Error("This answer belongs to a different or expired offer.");
@@ -342,13 +414,18 @@ export class Session {
       this.broadcast();
     } else {
       const link = [...this.links.values()][0];
-      if (link?.channel?.readyState === "open" && this.players.length)
+      if (link?.channel?.readyState === "open" && this.players.length) {
+        const sequence = ++this.sequence;
+        if (link.pendingTaps.size >= 64)
+          link.pendingTaps.delete(link.pendingTaps.keys().next().value!);
+        link.pendingTaps.set(sequence, performance.now());
         this.send(link, {
           v: 1,
           type: "toggle",
           index,
-          sequence: ++this.sequence,
+          sequence,
         });
+      }
       this.emit();
     }
   }

@@ -10,6 +10,8 @@ describe("untrusted inputs", () => {
       "x".repeat(17_000),
       JSON.stringify({ v: 2, type: "hello", player: { id: "a", name: "A" } }),
       JSON.stringify({ v: 1, type: "toggle", index: 16, sequence: 1 }),
+      JSON.stringify({ v: 1, type: "ping", id: -1 }),
+      JSON.stringify({ v: 1, type: "pong", id: "1" }),
       JSON.stringify({
         v: 1,
         type: "state",
@@ -20,6 +22,8 @@ describe("untrusted inputs", () => {
       expect(parseMessage(raw)).toBeNull();
   });
   it("accepts a valid action and bounded player identity", () => {
+    expect(parseMessage('{"v":1,"type":"ping","id":7}')?.type).toBe("ping");
+    expect(parseMessage('{"v":1,"type":"pong","id":7}')?.type).toBe("pong");
     expect(
       parseMessage('{"v":1,"type":"toggle","index":0,"sequence":1}'),
     ).toEqual({ v: 1, type: "toggle", index: 0, sequence: 1 });

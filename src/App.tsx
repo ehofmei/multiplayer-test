@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { QrDisplay, QrReader } from "./components/QrPairing";
+import type { LatencySummary } from "./network/latency";
 import {
   loadPlayer,
   savePlayer,
@@ -6,9 +8,18 @@ import {
   type Snapshot,
 } from "./network/session";
 
+const ms = (value: number) => `${value.toFixed(1)} ms`;
+function latencyText(stats?: LatencySummary) {
+  return stats
+    ? `${ms(stats.current)} · median ${ms(stats.median)} · p95 ${ms(stats.p95)} (${stats.count}/60 samples)`
+    : "Collecting samples…";
+}
+
 export function App() {
   const [identity] = useState(loadPlayer);
-  const [name, setName] = useState(identity.player.name);
+  const [name, setName] = useState(
+    identity.player.name === "Player" ? "" : identity.player.name,
+  );
   const [persisted, setPersisted] = useState(identity.persisted);
   const [session, setSession] = useState<Session | null>(null);
   const sessionRef = useRef<Session | null>(null);
@@ -45,7 +56,7 @@ export function App() {
   const start = (role: "host" | "client") => {
     window.scrollTo(0, 0);
     const player = { ...identity.player, name: name.trim() || "Player" };
-    setName(player.name);
+    setName(name.trim());
     setPersisted(savePlayer(player));
     const next = new Session(role, player, setSnapshot);
     sessionRef.current = next;
@@ -94,6 +105,22 @@ export function App() {
       );
     }
   };
+  const applyConnection = (raw: string) =>
+    action(async () => {
+      const current = sessionRef.current;
+      if (!current) return;
+      setInput(raw);
+      if (current.role === "host") {
+        await current.accept(raw);
+        setNotice("Answer accepted. Waiting for the direct connection.");
+        setPairing(false);
+        setOutput("");
+        setInput("");
+      } else {
+        setOutput(await current.answer(raw));
+        setInput("");
+      }
+    });
   useEffect(() => {
     if (session?.role === "client" && (snapshot?.players.length ?? 0) > 0)
       setPairing(false);
@@ -147,6 +174,7 @@ export function App() {
             <label htmlFor="name">Your name</label>
             <input
               id="name"
+              placeholder="Player"
               maxLength={32}
               value={name}
               onChange={(e) => {
@@ -315,105 +343,117 @@ export function App() {
           )}
           {showPairing && (
             <section className="pair-card">
-              <p className="eyebrow">MANUAL PAIRING</p>
+              <p className="eyebrow">PAIR WITH A QR CODE</p>
               <h2>
                 {session.role === "host"
                   ? "Invite one device"
-                  : "Exchange connection text"}
+                  : output
+                    ? "Show your answer"
+                    : "Scan the host’s offer"}
               </h2>
               <p>
                 {session.role === "host"
-                  ? "1. Send this offer to one player. 2. Paste their answer below. Use a fresh offer for each player."
-                  : "1. Paste the host offer below. 2. Create an answer. 3. Send your answer back to the host."}
+                  ? "1. Ask the player to scan your offer. 2. Scan their answer to connect. Use a fresh offer for each player."
+                  : output
+                    ? "Show this answer QR to the host. Keep this screen open while they scan it."
+                    : "Scan the offer shown on the host’s screen. Your answer QR will appear here."}
               </p>
               {(error || snapshot?.error) && (
                 <p className="error" role="alert">
                   {error || snapshot?.error}
                 </p>
               )}
-              {output && (
-                <>
-                  <label htmlFor="output">
-                    {session.role === "host" ? "Offer text" : "Answer text"}
-                  </label>
-                  <textarea
-                    id="output"
-                    readOnly
+              <div className={`pairing-body ${output ? "has-code" : ""}`}>
+                {output && (
+                  <QrDisplay
                     value={output}
-                    onFocus={(e) => e.target.select()}
-                    spellCheck={false}
+                    kind={session.role === "host" ? "Offer" : "Answer"}
                   />
-                  <button className="secondary" onClick={copy}>
-                    Copy {session.role === "host" ? "Offer" : "Answer"}
-                  </button>
-                </>
-              )}
-              {!(session.role === "client" && output) && (
-                <>
-                  <label htmlFor="input">
-                    {session.role === "host"
-                      ? "Paste client answer"
-                      : "Paste host offer"}
-                  </label>
-                  <textarea
-                    id="input"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Paste the complete connection text here…"
-                    spellCheck={false}
-                    autoCapitalize="off"
-                    autoCorrect="off"
-                  />
-                  <button
-                    disabled={busy || !input.trim()}
-                    onClick={() =>
-                      action(async () => {
-                        if (session.role === "host") {
-                          await session.accept(input);
-                          setNotice(
-                            "Answer accepted. Waiting for the direct connection.",
-                          );
-                          setPairing(false);
-                          setOutput("");
-                          setInput("");
-                        } else {
-                          setOutput(await session.answer(input));
-                          setInput("");
-                        }
-                      })
-                    }
-                  >
-                    {busy
-                      ? "Preparing connection…"
-                      : session.role === "host"
-                        ? "Connect Player"
-                        : "Create Answer"}
-                  </button>
-                </>
-              )}
-              {session.role === "host" && (
-                <button
-                  className="quiet"
-                  disabled={busy}
-                  onClick={() => {
-                    session.cancelOffer(output);
-                    setError("");
-                    setPairing(false);
-                    setOutput("");
-                    setInput("");
-                    setNotice("");
-                  }}
-                >
-                  Cancel Invite
-                </button>
-              )}
-              {session.role === "client" && output && (
-                <p className="muted">
-                  Keep this screen open until the host accepts your answer.
-                  Pairing expires after three minutes.
-                </p>
-              )}
-              {notice && <p role="status">{notice}</p>}
+                )}
+                <div className="pair-controls">
+                  {!(session.role === "client" && output) && (
+                    <QrReader
+                      kind={session.role === "host" ? "Answer" : "Offer"}
+                      disabled={busy}
+                      onRead={applyConnection}
+                    />
+                  )}
+                  {output && (
+                    <>
+                      <details className="text-fallback">
+                        <summary>Copy/paste instead</summary>
+                        <label htmlFor="output">
+                          {session.role === "host"
+                            ? "Offer text"
+                            : "Answer text"}
+                        </label>
+                        <textarea
+                          id="output"
+                          readOnly
+                          value={output}
+                          onFocus={(e) => e.target.select()}
+                          spellCheck={false}
+                        />
+                        <button className="secondary" onClick={copy}>
+                          Copy {session.role === "host" ? "Offer" : "Answer"}
+                        </button>
+                      </details>
+                    </>
+                  )}
+                  {!(session.role === "client" && output) && (
+                    <details className="text-fallback">
+                      <summary>Paste connection text instead</summary>
+                      <label htmlFor="input">
+                        {session.role === "host"
+                          ? "Paste client answer"
+                          : "Paste host offer"}
+                      </label>
+                      <textarea
+                        id="input"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder="Paste the complete connection text here…"
+                        spellCheck={false}
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                      />
+                      <button
+                        disabled={busy || !input.trim()}
+                        onClick={() => applyConnection(input)}
+                      >
+                        {busy
+                          ? "Preparing connection…"
+                          : session.role === "host"
+                            ? "Connect Player"
+                            : "Create Answer"}
+                      </button>
+                    </details>
+                  )}
+                  {session.role === "host" && (
+                    <button
+                      className="quiet"
+                      disabled={busy}
+                      onClick={() => {
+                        session.cancelOffer(output);
+                        setError("");
+                        setPairing(false);
+                        setOutput("");
+                        setInput("");
+                        setNotice("");
+                      }}
+                    >
+                      Cancel Invite
+                    </button>
+                  )}
+                  {session.role === "client" && output && (
+                    <p className="muted">
+                      Keep this screen open until the host accepts your answer.
+                      Pairing expires after three minutes.
+                    </p>
+                  )}
+                  {notice && <p role="status">{notice}</p>}
+                </div>
+              </div>
             </section>
           )}
           <details className="debug">
@@ -421,8 +461,11 @@ export function App() {
               Connection details · {snapshot?.links.length ?? 0} peer(s)
             </summary>
             <p className="footnote">
-              LAN candidates only · reliable, ordered channel · protocol v1. RTT
-              measurement comes in the next milestone.
+              Round-trip time includes both directions and peer processing.
+              Samples update once per second; median and p95 use the latest 60
+              samples. Tap response measures a client action until its host
+              state arrives, before screen rendering. Keep both devices
+              foregrounded for useful results.
             </p>
             {!snapshot?.links.length && <p>No active peer connections.</p>}
             {snapshot?.links.map((link) => (
@@ -447,6 +490,20 @@ export function App() {
                       ? new Date(link.lastMessage).toLocaleTimeString()
                       : "None yet"}
                   </dd>
+                  <dt>Round-trip time</dt>
+                  <dd data-testid="rtt">{latencyText(link.rtt)}</dd>
+                  <dt>Unanswered probes</dt>
+                  <dd>{link.missed}</dd>
+                  {session.role === "client" && (
+                    <>
+                      <dt>Tap response</dt>
+                      <dd data-testid="tap-response">
+                        {link.taps
+                          ? latencyText(link.taps)
+                          : "Tap a light to measure"}
+                      </dd>
+                    </>
+                  )}
                 </dl>
               </div>
             ))}

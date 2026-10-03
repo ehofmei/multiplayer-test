@@ -1,10 +1,172 @@
-import { expect, test, type Page } from "@playwright/test";
+import { chromium, expect, test, type Page } from "@playwright/test";
+import QRCode from "qrcode";
+
+test("compressed QR images pair offline and expose live latency on a phone", async ({
+  browser,
+  page: host,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
+  await context.addInitScript(() => {
+    Reflect.deleteProperty(window, "BarcodeDetector");
+  });
+  try {
+    const client = await context.newPage();
+    await client.goto("./");
+    await client.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+    });
+    await client.reload();
+    await expect
+      .poll(() => client.evaluate(() => !!navigator.serviceWorker.controller))
+      .toBe(true);
+    // Block external HTTP without disabling Chromium's local WebRTC sockets.
+    // The service worker must serve the app and decoder from its cache.
+    await context.route("**/*", (route) => route.abort());
+    await client.getByLabel("Your name").fill("Emma");
+    await client
+      .getByRole("button", { name: "Join Game", exact: true })
+      .click();
+    await host.goto("./");
+    await host.getByLabel("Your name").fill("Alex");
+    await host
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await host.getByRole("button", { name: "Add Player", exact: true }).click();
+    const offer = host.getByRole("img", { name: "Offer QR code", exact: true });
+    await expect(offer).toBeVisible();
+    await host.screenshot({ path: "test-results/qr-host-desktop.png" });
+    await offer.screenshot({ path: "test-results/offer-qr.png" });
+    await client
+      .locator('input[type="file"]')
+      .setInputFiles("test-results/offer-qr.png");
+    const answer = client.getByRole("img", {
+      name: "Answer QR code",
+      exact: true,
+    });
+    await expect(answer).toBeVisible({ timeout: 20_000 });
+    const answerBounds = await answer.boundingBox();
+    expect(answerBounds!.y + answerBounds!.height).toBeLessThanOrEqual(844);
+    await client.screenshot({ path: "test-results/qr-answer-mobile.png" });
+    await answer.screenshot({ path: "test-results/answer-qr.png" });
+    await host
+      .locator('input[type="file"]')
+      .setInputFiles("test-results/answer-qr.png");
+    await expect(
+      host.getByRole("img", { name: "Offer QR code", exact: true }),
+    ).toHaveCount(0);
+    await expect(client.getByRole("status")).toHaveText("Connected to host", {
+      timeout: 20_000,
+    });
+    await expect(host.getByText("2/8", { exact: true })).toBeVisible();
+    await client.getByRole("button", { name: "Cell 1", exact: true }).click();
+    await expect(host.getByText("Revision 1", { exact: true })).toBeVisible();
+    await client.getByText("Connection details", { exact: false }).click();
+    await expect(client.getByTestId("rtt")).toContainText("ms", {
+      timeout: 10_000,
+    });
+    await expect(client.getByTestId("tap-response")).toContainText("ms");
+    expect(
+      await client.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(390);
+    await client.screenshot({
+      path: "test-results/latency-mobile.png",
+      fullPage: true,
+    });
+  } finally {
+    await context.close();
+  }
+});
+
+test("camera denial and unrelated QR images preserve the text fallback", async ({
+  page,
+}) => {
+  await page.context().clearPermissions();
+  await page.goto("./");
+  await page.getByRole("button", { name: "Join Game", exact: true }).click();
+  await page.getByRole("button", { name: "Scan Offer", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("Camera unavailable", {
+    timeout: 10_000,
+  });
+  await expect(
+    page.getByRole("button", { name: "Stop Camera", exact: true }),
+  ).toHaveCount(0);
+  const unrelated = await QRCode.toBuffer("https://example.com");
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "unrelated.png",
+    mimeType: "image/png",
+    buffer: unrelated,
+  });
+  await expect(page.getByRole("alert")).toContainText(
+    "Invalid connection text",
+  );
+  await expect(
+    page.getByRole("button", { name: "Scan Offer", exact: true }),
+  ).toBeEnabled();
+  await page.locator('input[type="file"]').setInputFiles("public/icon-192.png");
+  await expect(page.getByRole("alert")).toContainText("No readable QR");
+  await page
+    .getByText("Paste connection text instead", { exact: true })
+    .click();
+  await expect(page.getByLabel("Paste host offer")).toBeVisible();
+});
+
+test("camera controls release the stream when stopped and when leaving", async () => {
+  const browser = await chromium.launch({
+    args: [
+      "--use-fake-device-for-media-stream",
+      "--use-fake-ui-for-media-stream",
+    ],
+  });
+  try {
+    const page = await browser.newPage({
+      baseURL: "http://127.0.0.1:4173/multiplayer-test/",
+      viewport: { width: 390, height: 844 },
+    });
+    await page.goto("./");
+    await page.getByRole("button", { name: "Join Game", exact: true }).click();
+    for (const exit of ["Stop Camera", "Return Home"]) {
+      await page
+        .getByRole("button", { name: "Scan Offer", exact: true })
+        .click();
+      await expect
+        .poll(() =>
+          page
+            .locator("video")
+            .evaluate((video) => (video as HTMLVideoElement).videoWidth),
+        )
+        .toBeGreaterThan(0);
+      const track = await page.evaluateHandle(
+        () =>
+          (
+            document.querySelector("video")!.srcObject as MediaStream
+          ).getVideoTracks()[0],
+      );
+      await page.getByRole("button", { name: exit, exact: true }).click();
+      await expect
+        .poll(() => track.evaluate((track) => track.readyState))
+        .toBe("ended");
+      await expect(page.locator("video")).toHaveCount(0);
+      await track.dispose();
+    }
+  } finally {
+    await browser.close();
+  }
+});
 
 async function join(host: Page, client: Page, name: string) {
   await client.goto("./");
   await client.getByLabel("Your name").fill(name);
   await client.getByRole("button", { name: "Join Game", exact: true }).click();
   await host.getByRole("button", { name: "Add Player", exact: true }).click();
+  await host.getByText("Copy/paste instead", { exact: true }).click();
+  await host
+    .getByText("Paste connection text instead", { exact: true })
+    .click();
+  await client
+    .getByText("Paste connection text instead", { exact: true })
+    .click();
   await expect(host.getByLabel("Offer text")).toBeVisible({ timeout: 20_000 });
   const offer = await host.getByLabel("Offer text").inputValue();
   const parsed = JSON.parse(offer);
@@ -13,6 +175,7 @@ async function join(host: Page, client: Page, name: string) {
   await client
     .getByRole("button", { name: "Create Answer", exact: true })
     .click();
+  await client.getByText("Copy/paste instead", { exact: true }).click();
   await expect(client.getByLabel("Answer text")).toBeVisible({
     timeout: 20_000,
   });
@@ -44,6 +207,10 @@ for (const missed of ["hello", "state"] as const)
         const send = RTCDataChannel.prototype.send;
         let dropped = false;
         RTCDataChannel.prototype.send = function (data: string) {
+          if (JSON.parse(data).type === "hello") {
+            const counters = window as unknown as { helloCount?: number };
+            counters.helloCount = (counters.helloCount ?? 0) + 1;
+          }
           if (!dropped && JSON.parse(data).type === type) {
             dropped = true;
             return;
@@ -65,12 +232,15 @@ for (const missed of ["hello", "state"] as const)
           page.getByText("Revision 1", { exact: true }),
         ).toBeVisible();
       await client.getByText("Connection details", { exact: false }).click();
-      const counts = client.locator(".debug dl").getByText(/^\d+ \/ \d+$/);
-      const acknowledged = await counts.innerText();
+      const helloCount = () =>
+        client.evaluate(
+          () => (window as unknown as { helloCount?: number }).helloCount,
+        );
+      const acknowledged = await helloCount();
       // Advancing past the handshake deadline must neither send another hello
       // nor drop a client whose initial state was acknowledged.
       await client.clock.runFor(35_000);
-      await expect(counts).toHaveText(acknowledged);
+      expect(await helloCount()).toBe(acknowledged);
       await expect(client.getByRole("status")).toHaveText("Connected to host");
       await host
         .getByRole("button", { name: "Return Home", exact: true })
@@ -120,6 +290,13 @@ test("host and three clients pair, synchronize concurrent taps, and disconnect c
   }
   await host.getByText("Connection details", { exact: false }).click();
   await expect(host.getByText("open", { exact: true })).toHaveCount(3);
+  for (const rtt of await host.getByTestId("rtt").all())
+    await expect(rtt).toContainText("ms", { timeout: 10_000 });
+  await clients[0].getByText("Connection details", { exact: false }).click();
+  await expect(clients[0].getByTestId("rtt")).toContainText("ms", {
+    timeout: 10_000,
+  });
+  await expect(clients[0].getByTestId("tap-response")).toContainText("ms");
   await host
     .locator(".debug")
     .screenshot({ path: "test-results/connected-details.png" });
@@ -154,10 +331,24 @@ test("mobile controls, keyboard, invalid input, cancellation and persistent iden
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./");
-  await page.getByLabel("Your name").fill("Family Player");
+  await expect(page.getByLabel("Your name")).toHaveValue("");
+  await expect(page.getByLabel("Your name")).toHaveAttribute(
+    "placeholder",
+    "Player",
+  );
+  await page.reload();
+  // A saved default from an earlier visit also stays out of the editable text.
+  await expect(page.getByLabel("Your name")).toHaveValue("");
+  await page.getByRole("button", { name: "Create Game", exact: true }).click();
+  await page.getByRole("button", { name: "Return Home", exact: true }).click();
+  await expect(page.getByLabel("Your name")).toHaveValue("");
+  await page.getByLabel("Your name").pressSequentially("Family Player");
   await page.reload();
   await expect(page.getByLabel("Your name")).toHaveValue("Family Player");
   await page.getByRole("button", { name: "Join Game", exact: true }).click();
+  await page
+    .getByText("Paste connection text instead", { exact: true })
+    .click();
   await page.getByLabel("Paste host offer").fill("not an offer");
   await page
     .getByRole("button", { name: "Create Answer", exact: true })
@@ -181,6 +372,10 @@ test("mobile controls, keyboard, invalid input, cancellation and persistent iden
   expect(metrics.gridBottom).toBeLessThan(844);
   await page.screenshot({ path: "test-results/mobile-host.png" });
   await page.getByRole("button", { name: "Add Player", exact: true }).click();
+  await page.getByText("Copy/paste instead", { exact: true }).click();
+  await page
+    .getByText("Paste connection text instead", { exact: true })
+    .click();
   await expect(page.getByLabel("Offer text")).toBeVisible({ timeout: 20_000 });
   await page.getByLabel("Paste client answer").fill("{}");
   await page
@@ -192,6 +387,11 @@ test("mobile controls, keyboard, invalid input, cancellation and persistent iden
     .click();
   await expect(page.getByLabel("Offer text")).toHaveCount(0);
   await expect(page.getByRole("alert")).toHaveCount(0);
+  await page.getByRole("button", { name: "Return Home", exact: true }).click();
+  await page.getByLabel("Your name").fill("");
+  await page.reload();
+  await expect(page.getByLabel("Your name")).toHaveValue("");
+  await page.screenshot({ path: "test-results/name-placeholder-mobile.png" });
 });
 
 test("production subpath manifest, cache, offline startup and identity survive reload", async ({
@@ -251,6 +451,17 @@ test("the complete board fits desktop, tablet and narrow phone viewports", async
     await page.getByRole("button", { name: "Cell 1", exact: true }).click();
     await page.screenshot({
       path: `test-results/host-${viewport.width}x${viewport.height}.png`,
+    });
+    await page.getByRole("button", { name: "Add Player", exact: true }).click();
+    const qr = page.getByRole("img", { name: "Offer QR code", exact: true });
+    await expect(qr).toBeVisible();
+    const qrBounds = await qr.boundingBox();
+    expect(qrBounds!.y + qrBounds!.height).toBeLessThanOrEqual(viewport.height);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(viewport.width);
+    await page.screenshot({
+      path: `test-results/qr-${viewport.width}x${viewport.height}.png`,
     });
   }
 });
