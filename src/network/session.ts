@@ -17,6 +17,7 @@ interface Link {
   lastMessage?: number;
   sequence: number;
   timer?: ReturnType<typeof setTimeout>;
+  introduction?: ReturnType<typeof setInterval>;
 }
 export interface ConnectionInfo {
   id: string;
@@ -116,21 +117,33 @@ export class Session {
   }
   private attach(link: Link, channel: RTCDataChannel) {
     link.channel = channel;
-    channel.onopen = () => {
+    let opened = false;
+    const openedChannel = () => {
       if (this.disposed || !this.links.has(link.id)) return;
+      if (opened) return;
+      opened = true;
       this.status =
         this.role === "host"
           ? "Hosting · connected"
           : "DataChannel open · waiting for host";
       clearTimeout(link.timer);
-      link.timer = setTimeout(
-        () => this.drop(link, "Player introduction timed out. Pair again."),
-        30_000,
-      );
-      if (this.role === "client")
+      if (!link.player)
+        link.timer = setTimeout(
+          () => this.drop(link, "Player introduction timed out. Pair again."),
+          30_000,
+        );
+      if (this.role === "client") {
+        // Channel-open alone does not confirm the application handshake.
+        // Retry until the host acknowledges us with its initial state.
+        link.introduction = setInterval(
+          () => this.send(link, { v: 1, type: "hello", player: this.me }),
+          1_000,
+        );
         this.send(link, { v: 1, type: "hello", player: this.me });
+      } else if (link.player) this.broadcast();
       this.emit();
     };
+    channel.onopen = openedChannel;
     channel.onmessage = (event) => {
       link.received++;
       link.lastMessage = Date.now();
@@ -154,6 +167,8 @@ export class Session {
         link,
         "DataChannel failed. Pair again with fresh connection text.",
       );
+    // Remote-created channels can already be open when delivered to us.
+    if (channel.readyState === "open") openedChannel();
   }
   private send(link: Link, message: Message) {
     if (link.channel?.readyState !== "open") return;
@@ -172,7 +187,10 @@ export class Session {
     if (this.role === "host") {
       if (message.type === "hello") {
         if (link.player) {
-          this.fail("Ignored a repeated player introduction.");
+          // Repeated introductions acknowledge a retry without adding a player
+          // or changing the identity already bound to this connection.
+          if (link.player.id === message.player.id) this.broadcast();
+          else this.fail("Ignored a changed player introduction.");
           return;
         }
         if (
@@ -207,6 +225,7 @@ export class Session {
       }
       if (message.grid.revision < this.grid.revision) return;
       clearTimeout(link.timer);
+      clearInterval(link.introduction);
       this.grid = message.grid;
       this.players = message.players;
       this.error = "";
@@ -235,6 +254,7 @@ export class Session {
     if (!this.links.has(link.id)) return;
     this.links.delete(link.id);
     clearTimeout(link.timer);
+    clearInterval(link.introduction);
     link.pc.onconnectionstatechange = null;
     link.pc.oniceconnectionstatechange = null;
     link.pc.onsignalingstatechange = null;

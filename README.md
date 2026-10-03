@@ -44,6 +44,9 @@ files to main, then check the workflow and open:
 
 https://ehofmei.github.io/multiplayer-test/
 
+Failed workflow runs retain browser traces and error contexts in the
+`browser-failure-results` artifact for seven days.
+
 No client-side path routes are used; Create/Join are in-app modes. Refresh returns
 to Home, so there are no nested-route refresh errors. If the repository is renamed,
 update the Vite base path. Other HTTPS static hosts can serve dist/ under that path,
@@ -105,6 +108,9 @@ is implemented. Keep the host foregrounded and awake. A disconnect removes the
 player; host loss disables the client board. Closing all tabs can interrupt a game.
 
 The protocol is versioned JSON with size and shape checks. Reliable ordered channels
-preserve actions per client; the host serializes actions from all clients. Networking
-and state logic live outside React, so a future game can replace the grid reducer
-and game messages while retaining pairing and peer lifecycle code.
+preserve actions per client; the host serializes actions from all clients. The host
+acknowledges pairing with an initial grid state; clients retry their introduction
+once per second until acknowledged, with a 30-second deadline. Repeated introductions
+on the same link resend state without duplicating or changing the bound player.
+Networking and state logic live outside React, so a future game can replace the grid
+reducer and game messages while retaining pairing and peer lifecycle code.

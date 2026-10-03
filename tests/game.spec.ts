@@ -30,6 +30,57 @@ async function join(host: Page, client: Page, name: string) {
   ).toBeVisible();
 }
 
+for (const missed of ["hello", "state"] as const)
+  test(`pairing recovers when the first ${missed} message is missed`, async ({
+    browser,
+    page: host,
+  }) => {
+    const context = await browser.newContext();
+    try {
+      const client = await context.newPage();
+      await client.clock.install();
+      const sender = missed === "hello" ? client : host;
+      await sender.addInitScript((type) => {
+        const send = RTCDataChannel.prototype.send;
+        let dropped = false;
+        RTCDataChannel.prototype.send = function (data: string) {
+          if (!dropped && JSON.parse(data).type === type) {
+            dropped = true;
+            return;
+          }
+          return send.call(this, data);
+        };
+      }, missed);
+      await host.goto("./");
+      await host.getByLabel("Your name").fill("Alex");
+      await host
+        .getByRole("button", { name: "Create Game", exact: true })
+        .click();
+      await join(host, client, "Emma");
+      await expect(host.getByText("2/8", { exact: true })).toBeVisible();
+      await expect(host.getByRole("alert")).toHaveCount(0);
+      await client.getByRole("button", { name: "Cell 1", exact: true }).click();
+      for (const page of [host, client])
+        await expect(
+          page.getByText("Revision 1", { exact: true }),
+        ).toBeVisible();
+      await client.getByText("Connection details", { exact: false }).click();
+      const counts = client.locator(".debug dl").getByText(/^\d+ \/ \d+$/);
+      const acknowledged = await counts.innerText();
+      // Advancing past the handshake deadline must neither send another hello
+      // nor drop a client whose initial state was acknowledged.
+      await client.clock.runFor(35_000);
+      await expect(counts).toHaveText(acknowledged);
+      await expect(client.getByRole("status")).toHaveText("Connected to host");
+      await host
+        .getByRole("button", { name: "Return Home", exact: true })
+        .click();
+      await expect(client.getByRole("status")).toHaveText("Host disconnected");
+    } finally {
+      await context.close();
+    }
+  });
+
 test("host and three clients pair, synchronize concurrent taps, and disconnect cleanly", async ({
   browser,
   page: host,
