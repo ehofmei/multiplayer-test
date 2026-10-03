@@ -1,3 +1,5 @@
+import { PaddleColors } from "./ArenaGame";
+import { paddleHex } from "../games/colors";
 import { useEffect, useRef, useState } from "react";
 import {
   clampPaddle,
@@ -20,6 +22,12 @@ const choices: {
     title: "Pong",
     detail: "Two paddles. First to seven. Everyone else can watch.",
     mark: "↔",
+  },
+  {
+    kind: "arena",
+    title: "Arena Pong",
+    detail: "Three or four paddles. Five lives. Last player standing wins.",
+    mark: "□",
   },
   {
     kind: "reaction",
@@ -208,7 +216,16 @@ export function PongGame({
               width="20"
               height="156"
               rx="8"
-              fill={i === seat ? "#d9f29d" : "#f5f4ee"}
+              fill={
+                players.find((p) => p.id === game.seats[i])?.color
+                  ? paddleHex(
+                      players.find((p) => p.id === game.seats[i])?.color,
+                      i,
+                    )
+                  : i === seat
+                    ? "#d9f29d"
+                    : "#f5f4ee"
+              }
             />
           ))}
           <circle ref={ball} cx="500" cy="325" r="17" fill="#f5f4ee" />
@@ -235,6 +252,11 @@ export function PongGame({
           />
         </>
       )}
+      <PaddleColors
+        session={session}
+        players={players}
+        fallback={seat === 1 ? "White" : "Lime"}
+      />
       {session.role === "host" && configure && (
         <>
           <div className="seat-picker">

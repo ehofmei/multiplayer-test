@@ -1,4 +1,7 @@
+import { ArenaGame } from "./components/ArenaGame";
+import { applyUpdate, checkForUpdate, useUpdates } from "./pwa/updates";
 import { useEffect, useRef, useState } from "react";
+import { useGameSounds } from "./audio/useGameSounds";
 import {
   GamePicker,
   GameBar,
@@ -37,7 +40,7 @@ export function App() {
   const [pairing, setPairing] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [update, setUpdate] = useState(false);
+  const update = useUpdates();
   const [offlineReady, setOfflineReady] = useState(false);
   const [standalone] = useState(
     () =>
@@ -49,25 +52,26 @@ export function App() {
 
   useEffect(() => {
     const ready = () => setOfflineReady(true);
-    const refresh = () => setUpdate(true);
     const visibility = () => {
       if (document.hidden) sessionRef.current?.pauseGames();
     };
     document.addEventListener("visibilitychange", visibility);
-    window.addEventListener("pwa-update", refresh);
     window.addEventListener("pwa-offline", ready);
     // Also detect an already-installed cache after subsequent launches.
     navigator.serviceWorker?.ready.then(() => setOfflineReady(true));
     return () => {
       document.removeEventListener("visibilitychange", visibility);
-      window.removeEventListener("pwa-update", refresh);
       window.removeEventListener("pwa-offline", ready);
       sessionRef.current?.dispose();
     };
   }, []);
   const start = (role: "host" | "client") => {
     window.scrollTo(0, 0);
-    const player = { ...identity.player, name: name.trim() || "Player" };
+    const player = {
+      ...identity.player,
+      color: loadPlayer().player.color,
+      name: name.trim() || "Player",
+    };
     setName(name.trim());
     setPersisted(savePlayer(player));
     const next = new Session(role, player, setSnapshot);
@@ -143,6 +147,12 @@ export function App() {
   const connected =
     session?.role === "host" || (snapshot?.players.length ?? 0) > 0;
   const showPairing = pairing && !(session?.role === "client" && connected);
+  const sound = useGameSounds(
+    snapshot,
+    identity.player.id,
+    session?.id ?? "",
+    !!session && connected && !showPairing,
+  );
 
   return (
     <main>
@@ -160,14 +170,29 @@ export function App() {
           </span>
           <span>P2P Game Lab</span>
         </a>
-        <span className="badge">
-          {standalone ? "Installed PWA" : "Browser"}
-        </span>
+        <div className="header-tools">
+          <span className="badge">
+            {standalone ? "Installed PWA" : "Browser"}
+          </span>
+          <button
+            className="quiet sound-toggle"
+            aria-label="Sound"
+            aria-pressed={sound.enabled}
+            onClick={sound.toggle}
+          >
+            Sound {sound.enabled ? "On" : "Off"}
+          </button>
+        </div>
       </header>
-      {update && (
+      {sound.unavailable && (
+        <p className="footnote" aria-live="polite">
+          Sound couldn’t start. Tap Sound off, then on to try again. You can
+          keep playing.
+        </p>
+      )}
+      {update.ready && (
         <aside className="banner">
-          An update is ready. Finish your session, close all app windows, then
-          reopen to update.
+          An update is ready. Use Update app below when you’re done playing.
         </aside>
       )}
       {!session ? (
@@ -194,6 +219,7 @@ export function App() {
                 setPersisted(
                   savePlayer({
                     ...identity.player,
+                    color: loadPlayer().player.color,
                     name: e.target.value.trim() || "Player",
                   }),
                 );
@@ -298,7 +324,16 @@ export function App() {
                 {snapshot?.room.kind === "lobby" && (
                   <GamePicker session={session} />
                 )}
-                {snapshot?.room.pong && (
+                {snapshot?.room.kind === "arena" && snapshot.room.pong && (
+                  <ArenaGame
+                    key={snapshot.room.epoch}
+                    game={snapshot.room.pong}
+                    players={snapshot.players}
+                    session={session}
+                    connected={connected}
+                  />
+                )}
+                {snapshot?.room.kind === "pong" && snapshot.room.pong && (
                   <PongGame
                     key={snapshot.room.epoch}
                     game={snapshot.room.pong}
@@ -568,7 +603,37 @@ export function App() {
         </>
       )}
       <footer>
-        LOCAL WI-FI LAB <span>One host. Everyone connected.</span>
+        <div>
+          LOCAL WI-FI LAB <span>One host. Everyone connected.</span>
+        </div>
+        <div className="app-updates">
+          <span className="build-id" title="UTC build time and source revision">
+            Build {__BUILD_ID__}
+          </span>
+          <button
+            className="quiet"
+            disabled={update.busy}
+            onClick={() => {
+              if (!update.ready) void checkForUpdate();
+              else if (
+                !session ||
+                window.confirm(
+                  "Updating reloads the app and ends your connection to this game. Update now?",
+                )
+              )
+                void applyUpdate();
+            }}
+          >
+            {update.busy
+              ? update.ready
+                ? "Updating…"
+                : "Checking…"
+              : update.ready
+                ? "Update app"
+                : "Check for updates"}
+          </button>
+          <p aria-live="polite">{update.message}</p>
+        </div>
       </footer>
     </main>
   );

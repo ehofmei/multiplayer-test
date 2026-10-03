@@ -1,3 +1,5 @@
+import { newArena, moveArena, stepArena } from "../games/arena";
+import { validColor, type PaddleColor } from "../games/colors";
 import {
   newRoom,
   newPong,
@@ -531,16 +533,21 @@ export class Session {
   startPong(seats: string[]) {
     if (
       this.role !== "host" ||
-      this.room.kind !== "pong" ||
-      seats.length !== 2 ||
-      new Set(seats).size !== 2 ||
+      !["pong", "arena"].includes(this.room.kind) ||
+      (this.room.kind === "arena"
+        ? seats.length < 3 || seats.length > 4
+        : seats.length !== 2) ||
+      new Set(seats).size !== seats.length ||
       !seats.every((id) => this.players.some((p) => p.id === id))
     )
       return;
     this.stopGameTimers();
     this.room.epoch++;
     this.room.notice = "";
-    this.room.pong = { ...newPong(seats), phase: "serve" };
+    this.room.pong = {
+      ...(this.room.kind === "arena" ? newArena(seats) : newPong(seats)),
+      phase: "serve",
+    };
     this.runPong();
     this.broadcast();
   }
@@ -558,7 +565,10 @@ export class Session {
       accumulator += Math.min(0.05, (now - last) / 1000);
       last = now;
       while (accumulator >= 1 / 120 && this.room.pong) {
-        this.room.pong = stepPong(this.room.pong, 1 / 120);
+        this.room.pong =
+          this.room.kind === "arena"
+            ? stepArena(this.room.pong, 1 / 120)
+            : stepPong(this.room.pong, 1 / 120);
         accumulator -= 1 / 120;
       }
       if (this.room.pong?.phase === "finished") {
@@ -652,8 +662,20 @@ export class Session {
     );
   }
   private applyInput(id: string, input: GameInput) {
-    if (input.kind === "paddle" && this.room.pong) {
-      this.room.pong = movePaddle(this.room.pong, id, input.position);
+    if (input.kind === "color") {
+      const player =
+        id === this.me.id
+          ? this.me
+          : [...this.links.values()].find((l) => l.player?.id === id)?.player;
+      if (player && validColor(input.color)) {
+        player.color = input.color;
+        this.broadcast();
+      }
+    } else if (input.kind === "paddle" && this.room.pong) {
+      this.room.pong =
+        this.room.kind === "arena"
+          ? moveArena(this.room.pong, id, input.position)
+          : movePaddle(this.room.pong, id, input.position);
       this.emit();
     } else if (
       input.kind === "target" &&
@@ -685,8 +707,18 @@ export class Session {
       }
     }
   }
+  setColor(color: PaddleColor) {
+    if (!validColor(color)) return;
+    this.me.color = color;
+    savePlayer(this.me);
+    this.input({ kind: "color", color });
+  }
   move(position: number) {
-    if (!Number.isFinite(position) || this.room.kind !== "pong") return;
+    if (
+      !Number.isFinite(position) ||
+      !["pong", "arena"].includes(this.room.kind)
+    )
+      return;
     this.queuedPaddle = {
       epoch: this.room.epoch,
       position: Math.max(0, Math.min(1, position)),

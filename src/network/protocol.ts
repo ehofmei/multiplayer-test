@@ -1,3 +1,4 @@
+import { validColor, type PaddleColor } from "../games/colors";
 import { validRoom } from "../games/validate";
 import type { Room, GameInput } from "../games/model";
 import type { GridState } from "../game/grid";
@@ -7,6 +8,7 @@ export const MAX_MESSAGE = 16_384;
 export interface Player {
   id: string;
   name: string;
+  color?: PaddleColor;
 }
 export type Message =
   | { v: 2; type: "hello"; player: Player }
@@ -32,7 +34,8 @@ export const validPlayer = (p: unknown): p is Player =>
   p.id.length <= 80 &&
   typeof p.name === "string" &&
   p.name.trim().length > 0 &&
-  p.name.length <= 32;
+  p.name.length <= 32 &&
+  (p.color === undefined || validColor(p.color));
 export function parseMessage(raw: unknown): Message | null {
   if (typeof raw !== "string" || raw.length > MAX_MESSAGE) return null;
   try {
@@ -45,6 +48,7 @@ export function parseMessage(raw: unknown): Message | null {
       record(m.input)
     ) {
       const i = m.input;
+      if (i.kind === "color" && validColor(i.color)) return m as Message;
       if (
         i.kind === "paddle" &&
         typeof i.position === "number" &&

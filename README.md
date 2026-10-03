@@ -5,7 +5,7 @@ device has one direct WebRTC DataChannel to that host. There is no gameplay serv
 signaling service, STUN/TURN configuration, database, or account.
 
 Pair up to eight devices once using QR codes or copy/paste, then let the host choose
-Shared Lights, two-player Pong, or Reaction Race. Switching games keeps the same
+Shared Lights, two-player Pong, three/four-player Arena Pong, or Reaction Race. Switching games keeps the same
 connections. The app is installable and includes latency diagnostics.
 
 ## Run and verify
@@ -90,6 +90,21 @@ point. The host can pause/resume and choose new players after a match.
 This is a simple reliable-channel prototype, with no rollback or collision
 prediction; real-device play determines whether its motion feels smooth enough.
 
+**Arena Pong** plays three or four people simultaneously in a square arena. The
+host assigns bottom/right/top/left seats; leave the fourth seat empty for a wall.
+Each player sees their own paddle at the bottom and drags horizontally, uses the
+slider, or presses ←/→. Five lives each: missing your side costs a life, eliminated
+sides become walls, and the last living player wins. A serve delay follows every
+miss, with serves rotating between surviving players. Extra players spectate;
+late arrivals join the next match. A participant leaving resets the match while
+keeping other connections open. Pause/resume and host background handling match
+regular Pong. Simulation and client smoothing use the same rates as Pong.
+
+Both Pong games offer six named paddle color presets. Players choose their own;
+colors are shared with all devices and saved with the local player identity.
+Duplicate colors are allowed; name/life labels identify Arena players without
+relying on color. Update all devices before pairing to use Arena Pong.
+
 **Reaction Race** has six targets and ten rounds for everyone present at the start
 (or solo practice). After a random 1.2–3 second wait, hit the marked target within
 two seconds. Rounds 3 and 7 say Hold and show a decoy: leave every target alone.
@@ -128,6 +143,25 @@ Stop Camera, leaving pairing, or leaving the app screen releases its stream.
 Generation, decoding and compression run locally; the decoder worker is precached
 with the app for offline use. Each additional player still needs two scans.
 
+## Sound
+
+Each device has its own Sound toggle in the header. Sound starts off by default;
+the versioned local preference survives reloads. Tap Sound to enable it and hear a
+quiet confirmation. Browsers require a tap/key gesture to start audio, including
+on a visit with Sound already saved on. Keep the device's volume at a comfortable
+level. If audio is unavailable, gameplay continues and the toggle offers a retry.
+
+Short synthesized tones cover light on/off, Pong paddle/wall hits, serves, points
+and match results, and Reaction Race hit/hold cues, individual feedback and finishes.
+Race still requires choosing the correct visual target; a tone alone does not tell
+you which button to press. Sound never controls scoring or networking.
+No samples, new dependencies, or external downloads are needed, so effects work
+offline. Muting stops active tones immediately; hiding the app stops/suspends audio.
+After returning, a tap/key gesture resumes enabled sound. No old events replay on
+joining, switching games, enabling sound or reconnecting. Rapid cues are bounded.
+Pong sounds follow observed state changes; a delayed client update may omit a very
+brief bounce. Physical iPhone/iPad audibility and background/resume need device testing.
+
 ## Inspect and test
 
 Expand Connection details to see connection/ICE/signaling/channel states, sent and
@@ -164,9 +198,15 @@ remote fonts, scripts, or media. Identity/name storage is versioned locally; the
 and connections are intentionally temporary and reset when the host leaves/reloads.
 There is no saved game progress requiring export/import.
 
-A new service worker waits rather than forcing an update during play. Finish the
-session, close all app windows, and reopen to use the update. Real iOS offline/update
-behavior still needs testing.
+A new service worker waits rather than forcing an update during play. The footer’s
+**Check for updates** fetches the latest service worker when online. Once its assets
+are cached, **Update app** activates it and reloads the app. During a session, a
+confirmation explains that this ends the connection; canceling keeps the game open.
+Updating a host disconnects its players. Update each device between games. Other
+open tabs keep playing until their own reload. Failed/offline checks preserve the
+current playable build. A small UTC build timestamp appears in the footer, followed
+by the short GitHub commit ID in CI or “local” for local builds. Real installed iOS
+update behavior still needs device testing.
 After deploying this checkpoint, update every participating device before pairing;
 earlier app versions do not understand version 2 game messages.
 

@@ -2,7 +2,14 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
+// Each build gets a visible identity, including local/uncommitted builds.
+const buildTime =
+  new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
+const revision = process.env.GITHUB_SHA?.slice(0, 7);
+const buildId = `${buildTime}${revision ? ` · ${revision}` : " · local"}`;
+
 export default defineConfig({
+  define: { __BUILD_ID__: JSON.stringify(buildId) },
   base: "/multiplayer-test/",
   plugins: [
     react(),

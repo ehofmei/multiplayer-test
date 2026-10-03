@@ -21,7 +21,8 @@ export function validRoom(v: unknown): v is Room {
     return false;
   if (v.kind === "lobby" || v.kind === "lights")
     return v.pong === null && v.race === null;
-  if (v.kind === "pong") {
+  if (v.kind === "pong" || v.kind === "arena") {
+    const arena = v.kind === "arena";
     const p = v.pong;
     if (
       !record(p) ||
@@ -33,12 +34,29 @@ export function validRoom(v: unknown): v is Room {
       return false;
     return (
       Array.isArray(p.seats) &&
-      p.seats.length <= 2 &&
+      p.seats.length <= (arena ? 4 : 2) &&
       p.seats.every(id) &&
       new Set(p.seats).size === p.seats.length &&
-      (p.phase === "ready" || p.seats.length === 2) &&
-      pair(p.paddles, 0.12, 0.88) &&
-      pair(p.score, 0, 7, true) &&
+      (p.phase === "ready" ||
+        (arena ? p.seats.length >= 3 : p.seats.length === 2)) &&
+      (arena
+        ? Array.isArray(p.paddles) &&
+          p.paddles.length === 4 &&
+          p.paddles.every((n) => number(n, 0.12, 0.88))
+        : pair(p.paddles, 0.12, 0.88)) &&
+      (arena
+        ? Array.isArray(p.score) &&
+          p.score.length === 4 &&
+          p.score.every((n) => integer(n, 0, 5))
+        : pair(p.score, 0, 7, true)) &&
+      (arena
+        ? Array.isArray(p.lives) &&
+          p.lives.length === 4 &&
+          p.lives.every(
+            (n, i) =>
+              integer(n, 0, 5) && (i < (p.seats as string[]).length || n === 0),
+          )
+        : p.lives === undefined) &&
       number(p.serveIn, 0, 1) &&
       record(p.ball) &&
       number(p.ball.x, -0.04, 1.04) &&

@@ -163,6 +163,21 @@ async function createLights(page: Page) {
     .click();
 }
 
+async function monitorAudio(page: Page) {
+  await page.addInitScript(() => {
+    const create = AudioContext.prototype.createOscillator;
+    (window as unknown as { audioStarts: number }).audioStarts = 0;
+    AudioContext.prototype.createOscillator = function () {
+      (window as unknown as { audioStarts: number }).audioStarts++;
+      return create.call(this);
+    };
+  });
+}
+const audioStarts = (page: Page) =>
+  page.evaluate(
+    () => (window as unknown as { audioStarts: number }).audioStarts,
+  );
+
 async function join(host: Page, client: Page, name: string) {
   await client.goto("./");
   await client.getByLabel("Your name").fill(name);
@@ -502,6 +517,7 @@ test("host picks games, assigns two Pong players, spectators watch, and switchin
   browser,
   page: host,
 }) => {
+  await monitorAudio(host);
   const contexts = await Promise.all(
     [0, 1].map(() =>
       browser.newContext({ viewport: { width: 390, height: 844 } }),
@@ -520,6 +536,9 @@ test("host picks games, assigns two Pong players, spectators watch, and switchin
     await host.screenshot({ path: "test-results/game-picker-desktop.png" });
     await join(host, emma, "Emma");
     await join(host, sam, "Sam");
+    await host.getByRole("button", { name: "Sound", exact: true }).click();
+    await expect.poll(() => audioStarts(host)).toBeGreaterThan(0);
+    const beforePong = await audioStarts(host);
     await expect(
       emma.getByRole("button", { name: "Pong", exact: true }),
     ).toBeDisabled();
@@ -541,6 +560,10 @@ test("host picks games, assigns two Pong players, spectators watch, and switchin
     ).toBeVisible();
     await expect(host.getByLabel("Your paddle")).toHaveCount(0);
     await expect(emma.getByLabel("Your paddle")).toBeEnabled();
+    await expect(
+      host.getByText("First to seven", { exact: true }),
+    ).toBeVisible();
+    await expect.poll(() => audioStarts(host)).toBeGreaterThan(beforePong);
     await emma.getByLabel("Your paddle").press("End");
     await expect
       .poll(async () =>
@@ -608,6 +631,7 @@ test("Reaction Race penalizes early/wrong taps, mixes hold rounds, finishes and 
   browser,
   page: host,
 }) => {
+  await monitorAudio(host);
   test.setTimeout(90_000);
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -623,6 +647,9 @@ test("Reaction Race penalizes early/wrong taps, mixes hold rounds, finishes and 
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
     await join(host, client, "Emma");
+    await host.getByRole("button", { name: "Sound", exact: true }).click();
+    await expect.poll(() => audioStarts(host)).toBeGreaterThan(0);
+    const beforeRace = await audioStarts(host);
     await host.clock.install();
     await host.clock.pauseAt(new Date(Date.now() + 1000));
     const advanceTo = async (text: string | RegExp) => {
@@ -656,6 +683,8 @@ test("Reaction Race penalizes early/wrong taps, mixes hold rounds, finishes and 
       await advanceTo(
         hold ? "Hold! Don’t tap anything." : "Hit the marked target!",
       );
+      if (round === 1)
+        await expect.poll(() => audioStarts(host)).toBeGreaterThan(beforeRace);
       await expect(
         client.getByText(
           hold ? "Hold! Don’t tap anything." : "Hit the marked target!",
@@ -725,10 +754,10 @@ test("game picker and new game controls fit phones, tablet and desktop with long
     await page
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
-    for (const name of ["Pong", "Reaction Race"] as const) {
+    for (const name of ["Pong", "Arena Pong", "Reaction Race"] as const) {
       await page.getByRole("button", { name, exact: true }).click();
       const surface = page.locator(
-        name === "Pong" ? ".pong-court" : ".race-targets",
+        name === "Reaction Race" ? ".race-targets" : ".pong-court",
       );
       const bounds = await surface.boundingBox();
       expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(viewport.height);
@@ -736,11 +765,217 @@ test("game picker and new game controls fit phones, tablet and desktop with long
         await page.evaluate(() => document.documentElement.scrollWidth),
       ).toBeLessThanOrEqual(viewport.width);
       await page.screenshot({
-        path: `test-results/${name === "Pong" ? "pong" : "reaction"}-${viewport.width}x${viewport.height}.png`,
+        path: `test-results/${name === "Pong" ? "pong" : name === "Arena Pong" ? "arena" : "reaction"}-${viewport.width}x${viewport.height}.png`,
       });
       await page
         .getByRole("button", { name: "Choose Game", exact: true })
         .click();
     }
+  }
+});
+
+test("sound defaults to mute, unlocks on tap, plays light cues, persists and works offline", async ({
+  page,
+  context,
+}) => {
+  await page.addInitScript(() => {
+    const oscillator = AudioContext.prototype.createOscillator;
+    (window as unknown as { audioStarts: number }).audioStarts = 0;
+    AudioContext.prototype.createOscillator = function () {
+      (window as unknown as { audioStarts: number }).audioStarts++;
+      return oscillator.call(this);
+    };
+  });
+  const starts = () =>
+    page.evaluate(
+      () => (window as unknown as { audioStarts: number }).audioStarts,
+    );
+  await page.goto("./");
+  const sound = page.getByRole("button", { name: "Sound", exact: true });
+  await expect(sound).toHaveAttribute("aria-pressed", "false");
+  await createLights(page);
+  await page.getByRole("button", { name: "Cell 1", exact: true }).click();
+  expect(await starts()).toBe(0);
+  await sound.click();
+  await expect(sound).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(starts).toBeGreaterThan(0);
+  const enabledCount = await starts();
+  await page.getByRole("button", { name: "Cell 2", exact: true }).click();
+  await expect.poll(starts).toBeGreaterThan(enabledCount);
+  await sound.click();
+  await expect(sound).toHaveAttribute("aria-pressed", "false");
+  const mutedCount = await starts();
+  await page.getByRole("button", { name: "Cell 3", exact: true }).click();
+  expect(await starts()).toBe(mutedCount);
+  await page.reload();
+  await expect(sound).toHaveAttribute("aria-pressed", "false");
+  await sound.press("Enter");
+  await expect(sound).toHaveAttribute("aria-pressed", "true");
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await page.reload();
+  await expect
+    .poll(() => page.evaluate(() => !!navigator.serviceWorker.controller))
+    .toBe(true);
+  await context.setOffline(true);
+  await page.reload();
+  await expect(sound).toHaveAttribute("aria-pressed", "true");
+  expect(await starts()).toBe(0);
+  await createLights(page);
+  await page.getByRole("button", { name: "Cell 4", exact: true }).click();
+  await expect.poll(starts).toBeGreaterThan(0);
+  await page.screenshot({ path: "test-results/sound-enabled.png" });
+  await context.setOffline(false);
+});
+
+test("unavailable audio does not prevent playing", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "AudioContext", { value: undefined });
+    Object.defineProperty(window, "webkitAudioContext", { value: undefined });
+  });
+  await page.goto("./");
+  await page.getByRole("button", { name: "Sound", exact: true }).click();
+  await expect(
+    page.getByText("Sound couldn’t start.", { exact: false }),
+  ).toBeVisible();
+  await createLights(page);
+  await page.getByRole("button", { name: "Cell 1", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Cell 1", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+});
+
+test("Arena Pong synchronizes four players, rotated controls, colors, pause and disconnect", async ({
+  browser,
+  page: host,
+}) => {
+  const contexts = await Promise.all(
+    [0, 1, 2].map(() =>
+      browser.newContext({ viewport: { width: 390, height: 844 } }),
+    ),
+  );
+  try {
+    const [emma, sam, lee] = await Promise.all(
+      contexts.map((c) => c.newPage()),
+    );
+    await host.goto("./");
+    await host.getByLabel("Your name").fill("Alex");
+    await host
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await join(host, emma, "Emma");
+    await join(host, sam, "Sam");
+    await join(host, lee, "Lee");
+    await host.getByRole("button", { name: "Arena Pong", exact: true }).click();
+    await expect(
+      emma.getByRole("region", { name: "Arena Pong game" }),
+    ).toBeVisible();
+    await emma
+      .getByRole("button", { name: "Coral paddle", exact: true })
+      .click();
+    await expect(
+      host.getByRole("button", { name: "Start Arena Pong", exact: true }),
+    ).toBeEnabled();
+    await host
+      .getByRole("button", { name: "Start Arena Pong", exact: true })
+      .click();
+    for (const page of [host, emma, sam, lee]) {
+      await expect(
+        page.getByText("Your paddle is at the bottom.", { exact: false }),
+      ).toBeVisible();
+      await expect(page.getByTestId("arena-lives-0")).toContainText("5 lives");
+      await expect(page.getByTestId("arena-paddle-1")).toHaveAttribute(
+        "fill",
+        "#fda4af",
+      );
+    }
+    for (const [page, rotation] of [
+      [host, 0],
+      [emma, 90],
+      [sam, 180],
+      [lee, 270],
+    ] as const)
+      await expect(page.locator(".arena-court svg g")).toHaveAttribute(
+        "transform",
+        `rotate(${rotation} 500 500)`,
+      );
+    await emma
+      .getByRole("group", { name: "Arena court", exact: true })
+      .press("ArrowRight");
+    await expect
+      .poll(async () =>
+        Number(await host.getByTestId("arena-paddle-1").getAttribute("y")),
+      )
+      .toBeLessThan(380);
+    await host
+      .getByRole("button", { name: "Pause Arena", exact: true })
+      .click();
+    await expect(emma.getByText("Arena paused", { exact: true })).toBeVisible();
+    await expect(
+      emma.getByLabel("Your paddle", { exact: true }),
+    ).toBeDisabled();
+    await host
+      .getByRole("region", { name: "Arena Pong game" })
+      .screenshot({ path: "test-results/arena-desktop.png" });
+    await emma.setViewportSize({ width: 320, height: 700 });
+    await emma.keyboard.press("Control+Home");
+    const courtBounds = await emma
+      .getByRole("group", { name: "Arena court" })
+      .boundingBox();
+    expect(courtBounds!.y + courtBounds!.height).toBeLessThanOrEqual(700);
+    expect(
+      await emma.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(320);
+    await emma.screenshot({
+      path: "test-results/arena-phone.png",
+      fullPage: true,
+    });
+    await host
+      .getByRole("button", { name: "Resume Arena", exact: true })
+      .click();
+    await expect(emma.getByLabel("Your paddle", { exact: true })).toBeEnabled();
+    await host
+      .getByRole("button", { name: "Choose Game", exact: true })
+      .click();
+    await host.getByRole("button", { name: "Arena Pong", exact: true }).click();
+    await host.getByLabel("Left player", { exact: true }).selectOption("");
+    await host
+      .getByRole("button", { name: "Start Arena Pong", exact: true })
+      .click();
+    await expect(emma.getByTestId("arena-paddle-3")).toHaveAttribute(
+      "data-active",
+      "false",
+    );
+    await expect(
+      lee.getByText("You’re watching. The host picks the players.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(lee.getByLabel("Your paddle", { exact: true })).toHaveCount(0);
+    await expect(
+      emma.getByRole("button", { name: "Coral paddle", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await emma
+      .getByRole("button", { name: "Return Home", exact: true })
+      .click();
+    await expect(
+      host.getByText("A player left. Choose players and start a new round.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      sam.getByRole("button", { name: "Start Arena Pong", exact: true }),
+    ).toHaveCount(0);
+    await emma.reload();
+    await emma
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await emma.getByRole("button", { name: "Pong", exact: true }).click();
+    await expect(
+      emma.getByRole("button", { name: "Coral paddle", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+  } finally {
+    await Promise.all(contexts.map((c) => c.close()));
   }
 });

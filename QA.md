@@ -1,6 +1,6 @@
 # Browser QA inventory
 
-Checkpoint: app shell, QR/text pairing, game picker, Pong, Reaction Race, shared grid and latency.
+Checkpoint: app shell, QR/text pairing, game picker, Pong, Arena Pong, Reaction Race, shared grid and latency.
 Use the production build at /multiplayer-test/ for checks.
 
 | Feature / control                           | Functional check                                                                                                                  | Visual state / evidence                                                |
@@ -52,3 +52,28 @@ Play a complete race with several players; check target/hold readability, false
 starts, results, and whether response rankings feel reasonable. Background the
 host during each game, return, and resume/restart; confirm switching never asks
 for new QR scans. Phone emulation cannot certify real iOS scheduling or touch feel.
+
+Sound inventory: muted first visit; per-device saved toggle; keyboard activation;
+unlock on a user gesture after reload; light on/off, Pong bounce/serve/point/end,
+race target/hold/result/end cues; no repeated cues from diagnostics/state messages;
+no replay on game changes; rapid taps remain bounded; mute/background/unmount stop
+voices; unavailable audio preserves gameplay; offline effects. Check the header
+at 320px and desktop, visible toggle focus, and comfortable volume. Real iOS sound
+unlock, device volume/mute behavior, and foreground recovery need physical testing.
+
+## App updates
+
+- Footer build identifier and 44px update control on desktop and narrow phone.
+- Latest build reports up to date; offline check explains retry without interrupting play.
+- A new service worker waits during play, caches fully before Update app appears, and reloads on request.
+- Canceling an in-game update preserves the session; accepting returns home with the current assets.
+- Check installed iPhone/iPad updates and compare build identifiers after deployment.
+
+## Arena Pong and paddle colors
+
+- Host-only game selection and three/four distinct player assignments; fourth empty seat is a wall.
+- Four simultaneous paddles, own paddle at bottom on every side, left/right pointer/keyboard/slider controls and spectator restrictions.
+- Five lives, paddle/wall/corner collisions, elimination turns sides into walls, winner and rematch.
+- Palette names/selection indicators, synchronized colors, reload persistence, regular Pong reuse.
+- Pause/resume, background handling, participant disconnect reset, switching games preserves peers.
+- Desktop/tablet/320px phone: court proportions, long names, 44px controls, focus, contrast and no horizontal overflow.

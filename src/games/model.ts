@@ -1,9 +1,11 @@
-export type GameKind = "lobby" | "lights" | "pong" | "reaction";
+import { newArena } from "./arena";
+export type GameKind = "lobby" | "lights" | "pong" | "arena" | "reaction";
 export interface PongState {
   phase: "ready" | "serve" | "playing" | "paused" | "finished";
   seats: string[];
-  paddles: [number, number];
-  score: [number, number];
+  paddles: number[];
+  score: number[];
+  lives?: number[];
   ball: { x: number; y: number; vx: number; vy: number };
   serveIn: number;
 }
@@ -28,12 +30,14 @@ export interface Room {
   race: RaceState | null;
 }
 export type GameInput =
+  | { kind: "color"; color: import("./colors").PaddleColor }
   | { kind: "paddle"; position: number }
   | { kind: "target"; round: number; index: number; elapsed: number };
 export const gameNames: Record<GameKind, string> = {
   lobby: "Game night",
   lights: "Shared Lights",
   pong: "Pong",
+  arena: "Arena Pong",
   reaction: "Reaction Race",
 };
 export function newRoom(kind: GameKind, epoch: number): Room {
@@ -41,7 +45,8 @@ export function newRoom(kind: GameKind, epoch: number): Room {
     epoch,
     kind,
     notice: "",
-    pong: kind === "pong" ? newPong([]) : null,
+    pong:
+      kind === "pong" ? newPong([]) : kind === "arena" ? newArena([]) : null,
     race:
       kind === "reaction"
         ? { phase: "ready", round: 0, rule: "hit", target: -1, entries: [] }
@@ -67,7 +72,7 @@ export function movePaddle(
 ): PongState {
   const seat = state.seats.indexOf(id);
   if (seat < 0 || !["serve", "playing"].includes(state.phase)) return state;
-  const paddles: [number, number] = [...state.paddles];
+  const paddles = [...state.paddles];
   paddles[seat] = clampPaddle(position);
   return { ...state, paddles };
 }
@@ -104,7 +109,7 @@ export function stepPong(state: PongState, seconds: number): PongState {
   }
   if (x < -0.025 || x > 1.025) {
     const scorer = x < 0 ? 1 : 0;
-    const score: [number, number] = [...state.score];
+    const score = [...state.score];
     score[scorer]++;
     return {
       ...state,
