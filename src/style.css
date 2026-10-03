@@ -533,3 +533,229 @@ dd {
     flex-shrink: 0;
   }
 }
+
+.games-card {
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #d5dcd4;
+  border-radius: 20px;
+  padding: 24px;
+}
+.games-card h2 {
+  margin: 10px 0;
+}
+.game-choices {
+  display: grid;
+  gap: 12px;
+}
+.game-choice {
+  background: #eef2e8;
+  color: #122c29;
+  border-color: #cbd6c4;
+  padding: 18px;
+  text-align: left;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 6px 12px;
+}
+.game-choice small {
+  grid-column: 2;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.game-choice .game-mark {
+  grid-row: 1 / 3;
+  font-size: 28px;
+  align-self: center;
+}
+.game-choice:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.game-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+.game-bar > span {
+  font-weight: 700;
+}
+.game-bar button {
+  font-size: 13px;
+}
+.game-score {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  text-align: center;
+}
+.game-score > div {
+  min-width: 0;
+}
+.game-score span {
+  display: block;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.game-score strong {
+  display: block;
+  font-size: 40px;
+  font-variant-numeric: tabular-nums;
+}
+.game-status {
+  text-align: center;
+  margin: 10px 0;
+  font-weight: 700;
+}
+.pong-court {
+  width: 100%;
+  max-width: max(240px, calc((100dvh - 500px) * 1.54));
+  margin-inline: auto;
+  background: #122c29;
+  border-radius: 12px;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+.pong-court svg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1000 / 650;
+}
+.pong-court:focus-visible {
+  outline: 3px solid #5e8c28;
+  outline-offset: 4px;
+}
+input[type="range"] {
+  accent-color: #44765b;
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+}
+.seat-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+select {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 8px;
+  margin-top: 8px;
+  font: inherit;
+  color: #122c29;
+  background: #fafbf7;
+  border: 1px solid #b9c8ba;
+  border-radius: 8px;
+}
+select:focus-visible {
+  outline: 3px solid #5e8c28;
+  outline-offset: 2px;
+}
+.race-cue {
+  min-height: 56px;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 750;
+  border-radius: 10px;
+  background: #eef2e8;
+}
+.race-cue.hit {
+  background: #d9f29d;
+}
+.race-cue.hold {
+  background: #ffe2c2;
+}
+.race-targets {
+  width: 100%;
+  max-width: max(240px, calc(100dvh - 460px));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.race-target {
+  aspect-ratio: 1;
+  min-height: 76px;
+  padding: 8px;
+  background: #edf1ea;
+  color: #122c29;
+  border: 2px solid #cbd6c4;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.race-target strong {
+  font-size: 26px;
+}
+.race-target span {
+  font-size: 11px;
+}
+.race-target:disabled {
+  opacity: 1;
+}
+.race-target.lit {
+  background: #d9f29d;
+  border-color: #426721;
+}
+.race-target.decoy {
+  background: #ffe2c2;
+  border-color: #a65422;
+}
+.race-feedback {
+  min-height: 42px;
+  font-size: 14px;
+}
+.race-scores {
+  list-style: none;
+  padding: 0;
+}
+.race-scores li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  border-top: 1px solid #d5dcd4;
+  padding: 12px 0;
+}
+.race-scores li > span {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.race-scores li > strong {
+  flex-shrink: 0;
+}
+.race-scores small {
+  display: block;
+  font-weight: 400;
+  font-size: 12px;
+  color: #52665b;
+  margin-top: 4px;
+}
+@media (max-width: 650px) {
+  .games-card {
+    padding: 18px;
+    border-radius: 16px;
+  }
+  .race-targets {
+    gap: 8px;
+  }
+  .race-target {
+    gap: 4px;
+  }
+  .game-choice {
+    padding: 12px;
+  }
+  .game-score strong {
+    font-size: 32px;
+  }
+}

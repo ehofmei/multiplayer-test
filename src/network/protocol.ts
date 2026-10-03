@@ -1,16 +1,26 @@
+import { validRoom } from "../games/validate";
+import type { Room, GameInput } from "../games/model";
 import type { GridState } from "../game/grid";
 
-export const VERSION = 1;
+export const VERSION = 2;
 export const MAX_MESSAGE = 16_384;
 export interface Player {
   id: string;
   name: string;
 }
 export type Message =
-  | { v: 1; type: "hello"; player: Player }
-  | { v: 1; type: "toggle"; index: number; sequence: number }
-  | { v: 1; type: "ping" | "pong"; id: number }
-  | { v: 1; type: "state"; grid: GridState; players: Player[]; ack?: number };
+  | { v: 2; type: "hello"; player: Player }
+  | { v: 2; type: "toggle"; index: number; sequence: number; epoch: number }
+  | { v: 2; type: "ping" | "pong"; id: number }
+  | {
+      v: 2;
+      type: "state";
+      grid: GridState;
+      room: Room;
+      players: Player[];
+      ack?: number;
+    }
+  | { v: 2; type: "input"; epoch: number; sequence: number; input: GameInput };
 const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 const integer = (value: unknown): value is number =>
@@ -28,11 +38,39 @@ export function parseMessage(raw: unknown): Message | null {
   try {
     const m: unknown = JSON.parse(raw);
     if (!record(m) || m.v !== VERSION) return null;
+    if (
+      m.type === "input" &&
+      integer(m.epoch) &&
+      integer(m.sequence) &&
+      record(m.input)
+    ) {
+      const i = m.input;
+      if (
+        i.kind === "paddle" &&
+        typeof i.position === "number" &&
+        Number.isFinite(i.position) &&
+        i.position >= 0 &&
+        i.position <= 1
+      )
+        return m as Message;
+      if (
+        i.kind === "target" &&
+        integer(i.round) &&
+        i.round >= 1 &&
+        i.round <= 10 &&
+        integer(i.index) &&
+        i.index < 6 &&
+        integer(i.elapsed) &&
+        i.elapsed <= 2000
+      )
+        return m as Message;
+    }
     if (m.type === "hello" && validPlayer(m.player)) return m as Message;
     if ((m.type === "ping" || m.type === "pong") && integer(m.id))
       return m as Message;
     if (
       m.type === "toggle" &&
+      integer(m.epoch) &&
       integer(m.index) &&
       m.index < 16 &&
       integer(m.sequence)
@@ -40,6 +78,7 @@ export function parseMessage(raw: unknown): Message | null {
       return m as Message;
     if (
       m.type === "state" &&
+      validRoom(m.room) &&
       (m.ack === undefined || integer(m.ack)) &&
       record(m.grid) &&
       integer(m.grid.revision) &&

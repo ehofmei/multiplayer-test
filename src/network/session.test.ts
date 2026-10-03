@@ -102,6 +102,7 @@ async function pair() {
 describe("session latency", () => {
   it("measures local round trips and matches tap acknowledgments without duplicate samples", async () => {
     const { host, client } = await pair();
+    host.selectGame("lights");
     await vi.advanceTimersByTimeAsync(1_100);
     expect(host.snapshot().links[0].rtt?.current).toBe(20);
     expect(client.snapshot().links[0].rtt?.current).toBe(20);
@@ -128,11 +129,130 @@ describe("session latency", () => {
     expect(client.snapshot().links[0].missed).toBe(1);
     expect(client.snapshot().links[0].rtt).toBeUndefined();
     clientChannel.onmessage!({
-      data: JSON.stringify({ v: 1, type: "pong", id: 1 }),
+      data: JSON.stringify({ v: 2, type: "pong", id: 1 }),
     });
     expect(client.snapshot().links[0].rtt).toBeUndefined();
     hostChannel.ignorePongs = false;
     await vi.advanceTimersByTimeAsync(5_000);
     expect(client.snapshot().links[0].rtt?.current).toBe(20);
+  });
+});
+
+describe("shared game room", () => {
+  it("late arrivals spectate the race and losing a participant resets play without losing other peers", async () => {
+    const { host, hostChannel } = await pair();
+    const offer = await host.offer();
+    host.selectGame("reaction");
+    host.startRace();
+    const late = new Session("client", { id: "late", name: "Sam" }, () => {});
+    sessions.push(late);
+    await host.accept(await late.answer(offer));
+    const [a, b] = Peer.all.slice(-2);
+    a.channel.peer = b.channel;
+    b.channel.peer = a.channel;
+    b.ondatachannel!({ channel: b.channel });
+    a.channel.open();
+    b.channel.open();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(late.snapshot().players).toHaveLength(3);
+    expect(late.snapshot().room.race?.entries.map((e) => e.id)).toEqual([
+      "host",
+      "client",
+    ]);
+    late.tapTarget(0);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(
+      host.snapshot().room.race?.entries.every((e) => e.result === "pending"),
+    ).toBe(true);
+    hostChannel.onclose!();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(late.snapshot().room.race?.phase).toBe("ready");
+    expect(late.snapshot().players).toHaveLength(2);
+    expect(late.snapshot().links[0].channel).toBe("open");
+    expect(late.snapshot().room.notice).toContain("A player left");
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(host.snapshot().room.race?.phase).toBe("ready");
+  });
+  it("only lets the host choose, rejects stale inputs and switches without losing peers", async () => {
+    const { host, client, hostChannel } = await pair();
+    expect(client.snapshot().room.kind).toBe("lobby");
+    client.selectGame("pong");
+    expect(host.snapshot().room.kind).toBe("lobby");
+    host.selectGame("pong");
+    host.startPong(["host", "host"]);
+    expect(host.snapshot().room.pong?.phase).toBe("ready");
+    host.startPong(["host", "client"]);
+    await vi.advanceTimersByTimeAsync(1100);
+    expect(client.snapshot().room.pong?.phase).toBe("playing");
+    client.move(0.8);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(host.snapshot().room.pong?.paddles[1]).toBe(0.8);
+    host.pauseGames();
+    await vi.advanceTimersByTimeAsync(10);
+    const position = host.snapshot().room.pong?.ball;
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(host.snapshot().room.pong?.ball).toEqual(position);
+    host.resumePong();
+    await vi.advanceTimersByTimeAsync(1100);
+    expect(host.snapshot().room.pong?.phase).toBe("playing");
+    const epoch = host.snapshot().room.epoch;
+    host.selectGame("lights");
+    hostChannel.onmessage!({
+      data: JSON.stringify({
+        v: 2,
+        type: "toggle",
+        epoch,
+        index: 0,
+        sequence: 100,
+      }),
+    });
+    expect(host.snapshot().grid.revision).toBe(0);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(client.snapshot().room.kind).toBe("lights");
+    expect(client.snapshot().players).toHaveLength(2);
+    expect(client.snapshot().links[0].channel).toBe("open");
+    host.selectGame("reaction");
+    host.startRace();
+    client.dispose();
+    host.dispose();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it("runs all ten race rounds, scores local response times and ignores repeat/stale taps", async () => {
+    const { host, client, hostChannel } = await pair();
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    host.selectGame("reaction");
+    host.startRace();
+    await vi.advanceTimersByTimeAsync(10);
+    client.tapTarget(0);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(host.snapshot().room.race?.entries[1].result).toBe("early");
+    await vi.advanceTimersByTimeAsync(1200);
+    expect(client.snapshot().room.race?.phase).toBe("active");
+    const before = client.snapshot().room.race!.entries[1].points;
+    client.tapTarget(0);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(host.snapshot().room.race?.entries[1].points).toBe(before);
+    await vi.advanceTimersByTimeAsync(3400);
+    expect(host.snapshot().room.race?.round).toBe(2);
+    await vi.advanceTimersByTimeAsync(1200);
+    client.tapTarget(0);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(host.snapshot().room.race?.entries[1].result).toBe("hit");
+    const race = host.snapshot().room.race!;
+    hostChannel.onmessage!({
+      data: JSON.stringify({
+        v: 2,
+        type: "input",
+        epoch: host.snapshot().room.epoch,
+        sequence: 999,
+        input: { kind: "target", round: 1, index: 0, elapsed: 0 },
+      }),
+    });
+    expect(host.snapshot().room.race).toBe(race);
+    await vi.advanceTimersByTimeAsync(50_000);
+    expect(host.snapshot().room.race?.phase).toBe("finished");
+    expect(client.snapshot().room.race?.round).toBe(10);
+    vi.restoreAllMocks();
   });
 });

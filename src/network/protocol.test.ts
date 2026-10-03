@@ -8,12 +8,12 @@ describe("untrusted inputs", () => {
       "null",
       '"hello"',
       "x".repeat(17_000),
-      JSON.stringify({ v: 2, type: "hello", player: { id: "a", name: "A" } }),
-      JSON.stringify({ v: 1, type: "toggle", index: 16, sequence: 1 }),
-      JSON.stringify({ v: 1, type: "ping", id: -1 }),
-      JSON.stringify({ v: 1, type: "pong", id: "1" }),
+      JSON.stringify({ v: 3, type: "hello", player: { id: "a", name: "A" } }),
+      JSON.stringify({ v: 2, type: "toggle", index: 16, sequence: 1 }),
+      JSON.stringify({ v: 2, type: "ping", id: -1 }),
+      JSON.stringify({ v: 2, type: "pong", id: "1" }),
       JSON.stringify({
-        v: 1,
+        v: 2,
         type: "state",
         grid: { revision: 0, cells: [true] },
         players: [],
@@ -22,13 +22,13 @@ describe("untrusted inputs", () => {
       expect(parseMessage(raw)).toBeNull();
   });
   it("accepts a valid action and bounded player identity", () => {
-    expect(parseMessage('{"v":1,"type":"ping","id":7}')?.type).toBe("ping");
-    expect(parseMessage('{"v":1,"type":"pong","id":7}')?.type).toBe("pong");
+    expect(parseMessage('{"v":2,"type":"ping","id":7}')?.type).toBe("ping");
+    expect(parseMessage('{"v":2,"type":"pong","id":7}')?.type).toBe("pong");
     expect(
-      parseMessage('{"v":1,"type":"toggle","index":0,"sequence":1}'),
-    ).toEqual({ v: 1, type: "toggle", index: 0, sequence: 1 });
+      parseMessage('{"v":2,"type":"toggle","index":0,"sequence":1,"epoch":0}'),
+    ).toEqual({ v: 2, type: "toggle", index: 0, sequence: 1, epoch: 0 });
     expect(
-      parseMessage('{"v":1,"type":"hello","player":{"id":"a","name":"Alex"}}')
+      parseMessage('{"v":2,"type":"hello","player":{"id":"a","name":"Alex"}}')
         ?.type,
     ).toBe("hello");
   });

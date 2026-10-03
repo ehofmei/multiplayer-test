@@ -1,4 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  GamePicker,
+  GameBar,
+  PongGame,
+  ReactionGame,
+} from "./components/Games";
+import { gameNames } from "./games/model";
 import { QrDisplay, QrReader } from "./components/QrPairing";
 import type { LatencySummary } from "./network/latency";
 import {
@@ -43,11 +50,16 @@ export function App() {
   useEffect(() => {
     const ready = () => setOfflineReady(true);
     const refresh = () => setUpdate(true);
+    const visibility = () => {
+      if (document.hidden) sessionRef.current?.pauseGames();
+    };
+    document.addEventListener("visibilitychange", visibility);
     window.addEventListener("pwa-update", refresh);
     window.addEventListener("pwa-offline", ready);
     // Also detect an already-installed cache after subsequent launches.
     navigator.serviceWorker?.ready.then(() => setOfflineReady(true));
     return () => {
+      document.removeEventListener("visibilitychange", visibility);
       window.removeEventListener("pwa-update", refresh);
       window.removeEventListener("pwa-offline", ready);
       sessionRef.current?.dispose();
@@ -112,7 +124,7 @@ export function App() {
       setInput(raw);
       if (current.role === "host") {
         await current.accept(raw);
-        setNotice("Answer accepted. Waiting for the direct connection.");
+        setNotice("Join code accepted. Waiting for the direct connection.");
         setPairing(false);
         setOutput("");
         setInput("");
@@ -162,13 +174,13 @@ export function App() {
         <section className="home">
           <p className="eyebrow">THE SAME WI-FI. A SHARED EXPERIMENT.</p>
           <h1>
-            Small taps.
+            Same Wi-Fi.
             <br />
-            <span>Shared lights.</span>
+            <span>More play.</span>
           </h1>
           <p className="intro">
-            Connect your family's devices and light up the same grid. One device
-            hosts. Everyone can play.
+            Connect your family's devices, pick a game, and play together. One
+            device hosts. Everyone can join.
           </p>
           <div className="home-card">
             <label htmlFor="name">Your name</label>
@@ -216,10 +228,10 @@ export function App() {
               <strong>01 / Connect</strong> Use the same Wi-Fi network.
             </p>
             <p>
-              <strong>02 / Pair</strong> Exchange offer and answer text.
+              <strong>02 / Pair</strong> Scan each other’s QR codes.
             </p>
             <p>
-              <strong>03 / Tap</strong> Watch the lights change together.
+              <strong>03 / Play</strong> The host picks the game.
             </p>
           </div>
           <details className="install">
@@ -247,7 +259,13 @@ export function App() {
                   : "YOU ARE A PLAYER"}
               </p>
               <h1>
-                {session.role === "host" ? "Shared grid" : "Join the grid"}
+                {showPairing
+                  ? "Pair devices"
+                  : connected
+                    ? snapshot?.room.kind === "lights"
+                      ? "Shared grid"
+                      : gameNames[snapshot?.room.kind ?? "lobby"]
+                    : "Join the fun"}
               </h1>
             </div>
             <button className="quiet" disabled={busy} onClick={home}>
@@ -264,82 +282,121 @@ export function App() {
             </p>
           )}
           {!showPairing && (
-            <div className="session-layout">
-              <section className="board-card" aria-label="Shared grid">
-                <div className="board-heading">
-                  <h2>Light board</h2>
-                  <span>Revision {snapshot?.grid.revision ?? 0}</span>
-                </div>
-                <div className="grid">
-                  {snapshot?.grid.cells.map((on, i) => (
+            <>
+              {snapshot?.room.kind !== "lobby" && (
+                <GameBar
+                  session={session}
+                  kind={snapshot?.room.kind ?? "lobby"}
+                />
+              )}
+              {snapshot?.room.notice && (
+                <p className="banner" aria-live="polite">
+                  {snapshot.room.notice}
+                </p>
+              )}
+              <div className="session-layout">
+                {snapshot?.room.kind === "lobby" && (
+                  <GamePicker session={session} />
+                )}
+                {snapshot?.room.pong && (
+                  <PongGame
+                    key={snapshot.room.epoch}
+                    game={snapshot.room.pong}
+                    epoch={snapshot.room.epoch}
+                    players={snapshot.players}
+                    session={session}
+                    connected={connected}
+                  />
+                )}
+                {snapshot?.room.race && (
+                  <ReactionGame
+                    game={snapshot.room.race}
+                    players={snapshot.players}
+                    session={session}
+                    connected={connected}
+                  />
+                )}
+                {snapshot?.room.kind === "lights" && (
+                  <section className="board-card" aria-label="Shared grid">
+                    <div className="board-heading">
+                      <h2>Light board</h2>
+                      <span>Revision {snapshot?.grid.revision ?? 0}</span>
+                    </div>
+                    <div className="grid">
+                      {snapshot?.grid.cells.map((on, i) => (
+                        <button
+                          key={i}
+                          className={on ? "cell on" : "cell"}
+                          aria-label={"Cell " + (i + 1)}
+                          aria-pressed={on}
+                          disabled={!connected}
+                          onClick={() => session.toggle(i)}
+                        >
+                          <span className="light" aria-hidden="true" />
+                          <span>{i + 1}</span>
+                          <span className="cell-state">
+                            {on ? "ON" : "OFF"}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="board-note">
+                      {connected
+                        ? "Tap any light. The host shares every change."
+                        : "Pair with a host to activate the board."}
+                    </p>
+                  </section>
+                )}
+                <aside className="people-card">
+                  <div className="board-heading">
+                    <h2>At the table</h2>
+                    <span>{snapshot?.players.length ?? 0}/8</span>
+                  </div>
+                  <ul>
+                    {snapshot?.players.map((p, i) => (
+                      <li key={p.id}>
+                        <span className="avatar">
+                          {p.name.slice(0, 1).toUpperCase()}
+                        </span>
+                        <span>
+                          {p.name}
+                          <small>
+                            {i === 0 ? "Host" : "Player"}
+                            {p.id === identity.player.id ? " · You" : ""}
+                          </small>
+                        </span>
+                        <span className="dot live" />
+                      </li>
+                    ))}
+                  </ul>
+                  {session.role === "host" && (
                     <button
-                      key={i}
-                      className={on ? "cell on" : "cell"}
-                      aria-label={"Cell " + (i + 1)}
-                      aria-pressed={on}
-                      disabled={!connected}
-                      onClick={() => session.toggle(i)}
+                      className="secondary"
+                      disabled={busy || pairing}
+                      onClick={() =>
+                        action(async () => {
+                          session.pauseGames();
+                          setOutput(await session.offer());
+                          setInput("");
+                          setPairing(true);
+                        })
+                      }
                     >
-                      <span className="light" aria-hidden="true" />
-                      <span>{i + 1}</span>
-                      <span className="cell-state">{on ? "ON" : "OFF"}</span>
+                      Add Player
                     </button>
-                  ))}
-                </div>
-                <p className="board-note">
-                  {connected
-                    ? "Tap any light. The host shares every change."
-                    : "Pair with a host to activate the board."}
-                </p>
-              </section>
-              <aside className="people-card">
-                <div className="board-heading">
-                  <h2>At the table</h2>
-                  <span>{snapshot?.players.length ?? 0}/8</span>
-                </div>
-                <ul>
-                  {snapshot?.players.map((p, i) => (
-                    <li key={p.id}>
-                      <span className="avatar">
-                        {p.name.slice(0, 1).toUpperCase()}
-                      </span>
-                      <span>
-                        {p.name}
-                        <small>
-                          {i === 0 ? "Host" : "Player"}
-                          {p.id === identity.player.id ? " · You" : ""}
-                        </small>
-                      </span>
-                      <span className="dot live" />
-                    </li>
-                  ))}
-                </ul>
-                {session.role === "host" && (
-                  <button
-                    className="secondary"
-                    disabled={busy || pairing}
-                    onClick={() =>
-                      action(async () => {
-                        setOutput(await session.offer());
-                        setInput("");
-                        setPairing(true);
-                      })
-                    }
-                  >
-                    Add Player
-                  </button>
-                )}
-                {session.role === "client" && !connected && (
-                  <p className="muted">
-                    The host and players will appear here after pairing.
+                  )}
+                  {session.role === "client" && !connected && (
+                    <p className="muted">
+                      The host and players will appear here after pairing.
+                    </p>
+                  )}
+                  <p className="footnote">
+                    Keep the host app open and awake. Leaving the app may
+                    interrupt connections.
                   </p>
-                )}
-                <p className="footnote">
-                  Keep the host app open and awake. Leaving the app may
-                  interrupt connections.
-                </p>
-              </aside>
-            </div>
+                </aside>
+              </div>
+            </>
           )}
           {showPairing && (
             <section className="pair-card">
@@ -348,15 +405,15 @@ export function App() {
                 {session.role === "host"
                   ? "Invite one device"
                   : output
-                    ? "Show your answer"
-                    : "Scan the host’s offer"}
+                    ? "Show your join code"
+                    : "Scan the host’s invite code"}
               </h2>
               <p className="pair-instructions">
                 {session.role === "host"
-                  ? "1. Ask the player to scan your offer. 2. Scan their answer to connect. Use a fresh offer for each player."
+                  ? "1. Have the player scan your invite code. 2. Scan their join code. Create a fresh invite for each player."
                   : output
-                    ? "Show this answer QR to the host. Keep this screen open while they scan it."
-                    : "Scan the offer shown on the host’s screen. Your answer QR will appear here."}
+                    ? "Show your join QR code to the host. Keep this screen open while they scan it."
+                    : "Scan the host’s QR code. Your join code will appear here."}
               </p>
               {(error || snapshot?.error) && (
                 <p className="error" role="alert">
@@ -367,13 +424,13 @@ export function App() {
                 {output && (
                   <QrDisplay
                     value={output}
-                    kind={session.role === "host" ? "Offer" : "Answer"}
+                    kind={session.role === "host" ? "Invite" : "Join"}
                   />
                 )}
                 <div className="pair-controls">
                   {!(session.role === "client" && output) && (
                     <QrReader
-                      kind={session.role === "host" ? "Answer" : "Offer"}
+                      kind={session.role === "host" ? "Join" : "Invite"}
                       disabled={busy}
                       onRead={applyConnection}
                     />
@@ -384,8 +441,8 @@ export function App() {
                         <summary>Copy/paste instead</summary>
                         <label htmlFor="output">
                           {session.role === "host"
-                            ? "Offer text"
-                            : "Answer text"}
+                            ? "Invite text"
+                            : "Join text"}
                         </label>
                         <textarea
                           id="output"
@@ -395,7 +452,7 @@ export function App() {
                           spellCheck={false}
                         />
                         <button className="secondary" onClick={copy}>
-                          Copy {session.role === "host" ? "Offer" : "Answer"}
+                          Copy {session.role === "host" ? "Invite" : "Join"}
                         </button>
                       </details>
                     </>
@@ -405,8 +462,8 @@ export function App() {
                       <summary>Paste connection text instead</summary>
                       <label htmlFor="input">
                         {session.role === "host"
-                          ? "Paste client answer"
-                          : "Paste host offer"}
+                          ? "Paste player join code"
+                          : "Paste host invite code"}
                       </label>
                       <textarea
                         id="input"
@@ -425,7 +482,7 @@ export function App() {
                           ? "Preparing connection…"
                           : session.role === "host"
                             ? "Connect Player"
-                            : "Create Answer"}
+                            : "Create Join Code"}
                       </button>
                     </details>
                   )}
@@ -447,7 +504,7 @@ export function App() {
                   )}
                   {session.role === "client" && output && (
                     <p className="muted">
-                      Keep this screen open until the host accepts your answer.
+                      Keep this screen open until the host scans your join code.
                       Pairing expires after three minutes.
                     </p>
                   )}
@@ -500,7 +557,7 @@ export function App() {
                       <dd data-testid="tap-response">
                         {link.taps
                           ? latencyText(link.taps)
-                          : "Tap a light to measure"}
+                          : "Tap a light or race target to measure"}
                       </dd>
                     </>
                   )}

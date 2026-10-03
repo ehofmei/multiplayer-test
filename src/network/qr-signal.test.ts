@@ -21,7 +21,7 @@ describe("QR signaling", () => {
     expect(await decodeSignal(encoded, "offer")).toEqual(offer);
     expect(await decodeSignal(raw, "offer")).toEqual(offer);
     await expect(decodeSignal(encoded, "answer")).rejects.toThrow(
-      "valid version 1 answer",
+      "valid join code",
     );
   });
   it("rejects invalid, truncated, oversized and expanded payloads", async () => {

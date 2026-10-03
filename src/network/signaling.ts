@@ -11,7 +11,7 @@ export function parseSignal(raw: string, type: "offer" | "answer"): Signal {
     s = JSON.parse(raw.trim()) as Signal;
   } catch {
     throw new Error(
-      "Invalid connection text. Paste the complete offer or answer.",
+      "Invalid connection text. Paste the complete invite or join code.",
     );
   }
   if (
@@ -27,7 +27,11 @@ export function parseSignal(raw: string, type: "offer" | "answer"): Signal {
     typeof s.description.sdp !== "string" ||
     !s.description.sdp.startsWith("v=0")
   )
-    throw new Error("This is not a valid version 1 " + type + ".");
+    throw new Error(
+      "This is not a valid " +
+        (type === "offer" ? "invite" : "join") +
+        " code.",
+    );
   return s;
 }
 // Manual signaling needs all candidates in one payload; no trickle-ICE transport exists.

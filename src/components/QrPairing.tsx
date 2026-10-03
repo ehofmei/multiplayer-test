@@ -8,7 +8,7 @@ export function QrDisplay({
   kind,
 }: {
   value: string;
-  kind: "Offer" | "Answer";
+  kind: "Invite" | "Join";
 }) {
   const [image, setImage] = useState("");
   const [error, setError] = useState("");
@@ -64,7 +64,7 @@ export function QrReader({
   disabled,
   onRead,
 }: {
-  kind: "Offer" | "Answer";
+  kind: "Invite" | "Join";
   disabled: boolean;
   onRead: (raw: string) => Promise<void>;
 }) {
@@ -94,7 +94,7 @@ export function QrReader({
     setReading(true);
     setError("");
     try {
-      await decodeSignal(raw, kind === "Offer" ? "offer" : "answer");
+      await decodeSignal(raw, kind === "Invite" ? "offer" : "answer");
       if (alive.current) await onReadRef.current(raw);
     } catch (e) {
       if (alive.current)
