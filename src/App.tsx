@@ -351,7 +351,7 @@ export function App() {
                     ? "Show your answer"
                     : "Scan the host’s offer"}
               </h2>
-              <p>
+              <p className="pair-instructions">
                 {session.role === "host"
                   ? "1. Ask the player to scan your offer. 2. Scan their answer to connect. Use a fresh offer for each player."
                   : output

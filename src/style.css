@@ -459,6 +459,14 @@ dd {
   .pairing-body.has-code {
     display: block;
   }
+  .pair-card {
+    margin-top: 12px;
+  }
+  .pair-instructions {
+    margin: 10px 0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
   main {
     padding: max(18px, env(safe-area-inset-top))
       max(16px, env(safe-area-inset-right))

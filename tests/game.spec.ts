@@ -432,14 +432,21 @@ test("production subpath manifest, cache, offline startup and identity survive r
 test("the complete board fits desktop, tablet and narrow phone viewports", async ({
   page,
 }) => {
-  for (const viewport of [
-    { width: 1280, height: 900 },
-    { width: 1280, height: 720 },
-    { width: 768, height: 1024 },
-    { width: 320, height: 700 },
+  for (const { font, ...viewport } of [
+    { width: 1280, height: 900, font: "system" },
+    { width: 1280, height: 720, font: "system" },
+    { width: 768, height: 1024, font: "system" },
+    { width: 320, height: 700, font: "system" },
+    { width: 320, height: 700, font: "Arial" },
   ]) {
     await page.setViewportSize(viewport);
     await page.goto("./");
+    // Exercise different font metrics rather than relying on macOS's system font.
+    if (font !== "system") {
+      await page.addStyleTag({
+        content: `:root { font-family: ${font}, sans-serif; }`,
+      });
+    }
     await page
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
@@ -450,18 +457,24 @@ test("the complete board fits desktop, tablet and narrow phone viewports", async
     ).toBeLessThanOrEqual(viewport.width);
     await page.getByRole("button", { name: "Cell 1", exact: true }).click();
     await page.screenshot({
-      path: `test-results/host-${viewport.width}x${viewport.height}.png`,
+      path: `test-results/host-${viewport.width}x${viewport.height}-${font}.png`,
     });
     await page.getByRole("button", { name: "Add Player", exact: true }).click();
     const qr = page.getByRole("img", { name: "Offer QR code", exact: true });
     await expect(qr).toBeVisible();
     const qrBounds = await qr.boundingBox();
     expect(qrBounds!.y + qrBounds!.height).toBeLessThanOrEqual(viewport.height);
+    if (viewport.width === 320) {
+      expect(qrBounds!.width).toBeGreaterThanOrEqual(240);
+      expect(qrBounds!.y + qrBounds!.height).toBeLessThanOrEqual(
+        viewport.height - 16,
+      );
+    }
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBeLessThanOrEqual(viewport.width);
     await page.screenshot({
-      path: `test-results/qr-${viewport.width}x${viewport.height}.png`,
+      path: `test-results/qr-${viewport.width}x${viewport.height}-${font}.png`,
     });
   }
 });
