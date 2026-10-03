@@ -443,13 +443,6 @@ export function App() {
                     ? "Show your join code"
                     : "Scan the host’s invite code"}
               </h2>
-              <p className="pair-instructions">
-                {session.role === "host"
-                  ? "1. Have the player scan your invite code. 2. Scan their join code. Create a fresh invite for each player."
-                  : output
-                    ? "Show your join QR code to the host. Keep this screen open while they scan it."
-                    : "Scan the host’s QR code. Your join code will appear here."}
-              </p>
               {(error || snapshot?.error) && (
                 <p className="error" role="alert">
                   {error || snapshot?.error}
@@ -463,6 +456,13 @@ export function App() {
                   />
                 )}
                 <div className="pair-controls">
+                  <p className="pair-instructions">
+                    {session.role === "host"
+                      ? "1. Have the player scan your invite code. 2. Scan their join code. Create a fresh invite for each player."
+                      : output
+                        ? "Show your join QR code to the host. Keep this screen open while they scan it."
+                        : "Scan the host’s QR code. Your join code will appear here."}
+                  </p>
                   {!(session.role === "client" && output) && (
                     <QrReader
                       kind={session.role === "host" ? "Join" : "Invite"}

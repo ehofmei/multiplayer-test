@@ -501,9 +501,10 @@ test("the complete board fits desktop, tablet and narrow phone viewports", async
     expect(qrBounds!.y + qrBounds!.height).toBeLessThanOrEqual(viewport.height);
     if (viewport.width === 320) {
       expect(qrBounds!.width).toBeGreaterThanOrEqual(240);
-      expect(qrBounds!.y + qrBounds!.height).toBeLessThanOrEqual(
-        viewport.height - 16,
-      );
+      expect(
+        qrBounds!.y + qrBounds!.height,
+        `${font} QR must leave 32px below it on ${viewport.width}×${viewport.height}`,
+      ).toBeLessThanOrEqual(viewport.height - 32);
     }
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
