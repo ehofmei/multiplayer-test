@@ -474,13 +474,14 @@ test("the complete board fits desktop, tablet and narrow phone viewports", async
     { width: 768, height: 1024, font: "system" },
     { width: 320, height: 700, font: "system" },
     { width: 320, height: 700, font: "Arial" },
+    { width: 320, height: 700, font: "Arial-tall" },
   ]) {
     await page.setViewportSize(viewport);
     await page.goto("./");
     // Exercise different font metrics rather than relying on macOS's system font.
     if (font !== "system") {
       await page.addStyleTag({
-        content: `:root { font-family: ${font}, sans-serif; }`,
+        content: `:root { font-family: Arial, sans-serif; ${font === "Arial-tall" ? "line-height: 1.3;" : ""} }`,
       });
     }
     await createLights(page);
@@ -919,18 +920,24 @@ test("Arena Pong synchronizes four players, rotated controls, colors, pause and 
       .getByRole("region", { name: "Arena Pong game" })
       .screenshot({ path: "test-results/arena-desktop.png" });
     await emma.setViewportSize({ width: 320, height: 700 });
-    await emma.keyboard.press("Control+Home");
-    const courtBounds = await emma
-      .getByRole("group", { name: "Arena court" })
-      .boundingBox();
-    expect(courtBounds!.y + courtBounds!.height).toBeLessThanOrEqual(700);
-    expect(
-      await emma.evaluate(() => document.documentElement.scrollWidth),
-    ).toBeLessThanOrEqual(320);
-    await emma.screenshot({
-      path: "test-results/arena-phone.png",
-      fullPage: true,
-    });
+    for (const font of ["system", "Arial", "Arial-tall"]) {
+      if (font !== "system")
+        await emma.addStyleTag({
+          content: `:root { font-family: Arial, sans-serif; ${font === "Arial-tall" ? "line-height: 1.3;" : ""} }`,
+        });
+      await emma.keyboard.press("Control+Home");
+      const courtBounds = await emma
+        .getByRole("group", { name: "Arena court" })
+        .boundingBox();
+      expect(courtBounds!.y + courtBounds!.height).toBeLessThanOrEqual(700);
+      expect(
+        await emma.evaluate(() => document.documentElement.scrollWidth),
+      ).toBeLessThanOrEqual(320);
+      await emma.screenshot({
+        path: `test-results/arena-phone-${font}.png`,
+        fullPage: true,
+      });
+    }
     await host
       .getByRole("button", { name: "Resume Arena", exact: true })
       .click();

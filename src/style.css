@@ -500,10 +500,10 @@ dd {
     display: block;
   }
   .pair-card {
-    margin-top: 12px;
+    margin-top: 8px;
   }
   .pair-instructions {
-    margin: 10px 0;
+    margin: 4px 0;
     font-size: 14px;
     line-height: 1.5;
   }
@@ -875,6 +875,10 @@ select:focus-visible {
 }
 
 @media (max-width: 650px) {
+  .arena-court {
+    /* Leave room for taller system fonts on short phone screens. */
+    max-width: min(480px, max(200px, calc(100dvh - 492px)));
+  }
   .arena-game-card > .board-heading {
     display: none;
   }
