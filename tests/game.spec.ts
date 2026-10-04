@@ -1,3 +1,4 @@
+import { expectStableScreenshot } from "./screenshot";
 import { chromium, expect, test, type Page } from "@playwright/test";
 import QRCode from "qrcode";
 
@@ -1361,9 +1362,7 @@ test("Spaceship Panic pairs crew, shares orders and repairs, pauses, and handles
     await expect(
       client.getByRole("button", { name: "Reactor 2", exact: true }),
     ).toBeDisabled();
-    await expect(host.locator(".ship-panels")).toHaveScreenshot(
-      "ship-panels.png",
-    );
+    await expectStableScreenshot(host, ".ship-panels", "ship-panels.png");
     for (const viewport of [
       { width: 320, height: 700 },
       { width: 390, height: 844 },
@@ -1566,9 +1565,7 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
     const startBounds = await host.locator(".cycle-court").boundingBox();
     expect(startBounds!.y).toBeGreaterThanOrEqual(0);
     expect(startBounds!.y + startBounds!.height).toBeLessThanOrEqual(720);
-    await expect(host.locator(".cycle-court")).toHaveScreenshot(
-      "cycle-court.png",
-    );
+    await expectStableScreenshot(host, ".cycle-court", "cycle-court.png");
     await host.clock.runFor(3000);
     await expect(
       client.getByRole("button", { name: "Steer up", exact: true }),

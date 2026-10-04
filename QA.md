@@ -162,3 +162,13 @@ Physical-device follow-up: pair two iPhones/iPads on Wi-Fi, then try a larger ro
 Check touch steering and swipe feel, numbered heads on small displays, optional
 sound, Safari/installed PWA background-and-resume, and all-device updates. Browser
 emulation does not establish physical-device latency or iOS behavior.
+
+## Screenshot portability
+
+Ship-panel and Light-cycle arena regression snapshots temporarily use the checked-in,
+OFL-licensed Atkinson Hyperlegible font fixture. The app continues to use system
+fonts. The helper waits for the fixture faces, aligns the region to whole pixels, compares strict image dimensions,
+and permits at most 64 differing pixels for macOS/Linux rasterization. It removes
+the fixture before the normal and taller-font responsive checks, whose viewport,
+clearance, overflow, and touch-target assertions remain strict. Update these two
+baselines with the helper active; do not increase tolerances to hide layout changes.
