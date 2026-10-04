@@ -1362,7 +1362,20 @@ test("Spaceship Panic pairs crew, shares orders and repairs, pauses, and handles
     await expect(
       client.getByRole("button", { name: "Reactor 2", exact: true }),
     ).toBeDisabled();
-    await expectStableScreenshot(host, ".ship-panels", "ship-panels.png");
+    await expect(host.locator(".ship-panel legend")).toHaveText([
+      "Shields",
+      "Thrusters",
+      "Coolant",
+    ]);
+    await expect(host.locator(".ship-panels button")).toHaveCount(12);
+    await expect(
+      host.locator('.ship-panels button[aria-pressed="true"]'),
+    ).toHaveText(["1", "0", "0"]);
+    // Linux differs from the shared-font macOS baseline by 396 pixels, under
+    // 0.3% of this region. Allow 512 here; keep the smaller arena budget at 64.
+    await expectStableScreenshot(host, ".ship-panels", "ship-panels.png", {
+      maxDiffPixels: 512,
+    });
     for (const viewport of [
       { width: 320, height: 700 },
       { width: 390, height: 844 },

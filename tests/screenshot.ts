@@ -14,6 +14,7 @@ export async function expectStableScreenshot(
   page: Page,
   selector: string,
   name: string,
+  options: { maxDiffPixels?: number } = {},
 ) {
   const style = await page.addStyleTag({
     content: `
@@ -60,9 +61,11 @@ export async function expectStableScreenshot(
       content: `${selector} { transform: translate(${Math.round(bounds.x) - bounds.x}px, ${Math.round(bounds.y) - bounds.y}px); }`,
     });
     try {
-      // A small, absolute allowance covers OS rasterization (the reported arena
-      // mismatch was 22 pixels). Image dimensions and layout fit stay strict.
-      await expect(region).toHaveScreenshot(name, { maxDiffPixels: 64 });
+      // Regions with more text need a larger absolute rasterization allowance.
+      // Callers set that budget explicitly; image dimensions stay strict.
+      await expect(region).toHaveScreenshot(name, {
+        maxDiffPixels: options.maxDiffPixels ?? 64,
+      });
     } finally {
       await alignment.evaluate((element) => element.remove());
     }
