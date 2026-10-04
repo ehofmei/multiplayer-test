@@ -77,3 +77,10 @@ unlock, device volume/mute behavior, and foreground recovery need physical testi
 - Palette names/selection indicators, synchronized colors, reload persistence, regular Pong reuse.
 - Pause/resume, background handling, participant disconnect reset, switching games preserves peers.
 - Desktop/tablet/320px phone: court proportions, long names, 44px controls, focus, contrast and no horizontal overflow.
+
+## Family play feedback
+
+- Reaction Race: touch drag of a few pixels on a live target still scores once and does not scroll; surrounding page can scroll; keyboard activation still works.
+- Both Pong games: gentle opening, acceleration visible by five seconds, capped speed, ramp resets after every miss, pause freezes timing.
+- Arena: host picks 1/3/5/7 lives, clients see the chosen setting, rematch keeps it, invalid wire values rejected.
+- Scanner: full-screen phone/desktop dialog, focus stays in modal, Escape/Stop restores focus and scrolling, camera tracks end, permission denial retains fallbacks. Check successful scanning and background close on real iPhone/iPad.

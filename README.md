@@ -93,7 +93,7 @@ prediction; real-device play determines whether its motion feels smooth enough.
 **Arena Pong** plays three or four people simultaneously in a square arena. The
 host assigns bottom/right/top/left seats; leave the fourth seat empty for a wall.
 Each player sees their own paddle at the bottom and drags horizontally, uses the
-slider, or presses ←/→. Five lives each: missing your side costs a life, eliminated
+slider, or presses ←/→. The host chooses 1, 3, 5, or 7 lives per player (default 5): missing your side costs a life, eliminated
 sides become walls, and the last living player wins. A serve delay follows every
 miss, with serves rotating between surviving players. Extra players spectate;
 late arrivals join the next match. A participant leaving resets the match while
@@ -104,6 +104,11 @@ Both Pong games offer six named paddle color presets. Players choose their own;
 colors are shared with all devices and saved with the local player identity.
 Duplicate colors are allowed; name/life labels identify Arena players without
 relying on color. Update all devices before pairing to use Arena Pong.
+
+Both Pong games keep the original gentle serve, then ramp ball speed after two
+seconds of each rally even without paddle hits. Paddle hits also give a stronger speed boost,
+with bounded top speeds. Every point/lost life resets the ramp; pausing freezes it.
+Update all devices before using the new Arena lives settings.
 
 **Reaction Race** has six targets and ten rounds for everyone present at the start
 (or solo practice). After a random 1.2–3 second wait, hit the marked target within
@@ -188,6 +193,19 @@ synchronization, rules, controls, game switching, and responsive layouts.
 | Device/browser combination               | Connection / synchronization             | Application RTT                                                                  |
 | ---------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------- |
 | Real iPhone + iPad, QR pairing (browser) | User confirmed working, hundreds of taps | Median 13 ms, p95 49 ms, zero unanswered probes in the pictured 60-sample window |
+
+## Camera scanning and touch controls
+
+Scan Invite / Scan Join opens a full-screen native dialog with the camera already
+in view. Stop Camera or Escape closes it and returns focus to Scan; backgrounding
+the app also closes it. Camera streams are released on close, a decoded code,
+permission failure, and leaving the pairing UI. Image import and text pairing
+remain available when camera access fails. The dialog blocks background scrolling;
+the rest of the app stays scrollable after it closes.
+
+Reaction Race disables touch scrolling/selection on the target grid and scores
+touch input on finger-down, so a small drag cannot cancel the tap. Mouse and
+keyboard activation still work normally. Scroll using the surrounding page.
 
 ## Offline, updates and limitations
 

@@ -47,16 +47,20 @@ export function validRoom(v: unknown): v is Room {
       (arena
         ? Array.isArray(p.score) &&
           p.score.length === 4 &&
-          p.score.every((n) => integer(n, 0, 5))
+          p.score.every((n) => integer(n, 0, (p.startingLives as number) || 5))
         : pair(p.score, 0, 7, true)) &&
       (arena
         ? Array.isArray(p.lives) &&
           p.lives.length === 4 &&
           p.lives.every(
             (n, i) =>
-              integer(n, 0, 5) && (i < (p.seats as string[]).length || n === 0),
+              integer(n, 0, (p.startingLives as number) || 5) &&
+              (i < (p.seats as string[]).length || n === 0),
           )
         : p.lives === undefined) &&
+      (p.startingLives === undefined ||
+        (arena && integer(p.startingLives, 1, 7))) &&
+      (p.rallySeconds === undefined || number(p.rallySeconds, 0, 86400)) &&
       number(p.serveIn, 0, 1) &&
       record(p.ball) &&
       number(p.ball.x, -0.04, 1.04) &&

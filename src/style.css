@@ -904,3 +904,56 @@ select:focus-visible {
     padding: 4px 8px;
   }
 }
+
+/* A small drag on a target must not turn a reaction tap into page scrolling. */
+.race-targets {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.scan-dialog {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  border: 0;
+  padding: max(16px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  background: #f5f4ee;
+  color: #122c29;
+  overscroll-behavior: contain;
+}
+.scan-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.scan-dialog::backdrop {
+  background: #122c29;
+}
+.scan-dialog header {
+  padding: 0;
+  flex-shrink: 0;
+  gap: 12px;
+}
+.scan-dialog h2 {
+  margin: 0;
+  font-size: 22px;
+}
+.scan-dialog p {
+  margin: 0;
+}
+.scan-dialog video {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+  object-fit: contain;
+  background: #122c29;
+  border-radius: 12px;
+}

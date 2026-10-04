@@ -51,6 +51,7 @@ export function ArenaGame({
     [0, 1, 2, 3].map((i) => players[i]?.id ?? ""),
   );
   const [local, setLocal] = useState(0.5);
+  const [startingLives, setStartingLives] = useState(game.startingLives ?? 5);
   const side = game.seats.indexOf(session.me.id);
   const rotation = side < 0 ? 0 : side * 90;
   const alive = side >= 0 && !!game.lives?.[side];
@@ -242,11 +243,28 @@ export function ArenaGame({
         fallback={paddleColors[Math.max(0, side)].name}
       />
       <p className="muted">
-        Five lives each. Miss the ball and lose a life. Empty and eliminated
-        sides become walls. Last player remaining wins.
+        {configure && session.role === "host"
+          ? startingLives
+          : (game.startingLives ?? 5)}{" "}
+        lives each. Miss the ball and lose a life. Empty and eliminated sides
+        become walls. Last player remaining wins.
       </p>
       {session.role === "host" && configure && (
         <>
+          <label>
+            Lives per player
+            <select
+              aria-label="Lives per player"
+              value={startingLives}
+              onChange={(e) => setStartingLives(Number(e.target.value))}
+            >
+              {[1, 3, 5, 7].map((lives) => (
+                <option key={lives} value={lives}>
+                  {lives} {lives === 1 ? "life" : "lives"}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="seat-picker">
             {sideNames.map((label, i) => (
               <label key={label}>
@@ -277,7 +295,10 @@ export function ArenaGame({
               Add at least two other players to play Arena Pong.
             </p>
           )}
-          <button disabled={!valid} onClick={() => session.startPong(selected)}>
+          <button
+            disabled={!valid}
+            onClick={() => session.startPong(selected, startingLives)}
+          >
             {game.phase === "finished"
               ? "Play Arena Again"
               : "Start Arena Pong"}

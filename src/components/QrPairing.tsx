@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import QrScanner from "qr-scanner";
@@ -72,6 +73,8 @@ export function QrReader({
   const [reading, setReading] = useState(false);
   const [error, setError] = useState("");
   const video = useRef<HTMLVideoElement>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const scanButton = useRef<HTMLButtonElement>(null);
   const scanner = useRef<QrScanner | null>(null);
   const handling = useRef(false);
   const alive = useRef(true);
@@ -110,6 +113,23 @@ export function QrReader({
   };
   const readRef = useRef(read);
   readRef.current = read;
+  useEffect(() => {
+    if (!scanning || !dialog.current) return;
+    const modal = dialog.current;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    modal.showModal();
+    const hide = () => {
+      if (document.hidden) setScanning(false);
+    };
+    document.addEventListener("visibilitychange", hide);
+    return () => {
+      modal.close();
+      document.body.style.overflow = overflow;
+      document.removeEventListener("visibilitychange", hide);
+      scanButton.current?.focus();
+    };
+  }, [scanning]);
   useEffect(() => {
     if (!scanning || !video.current) return;
     let cancelled = false;
@@ -158,6 +178,7 @@ export function QrReader({
   return (
     <div className="qr-reader">
       <button
+        ref={scanButton}
         type="button"
         disabled={disabled || reading || scanning}
         onClick={() => {
@@ -203,23 +224,54 @@ export function QrReader({
           }}
         />
       </label>
-      {scanning && (
-        <div className="camera-panel">
-          <p>Point the camera at the other device’s {kind.toLowerCase()} QR.</p>
-          <video ref={video} muted playsInline aria-label="QR camera preview" />
-          <button
-            type="button"
-            className="quiet"
-            onClick={() => {
-              scanner.current?.destroy();
-              scanner.current = null;
+      {scanning &&
+        createPortal(
+          <dialog
+            ref={dialog}
+            className="scan-dialog"
+            aria-labelledby={`scan-${kind}-title`}
+            onKeyDown={(e) => {
+              // The camera dialog has one keyboard control; keep Tab on Close.
+              if (e.key === "Tab") {
+                e.preventDefault();
+                e.currentTarget
+                  .querySelector<HTMLButtonElement>("button")
+                  ?.focus();
+              }
+            }}
+            onCancel={(e) => {
+              e.preventDefault();
               setScanning(false);
             }}
           >
-            Stop Camera
-          </button>
-        </div>
-      )}
+            <header>
+              <h2 id={`scan-${kind}-title`}>Scan {kind} QR code</h2>
+              <button
+                type="button"
+                className="secondary"
+                autoFocus
+                onClick={() => setScanning(false)}
+              >
+                Stop Camera
+              </button>
+            </header>
+            <p>
+              Point the camera at the other device’s {kind.toLowerCase()} QR
+              code.
+            </p>
+            <video
+              ref={video}
+              muted
+              playsInline
+              aria-label="QR camera preview"
+            />
+            <p className="footnote">
+              Keep the whole QR code in view. Press Escape or Stop Camera to
+              close.
+            </p>
+          </dialog>,
+          document.body,
+        )}
       {reading && <p>Reading connection…</p>}
       {error && (
         <p className="error" role="alert">

@@ -26,7 +26,7 @@ describe("Arena Pong", () => {
       state.ball = { x, y, vx, vy };
       const next = stepArena(state, 1 / 120);
       expect(next.ball.vx * vx + next.ball.vy * vy).toBeLessThan(0);
-      expect(Math.hypot(next.ball.vx, next.ball.vy)).toBeCloseTo(0.42);
+      expect(Math.hypot(next.ball.vx, next.ball.vy)).toBeCloseTo(0.4704);
       expect(next.lives).toEqual([5, 5, 5, 5]);
     }
   });

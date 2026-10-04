@@ -113,7 +113,7 @@ test("camera denial and unrelated QR images preserve the text fallback", async (
   await expect(page.getByLabel("Paste host invite code")).toBeVisible();
 });
 
-test("camera controls release the stream when stopped and when leaving", async () => {
+test("scanner modal fills the viewport, traps focus and releases the stream on close or Escape", async () => {
   const browser = await chromium.launch({
     args: [
       "--use-fake-device-for-media-stream",
@@ -127,29 +127,65 @@ test("camera controls release the stream when stopped and when leaving", async (
     });
     await page.goto("./");
     await page.getByRole("button", { name: "Join Game", exact: true }).click();
-    for (const exit of ["Stop Camera", "Return Home"]) {
-      await page
-        .getByRole("button", { name: "Scan Invite", exact: true })
-        .click();
-      await expect
-        .poll(() =>
-          page
-            .locator("video")
-            .evaluate((video) => (video as HTMLVideoElement).videoWidth),
-        )
-        .toBeGreaterThan(0);
-      const track = await page.evaluateHandle(
-        () =>
-          (
-            document.querySelector("video")!.srcObject as MediaStream
-          ).getVideoTracks()[0],
-      );
-      await page.getByRole("button", { name: exit, exact: true }).click();
-      await expect
-        .poll(() => track.evaluate((track) => track.readyState))
-        .toBe("ended");
-      await expect(page.locator("video")).toHaveCount(0);
-      await track.dispose();
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 1280, height: 720 },
+      { width: 320, height: 700 },
+    ]) {
+      await page.setViewportSize(viewport);
+      for (const exit of ["Stop Camera", "Escape"]) {
+        await page
+          .getByRole("button", { name: "Scan Invite", exact: true })
+          .click();
+        await expect
+          .poll(() =>
+            page
+              .locator("video")
+              .evaluate((video) => (video as HTMLVideoElement).videoWidth),
+          )
+          .toBeGreaterThan(0);
+        const track = await page.evaluateHandle(
+          () =>
+            (
+              document.querySelector("video")!.srcObject as MediaStream
+            ).getVideoTracks()[0],
+        );
+        const modal = page.getByRole("dialog", {
+          name: "Scan Invite QR code",
+          exact: true,
+        });
+        await expect(modal).toBeVisible();
+        const bounds = await modal.boundingBox();
+        expect(bounds!.y).toBe(0);
+        expect(bounds!.height).toBe(viewport.height);
+        expect(bounds!.width).toBe(viewport.width);
+        expect(await page.evaluate(() => document.body.style.overflow)).toBe(
+          "hidden",
+        );
+        await page.keyboard.press("Tab");
+        expect(
+          await page.evaluate(
+            () => !!document.activeElement?.closest("dialog"),
+          ),
+        ).toBe(true);
+        await page.screenshot({
+          path: `test-results/scanner-modal-${viewport.width}.png`,
+        });
+        if (exit === "Escape") await page.keyboard.press("Escape");
+        else
+          await page.getByRole("button", { name: exit, exact: true }).click();
+        await expect
+          .poll(() => track.evaluate((track) => track.readyState))
+          .toBe("ended");
+        await expect(page.locator("video")).toHaveCount(0);
+        await track.dispose();
+        await expect(
+          page.getByRole("button", { name: "Scan Invite", exact: true }),
+        ).toBeFocused();
+        expect(await page.evaluate(() => document.body.style.overflow)).toBe(
+          "",
+        );
+      }
     }
   } finally {
     await browser.close();
@@ -949,8 +985,15 @@ test("Arena Pong synchronizes four players, rotated controls, colors, pause and 
     await host.getByRole("button", { name: "Arena Pong", exact: true }).click();
     await host.getByLabel("Left player", { exact: true }).selectOption("");
     await host
+      .getByLabel("Lives per player", { exact: true })
+      .selectOption("3");
+    await host
       .getByRole("button", { name: "Start Arena Pong", exact: true })
       .click();
+    await expect(emma.getByTestId("arena-lives-0")).toContainText("3 lives");
+    await expect(
+      lee.getByLabel("Lives per player", { exact: true }),
+    ).toHaveCount(0);
     await expect(emma.getByTestId("arena-paddle-3")).toHaveAttribute(
       "data-active",
       "false",
@@ -985,5 +1028,58 @@ test("Arena Pong synchronizes four players, rotated controls, colors, pause and 
     ).toHaveAttribute("aria-pressed", "true");
   } finally {
     await Promise.all(contexts.map((c) => c.close()));
+  }
+});
+
+test("a slight touch drag on a reaction target registers without scrolling", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  try {
+    const page = await context.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0;
+    });
+    await page.goto("./");
+    await page
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Reaction Race", exact: true })
+      .click();
+    await page.getByRole("button", { name: "Start Race", exact: true }).click();
+    await expect(
+      page.getByText("Hit the marked target!", { exact: true }),
+    ).toBeVisible({ timeout: 8000 });
+    const target = page.getByRole("button", { name: "Target 1", exact: true });
+    await target.scrollIntoViewIfNeeded();
+    const bounds = (await target.boundingBox())!;
+    const scroll = await page.evaluate(() => window.scrollY);
+    const cdp = await context.newCDPSession(page);
+    const point = {
+      x: bounds.x + bounds.width / 2,
+      y: bounds.y + bounds.height / 2,
+    };
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [point],
+    });
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ ...point, y: point.y + 20 }],
+    });
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    await expect(page.locator(".race-feedback")).toContainText("Hit");
+    expect(await page.evaluate(() => window.scrollY)).toBe(scroll);
+    await cdp.detach();
+  } finally {
+    await context.close();
   }
 });

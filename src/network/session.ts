@@ -530,13 +530,14 @@ export class Session {
     this.grid = initialGrid();
     this.broadcast();
   }
-  startPong(seats: string[]) {
+  startPong(seats: string[], startingLives = 5) {
     if (
       this.role !== "host" ||
       !["pong", "arena"].includes(this.room.kind) ||
       (this.room.kind === "arena"
         ? seats.length < 3 || seats.length > 4
         : seats.length !== 2) ||
+      (this.room.kind === "arena" && ![1, 3, 5, 7].includes(startingLives)) ||
       new Set(seats).size !== seats.length ||
       !seats.every((id) => this.players.some((p) => p.id === id))
     )
@@ -545,7 +546,9 @@ export class Session {
     this.room.epoch++;
     this.room.notice = "";
     this.room.pong = {
-      ...(this.room.kind === "arena" ? newArena(seats) : newPong(seats)),
+      ...(this.room.kind === "arena"
+        ? newArena(seats, startingLives)
+        : newPong(seats)),
       phase: "serve",
     };
     this.runPong();

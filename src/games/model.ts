@@ -1,3 +1,4 @@
+import { rallyBall } from "./speed";
 import { newArena } from "./arena";
 export type GameKind = "lobby" | "lights" | "pong" | "arena" | "reaction";
 export interface PongState {
@@ -6,6 +7,8 @@ export interface PongState {
   paddles: number[];
   score: number[];
   lives?: number[];
+  startingLives?: number;
+  rallySeconds?: number;
   ball: { x: number; y: number; vx: number; vy: number };
   serveIn: number;
 }
@@ -56,6 +59,7 @@ export function newRoom(kind: GameKind, epoch: number): Room {
 export function newPong(seats: string[]): PongState {
   return {
     phase: "ready",
+    rallySeconds: 0,
     seats,
     paddles: [0.5, 0.5],
     score: [0, 0],
@@ -83,7 +87,11 @@ export function stepPong(state: PongState, seconds: number): PongState {
     return { ...state, serveIn, phase: serveIn === 0 ? "playing" : "serve" };
   }
   if (state.phase !== "playing") return state;
-  let { x, y, vx, vy } = state.ball;
+  const rallySeconds = (state.rallySeconds ?? 0) + seconds;
+  const { x: oldX, y: oldY } = state.ball;
+  let { vx, vy } = rallyBall(state.ball, rallySeconds, 0.95);
+  let x = oldX,
+    y = oldY;
   const previousX = x;
   x += vx * seconds;
   y += vy * seconds;
@@ -103,7 +111,7 @@ export function stepPong(state: PongState, seconds: number): PongState {
         : vx > 0 && previousX <= face && x >= face;
     if (crossed && Math.abs(y - state.paddles[side]) <= 0.145) {
       x = face;
-      vx = (side === 0 ? 1 : -1) * Math.min(0.85, Math.abs(vx) * 1.07);
+      vx = (side === 0 ? 1 : -1) * Math.min(0.85, Math.abs(vx) * 1.12);
       vy = (y - state.paddles[side]) * 2.3;
     }
   }
@@ -116,6 +124,7 @@ export function stepPong(state: PongState, seconds: number): PongState {
       score,
       phase: score[scorer] >= 7 ? "finished" : "serve",
       serveIn: 1,
+      rallySeconds: 0,
       ball: {
         x: 0.5,
         y: 0.5,
@@ -124,7 +133,11 @@ export function stepPong(state: PongState, seconds: number): PongState {
       },
     };
   }
-  return { ...state, ball: { x, y, vx, vy } };
+  return {
+    ...state,
+    rallySeconds,
+    ball: { x, y, ...rallyBall({ vx, vy }, rallySeconds, 0.95) },
+  };
 }
 export function raceRound(entries: RaceEntry[], round: number): RaceState {
   return {

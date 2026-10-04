@@ -333,6 +333,7 @@ export function ReactionGame({
   session: Session;
   connected: boolean;
 }) {
+  const touchTap = useRef(false);
   const me = game.entries.find((e) => e.id === session.me.id);
   const active = game.phase === "active";
   const playable =
@@ -375,7 +376,17 @@ export function ReactionGame({
             aria-pressed={active && game.target === i}
             className={`race-target ${active && game.target === i ? (game.rule === "hit" ? "lit" : "decoy") : ""}`}
             disabled={!playable}
-            onClick={() => session.tapTarget(i)}
+            onPointerDown={(e) => {
+              touchTap.current = e.pointerType === "touch";
+              if (touchTap.current && e.isPrimary && playable) {
+                e.preventDefault();
+                session.tapTarget(i);
+              }
+            }}
+            onClick={(e) => {
+              // Touch already scored on contact; keyboard/assistive clicks use detail 0.
+              if (e.detail === 0 || !touchTap.current) session.tapTarget(i);
+            }}
           >
             <strong>{i + 1}</strong>
             <span aria-hidden="true">

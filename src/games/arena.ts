@@ -1,17 +1,20 @@
+import { rallyBall } from "./speed";
 import { type PongState, clampPaddle } from "./model";
 
 // Clockwise sides: bottom, right, top, left. Positions use canonical x/y axes.
 export const sideNames = ["Bottom", "Right", "Top", "Left"];
 export const viewPosition = (side: number, position: number) =>
   side === 1 || side === 2 ? 1 - position : position;
-export function newArena(seats: string[]): PongState {
+export function newArena(seats: string[], startingLives = 5): PongState {
   return {
     phase: "ready",
+    startingLives,
+    rallySeconds: 0,
     seats,
     serveIn: 1,
     paddles: [0.5, 0.5, 0.5, 0.5],
     score: [0, 0, 0, 0],
-    lives: [0, 1, 2, 3].map((i) => (seats[i] ? 5 : 0)),
+    lives: [0, 1, 2, 3].map((i) => (seats[i] ? startingLives : 0)),
     ball: { x: 0.5, y: 0.5, vx: 0.18, vy: 0.38 },
   };
 }
@@ -24,7 +27,8 @@ export function stepArena(state: PongState, seconds: number): PongState {
     return { ...state, serveIn, phase: serveIn === 0 ? "playing" : "serve" };
   }
   if (state.phase !== "playing" || !state.lives) return state;
-  const old = state.ball;
+  const rallySeconds = (state.rallySeconds ?? 0) + seconds;
+  const old = { ...state.ball, ...rallyBall(state.ball, rallySeconds, 0.9) };
   let { x, y, vx, vy } = old;
   x += vx * seconds;
   y += vy * seconds;
@@ -53,7 +57,7 @@ export function stepArena(state: PongState, seconds: number): PongState {
     .filter((hit) => hit.crossed)
     .sort((a, b) => a.t - b.t);
   const hit = crossings[0];
-  if (!hit) return { ...state, ball: { x, y, vx, vy } };
+  if (!hit) return { ...state, rallySeconds, ball: { x, y, vx, vy } };
   const vertical = hit.side === 1 || hit.side === 3;
   const along = vertical
     ? old.y + vy * seconds * hit.t
@@ -79,6 +83,7 @@ export function stepArena(state: PongState, seconds: number): PongState {
       score,
       phase: alive.length <= 1 ? "finished" : "serve",
       serveIn: 1,
+      rallySeconds: 0,
       ball: { x: 0.5, y: 0.5, vx: velocity[0], vy: velocity[1] },
     };
   }
@@ -86,7 +91,7 @@ export function stepArena(state: PongState, seconds: number): PongState {
   if (vertical) x = face;
   else y = face;
   if (active) {
-    const speed = Math.min(0.8, Math.hypot(vx, vy) * 1.05);
+    const speed = Math.min(0.9, Math.hypot(vx, vy) * 1.12);
     const tangent = ((along - state.paddles[hit.side]) / 0.14) * speed * 0.8;
     const normal = Math.sqrt(speed * speed - tangent * tangent);
     const direction = hit.side < 2 ? -1 : 1;
@@ -101,6 +106,7 @@ export function stepArena(state: PongState, seconds: number): PongState {
   else vy = -vy;
   return {
     ...state,
+    rallySeconds,
     ball: { x: clampPaddleEdge(x), y: clampPaddleEdge(y), vx, vy },
   };
 }
