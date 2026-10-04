@@ -3,7 +3,7 @@ const record = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 const number = (v: unknown, min: number, max: number): v is number =>
   typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;
-const integer = (v: unknown, min: number, max: number) =>
+const integer = (v: unknown, min: number, max: number): v is number =>
   number(v, min, max) && Number.isInteger(v);
 const id = (v: unknown): v is string =>
   typeof v === "string" && v.length > 0 && v.length <= 80;
@@ -21,8 +21,9 @@ export function validRoom(v: unknown): v is Room {
     return false;
   if (v.kind === "lobby" || v.kind === "lights")
     return v.pong === null && v.race === null;
-  if (v.kind === "pong" || v.kind === "arena") {
-    const arena = v.kind === "arena";
+  if (v.kind === "pong" || v.kind === "arena" || v.kind === "breakout") {
+    const breakout = v.kind === "breakout";
+    const arena = v.kind === "arena" || breakout;
     const p = v.pong;
     if (
       !record(p) ||
@@ -33,12 +34,36 @@ export function validRoom(v: unknown): v is Room {
     )
       return false;
     return (
+      (breakout
+        ? record(p.breakout) &&
+          integer(p.breakout.level, 1, 3) &&
+          integer(p.breakout.lives, 0, 5) &&
+          (p.phase === "finished" || p.breakout.lives > 0) &&
+          p.startingLives === 5 &&
+          Array.isArray(p.score) &&
+          p.score.every((n) => n === 0) &&
+          Array.isArray(p.lives) &&
+          Array.isArray(p.seats) &&
+          p.lives.every(
+            (n, i) => n === (i < (p.seats as string[]).length ? 5 : 0),
+          ) &&
+          Array.isArray(p.breakout.bricks) &&
+          p.breakout.bricks.length === 16 &&
+          p.breakout.bricks.every((n) => integer(n, 0, 2)) &&
+          (p.phase !== "finished" ||
+            p.breakout.lives === 0 ||
+            (p.breakout.level === 3 && p.breakout.bricks.every((n) => n === 0)))
+        : p.breakout === undefined) &&
       Array.isArray(p.seats) &&
       p.seats.length <= (arena ? 4 : 2) &&
       p.seats.every(id) &&
       new Set(p.seats).size === p.seats.length &&
       (p.phase === "ready" ||
-        (arena ? p.seats.length >= 3 : p.seats.length === 2)) &&
+        (breakout
+          ? p.seats.length >= 1
+          : arena
+            ? p.seats.length >= 3
+            : p.seats.length === 2)) &&
       (arena
         ? Array.isArray(p.paddles) &&
           p.paddles.length === 4 &&

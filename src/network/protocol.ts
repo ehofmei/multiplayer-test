@@ -3,6 +3,8 @@ import { validRoom } from "../games/validate";
 import type { Room, GameInput } from "../games/model";
 import type { GridState } from "../game/grid";
 
+// Breakout uses the existing bounded paddle input; its level, brick hit points,
+// and shared lives are validated as part of every room snapshot by validRoom.
 export const VERSION = 2;
 export const MAX_MESSAGE = 16_384;
 export interface Player {

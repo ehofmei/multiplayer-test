@@ -173,6 +173,51 @@ describe("shared game room", () => {
     await vi.advanceTimersByTimeAsync(10_000);
     expect(host.snapshot().room.race?.phase).toBe("ready");
   });
+  it("runs Breakout with shared state, host controls, stale input protection and disconnect cleanup", async () => {
+    const { host, client, hostChannel } = await pair();
+    host.selectGame("breakout");
+    client.startPong(["host", "client"]);
+    host.startPong([]);
+    host.startPong(["missing"]);
+    expect(host.snapshot().room.pong?.phase).toBe("ready");
+    host.startPong(["host", "client"]);
+    await vi.advanceTimersByTimeAsync(1100);
+    expect(client.snapshot().room.kind).toBe("breakout");
+    expect(client.snapshot().room.pong?.breakout?.lives).toBe(5);
+    client.move(0.8);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(host.snapshot().room.pong?.paddles[1]).toBe(0.8);
+    host.pauseGames();
+    await vi.advanceTimersByTimeAsync(20);
+    const state = client.snapshot().room.pong;
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(client.snapshot().room.pong).toEqual(state);
+    host.resumePong();
+    await vi.advanceTimersByTimeAsync(1100);
+    expect(client.snapshot().room.pong?.phase).toBe("playing");
+    const epoch = host.snapshot().room.epoch;
+    host.startPong(["host", "client"]);
+    hostChannel.onmessage!({
+      data: JSON.stringify({
+        v: 2,
+        type: "input",
+        epoch,
+        sequence: 999,
+        input: { kind: "paddle", position: 0.2 },
+      }),
+    });
+    expect(host.snapshot().room.pong?.paddles[1]).toBe(0.5);
+    hostChannel.onclose!();
+    expect(host.snapshot().room.pong?.phase).toBe("ready");
+    expect(host.snapshot().room.notice).toContain("A player left");
+    host.startPong(["host"]);
+    await vi.advanceTimersByTimeAsync(1100);
+    expect(host.snapshot().room.pong?.phase).toBe("playing");
+    host.selectGame("lights");
+    const room = host.snapshot().room;
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(host.snapshot().room).toEqual(room);
+  });
   it("only lets the host choose, rejects stale inputs and switches without losing peers", async () => {
     const { host, client, hostChannel } = await pair();
     expect(client.snapshot().room.kind).toBe("lobby");

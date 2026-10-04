@@ -5,7 +5,7 @@ device has one direct WebRTC DataChannel to that host. There is no gameplay serv
 signaling service, STUN/TURN configuration, database, or account.
 
 Pair up to eight devices once using QR codes or copy/paste, then let the host choose
-Shared Lights, two-player Pong, three/four-player Arena Pong, or Reaction Race. Switching games keeps the same
+Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, or Reaction Race. Switching games keeps the same
 connections. The app is installable and includes latency diagnostics.
 
 ## Run and verify
@@ -109,6 +109,22 @@ Both Pong games keep the original gentle serve, then ramp ball speed after two
 seconds of each rally even without paddle hits. Paddle hits also give a stronger speed boost,
 with bounded top speeds. Every point/lost life resets the ramp; pausing freezes it.
 Update all devices before using the new Arena lives settings.
+
+**Co-op Breakout** is a one-to-four-player team game, with solo practice and
+spectators. The host fills bottom/right/top/left seats in order; unused sides are
+walls. Each teammate sees their paddle at the bottom and uses horizontal drag,
+the slider, or ←/→, with the same local paddle response and smoothed ball as Arena.
+Everyone shares five lives: a miss on any occupied edge costs one team life and
+never eliminates a teammate. Clear all sixteen central bricks in each of three
+levels to win together. Level two adds some two-hit bricks; level three makes all
+bricks two-hit (marked with a dark dash). Lives carry between levels. A one-second
+serve follows a miss or cleared level; serves rotate between teammates. The host
+can pause/resume or start a fresh match after victory/loss. Late arrivals watch
+until the next match; a participating player leaving resets the match. Switching,
+pairing, background handling, color preferences and muted local sounds use the
+existing game lifecycle. Update every device before selecting Co-op Breakout;
+older builds cannot validate its room snapshots. No pairing protocol or saved
+identity/sound storage change is required.
 
 **Reaction Race** has six targets and ten rounds for everyone present at the start
 (or solo practice). After a random 1.2–3 second wait, hit the marked target within

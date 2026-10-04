@@ -84,3 +84,25 @@ unlock, device volume/mute behavior, and foreground recovery need physical testi
 - Both Pong games: gentle opening, acceleration visible by five seconds, capped speed, ramp resets after every miss, pause freezes timing.
 - Arena: host picks 1/3/5/7 lives, clients see the chosen setting, rematch keeps it, invalid wire values rejected.
 - Scanner: full-screen phone/desktop dialog, focus stays in modal, Escape/Stop restores focus and scrolling, camera tracks end, permission denial retains fallbacks. Check successful scanning and background close on real iPhone/iPad.
+
+## Co-op Breakout
+
+- Inventory: host-only selection/setup, distinct contiguous seats for 1–4 players,
+  shared five-life counter, three levels, one/two-hit bricks, team win/loss/rematch,
+  own paddle at bottom, pointer/keyboard/slider, palette, pause/resume, spectators,
+  switching, participant disconnect and host background pause.
+- Automated rules cover every entering brick face, no repeated overlap damage,
+  shared misses without elimination, walls, serve timing, level advancement,
+  victory/loss, paused/finished freeze, bounded full simulation and malformed wire state.
+- Session checks cover synchronized state/input, host permissions, stale epochs,
+  pause/resume, disconnect reset, solo restart and timer cleanup.
+- Production browser checks pair real WebRTC contexts, exercise rotated keyboard
+  and touch input, duplicate setup rejection, spectators, pause/resume, disconnect
+  restart and game switching. A deterministic ready court snapshot is retained.
+- Review desktop and 320×700/390×844/768×1024 screenshots, including taller Arial
+  metrics and four teammates with a long name. Check court clearance, focus,
+  touch targets, wrapping, contrast and page scrolling outside active play.
+- Live browser pass covers solo start, keyboard movement, palette, pause/resume,
+  game selection and phone viewport inspection. Physical iPhone/iPad co-op feel,
+  a complete team victory, sound audibility and host background/resume still need
+  device testing; update all devices before pairing with this mode.

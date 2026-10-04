@@ -19,10 +19,14 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
           vx: pong.ball.vx,
           vy: pong.ball.vy,
           score: pong.score.reduce((a, b) => a + b, 0),
-          winner:
-            (pong.lives
-              ? arenaWinner(pong)
-              : pong.seats[pong.score[0] === 7 ? 0 : 1]) === me,
+          teamLives: pong.breakout?.lives,
+          bricks: pong.breakout?.bricks.reduce((a, b) => a + b, 0),
+          level: pong.breakout?.level,
+          winner: pong.breakout
+            ? pong.breakout.lives > 0
+            : (pong.lives
+                ? arenaWinner(pong)
+                : pong.seats[pong.score[0] === 7 ? 0 : 1]) === me,
         }
       : null,
     race: race
@@ -49,6 +53,18 @@ export function soundEvents(
   if (a && b) {
     if (a.phase === "finished" && b.phase !== "finished")
       return [a.winner ? "win" : "finish"];
+    if (
+      a.teamLives !== undefined &&
+      b.teamLives !== undefined &&
+      a.teamLives < b.teamLives
+    )
+      return ["miss"];
+    if (
+      a.bricks !== undefined &&
+      b.bricks !== undefined &&
+      (a.bricks < b.bricks || a.level !== b.level)
+    )
+      return ["success"];
     if (a.score > b.score) return ["point"];
     if (a.phase === "playing" && b.phase === "serve") return ["serve"];
     if (a.phase === "playing" && b.phase === "playing") {

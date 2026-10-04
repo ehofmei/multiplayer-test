@@ -1,3 +1,4 @@
+import { newBreakout, stepBreakout } from "../games/breakout";
 import { newArena, moveArena, stepArena } from "../games/arena";
 import { validColor, type PaddleColor } from "../games/colors";
 import {
@@ -533,10 +534,12 @@ export class Session {
   startPong(seats: string[], startingLives = 5) {
     if (
       this.role !== "host" ||
-      !["pong", "arena"].includes(this.room.kind) ||
-      (this.room.kind === "arena"
-        ? seats.length < 3 || seats.length > 4
-        : seats.length !== 2) ||
+      !["pong", "arena", "breakout"].includes(this.room.kind) ||
+      (this.room.kind === "breakout"
+        ? seats.length < 1 || seats.length > 4
+        : this.room.kind === "arena"
+          ? seats.length < 3 || seats.length > 4
+          : seats.length !== 2) ||
       (this.room.kind === "arena" && ![1, 3, 5, 7].includes(startingLives)) ||
       new Set(seats).size !== seats.length ||
       !seats.every((id) => this.players.some((p) => p.id === id))
@@ -546,9 +549,11 @@ export class Session {
     this.room.epoch++;
     this.room.notice = "";
     this.room.pong = {
-      ...(this.room.kind === "arena"
-        ? newArena(seats, startingLives)
-        : newPong(seats)),
+      ...(this.room.kind === "breakout"
+        ? newBreakout(seats)
+        : this.room.kind === "arena"
+          ? newArena(seats, startingLives)
+          : newPong(seats)),
       phase: "serve",
     };
     this.runPong();
@@ -569,9 +574,11 @@ export class Session {
       last = now;
       while (accumulator >= 1 / 120 && this.room.pong) {
         this.room.pong =
-          this.room.kind === "arena"
-            ? stepArena(this.room.pong, 1 / 120)
-            : stepPong(this.room.pong, 1 / 120);
+          this.room.kind === "breakout"
+            ? stepBreakout(this.room.pong, 1 / 120)
+            : this.room.kind === "arena"
+              ? stepArena(this.room.pong, 1 / 120)
+              : stepPong(this.room.pong, 1 / 120);
         accumulator -= 1 / 120;
       }
       if (this.room.pong?.phase === "finished") {
@@ -719,7 +726,7 @@ export class Session {
   move(position: number) {
     if (
       !Number.isFinite(position) ||
-      !["pong", "arena"].includes(this.room.kind)
+      !["pong", "arena", "breakout"].includes(this.room.kind)
     )
       return;
     this.queuedPaddle = {

@@ -957,3 +957,27 @@ select:focus-visible {
   background: #122c29;
   border-radius: 12px;
 }
+
+.breakout-progress {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 8px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 650px), (max-height: 800px) {
+  .breakout-game-card .arena-court {
+    max-width: min(480px, max(180px, calc(100dvh - 550px)));
+  }
+}
+
+.breakout-game-card .arena-lives strong {
+  display: none;
+}
+.breakout-game-card .arena-lives span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

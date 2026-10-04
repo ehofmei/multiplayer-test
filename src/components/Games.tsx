@@ -18,6 +18,12 @@ const choices: {
   mark: string;
 }[] = [
   {
+    kind: "breakout",
+    title: "Co-op Breakout",
+    detail: "One team, five shared lives. Clear three levels together.",
+    mark: "▤",
+  },
+  {
     kind: "pong",
     title: "Pong",
     detail: "Two paddles. First to seven. Everyone else can watch.",

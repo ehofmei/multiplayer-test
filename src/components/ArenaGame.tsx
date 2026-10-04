@@ -1,3 +1,4 @@
+import { brickBounds } from "../games/breakout";
 import { useEffect, useRef, useState } from "react";
 import { arenaWinner, sideNames, viewPosition } from "../games/arena";
 import { clampPaddle, type PongState } from "../games/model";
@@ -41,12 +42,16 @@ export function ArenaGame({
   players,
   session,
   connected,
+  cooperative = false,
 }: {
   game: PongState;
   players: Player[];
   session: Session;
   connected: boolean;
+  cooperative?: boolean;
 }) {
+  const title = cooperative ? "Co-op Breakout" : "Arena Pong";
+  const team = game.breakout;
   const [seats, setSeats] = useState(
     [0, 1, 2, 3].map((i) => players[i]?.id ?? ""),
   );
@@ -54,13 +59,16 @@ export function ArenaGame({
   const [startingLives, setStartingLives] = useState(game.startingLives ?? 5);
   const side = game.seats.indexOf(session.me.id);
   const rotation = side < 0 ? 0 : side * 90;
-  const alive = side >= 0 && !!game.lives?.[side];
+  const alive =
+    side >= 0 && (cooperative ? !!team?.lives : !!game.lives?.[side]);
   const controllable =
     connected && alive && ["playing", "serve"].includes(game.phase);
   const configure = ["ready", "finished"].includes(game.phase);
   const selected = seats.filter(Boolean);
   const valid =
-    seats.slice(0, 3).every(Boolean) &&
+    (cooperative
+      ? !!seats[0] && seats.every((id, i) => !!id === i < selected.length)
+      : seats.slice(0, 3).every(Boolean)) &&
     new Set(selected).size === selected.length &&
     selected.every((id) => players.some((p) => p.id === id));
   const name = (id?: string) =>
@@ -103,31 +111,54 @@ export function ArenaGame({
   };
   return (
     <section
-      className="games-card arena-game-card"
-      aria-label="Arena Pong game"
+      className={`games-card arena-game-card ${cooperative ? "breakout-game-card" : ""}`}
+      aria-label={`${title} game`}
     >
       <div className="board-heading">
-        <h2>Arena Pong</h2>
-        <span>3–4 players</span>
+        <h2>{title}</h2>
+        <span>{cooperative ? "1–4 teammates" : "3–4 players"}</span>
       </div>
       <p className="game-status" aria-live="polite">
         {!connected
           ? "Host disconnected"
           : game.phase === "finished"
-            ? `${name(arenaWinner(game))} wins!`
+            ? cooperative
+              ? team?.lives
+                ? "Team victory! All three levels cleared."
+                : "Out of lives. Try again together!"
+              : `${name(arenaWinner(game))} wins!`
             : game.phase === "paused"
-              ? "Arena paused"
+              ? cooperative
+                ? "Co-op Breakout paused"
+                : "Arena paused"
               : game.phase === "serve"
-                ? "Get ready…"
+                ? cooperative
+                  ? `Level ${team?.level} · Get ready…`
+                  : "Get ready…"
                 : game.phase === "ready"
-                  ? "Choose three or four players."
-                  : "Last paddle standing"}
+                  ? cooperative
+                    ? "Choose your team. Fill seats in order; unused sides are walls."
+                    : "Choose three or four players."
+                  : cooperative
+                    ? "Clear the bricks. Protect every teammate’s side!"
+                    : "Last paddle standing"}
       </p>
+      {cooperative && (
+        <p className="breakout-progress" aria-label="Team progress">
+          <strong>{team?.lives} shared lives</strong>
+          <span>Level {team?.level} / 3</span>
+          <span>{team?.bricks.filter((n) => n > 0).length} bricks left</span>
+        </p>
+      )}
       {!!game.seats.length && (
-        <ul className="arena-lives" aria-label="Arena lives">
+        <ul
+          className="arena-lives"
+          aria-label={cooperative ? "Team paddles" : "Arena lives"}
+        >
           {game.seats.map((id, i) => (
             <li
               key={id}
+              title={cooperative ? `${name(id)} · ${sideNames[i]}` : undefined}
               style={{
                 borderColor: paddleHex(
                   players.find((p) => p.id === id)?.color,
@@ -140,7 +171,9 @@ export function ArenaGame({
                 {id === session.me.id ? " · You" : ""}
               </span>
               <strong data-testid={`arena-lives-${i}`}>
-                {game.lives?.[i]} {game.lives?.[i] ? "lives" : "· Out"}
+                {cooperative
+                  ? sideNames[i]
+                  : `${game.lives?.[i]} ${game.lives?.[i] ? "lives" : "· Out"}`}
               </strong>
             </li>
           ))}
@@ -149,7 +182,8 @@ export function ArenaGame({
       <div
         className="pong-court arena-court"
         role="group"
-        aria-label="Arena court"
+        aria-label={cooperative ? "Breakout court" : "Arena court"}
+        style={{ touchAction: controllable ? "none" : "auto" }}
         tabIndex={controllable ? 0 : -1}
         onKeyDown={(e) => {
           if (["ArrowLeft", "ArrowRight"].includes(e.key)) {
@@ -181,7 +215,9 @@ export function ArenaGame({
               strokeDasharray="10 16"
             />
             {[0, 1, 2, 3].map((i) => {
-              const active = !!game.lives?.[i];
+              const active = cooperative
+                ? i < game.seats.length
+                : !!game.lives?.[i];
               const pos =
                 (i === side ? viewPosition(side, local) : game.paddles[i]) *
                 1000;
@@ -212,6 +248,32 @@ export function ArenaGame({
                 />
               );
             })}
+            {cooperative &&
+              team?.bricks.map((hp, i) => {
+                if (!hp) return null;
+                const b = brickBounds(i);
+                return (
+                  <g key={i} data-testid={`brick-${i}`} data-hp={hp}>
+                    <rect
+                      x={b.x * 1000}
+                      y={b.y * 1000}
+                      width={b.width * 1000}
+                      height={b.height * 1000}
+                      rx="8"
+                      fill={hp === 2 ? "#f4b66c" : "#d9f29d"}
+                      stroke="#122c29"
+                      strokeWidth="4"
+                    />
+                    {hp === 2 && (
+                      <path
+                        d={`M${(b.x + 0.022) * 1000} ${(b.y + 0.038) * 1000}h31`}
+                        stroke="#122c29"
+                        strokeWidth="8"
+                      />
+                    )}
+                  </g>
+                );
+              })}
             <circle ref={ball} cx="500" cy="500" r="18" fill="#f5f4ee" />
           </g>
         </svg>
@@ -242,33 +304,45 @@ export function ArenaGame({
         players={players}
         fallback={paddleColors[Math.max(0, side)].name}
       />
-      <p className="muted">
-        {configure && session.role === "host"
-          ? startingLives
-          : (game.startingLives ?? 5)}{" "}
-        lives each. Miss the ball and lose a life. Empty and eliminated sides
-        become walls. Last player remaining wins.
-      </p>
+      {!cooperative && (
+        <p className="muted">
+          {configure && session.role === "host"
+            ? startingLives
+            : (game.startingLives ?? 5)}{" "}
+          lives each. Miss the ball and lose a life. Empty and eliminated sides
+          become walls. Last player remaining wins.
+        </p>
+      )}
+      {cooperative && (
+        <p className="muted">
+          Clear all three levels with five shared lives. A miss costs everyone
+          one life; nobody is eliminated. Marked bricks take two hits. Late
+          arrivals watch until the next match.
+        </p>
+      )}
       {session.role === "host" && configure && (
         <>
-          <label>
-            Lives per player
-            <select
-              aria-label="Lives per player"
-              value={startingLives}
-              onChange={(e) => setStartingLives(Number(e.target.value))}
-            >
-              {[1, 3, 5, 7].map((lives) => (
-                <option key={lives} value={lives}>
-                  {lives} {lives === 1 ? "life" : "lives"}
-                </option>
-              ))}
-            </select>
-          </label>
+          {!cooperative && (
+            <label>
+              Lives per player
+              <select
+                aria-label="Lives per player"
+                value={startingLives}
+                onChange={(e) => setStartingLives(Number(e.target.value))}
+              >
+                {[1, 3, 5, 7].map((lives) => (
+                  <option key={lives} value={lives}>
+                    {lives} {lives === 1 ? "life" : "lives"}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <div className="seat-picker">
             {sideNames.map((label, i) => (
               <label key={label}>
-                {label} player{i === 3 ? " (optional)" : ""}
+                {label} player
+                {(cooperative ? i > 0 : i === 3) ? " (optional)" : ""}
                 <select
                   aria-label={`${label} player`}
                   value={seats[i]}
@@ -279,7 +353,9 @@ export function ArenaGame({
                   }
                 >
                   <option value="">
-                    {i === 3 ? "Wall · three players" : "Choose a player"}
+                    {(cooperative ? i > 0 : i === 3)
+                      ? "Wall"
+                      : "Choose a player"}
                   </option>
                   {players.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -290,7 +366,7 @@ export function ArenaGame({
               </label>
             ))}
           </div>
-          {players.length < 3 && (
+          {!cooperative && players.length < 3 && (
             <p className="muted">
               Add at least two other players to play Arena Pong.
             </p>
@@ -300,8 +376,12 @@ export function ArenaGame({
             onClick={() => session.startPong(selected, startingLives)}
           >
             {game.phase === "finished"
-              ? "Play Arena Again"
-              : "Start Arena Pong"}
+              ? cooperative
+                ? "Play Breakout Again"
+                : "Play Arena Again"
+              : cooperative
+                ? "Start Co-op Breakout"
+                : "Start Arena Pong"}
           </button>
         </>
       )}
@@ -315,7 +395,13 @@ export function ArenaGame({
                 : session.pauseGames()
             }
           >
-            {game.phase === "paused" ? "Resume Arena" : "Pause Arena"}
+            {game.phase === "paused"
+              ? cooperative
+                ? "Resume Breakout"
+                : "Resume Arena"
+              : cooperative
+                ? "Pause Breakout"
+                : "Pause Arena"}
           </button>
         )}
     </section>

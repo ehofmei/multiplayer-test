@@ -1,3 +1,4 @@
+import { newBreakout } from "../games/breakout";
 import { describe, expect, it } from "vitest";
 import { soundEvents, soundFrame } from "./events";
 import { newPong, newRoom, raceRound } from "../games/model";
@@ -55,6 +56,27 @@ describe("game sound transitions", () => {
         soundFrame(s, "b", "session"),
       ),
     ).toEqual(["finish"]);
+  });
+  it("plays shared brick, miss and team victory cues without repeats", () => {
+    const s = snapshot();
+    s.room = newRoom("breakout", 1);
+    s.room.pong = { ...newBreakout(["a", "b"]), phase: "playing" };
+    let before = frame(s);
+    s.room.pong.breakout!.bricks[0]--;
+    expect(soundEvents(before, frame(s))).toEqual(["success"]);
+    before = frame(s);
+    s.room.pong.breakout!.lives--;
+    expect(soundEvents(before, frame(s))).toEqual(["miss"]);
+    before = frame(s);
+    s.room.pong.phase = "finished";
+    expect(soundEvents(before, frame(s))).toEqual(["win"]);
+    expect(soundFrame(s, "b", "session").pong?.winner).toBe(true);
+    expect(soundEvents(frame(s), frame(s))).toEqual([]);
+    s.room.pong.phase = "playing";
+    before = frame(s);
+    s.room.pong.phase = "finished";
+    s.room.pong.breakout!.lives = 0;
+    expect(soundEvents(before, frame(s))).toEqual(["finish"]);
   });
   it("announces target and hold cues, individual results and finishes without repeats", () => {
     const s = snapshot();

@@ -1,6 +1,8 @@
 import { rallyBall } from "./speed";
+import { newBreakout } from "./breakout";
 import { newArena } from "./arena";
-export type GameKind = "lobby" | "lights" | "pong" | "arena" | "reaction";
+export type GameKind =
+  "lobby" | "lights" | "pong" | "arena" | "breakout" | "reaction";
 export interface PongState {
   phase: "ready" | "serve" | "playing" | "paused" | "finished";
   seats: string[];
@@ -8,6 +10,7 @@ export interface PongState {
   score: number[];
   lives?: number[];
   startingLives?: number;
+  breakout?: { level: number; lives: number; bricks: number[] };
   rallySeconds?: number;
   ball: { x: number; y: number; vx: number; vy: number };
   serveIn: number;
@@ -41,6 +44,7 @@ export const gameNames: Record<GameKind, string> = {
   lights: "Shared Lights",
   pong: "Pong",
   arena: "Arena Pong",
+  breakout: "Co-op Breakout",
   reaction: "Reaction Race",
 };
 export function newRoom(kind: GameKind, epoch: number): Room {
@@ -49,7 +53,13 @@ export function newRoom(kind: GameKind, epoch: number): Room {
     kind,
     notice: "",
     pong:
-      kind === "pong" ? newPong([]) : kind === "arena" ? newArena([]) : null,
+      kind === "pong"
+        ? newPong([])
+        : kind === "arena"
+          ? newArena([])
+          : kind === "breakout"
+            ? newBreakout([])
+            : null,
     race:
       kind === "reaction"
         ? { phase: "ready", round: 0, rule: "hit", target: -1, entries: [] }
