@@ -4,6 +4,7 @@ import {
   CYCLE_LIMIT,
   cycleDirections,
 } from "./cycle";
+import { MISSION_MS } from "./ship";
 import type { Room } from "./model";
 const record = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
@@ -93,7 +94,13 @@ export function validRoom(v: unknown): v is Room {
       v.pong !== null ||
       v.race !== null ||
       !["ready", "playing", "paused", "finished"].includes(String(s.phase)) ||
-      !integer(s.remaining, 0, 180_000) ||
+      (s.duration !== undefined &&
+        ![60_000, 120_000, MISSION_MS].includes(s.duration as number)) ||
+      !integer(
+        s.remaining,
+        0,
+        (s.duration as number | undefined) ?? MISSION_MS,
+      ) ||
       !integer(s.hull, 0, 100) ||
       !integer(s.repairs, 0, 100_000) ||
       !integer(s.mistakes, 0, 100_000) ||

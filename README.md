@@ -126,8 +126,10 @@ existing game lifecycle. Update every device before selecting Co-op Breakout;
 older builds cannot validate its room snapshots. No pairing protocol or saved
 identity/sound storage change is required.
 
-**Spaceship Panic** is a cooperative three-minute mission for two to eight
-players, with solo practice available. Everyone present at launch joins the crew.
+**Spaceship Panic** is a cooperative mission for two to eight
+players, with solo practice available. The host chooses 1, 2, or 3 minutes before
+launch or a rematch; the default is 3 minutes. Everyone present at launch joins
+the crew.
 Each device owns three uniquely named controls with settings 0–3, and sees one
 instruction for the next crew member's panel. Read your order aloud, listen for
 orders naming your controls, and set the requested number. Solo orders address
@@ -146,14 +148,17 @@ instead of fast-forwarding. Late arrivals watch until the next launch. Losing a
 crew member resets the mission, while a spectator leaving preserves it. Existing
 connections, offline support and muted local sound preferences remain in use.
 Update every device before selecting Spaceship Panic; older builds do not
-understand its new room state and control action. Saved identities/sound settings
+understand its new room state and control action. Update all devices to use the
+mission-length options; snapshots without a duration retain the three-minute
+default. Saved identities/sound settings
 and pairing formats are unchanged.
 
 **Light-cycle Arena** is a competitive grid game for two to eight players. Everyone
 present when the host starts rides; late arrivals watch until the next round.
 After a three-second countdown, riders move automatically one cell every 150 ms
 on a shared 32×32 arena. Steer with the four large arrow buttons, swipe on the
-arena, or focus the arena and use arrow keys/WASD. Touch buttons turn on contact.
+arena, or focus the arena and use arrow keys/WASD. Arrow buttons are about 80×64px
+with 10px gaps, including on narrow phones. Touch buttons turn on contact.
 Only one perpendicular turn is accepted per step; reversing is forbidden. Each
 rider has a distinct color and number, with names and elimination status below.
 
@@ -164,7 +169,10 @@ step, the round draws. At sixty seconds of movement, remaining riders share the
 win. Ride Again starts a fresh round with everyone currently connected.
 
 The host simulates fixed grid steps and shares compact, bounded full-board
-snapshots. Turns use the existing epoch and input sequence checks; the first valid
+snapshots. Heads and continuous trails animate between confirmed cells over 150 ms,
+following corners without predicting future moves. Pauses, crashes and skipped
+snapshots snap to the confirmed state; reduced-motion preferences retain grid steps.
+Turns use the existing epoch and input sequence checks; the first valid
 turn received before a step is applied. There is no client prediction or rollback,
 so steer early on slower Wi-Fi. Pause, host backgrounding, pairing, or a scheduling
 stall freezes play; Resume Arena gives another three-second countdown. A rider

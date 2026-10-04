@@ -1113,16 +1113,17 @@ select:focus-visible {
 }
 .cycle-controls {
   display: grid;
-  grid-template-columns: repeat(3, 52px);
-  grid-template-rows: repeat(2, 46px);
-  gap: 5px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, 64px);
+  width: min(100%, 260px);
+  gap: 10px;
   justify-content: center;
   margin: 10px auto 6px;
 }
 .cycle-controls button {
   padding: 0;
-  min-height: 46px;
-  font-size: 26px;
+  min-height: 64px;
+  font-size: 32px;
   touch-action: manipulation;
 }
 .cycle-up {
@@ -1236,6 +1237,33 @@ select:focus-visible {
     display: none;
   }
   .cycle-court {
-    max-width: min(360px, max(210px, calc(100dvh - 470px)));
+    max-width: min(360px, max(210px, calc(100dvh - 515px)));
   }
+}
+
+.ship-duration {
+  border: 0;
+  padding: 0;
+  margin: 12px 0;
+}
+.ship-duration legend {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.ship-duration > div {
+  display: flex;
+  gap: 8px;
+}
+.ship-duration button {
+  flex: 1;
+  min-height: 48px;
+  padding: 10px;
+  background: #edf1e7;
+  color: #122c29;
+  border-color: #c3cdc3;
+}
+.ship-duration button[aria-pressed="true"] {
+  background: #122c29;
+  color: #fff;
 }

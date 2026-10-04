@@ -1326,9 +1326,11 @@ test("Spaceship Panic pairs crew, shares orders and repairs, pauses, and handles
     await expect(
       client.getByRole("button", { name: "Launch Mission", exact: true }),
     ).toHaveCount(0);
+    await host.getByRole("button", { name: "2 minutes", exact: true }).click();
     await host
       .getByRole("button", { name: "Launch Mission", exact: true })
       .click();
+    await expect(client.getByTestId("ship-clock")).toHaveText("2:00");
     await expect(host.locator(".ship-command")).toHaveText("Set Reactor to 1.");
     await expect(client.locator(".ship-command")).toHaveText(
       "Set Shields to 1.",
@@ -1583,6 +1585,26 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
     await expect(
       client.getByRole("button", { name: "Steer up", exact: true }),
     ).toBeEnabled();
+    // Between authoritative grid steps, head and trail advance continuously.
+    await host.clock.runFor(150);
+    await expect(host.getByTestId("cycle-rider-0")).toHaveAttribute(
+      "data-x",
+      "5",
+    );
+    await host.clock.runFor(25);
+    const headX = await host
+      .getByTestId("cycle-rider-0")
+      .evaluate(
+        (element) =>
+          (element as unknown as SVGGElement).transform.baseVal.consolidate()!
+            .matrix.e,
+      );
+    expect(headX).toBeGreaterThan(45);
+    expect(headX).toBeLessThan(55);
+    const trailX = await host
+      .getByTestId("cycle-extension-0")
+      .getAttribute("x2");
+    expect(Number(trailX)).toBeCloseTo(headX);
     await client.getByRole("button", { name: "Steer up", exact: true }).tap();
     // Touch arrives over the actual DataChannel before the next grid step.
     await expect
@@ -1609,6 +1631,15 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
       .getByRole("button", { name: "Pause Arena", exact: true })
       .click();
     await expect(client.locator(".cycle-status")).toHaveText("Arena paused");
+    const pausedHead = host.getByTestId("cycle-rider-0");
+    const pausedMatrix = await pausedHead.evaluate(
+      (element) =>
+        (element as unknown as SVGGElement).transform.baseVal.consolidate()!
+          .matrix.e,
+    );
+    expect(pausedMatrix).toBe(
+      Number(await pausedHead.getAttribute("data-x")) * 10 + 5,
+    );
     const tick = await host.locator(".cycle-court").getAttribute("data-tick");
     await host.clock.runFor(3000);
     await expect(host.locator(".cycle-court")).toHaveAttribute(
@@ -1639,8 +1670,8 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
         const button = await client
           .getByRole("button", { name: "Steer up", exact: true })
           .boundingBox();
-        expect(button!.width).toBeGreaterThanOrEqual(44);
-        expect(button!.height).toBeGreaterThanOrEqual(44);
+        expect(button!.width).toBeGreaterThanOrEqual(72);
+        expect(button!.height).toBeGreaterThanOrEqual(64);
         await client.screenshot({
           path: `test-results/cycle-${viewport.width}-${font}.png`,
           fullPage: true,
@@ -1659,6 +1690,23 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
       .getByRole("button", { name: "Resume Arena", exact: true })
       .click();
     await expect(client.locator(".cycle-status")).toHaveText("Get ready… 3");
+    // Reduced-motion users get exact grid positions without interpolation.
+    await host.emulateMedia({ reducedMotion: "reduce" });
+    await host.clock.runFor(3000);
+    await expect(host.locator(".cycle-status")).toContainText("riders remain");
+    await host.clock.runFor(150);
+    const reducedHead = host.getByTestId("cycle-rider-0");
+    const reducedPosition = await reducedHead.evaluate((element) => ({
+      x: (element as unknown as SVGGElement).transform.baseVal.consolidate()!
+        .matrix.e,
+      y: (element as unknown as SVGGElement).transform.baseVal.consolidate()!
+        .matrix.f,
+      targetX: Number(element.getAttribute("data-x")) * 10 + 5,
+      targetY: Number(element.getAttribute("data-y")) * 10 + 5,
+    }));
+    expect(reducedPosition.x).toBe(reducedPosition.targetX);
+    expect(reducedPosition.y).toBe(reducedPosition.targetY);
+    await host.emulateMedia({ reducedMotion: "no-preference" });
     // Re-select for a deterministic untouched round; equal wall distances draw.
     await host
       .getByRole("button", { name: "Choose Game", exact: true })
@@ -1836,4 +1884,91 @@ test("eight Light-cycle riders fit a narrow phone and support swipe, background 
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
   }
+});
+
+test("Spaceship mission length selects 1/2/3 minutes, survives pause and reports the correct flown time", async ({
+  page,
+}) => {
+  const start = new Date("2026-10-04T12:00:00Z");
+  await page.clock.install({ time: start });
+  await page.clock.pauseAt(start);
+  await page.addInitScript(() => {
+    Math.random = () => 0;
+  });
+  await page.goto("./");
+  await page.getByRole("button", { name: "Create Game", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Spaceship Panic", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "3 minutes", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "1 minute", exact: true }).click();
+  await expect(page.getByTestId("ship-clock")).toHaveText("1:00");
+  await page.screenshot({
+    path: "test-results/ship-duration-ready.png",
+    fullPage: true,
+  });
+  for (const viewport of [
+    { width: 320, height: 700 },
+    { width: 390, height: 844 },
+    { width: 768, height: 1024 },
+  ]) {
+    await page.setViewportSize(viewport);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(viewport.width);
+    for (const label of ["1 minute", "2 minutes", "3 minutes"]) {
+      const bounds = await page
+        .getByRole("button", { name: label, exact: true })
+        .boundingBox();
+      expect(bounds!.width).toBeGreaterThanOrEqual(60);
+      expect(bounds!.height).toBeGreaterThanOrEqual(48);
+    }
+    await page.screenshot({
+      path: `test-results/ship-duration-${viewport.width}.png`,
+      fullPage: true,
+    });
+  }
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page
+    .getByRole("button", { name: "Launch Mission", exact: true })
+    .click();
+  await expect(page.getByTestId("ship-clock")).toHaveText("1:00");
+  await page
+    .getByRole("button", { name: "Pause Mission", exact: true })
+    .click();
+  await page.clock.runFor(10_000);
+  await expect(page.getByTestId("ship-clock")).toHaveText("1:00");
+  await page
+    .getByRole("button", { name: "Resume Mission", exact: true })
+    .click();
+  for (let round = 0; round < 30; round++) {
+    const command = await page.locator(".ship-command").innerText();
+    const match = command.match(/^Set (.+) to (\d)\.$/);
+    expect(match).not.toBeNull();
+    await page
+      .getByRole("button", { name: `${match![1]} ${match![2]}`, exact: true })
+      .click();
+    await page.clock.runFor(2000);
+  }
+  await expect(page.locator(".ship-command")).toHaveText(
+    "Mission complete! Everyone made it.",
+  );
+  await expect(page.locator(".ship-summary")).toContainText("1:00 flown");
+  await expect(
+    page.getByRole("button", { name: "1 minute", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "2 minutes", exact: true }).click();
+  await page.getByRole("button", { name: "Launch Again", exact: true }).click();
+  await expect(page.getByTestId("ship-clock")).toHaveText("2:00");
+  await page.getByRole("button", { name: "Choose Game", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Spaceship Panic", exact: true })
+    .click();
+  await page.getByRole("button", { name: "3 minutes", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Launch Mission", exact: true })
+    .click();
+  await expect(page.getByTestId("ship-clock")).toHaveText("3:00");
 });

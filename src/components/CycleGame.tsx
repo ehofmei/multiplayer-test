@@ -1,4 +1,9 @@
-import { useEffect, useRef } from "react";
+import {
+  adjacentCyclePoints,
+  cycleDrawPoint,
+  type CyclePoint,
+} from "../games/cycle-motion";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import {
   CYCLE_SIZE,
   CYCLE_LIMIT,
@@ -24,6 +29,56 @@ export function CycleGame({
   connected: boolean;
 }) {
   const court = useRef<HTMLDivElement>(null);
+  const heads = useRef<(SVGGElement | null)[]>([]);
+  const extensions = useRef<(SVGLineElement | null)[]>([]);
+  const drawn = useRef<Record<string, CyclePoint>>({});
+  const previous = useRef<CycleState | null>(null);
+  useLayoutEffect(() => {
+    const before = previous.current;
+    previous.current = game;
+    const animate =
+      connected &&
+      game.phase === "playing" &&
+      before?.phase === "playing" &&
+      game.ticks === before.ticks + 1 &&
+      !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const paths = game.riders.map((r) => {
+      const old = before?.riders.find((p) => p.id === r.id);
+      const moving =
+        animate && r.alive && old?.alive && adjacentCyclePoints(old, r);
+      return {
+        target: { x: r.x, y: r.y },
+        corner: moving ? { x: old.x, y: old.y } : r,
+        from: moving ? (drawn.current[r.id] ?? old) : r,
+        moving,
+      };
+    });
+    const start = performance.now();
+    let frame = 0;
+    const draw = () => {
+      const fraction = Math.min(1, (performance.now() - start) / CYCLE_STEP_MS);
+      paths.forEach((path, i) => {
+        const point = path.moving
+          ? cycleDrawPoint(path.from, path.corner, path.target, fraction)
+          : path.target;
+        drawn.current[game.riders[i].id] = point;
+        heads.current[i]?.setAttribute(
+          "transform",
+          `translate(${point.x * 10 + 5} ${point.y * 10 + 5})`,
+        );
+        const line = extensions.current[i];
+        line?.setAttribute("x1", String(path.corner.x * 10 + 5));
+        line?.setAttribute("y1", String(path.corner.y * 10 + 5));
+        line?.setAttribute("x2", String(point.x * 10 + 5));
+        line?.setAttribute("y2", String(point.y * 10 + 5));
+      });
+      if (fraction < 1 && paths.some((path) => path.moving))
+        frame = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => cancelAnimationFrame(frame);
+    // Queued-input updates within the same tick must not restart the animation.
+  }, [game.ticks, game.phase, connected]);
   useEffect(() => {
     if (game.phase === "countdown") {
       court.current?.focus({ preventScroll: true });
@@ -54,6 +109,11 @@ export function CycleGame({
                 ? `${name(survivors[0].id)} wins!`
                 : "Time’s up! Survivors share the win."
             : `${survivors.length} riders remain`;
+  const movingHeads = new Set(
+    game.phase === "playing"
+      ? game.riders.filter((r) => r.alive).map((r) => r.y * CYCLE_SIZE + r.x)
+      : [],
+  );
   const steer = (direction: CycleDirection) => {
     if (active) session.turnCycle(direction);
   };
@@ -158,9 +218,9 @@ export function CycleGame({
               fillOpacity=".72"
               d={[...game.cells]
                 .flatMap((cell, n) =>
-                  Number(cell) === i + 1
+                  Number(cell) === i + 1 && !movingHeads.has(n)
                     ? [
-                        `M${(n % CYCLE_SIZE) * 10 + 1} ${Math.floor(n / CYCLE_SIZE) * 10 + 1}h8v8h-8z`,
+                        `M${(n % CYCLE_SIZE) * 10} ${Math.floor(n / CYCLE_SIZE) * 10}h10v10h-10z`,
                       ]
                     : [],
                 )
@@ -168,8 +228,25 @@ export function CycleGame({
             />
           ))}
           {game.riders.map((r, i) => (
+            <line
+              className="cycle-extension"
+              data-testid={`cycle-extension-${i}`}
+              key={`extension-${r.id}`}
+              ref={(element) => {
+                extensions.current[i] = element;
+              }}
+              stroke={cycleColors[i]}
+              strokeOpacity=".72"
+              strokeWidth="10"
+              strokeLinecap="butt"
+            />
+          ))}
+          {game.riders.map((r, i) => (
             <g
               key={r.id}
+              ref={(element) => {
+                heads.current[i] = element;
+              }}
               data-testid={`cycle-rider-${i}`}
               data-direction={r.direction}
               data-alive={r.alive}
@@ -177,8 +254,8 @@ export function CycleGame({
               data-y={r.y}
             >
               <rect
-                x={r.x * 10 - 1}
-                y={r.y * 10 - 1}
+                x={-6}
+                y={-6}
                 width="12"
                 height="12"
                 rx="3"
@@ -187,8 +264,8 @@ export function CycleGame({
                 strokeWidth="1"
               />
               <text
-                x={r.x * 10 + 5}
-                y={r.y * 10 + 5.5}
+                x={0}
+                y={0.5}
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize="9"

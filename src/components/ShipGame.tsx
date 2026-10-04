@@ -1,4 +1,5 @@
-import { MISSION_MS, shipSystems, type ShipState } from "../games/ship";
+import { useState } from "react";
+import { shipDuration, shipSystems, type ShipState } from "../games/ship";
 import type { Player } from "../network/protocol";
 import type { Session } from "../network/session";
 const clock = (ms: number) => {
@@ -16,6 +17,7 @@ export function ShipGame({
   session: Session;
   connected: boolean;
 }) {
+  const [minutes, setMinutes] = useState(shipDuration(game) / 60_000);
   const host = session.role === "host";
   const configure = game.phase === "ready" || game.phase === "finished";
   const crew = game.crew.includes(session.me.id);
@@ -49,7 +51,11 @@ export function ShipGame({
       </div>
       <div className="ship-stats" aria-label="Ship status">
         <strong data-testid="ship-hull">Hull {game.hull}%</strong>
-        <span data-testid="ship-clock">{clock(game.remaining)}</span>
+        <span data-testid="ship-clock">
+          {clock(
+            game.phase === "ready" && host ? minutes * 60_000 : game.remaining,
+          )}
+        </span>
         <span data-testid="ship-repairs">{game.repairs} repairs</span>
       </div>
       <progress
@@ -105,18 +111,34 @@ export function ShipGame({
       )}
       <p className="muted ship-help">
         {game.phase === "ready"
-          ? "Survive a three-minute mission. Each phone has three controls; your orders usually belong to someone else. Read them aloud, listen for yours, and set the requested number."
+          ? "Choose a 1, 2, or 3-minute mission. Each phone has three controls; your orders usually belong to someone else. Read them aloud, listen for yours, and set the requested number."
           : "Read orders aloud. Only your three controls appear here. Missed orders cost 15 hull; wrong settings on a requested control cost 5. Repairs restore 3."}
       </p>
       {configure && game.phase === "finished" && (
         <p className="ship-summary">
           {game.repairs} repairs · {game.mistakes} mistakes ·{" "}
-          {clock(MISSION_MS - game.remaining)} flown
+          {clock(shipDuration(game) - game.remaining)} flown
         </p>
       )}
       {host && configure && (
         <>
-          <button onClick={() => session.startShip()}>
+          <fieldset className="ship-duration">
+            <legend>Mission length</legend>
+            <div>
+              {[1, 2, 3].map((value) => (
+                <button
+                  type="button"
+                  key={value}
+                  aria-label={`${value} minute${value === 1 ? "" : "s"}`}
+                  aria-pressed={minutes === value}
+                  onClick={() => setMinutes(value)}
+                >
+                  {value} min
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          <button onClick={() => session.startShip(minutes)}>
             {game.phase === "finished" ? "Launch Again" : "Launch Mission"}
           </button>
           {players.length === 1 && (

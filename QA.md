@@ -111,17 +111,19 @@ unlock, device volume/mute behavior, and foreground recovery need physical testi
 
 - Inventory: host launch/rematch, 2–8 crew plus solo practice, three controls per
   device, orders sent to another panel, setting selection, shared hull/repairs,
-  order deadlines, three-minute mission, victory/loss, pause/resume, spectators,
+  order deadlines, host-selected 1/2/3-minute missions (default 3), victory/loss,
+  pause/resume, spectators,
   switching, disconnect and host background/stall handling.
 - Rule tests cover ownership, conflict-free assignments, revision rejection,
   wrong-setting damage, unrelated controls, completed/expired orders, deadline
-  ramp, terminal states, frozen timers and an entire eight-player successful
+  ramp proportional to each selected duration, terminal states, frozen timers and an entire eight-player successful
   mission. Network tests cover malformed inputs/state, epochs, real session
   synchronization, late spectators, disconnect cleanup and timer disposal.
 - Production Chromium tests pair crew through WebRTC, complete each other's
   orders with keyboard/touch input, exercise damage/repair and pause/resume,
   join/leave a spectator, disconnect crew and switch games. Controlled-clock
-  tests cover an unattended loss, rematch, background pause and a complete win.
+  tests cover an unattended loss, rematch, background pause and complete wins,
+  including one-minute completion, correct flown time and duration changes on rematch.
 - Keep the deterministic control-panel screenshot and review desktop,
   320×700/390×844/768×1024 screenshots with normal and taller Arial metrics.
   Check that all three panels fit with viewport clearance, selected numbers
@@ -144,8 +146,12 @@ QA inventory for this game:
 - Pause/resume with a new countdown, pairing pause, host background/stall,
   late spectators, rider/spectator departures, host loss, and game switching.
 - Desktop, tablet, 390px and 320px phone layouts; alternate taller font metrics,
-  eight long names, numbered riders, focus, 44px touch targets, normal surrounding
+  eight long names, numbered riders, focus, roughly 80×64px arrow targets with 10px
+  gaps, normal surrounding
   page scrolling, active-surface gesture handling, and no horizontal overflow.
+- Motion: continuous head/trail movement between confirmed cells, corners without
+  diagonal shortcuts, no extrapolation, exact paused/crashed positions, reduced-motion
+  grid steps and recovery after delayed/skipped snapshots.
 - Retain a deterministic arena screenshot and review full-page desktop/mobile
   screenshots. Verify cached startup under `/multiplayer-test/` and update messaging.
 
@@ -175,3 +181,19 @@ It removes
 the fixture before the normal and taller-font responsive checks, whose viewport,
 clearance, overflow, and touch-target assertions remain strict. Update these two
 baselines with the helper active; do not increase tolerances to hide layout changes.
+
+## Control and motion follow-up
+
+The larger Light-cycle arrows and the Spaceship mission-length selector are
+covered by desktop, 320×700, 390×844 and 768×1024 production-browser checks.
+Light-cycle coverage includes eight long names, taller fonts, intermediate head
+and trail positions, paused alignment and reduced-motion grid steps. All three
+mission lengths have rules/session coverage; browser tests verify a complete
+one-minute win, correct flown time, pause/resume and choosing a new length for
+the next launch. Desktop/mobile/tablet screenshots were reviewed.
+
+A fresh live pass for these changes was unavailable: the in-app browser blocked
+localhost navigation and native Firefox access remained pending OS Accessibility
+and Screen Recording permissions. The earlier live game passes above predate this
+follow-up. Physical iPhone/iPad checks of the larger targets and animation feel
+remain useful; browser emulation does not establish device performance or latency.

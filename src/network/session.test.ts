@@ -473,3 +473,25 @@ describe("Light-cycle sessions", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+it("shares the host's chosen ship duration and preserves it through pause/resume", async () => {
+  const { host, client } = await pair();
+  host.selectGame("ship");
+  for (const minutes of [0, 4, NaN, 1.5]) host.startShip(minutes);
+  expect(host.snapshot().room.ship?.phase).toBe("ready");
+  client.startShip(1);
+  expect(host.snapshot().room.ship?.phase).toBe("ready");
+  for (const minutes of [1, 2, 3]) {
+    host.startShip(minutes);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(client.snapshot().room.ship?.duration).toBe(minutes * 60_000);
+    expect(client.snapshot().room.ship?.remaining).toBe(minutes * 60_000);
+    host.pauseGames();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(client.snapshot().room.ship?.remaining).toBe(minutes * 60_000);
+    host.resumeShip();
+    await vi.advanceTimersByTimeAsync(270);
+    expect(client.snapshot().room.ship?.duration).toBe(minutes * 60_000);
+    expect(client.snapshot().room.ship?.remaining).toBe(minutes * 60_000 - 250);
+  }
+});

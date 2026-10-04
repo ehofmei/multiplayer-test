@@ -159,3 +159,47 @@ describe("Spaceship Panic", () => {
     ).toBe(false);
   });
 });
+
+it("runs each selected duration with the same relative difficulty ramp and valid snapshots", () => {
+  for (const minutes of [1, 2, 3]) {
+    let s = launchShip(["a"], random, minutes);
+    expect(s.duration).toBe(minutes * 60_000);
+    expect(s.remaining).toBe(s.duration);
+    expect(s.orders[0].remaining).toBe(18_000);
+    // At halfway, a new order has the same deadline for each mission length.
+    const halfway = {
+      ...s,
+      remaining: s.remaining / 2,
+      orders: s.orders.map((o) => ({
+        ...o,
+        status: "done" as const,
+        remaining: 1,
+      })),
+    };
+    expect(stepShip(halfway, 1, random).orders[0].remaining).toBeCloseTo(
+      14_000,
+      -1,
+    );
+    for (let elapsed = 0; elapsed < minutes * 60_000; elapsed += 250) {
+      for (const o of s.orders)
+        if (o.status === "pending") {
+          const c = s.controls[o.control];
+          s = setShipControl(s, c.owner, o.control, o.value, c.revision);
+        }
+      s = stepShip(s, 250, random);
+      expect(validRoom(room(s))).toBe(true);
+    }
+    expect(s.phase).toBe("finished");
+    expect(s.hull).toBe(100);
+    expect(s.remaining).toBe(0);
+  }
+});
+it("rejects unsupported duration fields and remaining times beyond the selected length, while accepting legacy states", () => {
+  const state = launchShip(["a"], random, 1);
+  for (const duration of [0, 90_000, 240_000, "60000", null, Infinity])
+    expect(validRoom(room({ ...state, duration } as typeof state))).toBe(false);
+  expect(validRoom(room({ ...state, remaining: 60_001 }))).toBe(false);
+  const legacy = launchShip(["a"], random);
+  delete legacy.duration;
+  expect(validRoom(room(legacy))).toBe(true);
+});

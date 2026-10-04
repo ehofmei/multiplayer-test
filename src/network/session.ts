@@ -7,7 +7,12 @@ import {
   CYCLE_COUNTDOWN,
   type CycleDirection,
 } from "../games/cycle";
-import { launchShip, stepShip, setShipControl } from "../games/ship";
+import {
+  launchShip,
+  stepShip,
+  setShipControl,
+  validMissionMinutes,
+} from "../games/ship";
 import { newBreakout, stepBreakout } from "../games/breakout";
 import { newArena, moveArena, stepArena } from "../games/arena";
 import { validColor, type PaddleColor } from "../games/colors";
@@ -706,13 +711,22 @@ export class Session {
       if (changed) this.broadcast();
     }, 25);
   }
-  startShip() {
-    if (this.role !== "host" || this.disposed || this.room.kind !== "ship")
+  startShip(minutes = 3) {
+    if (
+      this.role !== "host" ||
+      this.disposed ||
+      this.room.kind !== "ship" ||
+      !validMissionMinutes(minutes)
+    )
       return;
     this.stopGameTimers();
     this.room.epoch++;
     this.room.notice = "";
-    this.room.ship = launchShip(this.players.map((p) => p.id));
+    this.room.ship = launchShip(
+      this.players.map((p) => p.id),
+      Math.random,
+      minutes,
+    );
     this.runShip();
     this.broadcast();
   }

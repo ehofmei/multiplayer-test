@@ -1,4 +1,7 @@
 export const MISSION_MS = 180_000;
+export const validMissionMinutes = (minutes: number) =>
+  [1, 2, 3].includes(minutes);
+export const shipDuration = (state: ShipState) => state.duration ?? MISSION_MS;
 export const shipSystems = [
   "Shields",
   "Thrusters",
@@ -41,17 +44,19 @@ export interface ShipState {
   phase: "ready" | "playing" | "paused" | "finished";
   crew: string[];
   remaining: number;
+  duration?: number;
   hull: number;
   repairs: number;
   mistakes: number;
   controls: ShipControl[];
   orders: ShipOrder[];
 }
-export function newShip(crew: string[] = []): ShipState {
+export function newShip(crew: string[] = [], minutes = 3): ShipState {
   return {
     phase: "ready",
     crew,
-    remaining: MISSION_MS,
+    duration: (validMissionMinutes(minutes) ? minutes : 3) * 60_000,
+    remaining: (validMissionMinutes(minutes) ? minutes : 3) * 60_000,
     hull: 100,
     repairs: 0,
     mistakes: 0,
@@ -77,11 +82,17 @@ function nextOrder(
     control,
     value,
     status: "pending",
-    remaining: Math.round(10_000 + (8_000 * state.remaining) / MISSION_MS),
+    remaining: Math.round(
+      10_000 + (8_000 * state.remaining) / shipDuration(state),
+    ),
   };
 }
-export function launchShip(crew: string[], random = Math.random): ShipState {
-  const state = { ...newShip(crew), phase: "playing" as const };
+export function launchShip(
+  crew: string[],
+  random = Math.random,
+  minutes = 3,
+): ShipState {
+  const state = { ...newShip(crew, minutes), phase: "playing" as const };
   return {
     ...state,
     orders: crew.map((caller) => nextOrder(state, caller, random)),
