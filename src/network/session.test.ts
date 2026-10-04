@@ -495,3 +495,105 @@ it("shares the host's chosen ship duration and preserves it through pause/resume
     expect(client.snapshot().room.ship?.remaining).toBe(minutes * 60_000 - 250);
   }
 });
+
+it("runs host-owned Sumo movement/dashes, rejects stale input, and freezes pause/resume", async () => {
+  const { host, client, hostChannel } = await pair();
+  host.selectGame("sumo");
+  client.startSumo();
+  expect(host.snapshot().room.sumo?.phase).toBe("ready");
+  host.startSumo();
+  const epoch = host.snapshot().room.epoch;
+  await vi.advanceTimersByTimeAsync(3050);
+  expect(client.snapshot().room.sumo?.phase).toBe("playing");
+  client.moveBumper(-1, 0);
+  await vi.advanceTimersByTimeAsync(20);
+  client.dashBumper();
+  await vi.advanceTimersByTimeAsync(100);
+  expect(client.snapshot().room.sumo?.bumpers[1].x).toBeLessThan(0.75);
+  expect(client.snapshot().room.sumo?.bumpers[1].cooldown).toBeGreaterThan(0);
+  hostChannel.onmessage!({
+    data: JSON.stringify({
+      v: 2,
+      type: "input",
+      epoch: epoch - 1,
+      sequence: 50,
+      input: { kind: "sumo-move", x: 1, y: 0 },
+    }),
+  });
+  hostChannel.onmessage!({
+    data: JSON.stringify({
+      v: 2,
+      type: "input",
+      epoch,
+      sequence: 49,
+      input: { kind: "sumo-move", x: 1, y: 0 },
+    }),
+  });
+  expect(host.snapshot().room.sumo?.bumpers[1].dx).toBe(-1);
+  await vi.advanceTimersByTimeAsync(500);
+  expect(host.snapshot().room.sumo?.bumpers[1].inputFor).toBe(0);
+  host.pauseGames();
+  await vi.advanceTimersByTimeAsync(20);
+  const paused = structuredClone(client.snapshot().room.sumo);
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(client.snapshot().room.sumo).toEqual(paused);
+  expect(paused?.bumpers[1].vx).toBe(0);
+  host.resumeSumo();
+  await vi.advanceTimersByTimeAsync(3050);
+  expect(client.snapshot().room.sumo?.phase).toBe("playing");
+  expect(client.snapshot().room.sumo?.bumpers[1].dx).toBe(0);
+  host.startSumo();
+  expect(host.snapshot().room.epoch).toBe(epoch + 1);
+  expect(host.snapshot().room.sumo?.ticks).toBe(0);
+  host.selectGame("lights");
+  await vi.advanceTimersByTimeAsync(20);
+  expect(client.snapshot().room.kind).toBe("lights");
+  client.dispose();
+  host.dispose();
+  await vi.advanceTimersByTimeAsync(20);
+  expect(vi.getTimerCount()).toBe(0);
+});
+
+it("Sumo spectators cannot move, spectator departures preserve play and participants leaving reset", async () => {
+  const { host, hostChannel } = await pair();
+  const offer = await host.offer();
+  host.selectGame("sumo");
+  host.startSumo();
+  const late = new Session("client", { id: "late", name: "Sam" }, () => {});
+  sessions.push(late);
+  await host.accept(await late.answer(offer));
+  const [a, b] = Peer.all.slice(-2);
+  a.channel.peer = b.channel;
+  b.channel.peer = a.channel;
+  b.ondatachannel!({ channel: b.channel });
+  a.channel.open();
+  b.channel.open();
+  await vi.advanceTimersByTimeAsync(3_050);
+  expect(late.snapshot().room.sumo?.bumpers).toHaveLength(2);
+  late.moveBumper(1, 0);
+  late.dashBumper();
+  await vi.advanceTimersByTimeAsync(20);
+  expect(
+    host.snapshot().room.sumo?.bumpers.every((r) => r.inputFor === 0),
+  ).toBe(true);
+  a.channel.onclose!();
+  expect(host.snapshot().room.sumo?.phase).toBe("playing");
+  hostChannel.onclose!();
+  expect(host.snapshot().room.sumo?.phase).toBe("ready");
+  expect(host.snapshot().room.notice).toContain("A player left");
+  host.startSumo();
+  expect(host.snapshot().room.sumo?.phase).toBe("ready");
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(host.snapshot().room.sumo?.ticks).toBe(0);
+});
+
+it("Sumo pauses on a scheduling stall rather than fast-forwarding", async () => {
+  const { host } = await pair();
+  host.selectGame("sumo");
+  host.startSumo();
+  const clock = vi.spyOn(performance, "now").mockReturnValue(5000);
+  await vi.advanceTimersByTimeAsync(25);
+  expect(host.snapshot().room.sumo?.phase).toBe("paused");
+  expect(host.snapshot().room.sumo?.ticks).toBe(0);
+  clock.mockRestore();
+});

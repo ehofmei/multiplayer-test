@@ -51,6 +51,17 @@ export function parseMessage(raw: unknown): Message | null {
       record(m.input)
     ) {
       const i = m.input;
+      if (i.kind === "sumo-dash") return m as Message;
+      if (
+        i.kind === "sumo-move" &&
+        typeof i.x === "number" &&
+        Number.isFinite(i.x) &&
+        Math.abs(i.x) <= 1 &&
+        typeof i.y === "number" &&
+        Number.isFinite(i.y) &&
+        Math.abs(i.y) <= 1
+      )
+        return m as Message;
       if (
         i.kind === "cycle-turn" &&
         cycleDirections.some((d) => d === i.direction)

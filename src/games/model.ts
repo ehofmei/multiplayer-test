@@ -1,3 +1,4 @@
+import { newSumo, type SumoState } from "./sumo";
 import { newCycle, type CycleState, type CycleDirection } from "./cycle";
 import { newShip, type ShipState } from "./ship";
 import { rallyBall } from "./speed";
@@ -11,7 +12,8 @@ export type GameKind =
   | "breakout"
   | "reaction"
   | "ship"
-  | "cycle";
+  | "cycle"
+  | "sumo";
 export interface PongState {
   phase: "ready" | "serve" | "playing" | "paused" | "finished";
   seats: string[];
@@ -45,8 +47,11 @@ export interface Room {
   race: RaceState | null;
   ship?: ShipState | null;
   cycle?: CycleState | null;
+  sumo?: SumoState | null;
 }
 export type GameInput =
+  | { kind: "sumo-move"; x: number; y: number }
+  | { kind: "sumo-dash" }
   | { kind: "cycle-turn"; direction: CycleDirection }
   | { kind: "color"; color: import("./colors").PaddleColor }
   | { kind: "paddle"; position: number }
@@ -61,6 +66,7 @@ export const gameNames: Record<GameKind, string> = {
   reaction: "Reaction Race",
   ship: "Spaceship Panic",
   cycle: "Light-cycle Arena",
+  sumo: "Sumo Bumpers",
 };
 export function newRoom(kind: GameKind, epoch: number): Room {
   return {
@@ -68,6 +74,7 @@ export function newRoom(kind: GameKind, epoch: number): Room {
     kind,
     notice: "",
     cycle: kind === "cycle" ? newCycle() : null,
+    sumo: kind === "sumo" ? newSumo() : null,
     ship: kind === "ship" ? newShip() : null,
     pong:
       kind === "pong"

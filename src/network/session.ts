@@ -1,4 +1,13 @@
 import {
+  newSumo,
+  stepSumo,
+  moveSumo,
+  dashSumo,
+  stopSumo,
+  SUMO_HZ,
+  SUMO_COUNTDOWN,
+} from "../games/sumo";
+import {
   newCycle,
   stepCycle,
   turnCycle,
@@ -430,6 +439,7 @@ export class Session {
         (this.room.pong?.seats.includes(link.player.id) ||
           this.room.ship?.crew.includes(link.player.id) ||
           this.room.cycle?.riders.some((r) => r.id === link.player!.id) ||
+          this.room.sumo?.bumpers.some((b) => b.id === link.player!.id) ||
           this.room.race?.entries.some((e) => e.id === link.player!.id))
       ) {
         this.stopGameTimers();
@@ -613,6 +623,15 @@ export class Session {
   pauseGames() {
     if (this.role !== "host") return;
     if (
+      this.room.sumo &&
+      ["countdown", "playing"].includes(this.room.sumo.phase)
+    ) {
+      this.stopGameTimers();
+      this.room.sumo = { ...stopSumo(this.room.sumo), phase: "paused" };
+      this.broadcast();
+      return;
+    }
+    if (
       this.room.cycle &&
       ["playing", "countdown"].includes(this.room.cycle.phase)
     ) {
@@ -652,6 +671,75 @@ export class Session {
     this.room.pong = { ...this.room.pong, phase: "serve", serveIn: 1 };
     this.runPong();
     this.broadcast();
+  }
+  startSumo() {
+    if (
+      this.role !== "host" ||
+      this.disposed ||
+      this.room.kind !== "sumo" ||
+      this.players.length < 2
+    )
+      return;
+    this.stopGameTimers();
+    this.room.epoch++;
+    this.room.notice = "";
+    this.room.sumo = newSumo(this.players.map((p) => p.id));
+    this.runSumo();
+    this.broadcast();
+  }
+  resumeSumo() {
+    if (
+      this.role !== "host" ||
+      this.disposed ||
+      this.room.sumo?.phase !== "paused"
+    )
+      return;
+    this.room.sumo = {
+      ...stopSumo(this.room.sumo),
+      phase: "countdown",
+      countdown: SUMO_COUNTDOWN,
+    };
+    this.runSumo();
+    this.broadcast();
+  }
+  moveBumper(x: number, y: number) {
+    if (
+      !Number.isFinite(x) ||
+      !Number.isFinite(y) ||
+      Math.abs(x) > 1 ||
+      Math.abs(y) > 1
+    )
+      return;
+    this.input({ kind: "sumo-move", x, y });
+  }
+  dashBumper() {
+    this.input({ kind: "sumo-dash" });
+  }
+  private runSumo() {
+    let last = performance.now(),
+      broadcastAt = last,
+      accumulator = 0;
+    this.gameTimer = setInterval(() => {
+      const now = performance.now();
+      if (now - last > 500) {
+        this.pauseGames();
+        return;
+      }
+      accumulator += (now - last) / 1000;
+      last = now;
+      while (accumulator >= 1 / SUMO_HZ && this.room.sumo) {
+        accumulator -= 1 / SUMO_HZ;
+        this.room.sumo = stepSumo(this.room.sumo);
+        if (this.room.sumo.phase === "finished") {
+          this.stopGameTimers();
+          break;
+        }
+      }
+      if (this.room.sumo?.phase === "finished" || now - broadcastAt >= 50) {
+        broadcastAt = now;
+        this.broadcast();
+      } else this.emit();
+    }, 1000 / 60);
   }
   startCycle() {
     if (
@@ -836,6 +924,18 @@ export class Session {
         player.color = input.color;
         this.broadcast();
       }
+    } else if (
+      input.kind === "sumo-move" &&
+      this.room.kind === "sumo" &&
+      this.room.sumo
+    ) {
+      this.room.sumo = moveSumo(this.room.sumo, id, input.x, input.y);
+    } else if (
+      input.kind === "sumo-dash" &&
+      this.room.kind === "sumo" &&
+      this.room.sumo
+    ) {
+      this.room.sumo = dashSumo(this.room.sumo, id);
     } else if (
       input.kind === "cycle-turn" &&
       this.room.kind === "cycle" &&

@@ -5,7 +5,7 @@ device has one direct WebRTC DataChannel to that host. There is no gameplay serv
 signaling service, STUN/TURN configuration, database, or account.
 
 Pair up to eight devices once using QR codes or copy/paste, then let the host choose
-Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, or Reaction Race. Switching games keeps the same
+Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, Sumo Bumpers, or Reaction Race. Switching games keeps the same
 connections. The app is installable and includes latency diagnostics.
 
 ## Run and verify
@@ -125,6 +125,33 @@ pairing, background handling, color preferences and muted local sounds use the
 existing game lifecycle. Update every device before selecting Co-op Breakout;
 older builds cannot validate its room snapshots. No pairing protocol or saved
 identity/sound storage change is required.
+
+**Sumo Bumpers** is a competitive ring-out game for two to eight players.
+Everyone present at Start Bumpers joins; late arrivals watch until Bump Again.
+A three-second countdown gives everyone time to find their numbered, colored
+bumper. Drag the large thumb pad in any direction to accelerate, and release to
+brake. While moving, tap Dash with your other thumb for a short burst; it recharges
+in two seconds. On a keyboard, focus the ring and hold arrows/WASD, with Space to
+dash. The second thumb works while movement remains held.
+
+Bumpers transfer momentum on contact. Your center crossing the bright ring edge
+eliminates you; eliminated bumpers stop colliding. The ring shrinks continuously
+through a maximum sixty-second round. Last survivor wins, simultaneous final
+ring-outs draw, and any survivors at the time limit share the win. Bump Again
+starts a fresh round with everyone currently connected.
+
+The host simulates fixed 120 Hz steps and sends bounded full snapshots. Movement
+vectors are normalized, messages use existing epochs/sequences, and held inputs
+expire after 375 ms without renewal. Releasing, losing focus or backgrounding a
+client clears its input; momentum slows naturally. Pause, host backgrounding,
+pairing and scheduling stalls freeze play and clear movement/momentum. Resume
+Bumpers uses a fresh three-second countdown with the same ring and recharge timers.
+A participant leaving resets the round; a spectator leaving preserves it.
+Confirmed bumper positions are smoothed without predicting ring-outs, with exact
+paused/eliminated positions and reduced-motion support. Optional local sounds
+announce start, dash, your ring-out and the result; sound remains muted by default.
+Update **every device** before selecting Sumo Bumpers: older builds cannot validate
+its state or inputs. Pairing, offline support and saved preferences are unchanged.
 
 **Spaceship Panic** is a cooperative mission for two to eight
 players, with solo practice available. The host chooses 1, 2, or 3 minutes before

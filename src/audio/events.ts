@@ -29,6 +29,13 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
                 : pong.seats[pong.score[0] === 7 ? 0 : 1]) === me,
         }
       : null,
+    sumo: room.sumo
+      ? {
+          phase: room.sumo.phase,
+          alive: room.sumo.bumpers.find((b) => b.id === me)?.alive,
+          cooldown: room.sumo.bumpers.find((b) => b.id === me)?.cooldown,
+        }
+      : null,
     cycle: room.cycle
       ? {
           phase: room.cycle.phase,
@@ -62,6 +69,15 @@ export function soundEvents(
   if (!before || before.key !== after.key) return [];
   if (after.kind === "lights" && after.revision > before.revision)
     return [after.lit >= before.lit ? "on" : "off"];
+  if (after.sumo && before.sumo) {
+    if (after.sumo.phase === "finished" && before.sumo.phase !== "finished")
+      return [after.sumo.alive ? "win" : "finish"];
+    if (before.sumo.alive && after.sumo.alive === false) return ["miss"];
+    if (after.sumo.phase === "playing" && before.sumo.phase === "countdown")
+      return ["go"];
+    if ((after.sumo.cooldown ?? 0) > (before.sumo.cooldown ?? 0))
+      return ["paddle"];
+  }
   if (after.cycle && before.cycle) {
     if (after.cycle.phase === "finished" && before.cycle.phase !== "finished")
       return [after.cycle.alive ? "win" : "finish"];

@@ -1,3 +1,4 @@
+import { SUMO_COUNTDOWN, SUMO_LIMIT, SUMO_LEASE, SUMO_COOLDOWN } from "./sumo";
 import {
   CYCLE_SIZE,
   CYCLE_COUNTDOWN,
@@ -26,6 +27,63 @@ export function validRoom(v: unknown): v is Room {
     v.notice.length > 200
   )
     return false;
+  if (v.kind !== "sumo" && v.sumo !== undefined && v.sumo !== null)
+    return false;
+  if (v.kind === "sumo") {
+    const s = v.sumo;
+    if (
+      !record(s) ||
+      v.pong !== null ||
+      v.race !== null ||
+      (v.ship !== undefined && v.ship !== null) ||
+      (v.cycle !== undefined && v.cycle !== null) ||
+      !["ready", "countdown", "playing", "paused", "finished"].includes(
+        String(s.phase),
+      ) ||
+      !integer(s.ticks, 0, SUMO_LIMIT) ||
+      !integer(s.countdown, 0, SUMO_COUNTDOWN) ||
+      !Array.isArray(s.bumpers) ||
+      s.bumpers.length > 8 ||
+      (s.phase === "ready" ? s.bumpers.length !== 0 : s.bumpers.length < 2)
+    )
+      return false;
+    const bumpers = s.bumpers;
+    if (
+      !bumpers.every(
+        (b) =>
+          record(b) &&
+          id(b.id) &&
+          typeof b.alive === "boolean" &&
+          number(b.x, 0, 1) &&
+          number(b.y, 0, 1) &&
+          number(b.vx, -2, 2) &&
+          number(b.vy, -2, 2) &&
+          number(b.dx, -1, 1) &&
+          number(b.dy, -1, 1) &&
+          Math.hypot(b.dx, b.dy) <= 1.000001 &&
+          integer(b.inputFor, 0, SUMO_LEASE) &&
+          integer(b.cooldown, 0, SUMO_COOLDOWN) &&
+          (b.alive ||
+            (b.inputFor === 0 &&
+              b.dx === 0 &&
+              b.dy === 0 &&
+              b.vx === 0 &&
+              b.vy === 0)),
+      ) ||
+      new Set(bumpers.map((b) => b.id)).size !== bumpers.length
+    )
+      return false;
+    const alive = bumpers.filter((b) => b.alive).length;
+    return s.phase === "ready"
+      ? s.ticks === 0 && s.countdown === SUMO_COUNTDOWN
+      : s.phase === "finished"
+        ? s.countdown === 0 && (alive <= 1 || s.ticks === SUMO_LIMIT)
+        : alive >= 2 &&
+          s.ticks < SUMO_LIMIT &&
+          (s.phase === "countdown"
+            ? s.countdown > 0
+            : s.phase !== "playing" || s.countdown === 0);
+  }
   if (v.kind !== "cycle" && v.cycle !== undefined && v.cycle !== null)
     return false;
   if (v.kind === "cycle") {

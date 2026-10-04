@@ -18,6 +18,12 @@ const choices: {
   mark: string;
 }[] = [
   {
+    kind: "sumo",
+    title: "Sumo Bumpers",
+    detail: "2–8 bumpers. Dash, bump, and stay inside the shrinking ring.",
+    mark: "◎",
+  },
+  {
     kind: "cycle",
     title: "Light-cycle Arena",
     detail: "2–8 riders. Leave a trail. Cut them off. Last survivor wins.",

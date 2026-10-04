@@ -1,3 +1,4 @@
+import { SumoGame } from "./components/SumoGame";
 import { CycleGame } from "./components/CycleGame";
 import { ShipGame } from "./components/ShipGame";
 import { ArenaGame } from "./components/ArenaGame";
@@ -343,6 +344,15 @@ export function App() {
                     key={snapshot.room.epoch}
                     game={snapshot.room.pong}
                     epoch={snapshot.room.epoch}
+                    players={snapshot.players}
+                    session={session}
+                    connected={connected}
+                  />
+                )}
+                {snapshot?.room.kind === "sumo" && snapshot.room.sumo && (
+                  <SumoGame
+                    key={snapshot.room.epoch}
+                    game={snapshot.room.sumo}
                     players={snapshot.players}
                     session={session}
                     connected={connected}

@@ -1,3 +1,4 @@
+import { newSumo } from "../games/sumo";
 import { newCycle } from "../games/cycle";
 import { launchShip } from "../games/ship";
 import { newBreakout } from "../games/breakout";
@@ -152,4 +153,25 @@ it("announces cycle starts, personal crashes and wins once", () => {
   expect(soundEvents(before, frame(s))).toEqual(["win"]);
   expect(soundEvents(frame(s), frame(s))).toEqual([]);
   expect(soundEvents(null, frame(s))).toEqual([]);
+});
+
+it("announces Sumo starts, dashes, ring-outs and outcomes once", () => {
+  const s = snapshot();
+  s.room = newRoom("sumo", 1);
+  s.room.sumo = newSumo(["a", "b", "c"]);
+  let before = frame(s);
+  s.room.sumo.phase = "playing";
+  expect(soundEvents(before, frame(s))).toEqual(["go"]);
+  before = frame(s);
+  s.room.sumo.bumpers[0].cooldown = 240;
+  expect(soundEvents(before, frame(s))).toEqual(["paddle"]);
+  before = frame(s);
+  s.room.sumo.bumpers[0].alive = false;
+  expect(soundEvents(before, frame(s))).toEqual(["miss"]);
+  before = frame(s);
+  s.room.sumo.phase = "finished";
+  expect(soundEvents(before, frame(s))).toEqual(["finish"]);
+  s.room.sumo.bumpers[0].alive = true;
+  expect(soundEvents(before, frame(s))).toEqual(["win"]);
+  expect(soundEvents(frame(s), frame(s))).toEqual([]);
 });

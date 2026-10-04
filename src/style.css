@@ -1267,3 +1267,149 @@ select:focus-visible {
   background: #122c29;
   color: #fff;
 }
+
+.sumo-court {
+  width: 100%;
+  max-width: 440px;
+  aspect-ratio: 1;
+  margin: 0 auto;
+  background: #122c29;
+  border: 2px solid #527064;
+  border-radius: 18px;
+  overflow: hidden;
+}
+.sumo-court svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.sumo-court:focus-visible {
+  outline: 3px solid #527064;
+  outline-offset: 3px;
+}
+.sumo-status {
+  text-align: center;
+  font-weight: 750;
+  margin: 8px 0;
+}
+.sumo-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 12px auto 8px;
+}
+.sumo-stick {
+  position: relative;
+  width: 144px;
+  height: 144px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid #527064;
+  background: #edf1e7;
+  user-select: none;
+}
+.sumo-stick[data-active="true"] {
+  touch-action: none;
+}
+.sumo-stick[aria-disabled="true"] {
+  opacity: 0.55;
+}
+.sumo-stick > span:not(.sumo-stick-knob) {
+  position: absolute;
+  font-size: 24px;
+  font-weight: 750;
+  line-height: 1;
+  color: #527064;
+  pointer-events: none;
+}
+.sumo-stick-up {
+  top: 6px;
+  left: 58px;
+}
+.sumo-stick-down {
+  bottom: 6px;
+  left: 58px;
+}
+.sumo-stick-left {
+  top: 58px;
+  left: 6px;
+}
+.sumo-stick-right {
+  top: 58px;
+  right: 6px;
+}
+.sumo-stick-knob {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  left: 46px;
+  top: 46px;
+  border-radius: 50%;
+  background: #122c29;
+  border: 3px solid #c9ee87;
+  pointer-events: none;
+}
+.sumo-dash-control {
+  width: 96px;
+  text-align: center;
+}
+.sumo-dash-control button {
+  width: 100%;
+  min-height: 72px;
+  font-size: 20px;
+  touch-action: manipulation;
+}
+.sumo-dash-control span {
+  display: block;
+  font-size: 12px;
+  margin-top: 6px;
+}
+.sumo-feedback {
+  text-align: center;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+  margin: 8px 0;
+}
+.sumo-help {
+  font-size: 13px;
+}
+@media (max-width: 650px) {
+  .sumo-game-card {
+    padding: 12px;
+  }
+  .sumo-status {
+    font-size: 14px;
+    margin: 6px 0;
+  }
+}
+@media (max-width: 650px), (max-height: 800px) {
+  main:has(.sumo-game-card) .session-heading {
+    padding-top: 14px;
+    gap: 8px;
+  }
+  main:has(.sumo-game-card) .session-heading h1 {
+    font-size: 24px;
+    letter-spacing: -0.8px;
+    margin: 8px 0;
+  }
+  main:has(.sumo-game-card) .session-heading .eyebrow {
+    display: none;
+  }
+  main:has(.sumo-game-card) .status {
+    margin: 8px 0;
+  }
+  main:has(.sumo-game-card) .game-bar {
+    margin: 8px 0;
+  }
+  .sumo-game-card .board-heading {
+    justify-content: flex-end;
+    margin: 0;
+  }
+  .sumo-game-card .board-heading h2 {
+    display: none;
+  }
+  .sumo-court {
+    max-width: min(360px, max(210px, calc(100dvh - 525px)));
+  }
+}

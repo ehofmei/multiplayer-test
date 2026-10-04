@@ -197,3 +197,38 @@ localhost navigation and native Firefox access remained pending OS Accessibility
 and Screen Recording permissions. The earlier live game passes above predate this
 follow-up. Physical iPhone/iPad checks of the larger targets and animation feel
 remain useful; browser emulation does not establish device performance or latency.
+
+## Sumo Bumpers
+
+QA inventory:
+
+- Host starts 2–8 players; three-second countdown, numbered/color seats, moving
+  collisions, ring-outs, simultaneous draw, shrinking ring, sixty-second shared
+  win, and fresh rematch. Late arrivals watch, eliminated controls disable.
+- 144px movement pad with capture/release/cancel and a 96×72px Dash button. Verify
+  simultaneous two-thumb movement/dash, diagonal normalization, braking, recharge,
+  lost-input expiry, focus loss, arrows/WASD + Space, and normal surrounding scrolling.
+- Pause/resume clears velocity/input and freezes ring/recharge timers; pairing,
+  background/stall, game switching, participant/spectator departures and host loss.
+- Desktop, 320×700/390×844 phones and 768×1024 tablet; taller font metrics, eight
+  long names, viewport clearance, contrast, keyboard focus, no overflow, continuous
+  confirmed movement, exact paused/eliminated positions and reduced-motion steps.
+
+Rules/protocol tests cover spawns, normalization, expired input, dash limits,
+contact separation/momentum, a successful knock-out, simultaneous ring-outs,
+terminal states, timeout, a full eight-player simulation and malformed wire state.
+Session tests cover actual input sequencing/epochs, permissions, shared movement,
+pause/resume, spectators, disconnect cleanup and scheduling stalls. Production
+Chromium tests pair two/eight independent WebRTC contexts, exercise physical-style
+two-finger touch input, keyboard movement/dash, paused timers, rematch, spectator
+controls/departures, background pause, participant loss and host loss. A deterministic
+ring snapshot is retained and desktop/mobile/tablet screenshots are reviewed.
+Existing production-subpath cache/offline/update checks remain in `npm run verify`.
+
+The attempted live pass was unavailable because the in-app browser blocked local
+preview navigation. Native access was also unavailable in the preceding feedback
+pass due to pending OS permissions. Automated checks and screenshot inspection
+cover this implementation; live interaction remains unverified. Physical iPhone/
+iPad follow-up should check two-thumb steering/dash feel, Wi-Fi latency, movement
+clarity, optional sound and Safari/installed-PWA background/resume. Update all
+devices before selecting this game.
