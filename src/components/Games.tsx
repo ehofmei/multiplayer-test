@@ -66,6 +66,12 @@ const choices: {
     detail: "The original shared board. Tap and experiment together.",
     mark: "▦",
   },
+  {
+    kind: "bakery",
+    title: "Midnight Bakery",
+    detail: "Pick, reveal, pass. Bake silly treats and dodge spoon gremlins.",
+    mark: "♧",
+  },
 ];
 export function GamePicker({ session }: { session: Session }) {
   const [page, setPage] = useState(0);
@@ -81,7 +87,7 @@ export function GamePicker({ session }: { session: Session }) {
     media.addEventListener("change", change);
     return () => media.removeEventListener("change", change);
   }, []);
-  const pages = compact ? 2 : 1;
+  const pages = compact ? Math.ceil(choices.length / 4) : 1;
   return (
     <section className="games-card game-library" aria-label="Game picker">
       <p className="eyebrow">WHAT SHALL WE PLAY?</p>
@@ -118,7 +124,7 @@ export function GamePicker({ session }: { session: Session }) {
           <button
             className="quiet"
             disabled={page === 0}
-            onClick={() => setPage(0)}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
           >
             Previous games
           </button>
@@ -127,8 +133,8 @@ export function GamePicker({ session }: { session: Session }) {
           </span>
           <button
             className="quiet"
-            disabled={page === 1}
-            onClick={() => setPage(1)}
+            disabled={page === pages - 1}
+            onClick={() => setPage((p) => Math.min(pages - 1, p + 1))}
           >
             More games
           </button>

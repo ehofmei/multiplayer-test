@@ -1,3 +1,4 @@
+import { newBakery, type BakeryState } from "./bakery";
 import { newSumo, type SumoState } from "./sumo";
 import { newCycle, type CycleState, type CycleDirection } from "./cycle";
 import { newShip, type ShipState } from "./ship";
@@ -13,7 +14,8 @@ export type GameKind =
   | "reaction"
   | "ship"
   | "cycle"
-  | "sumo";
+  | "sumo"
+  | "bakery";
 export interface PongState {
   phase: "ready" | "serve" | "playing" | "paused" | "finished";
   seats: string[];
@@ -48,8 +50,10 @@ export interface Room {
   ship?: ShipState | null;
   cycle?: CycleState | null;
   sumo?: SumoState | null;
+  bakery?: BakeryState | null;
 }
 export type GameInput =
+  | { kind: "bakery-pick"; round: number; pick: number; index: number }
   | { kind: "sumo-move"; x: number; y: number }
   | { kind: "sumo-dash" }
   | { kind: "cycle-turn"; direction: CycleDirection }
@@ -67,12 +71,14 @@ export const gameNames: Record<GameKind, string> = {
   ship: "Spaceship Panic",
   cycle: "Light-cycle Arena",
   sumo: "Sumo Bumpers",
+  bakery: "Midnight Bakery",
 };
 export function newRoom(kind: GameKind, epoch: number): Room {
   return {
     epoch,
     kind,
     notice: "",
+    bakery: kind === "bakery" ? newBakery() : null,
     cycle: kind === "cycle" ? newCycle() : null,
     sumo: kind === "sumo" ? newSumo() : null,
     ship: kind === "ship" ? newShip() : null,

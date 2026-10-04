@@ -1,4 +1,11 @@
 import {
+  newBakery,
+  pickBakery,
+  advanceBakery,
+  bakeryView,
+  BAKERY_REVEAL_MS,
+} from "../games/bakery";
+import {
   newSumo,
   stepSumo,
   moveSumo,
@@ -120,7 +127,9 @@ export class Session {
   snapshot(): Snapshot {
     return {
       grid: this.grid,
-      room: this.room,
+      room: this.room.bakery
+        ? { ...this.room, bakery: bakeryView(this.room.bakery, this.me.id) }
+        : this.room,
       players: this.players,
       status: this.status,
       error: this.error,
@@ -386,6 +395,12 @@ export class Session {
       )
         this.send(link, {
           ...message,
+          room: this.room.bakery
+            ? {
+                ...this.room,
+                bakery: bakeryView(this.room.bakery, link.player.id),
+              }
+            : this.room,
           ...(link.sequence >= 0 ? { ack: link.sequence } : {}),
         });
       // A failed send removes the peer and broadcasts a newer roster.
@@ -440,6 +455,7 @@ export class Session {
           this.room.ship?.crew.includes(link.player.id) ||
           this.room.cycle?.riders.some((r) => r.id === link.player!.id) ||
           this.room.sumo?.bumpers.some((b) => b.id === link.player!.id) ||
+          this.room.bakery?.bakers.some((b) => b.id === link.player!.id) ||
           this.room.race?.entries.some((e) => e.id === link.player!.id))
       ) {
         this.stopGameTimers();
@@ -623,6 +639,20 @@ export class Session {
   pauseGames() {
     if (this.role !== "host") return;
     if (
+      this.room.bakery &&
+      (this.room.bakery.phase === "picking" ||
+        this.room.bakery.phase === "reveal")
+    ) {
+      this.stopGameTimers();
+      this.room.bakery = {
+        ...this.room.bakery,
+        resumePhase: this.room.bakery.phase,
+        phase: "paused",
+      };
+      this.broadcast();
+      return;
+    }
+    if (
       this.room.sumo &&
       ["countdown", "playing"].includes(this.room.sumo.phase)
     ) {
@@ -671,6 +701,49 @@ export class Session {
     this.room.pong = { ...this.room.pong, phase: "serve", serveIn: 1 };
     this.runPong();
     this.broadcast();
+  }
+  startBakery() {
+    if (
+      this.role !== "host" ||
+      this.disposed ||
+      this.room.kind !== "bakery" ||
+      this.players.length < 2 ||
+      !["ready", "finished"].includes(this.room.bakery?.phase ?? "")
+    )
+      return;
+    this.stopGameTimers();
+    this.room.epoch++;
+    this.room.notice = "";
+    this.room.bakery = newBakery(this.players.map((p) => p.id));
+    this.broadcast();
+  }
+  pickTreat(index: number, round: number, pick: number) {
+    this.input({ kind: "bakery-pick", index, round, pick });
+  }
+  nextBakeryRound() {
+    if (this.role !== "host" || this.room.bakery?.phase !== "round-results")
+      return;
+    this.room.bakery = advanceBakery(this.room.bakery);
+    this.broadcast();
+  }
+  resumeBakery() {
+    if (this.role !== "host" || this.room.bakery?.phase !== "paused") return;
+    this.room.bakery = {
+      ...this.room.bakery,
+      phase: this.room.bakery.resumePhase!,
+      resumePhase: null,
+    };
+    this.scheduleBakery();
+    this.broadcast();
+  }
+  private scheduleBakery() {
+    if (this.room.bakery?.phase !== "reveal") return;
+    this.raceTimer = setTimeout(() => {
+      this.raceTimer = undefined;
+      if (this.room.bakery?.phase !== "reveal") return;
+      this.room.bakery = advanceBakery(this.room.bakery);
+      this.broadcast();
+    }, BAKERY_REVEAL_MS);
   }
   startSumo() {
     if (
@@ -915,7 +988,23 @@ export class Session {
     );
   }
   private applyInput(id: string, input: GameInput) {
-    if (input.kind === "color") {
+    if (
+      input.kind === "bakery-pick" &&
+      this.room.kind === "bakery" &&
+      this.room.bakery
+    ) {
+      const previous = this.room.bakery;
+      this.room.bakery = pickBakery(
+        previous,
+        id,
+        input.round,
+        input.pick,
+        input.index,
+      );
+      if (this.room.bakery === previous) return;
+      this.scheduleBakery();
+      this.broadcast();
+    } else if (input.kind === "color") {
       const player =
         id === this.me.id
           ? this.me

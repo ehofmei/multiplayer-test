@@ -51,6 +51,18 @@ export function parseMessage(raw: unknown): Message | null {
       record(m.input)
     ) {
       const i = m.input;
+      if (
+        i.kind === "bakery-pick" &&
+        integer(i.round) &&
+        i.round >= 1 &&
+        i.round <= 2 &&
+        integer(i.pick) &&
+        i.pick >= 1 &&
+        i.pick <= 6 &&
+        integer(i.index) &&
+        i.index < 6
+      )
+        return m as Message;
       if (i.kind === "sumo-dash") return m as Message;
       if (
         i.kind === "sumo-move" &&

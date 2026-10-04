@@ -1,3 +1,4 @@
+import { bakeryCards } from "./bakery";
 import { SUMO_COUNTDOWN, SUMO_LIMIT, SUMO_LEASE, SUMO_COOLDOWN } from "./sumo";
 import {
   CYCLE_SIZE,
@@ -27,6 +28,79 @@ export function validRoom(v: unknown): v is Room {
     v.notice.length > 200
   )
     return false;
+  if (v.kind !== "bakery" && v.bakery !== undefined && v.bakery !== null)
+    return false;
+  if (v.kind === "bakery") {
+    const b = v.bakery;
+    if (
+      !record(b) ||
+      v.pong !== null ||
+      v.race !== null ||
+      [v.sumo, v.cycle, v.ship].some((x) => x !== undefined && x !== null) ||
+      ![
+        "ready",
+        "picking",
+        "reveal",
+        "round-results",
+        "paused",
+        "finished",
+      ].includes(String(b.phase)) ||
+      !integer(b.round, 0, 2) ||
+      !integer(b.pick, 0, 6) ||
+      (b.direction !== 1 && b.direction !== -1) ||
+      typeof b.reversed !== "boolean" ||
+      !Array.isArray(b.bakers) ||
+      b.bakers.length > 8
+    )
+      return false;
+    if (
+      b.phase === "paused"
+        ? !["picking", "reveal"].includes(String(b.resumePhase))
+        : b.resumePhase !== null
+    )
+      return false;
+    if (b.phase === "ready")
+      return (
+        b.round === 0 && b.pick === 0 && b.bakers.length === 0 && !b.reversed
+      );
+    if (
+      b.round < 1 ||
+      b.pick < 1 ||
+      b.bakers.length < 2 ||
+      (b.phase === "round-results" && (b.round !== 1 || b.pick !== 6)) ||
+      (b.phase === "finished" && (b.round !== 2 || b.pick !== 6))
+    )
+      return false;
+    const phase = b.phase === "paused" ? b.resumePhase : b.phase;
+    const picking = phase === "picking";
+    const count = (b.pick as number) - (picking ? 1 : 0);
+    const cards = (v: unknown): v is string[] =>
+      Array.isArray(v) &&
+      v.every((c) => bakeryCards.some((card) => card === c));
+    return (
+      (!picking || !b.reversed) &&
+      b.bakers.every(
+        (p) =>
+          record(p) &&
+          id(p.id) &&
+          typeof p.locked === "boolean" &&
+          (picking || p.locked) &&
+          cards(p.treats) &&
+          p.treats.length === count &&
+          (p.hand === null || (cards(p.hand) && p.hand.length === 6 - count)) &&
+          integer(p.banked, 0, 21) &&
+          (b.round !== 1 || p.banked === 0) &&
+          (p.choice === null ||
+            (picking &&
+              p.locked &&
+              Array.isArray(p.hand) &&
+              integer(p.choice, 0, p.hand.length - 1))) &&
+          (p.locked || p.choice === null) &&
+          (count === 0 ? p.last === null : p.last === p.treats[count - 1]),
+      ) &&
+      new Set(b.bakers.map((p) => p.id)).size === b.bakers.length
+    );
+  }
   if (v.kind !== "sumo" && v.sumo !== undefined && v.sumo !== null)
     return false;
   if (v.kind === "sumo") {

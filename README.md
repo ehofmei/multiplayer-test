@@ -5,7 +5,7 @@ device has one direct WebRTC DataChannel to that host. There is no gameplay serv
 signaling service, STUN/TURN configuration, database, or account.
 
 Pair up to eight devices once using QR codes or copy/paste, then let the host choose
-Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, Sumo Bumpers, or Reaction Race. Switching games keeps the same
+Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, Sumo Bumpers, Reaction Race, or Midnight Bakery. Switching games keeps the same
 connections. The app is installable and includes latency diagnostics.
 
 ## Run and verify
@@ -63,8 +63,8 @@ support is not a project requirement. Desktop browsers remain useful for testing
 
 The app uses a viewport-filling shell with safe-area padding. Home, the game
 library, pairing, setup, and play are focused views rather than a long page.
-Phones and short windows show four games per library page; larger iPad windows
-show all eight. During games, courts fit their remaining space without changing
+Phones and short windows show four games per library page across three pages; larger iPad windows
+show all nine. During games, courts fit their remaining space without changing
 the game geometry. Landscape layouts place courts beside controls; very short
 setup screens omit the court preview to keep assignments and Start reachable.
 
@@ -106,6 +106,36 @@ browser navigation UI; iOS still controls its status area and home indicator.
    disconnecting. Return Home leaves the room and closes connections.
 
 ## Games
+
+**Midnight Bakery** is a silly competitive pick-and-pass card game for two to eight
+players. Everyone present when the host opens the bakery joins; late arrivals watch
+until Bake Again. Two batches of six simultaneous picks target a 3–5 minute game.
+Choices are untimed, so chatting or taking longer to think can extend the session.
+Tap a card to preview its exact score gain, then Lock my pick. Picks cannot change
+once locked. Everyone reveals together, then remaining hands pass after 1.8 seconds.
+The host starts batch two after everyone has had a chance to see the first scores.
+
+Googly Cookies earn 2 each plus 2 per pair (a pair earns 6). Wobble Jelly pairs earn
+7; unpaired jelly earns 0. Burp Cakes earn 3 each. Disco Sprinkles earn 1 each plus
+2 when matched with a cake, with one sprinkle per cake. Spoon Gremlins earn 1 and
+reverse passing on that reveal; even numbers cancel out. With two bakers, an odd
+number skips that pass instead, so the gremlin still changes your choices. Passing begins clockwise
+in batch one and counterclockwise in batch two. Gremlins affect remaining hands,
+never treats already collected. Each batch scores separately; scores add together,
+and ties share the win. A shuffled room-wide deck contains two cookies and one of
+each other card per player per batch, giving varied hands without additional assets
+or dependencies. The characters are local SVG artwork and work offline.
+
+The host owns the shuffled hands and resolves picks. Personalized snapshots send
+only the recipient's hand and public counters/readiness; other hands and locked
+choices are removed, including from the host's rendered view and spectator views.
+This is a trusted family-host game, not an anti-cheat system. Epoch, sequence,
+batch and pick checks reject outdated/repeated inputs. Pause, pairing and host
+backgrounding preserve hands and locked picks; Resume Bakery continues the same
+pick or restarts the short reveal delay. A participating player leaving resets the
+game; a spectator leaving preserves it. Reloading/leaving the host still ends the
+room. **Update every device before selecting Midnight Bakery**: older builds cannot
+validate its new state and action. Existing pairing and saved preferences remain.
 
 **Shared Lights** has sixteen shared cells, arranged as 4×4 in portrait and 8×2
 in short landscape windows. Every device can toggle cells; the host serializes

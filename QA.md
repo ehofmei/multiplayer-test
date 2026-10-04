@@ -264,3 +264,35 @@ Physical iPhone/iPad checks remain required below.
 - Recheck real-camera pairing in both directions, denied access, text/image fallback,
   foreground recovery, offline launch, and user-controlled updates across devices.
   Chromium viewport tests do not certify Safari or installed-PWA behavior.
+
+## Midnight Bakery
+
+QA inventory:
+
+- Select the ninth game through all three phone library pages; follow host selection.
+- Open Bakery with 2–8 players; select by touch or keyboard, preview score gains,
+  lock exactly once, wait for every baker, reveal together, and pass remaining hands.
+- Cookie/jelly pairs, sprinkle/cake matching, odd gremlin reversals, even gremlin
+  cancellation, two-player skipped passes, fresh batch-two hands, carried scores, ties, and Bake Again.
+- Pause/resume during choosing and revealing; preserve already locked picks.
+  Pairing pauses play; a late arrival spectates and joins the rematch. Participant
+  loss resets; host loss disables choices. Reject stale batch/pick/epoch inputs.
+- Table & scores and Controls & help open/close with focus containment; instructions
+  and scoring breakdowns remain accessible in their scrollable panels.
+- Setup, six-card hand, selected card, reveal, and results at 320×700, 390×844,
+  844×390, 768×1024 and 1280×720, including taller font metrics and long names.
+  Check child bounds as well as page overflow: the hand, preview, lock action and
+  counter must never overlap. Review card focus and 44px minimum touch targets.
+
+Automated coverage includes model scoring/passing, full two-batch play, private and
+bounded snapshots, malformed state/actions, stale/duplicate picks, paused reveals,
+real WebRTC text pairing, two-player completion/rematch, larger rosters, late joins,
+and disconnect cleanup. The deterministic hand snapshot uses local vector art.
+Saved full-screen evidence covers portrait/landscape play and results.
+
+Physical iPhone/iPad checks remain required: play with both children and parents,
+measure an ordinary session against the five-minute target, ask whether +0 jelly
+and the pair bonus are understandable, and whether gremlin reversals are fun.
+Check installed-PWA safe areas, touch focus, background/resume, updates on every
+device, and offline startup/pairing after an online visit. Browser tests cannot
+establish real iOS behavior or whether the family enjoys the balance.

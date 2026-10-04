@@ -2158,3 +2158,514 @@ main.app-shell {
     width: 400px;
   }
 }
+
+/* Midnight Bakery keeps choices central; larger rosters live in a focused panel. */
+.app-shell .bakery-game-card {
+  display: flex !important;
+  max-width: 1100px;
+  margin: 0 auto;
+  background: #fff8ed;
+  color: #382944;
+  gap: 8px;
+}
+.bakery-game-card .board-heading {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.bakery-game-card .board-heading > span {
+  font-size: 12px;
+  color: #665470;
+}
+.bakery-status {
+  font-weight: 700;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.bakery-workspace {
+  flex: 1 1 0 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bakery-hand {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  flex: 1;
+}
+.bakery-treat {
+  background: var(--treat-color);
+  color: #382944;
+  border: 2px solid #816d82;
+  border-radius: 14px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 100px;
+}
+.bakery-treat[aria-pressed="true"] {
+  border-color: #382944;
+  outline: 3px solid #382944;
+  outline-offset: -5px;
+}
+.bakery-treat:disabled {
+  opacity: 0.7;
+}
+.bakery-treat:focus-visible {
+  outline: 3px solid #382944;
+  outline-offset: 2px;
+}
+.treat-art {
+  width: 100%;
+  height: 74px;
+  flex-shrink: 1;
+  min-height: 28px;
+}
+.bakery-treat strong {
+  font-size: 14px;
+}
+.bakery-treat small {
+  font-size: 12px;
+  line-height: 1.2;
+}
+.bakery-gain {
+  font-size: 12px;
+  font-weight: 700;
+}
+.bakery-preview {
+  margin: 0;
+  min-height: 20px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.bakery-lock {
+  min-height: 44px;
+  padding: 8px;
+  background: #624274;
+  color: white;
+}
+.bakery-reveal {
+  display: none;
+}
+.bakery-game-card[data-phase="reveal"] .bakery-hand,
+.bakery-game-card[data-phase="reveal"] .bakery-preview {
+  display: none;
+}
+.bakery-game-card[data-phase="reveal"] .bakery-reveal {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 1;
+  gap: 8px;
+}
+.bakery-reveal > div {
+  background: #f1e2f0;
+  border: 1px solid #af93b9;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+}
+.bakery-reveal span {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.bakery-reveal strong {
+  font-size: 14px;
+}
+.bakery-counter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid #d6c3d8;
+  border-radius: 10px;
+  background: #fffdf8;
+  font-size: 13px;
+}
+.bakery-counter > span {
+  font-size: 12px;
+  line-height: 1.25;
+}
+.bakery-table {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.bakery-table > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.bakery-table button {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 6px 8px;
+  min-height: 44px;
+}
+.bakery-intro {
+  margin: auto;
+}
+.bakery-welcome-art {
+  display: flex;
+  justify-content: center;
+}
+.bakery-welcome-art .treat-art {
+  height: 80px;
+}
+.bakery-intro h3 {
+  margin: 8px 0;
+}
+.bakery-intro p,
+.bakery-results p {
+  font-size: 14px;
+  line-height: 1.35;
+  margin: 8px 0;
+}
+.bakery-menu {
+  display: grid;
+  gap: 6px;
+}
+.bakery-menu > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #d6c3d8;
+  font-size: 13px;
+}
+.bakery-menu > div > * {
+  flex: 1;
+}
+.bakery-menu > div > :last-child {
+  text-align: right;
+}
+.bakery-results {
+  flex: 1;
+  min-height: 0;
+}
+.bakery-scores {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.bakery-scores li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 8px;
+  padding: 8px 12px;
+  border: 1px solid #d6c3d8;
+  border-radius: 10px;
+  background: #fffdf8;
+}
+.bakery-scores li > span {
+  overflow-wrap: anywhere;
+}
+.bakery-scores small {
+  grid-column: 1 / -1;
+  color: #665470;
+}
+@media (max-width: 600px) {
+  .bakery-hand {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .bakery-treat {
+    padding: 5px;
+    gap: 2px;
+  }
+  .bakery-treat strong {
+    font-size: 12px;
+  }
+  .bakery-treat small {
+    display: none;
+  }
+  .bakery-counter {
+    padding: 6px 8px;
+  }
+  .bakery-menu > div {
+    font-size: 12px;
+    padding: 4px 0;
+  }
+  .bakery-welcome-art .treat-art {
+    height: 60px;
+  }
+  .bakery-scores {
+    gap: 5px;
+  }
+  .bakery-scores li {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .bakery-game-card {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.5fr) minmax(190px, 1fr);
+    gap: 4px 12px;
+  }
+  .bakery-game-card > .bakery-workspace {
+    grid-column: 1;
+  }
+  .bakery-hand {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .bakery-treat {
+    min-height: 60px;
+    padding: 4px;
+  }
+  .bakery-treat strong {
+    font-size: 12px;
+  }
+  .bakery-treat small {
+    display: none;
+  }
+  .bakery-welcome-art {
+    display: none;
+  }
+  .bakery-intro h3 {
+    font-size: 15px;
+    margin: 0;
+  }
+  .bakery-intro p {
+    font-size: 12px;
+    margin: 4px 0;
+  }
+  .bakery-menu > div {
+    font-size: 12px;
+    padding: 2px 0;
+  }
+  .bakery-counter > span {
+    line-height: 1.15;
+  }
+  .bakery-preview {
+    font-size: 12px;
+  }
+  .bakery-reveal > div {
+    padding: 6px;
+  }
+  .bakery-results .bakery-menu,
+  .bakery-results > p {
+    display: none;
+  }
+  .bakery-scores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .bakery-scores li {
+    font-size: 12px;
+    padding: 4px;
+  }
+}
+.app-shell .bakery-game-card > * {
+  min-width: 0;
+}
+.bakery-intro {
+  min-width: 0;
+  max-width: 100%;
+}
+.bakery-welcome-art .treat-art {
+  min-width: 0;
+  width: min(100px, 33%);
+}
+.bakery-hand {
+  min-height: min-content;
+}
+.bakery-treat .treat-art {
+  width: 90px;
+  height: 44px;
+  min-height: 36px;
+  flex-shrink: 0;
+}
+@media (max-width: 600px) {
+  .bakery-treat {
+    min-height: 78px;
+  }
+  .bakery-treat .treat-art {
+    height: 32px;
+    min-height: 32px;
+  }
+  .bakery-results .bakery-scores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .bakery-treat .treat-art {
+    height: 28px;
+    min-height: 28px;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .bakery-game-card:not([data-phase="ready"]):not(
+      [data-phase="round-results"]
+    ):not([data-phase="finished"])
+    .bakery-workspace {
+    display: contents;
+  }
+  .bakery-game-card .bakery-hand,
+  .bakery-game-card .bakery-reveal {
+    grid-column: 1;
+  }
+  .bakery-game-card .bakery-preview {
+    margin: 0;
+  }
+  .bakery-game-card .bakery-counter {
+    grid-column: 2;
+  }
+  .bakery-game-card .bakery-table {
+    bottom: 12px;
+    right: 160px;
+  }
+  .bakery-game-card .bakery-lock {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    right: 285px;
+  }
+  .bakery-game-card[data-host="true"] .bakery-lock {
+    left: 155px;
+  }
+  .bakery-game-card .board-heading h2 {
+    display: none;
+  }
+  .bakery-results .bakery-scores small {
+    display: none;
+  }
+  .bakery-results .bakery-scores li > span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+.bakery-workspace {
+  min-height: min-content;
+}
+.bakery-lock {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  max-width: calc(100% - 160px);
+}
+.bakery-reveal .treat-art {
+  width: 90px;
+  height: 60px;
+  flex-shrink: 0;
+}
+.bakery-table > .secondary {
+  font-size: 12px;
+  min-height: 44px;
+  padding: 6px 8px;
+  flex-shrink: 0;
+}
+@media (max-width: 600px) {
+  .bakery-pass-target {
+    display: none;
+  }
+  .bakery-table {
+    gap: 4px;
+  }
+  .bakery-reveal .treat-art {
+    height: 36px;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .bakery-game-card .bakery-table {
+    position: static;
+    grid-column: 2;
+  }
+  .bakery-game-card .bakery-table > span {
+    display: none;
+  }
+  .bakery-game-card .bakery-preview {
+    align-self: end;
+    font-size: 12px;
+  }
+  .bakery-game-card .bakery-hand {
+    grid-row: 1 / 4;
+  }
+  .bakery-game-card .bakery-reveal {
+    grid-row: 1 / 5;
+  }
+  .bakery-game-card .bakery-lock,
+  .bakery-game-card[data-host="true"] .bakery-lock {
+    left: 12px;
+    right: 160px;
+    max-width: none;
+  }
+  .bakery-reveal .treat-art {
+    height: 28px;
+  }
+}
+@media (max-width: 600px) {
+  .bakery-reveal > div {
+    padding: 6px;
+    gap: 2px;
+  }
+  .bakery-reveal span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bakery-reveal strong {
+    font-size: 12px;
+  }
+  .bakery-game-card:is(
+      [data-bakers="5"],
+      [data-bakers="6"],
+      [data-bakers="7"],
+      [data-bakers="8"]
+    )
+    .bakery-reveal
+    .treat-art {
+    display: none;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .bakery-game-card {
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    row-gap: 2px;
+  }
+  .bakery-game-card .board-heading {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 16px;
+  }
+  .bakery-game-card .bakery-status {
+    grid-column: 2;
+    grid-row: 2;
+    line-height: 1.2;
+  }
+  .bakery-game-card .bakery-counter {
+    grid-row: 3;
+    padding: 4px 6px;
+    gap: 2px;
+    font-size: 12px;
+  }
+  .bakery-game-card .bakery-preview {
+    grid-column: 2;
+    grid-row: 4;
+    line-height: 1.2;
+  }
+  .bakery-game-card .bakery-table {
+    grid-row: 5;
+  }
+  .bakery-game-card .bakery-hand,
+  .bakery-game-card .bakery-reveal {
+    grid-row: 1 / 6;
+  }
+  .bakery-game-card > .bakery-workspace {
+    grid-row: 1 / 6;
+  }
+}
+@media (max-width: 600px) {
+  .app-shell .bakery-game-card {
+    gap: 4px;
+  }
+}

@@ -26,12 +26,14 @@ export async function chooseGame(page: Page, name: string) {
   await closePanels(page);
   const choice = page.getByRole("button", { name, exact: true });
   if (!(await choice.count())) {
+    const previous = page.getByRole("button", {
+      name: "Previous games",
+      exact: true,
+    });
+    while (await previous.isEnabled()) await previous.click();
     const more = page.getByRole("button", { name: "More games", exact: true });
-    if (await more.isEnabled()) await more.click();
-    else
-      await page
-        .getByRole("button", { name: "Previous games", exact: true })
-        .click();
+    while (!(await choice.count()) && (await more.isEnabled()))
+      await more.click();
   }
   await choice.click();
 }

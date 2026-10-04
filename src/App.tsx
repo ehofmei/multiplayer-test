@@ -1,3 +1,4 @@
+import { BakeryGame } from "./components/BakeryGame";
 import { AppPanel } from "./components/AppLayout";
 import { SumoGame } from "./components/SumoGame";
 import { CycleGame } from "./components/CycleGame";
@@ -354,6 +355,15 @@ export function App() {
                       key={snapshot.room.epoch}
                       game={snapshot.room.pong}
                       epoch={snapshot.room.epoch}
+                      players={snapshot.players}
+                      session={session}
+                      connected={connected}
+                    />
+                  )}
+                  {snapshot?.room.kind === "bakery" && snapshot.room.bakery && (
+                    <BakeryGame
+                      key={snapshot.room.epoch}
+                      game={snapshot.room.bakery}
                       players={snapshot.players}
                       session={session}
                       connected={connected}

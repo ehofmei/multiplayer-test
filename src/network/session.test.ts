@@ -597,3 +597,76 @@ it("Sumo pauses on a scheduling stall rather than fast-forwarding", async () => 
   expect(host.snapshot().room.sumo?.ticks).toBe(0);
   clock.mockRestore();
 });
+
+it("Bakery protects hands, rejects stale/duplicate picks, pauses reveals and rematches", async () => {
+  const { host, client, hostChannel } = await pair();
+  const sent = vi.spyOn(hostChannel, "send");
+  host.selectGame("bakery");
+  host.startBakery();
+  await vi.advanceTimersByTimeAsync(20);
+  const view = client.snapshot().room.bakery!;
+  expect(view.bakers.find((b) => b.id === "host")!.hand).toBeNull();
+  expect(view.bakers.find((b) => b.id === "client")!.hand).toHaveLength(6);
+  expect(host.snapshot().room.bakery!.bakers[1].hand).toBeNull();
+  client.startBakery();
+  client.pickTreat(0, 1, 1);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(host.snapshot().room.bakery!.bakers[1].locked).toBe(true);
+  expect(host.snapshot().room.bakery!.bakers[1].choice).toBeNull();
+  const packet = sent.mock.calls
+    .map(([raw]) => JSON.parse(raw))
+    .filter((m) => m.type === "state")
+    .at(-1);
+  expect(
+    packet.room.bakery.bakers.find((b: { id: string }) => b.id === "host").hand,
+  ).toBeNull();
+  expect(
+    packet.room.bakery.bakers.find((b: { id: string }) => b.id === "client")
+      .hand,
+  ).toHaveLength(6);
+  expect(
+    packet.room.bakery.bakers.every(
+      (b: { choice: unknown }) => b.choice === null,
+    ),
+  ).toBe(true);
+  client.pickTreat(1, 1, 1);
+  host.pickTreat(0, 1, 1);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(client.snapshot().room.bakery!.phase).toBe("reveal");
+  host.pauseGames();
+  await vi.advanceTimersByTimeAsync(3000);
+  expect(client.snapshot().room.bakery!.phase).toBe("paused");
+  host.resumeBakery();
+  await vi.advanceTimersByTimeAsync(1820);
+  expect(client.snapshot().room.bakery!.pick).toBe(2);
+  client.pickTreat(0, 1, 1);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(host.snapshot().room.bakery!.bakers[1].locked).toBe(false);
+  host.pauseGames();
+  client.pickTreat(0, 1, 2);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(host.snapshot().room.bakery!.bakers[1].locked).toBe(false);
+  host.resumeBakery();
+  for (let round = 1; round <= 2; round++) {
+    for (let pick = round === 1 ? 2 : 1; pick <= 6; pick++) {
+      host.pickTreat(0, round, pick);
+      client.pickTreat(0, round, pick);
+      await vi.advanceTimersByTimeAsync(1840);
+    }
+    if (round === 1) {
+      host.nextBakeryRound();
+      await vi.advanceTimersByTimeAsync(20);
+    }
+  }
+  expect(client.snapshot().room.bakery!.phase).toBe("finished");
+  host.startBakery();
+  await vi.advanceTimersByTimeAsync(20);
+  expect(client.snapshot().room.bakery!.pick).toBe(1);
+  expect(
+    client.snapshot().room.bakery!.bakers.every((b) => b.banked === 0),
+  ).toBe(true);
+  client.dispose();
+  // Mock channels do not automatically propagate close events.
+  Peer.all[0].channel.onclose?.();
+  expect(host.snapshot().room.bakery!.phase).toBe("ready");
+});
