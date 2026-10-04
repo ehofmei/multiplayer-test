@@ -29,6 +29,12 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
                 : pong.seats[pong.score[0] === 7 ? 0 : 1]) === me,
         }
       : null,
+    cycle: room.cycle
+      ? {
+          phase: room.cycle.phase,
+          alive: room.cycle.riders.find((r) => r.id === me)?.alive,
+        }
+      : null,
     ship: room.ship
       ? {
           phase: room.ship.phase,
@@ -56,6 +62,13 @@ export function soundEvents(
   if (!before || before.key !== after.key) return [];
   if (after.kind === "lights" && after.revision > before.revision)
     return [after.lit >= before.lit ? "on" : "off"];
+  if (after.cycle && before.cycle) {
+    if (after.cycle.phase === "finished" && before.cycle.phase !== "finished")
+      return [after.cycle.alive ? "win" : "finish"];
+    if (before.cycle.alive && after.cycle.alive === false) return ["miss"];
+    if (after.cycle.phase === "playing" && before.cycle.phase === "countdown")
+      return ["go"];
+  }
   const ship = after.ship,
     previousShip = before.ship;
   if (ship && previousShip) {

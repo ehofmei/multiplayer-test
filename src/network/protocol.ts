@@ -1,3 +1,4 @@
+import { cycleDirections } from "../games/cycle";
 import { validColor, type PaddleColor } from "../games/colors";
 import { validRoom } from "../games/validate";
 import type { Room, GameInput } from "../games/model";
@@ -50,6 +51,11 @@ export function parseMessage(raw: unknown): Message | null {
       record(m.input)
     ) {
       const i = m.input;
+      if (
+        i.kind === "cycle-turn" &&
+        cycleDirections.some((d) => d === i.direction)
+      )
+        return m as Message;
       if (
         i.kind === "ship-control" &&
         integer(i.control) &&

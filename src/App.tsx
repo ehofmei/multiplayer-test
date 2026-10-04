@@ -1,3 +1,4 @@
+import { CycleGame } from "./components/CycleGame";
 import { ShipGame } from "./components/ShipGame";
 import { ArenaGame } from "./components/ArenaGame";
 import { applyUpdate, checkForUpdate, useUpdates } from "./pwa/updates";
@@ -342,6 +343,15 @@ export function App() {
                     key={snapshot.room.epoch}
                     game={snapshot.room.pong}
                     epoch={snapshot.room.epoch}
+                    players={snapshot.players}
+                    session={session}
+                    connected={connected}
+                  />
+                )}
+                {snapshot?.room.kind === "cycle" && snapshot.room.cycle && (
+                  <CycleGame
+                    key={snapshot.room.epoch}
+                    game={snapshot.room.cycle}
                     players={snapshot.players}
                     session={session}
                     connected={connected}

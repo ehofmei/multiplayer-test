@@ -18,6 +18,12 @@ const choices: {
   mark: string;
 }[] = [
   {
+    kind: "cycle",
+    title: "Light-cycle Arena",
+    detail: "2–8 riders. Leave a trail. Cut them off. Last survivor wins.",
+    mark: "↱",
+  },
+  {
     kind: "ship",
     title: "Spaceship Panic",
     detail:

@@ -5,7 +5,7 @@ device has one direct WebRTC DataChannel to that host. There is no gameplay serv
 signaling service, STUN/TURN configuration, database, or account.
 
 Pair up to eight devices once using QR codes or copy/paste, then let the host choose
-Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, or Reaction Race. Switching games keeps the same
+Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, or Reaction Race. Switching games keeps the same
 connections. The app is installable and includes latency diagnostics.
 
 ## Run and verify
@@ -148,6 +148,30 @@ connections, offline support and muted local sound preferences remain in use.
 Update every device before selecting Spaceship Panic; older builds do not
 understand its new room state and control action. Saved identities/sound settings
 and pairing formats are unchanged.
+
+**Light-cycle Arena** is a competitive grid game for two to eight players. Everyone
+present when the host starts rides; late arrivals watch until the next round.
+After a three-second countdown, riders move automatically one cell every 150 ms
+on a shared 32×32 arena. Steer with the four large arrow buttons, swipe on the
+arena, or focus the arena and use arrow keys/WASD. Touch buttons turn on contact.
+Only one perpendicular turn is accepted per step; reversing is forbidden. Each
+rider has a distinct color and number, with names and elimination status below.
+
+Walls and all trails—including your own and eliminated riders’ trails—are lethal.
+Collisions resolve simultaneously: riders entering the same cell or swapping
+positions both crash. The last survivor wins; if everyone crashes on the final
+step, the round draws. At sixty seconds of movement, remaining riders share the
+win. Ride Again starts a fresh round with everyone currently connected.
+
+The host simulates fixed grid steps and shares compact, bounded full-board
+snapshots. Turns use the existing epoch and input sequence checks; the first valid
+turn received before a step is applied. There is no client prediction or rollback,
+so steer early on slower Wi-Fi. Pause, host backgrounding, pairing, or a scheduling
+stall freezes play; Resume Arena gives another three-second countdown. A rider
+leaving resets the round; a spectator leaving preserves it. Optional local sounds
+announce movement starting, your crash, and the result; sound remains muted by
+default. Update every device before selecting Light-cycle Arena: older builds do
+not understand its state or turn input. Pairing and saved preferences are unchanged.
 
 **Reaction Race** has six targets and ten rounds for everyone present at the start
 (or solo practice). After a random 1.2–3 second wait, hit the marked target within

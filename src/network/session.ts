@@ -1,3 +1,12 @@
+import {
+  newCycle,
+  stepCycle,
+  turnCycle,
+  cycleDirections,
+  CYCLE_STEP_MS,
+  CYCLE_COUNTDOWN,
+  type CycleDirection,
+} from "../games/cycle";
 import { launchShip, stepShip, setShipControl } from "../games/ship";
 import { newBreakout, stepBreakout } from "../games/breakout";
 import { newArena, moveArena, stepArena } from "../games/arena";
@@ -356,7 +365,8 @@ export class Session {
       if (
         link.player &&
         !(
-          this.room.pong?.phase === "playing" &&
+          (this.room.pong?.phase === "playing" ||
+            this.room.cycle?.phase === "playing") &&
           (link.channel?.bufferedAmount ?? 0) > 4_000
         )
       )
@@ -414,6 +424,7 @@ export class Session {
         link.player &&
         (this.room.pong?.seats.includes(link.player.id) ||
           this.room.ship?.crew.includes(link.player.id) ||
+          this.room.cycle?.riders.some((r) => r.id === link.player!.id) ||
           this.room.race?.entries.some((e) => e.id === link.player!.id))
       ) {
         this.stopGameTimers();
@@ -596,6 +607,19 @@ export class Session {
   }
   pauseGames() {
     if (this.role !== "host") return;
+    if (
+      this.room.cycle &&
+      ["playing", "countdown"].includes(this.room.cycle.phase)
+    ) {
+      this.stopGameTimers();
+      this.room.cycle = {
+        ...this.room.cycle,
+        phase: "paused",
+        riders: this.room.cycle.riders.map((r) => ({ ...r, queued: null })),
+      };
+      this.broadcast();
+      return;
+    }
     if (this.room.ship?.phase === "playing") {
       this.stopGameTimers();
       this.room.ship = { ...this.room.ship, phase: "paused" };
@@ -623,6 +647,64 @@ export class Session {
     this.room.pong = { ...this.room.pong, phase: "serve", serveIn: 1 };
     this.runPong();
     this.broadcast();
+  }
+  startCycle() {
+    if (
+      this.role !== "host" ||
+      this.disposed ||
+      this.room.kind !== "cycle" ||
+      this.players.length < 2
+    )
+      return;
+    this.stopGameTimers();
+    this.room.epoch++;
+    this.room.notice = "";
+    this.room.cycle = newCycle(this.players.map((p) => p.id));
+    this.runCycle();
+    this.broadcast();
+  }
+  resumeCycle() {
+    if (
+      this.role !== "host" ||
+      this.disposed ||
+      this.room.cycle?.phase !== "paused"
+    )
+      return;
+    this.room.cycle = {
+      ...this.room.cycle,
+      phase: "countdown",
+      countdown: CYCLE_COUNTDOWN,
+    };
+    this.runCycle();
+    this.broadcast();
+  }
+  turnCycle(direction: CycleDirection) {
+    if (!cycleDirections.includes(direction)) return;
+    this.input({ kind: "cycle-turn", direction });
+  }
+  private runCycle() {
+    let last = performance.now();
+    let accumulator = 0;
+    this.gameTimer = setInterval(() => {
+      const now = performance.now();
+      if (now - last > 500) {
+        this.pauseGames();
+        return;
+      }
+      accumulator += now - last;
+      last = now;
+      let changed = false;
+      while (accumulator >= CYCLE_STEP_MS && this.room.cycle) {
+        accumulator -= CYCLE_STEP_MS;
+        this.room.cycle = stepCycle(this.room.cycle);
+        changed = true;
+        if (this.room.cycle.phase === "finished") {
+          this.stopGameTimers();
+          break;
+        }
+      }
+      if (changed) this.broadcast();
+    }, 25);
   }
   startShip() {
     if (this.role !== "host" || this.disposed || this.room.kind !== "ship")
@@ -740,6 +822,12 @@ export class Session {
         player.color = input.color;
         this.broadcast();
       }
+    } else if (
+      input.kind === "cycle-turn" &&
+      this.room.kind === "cycle" &&
+      this.room.cycle
+    ) {
+      this.room.cycle = turnCycle(this.room.cycle, id, input.direction);
     } else if (
       input.kind === "ship-control" &&
       this.room.kind === "ship" &&

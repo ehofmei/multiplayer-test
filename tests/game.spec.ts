@@ -1521,3 +1521,309 @@ test("Spaceship Panic survives a complete mission with correct orders", async ({
     fullPage: true,
   });
 });
+
+test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, rematches and handles departures", async ({
+  browser,
+  page: host,
+}) => {
+  test.setTimeout(90_000);
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+  });
+  const lateContext = await browser.newContext();
+  try {
+    const client = await context.newPage(),
+      late = await lateContext.newPage();
+    await host.goto("./");
+    await host.getByLabel("Your name").fill("Alex");
+    await host
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await host
+      .getByRole("button", { name: "Light-cycle Arena", exact: true })
+      .click();
+    await expect(
+      host.getByRole("button", { name: "Start Arena", exact: true }),
+    ).toBeDisabled();
+    await join(host, client, "Emma");
+    await expect(
+      client.getByRole("region", { name: "Light-cycle Arena game" }),
+    ).toBeVisible();
+    await expect(
+      client.getByRole("button", { name: "Start Arena", exact: true }),
+    ).toHaveCount(0);
+    await host.clock.install();
+    await host.clock.pauseAt(new Date(Date.now() + 1000));
+    await host
+      .getByRole("button", { name: "Start Arena", exact: true })
+      .click();
+    await expect(client.locator(".cycle-status")).toHaveText("Get ready… 3");
+    await expect(
+      client.getByRole("button", { name: "Steer up", exact: true }),
+    ).toBeDisabled();
+    await expect(host.locator(".cycle-court")).toBeFocused();
+    const startBounds = await host.locator(".cycle-court").boundingBox();
+    expect(startBounds!.y).toBeGreaterThanOrEqual(0);
+    expect(startBounds!.y + startBounds!.height).toBeLessThanOrEqual(720);
+    await expect(host.locator(".cycle-court")).toHaveScreenshot(
+      "cycle-court.png",
+    );
+    await host.clock.runFor(3000);
+    await expect(
+      client.getByRole("button", { name: "Steer up", exact: true }),
+    ).toBeEnabled();
+    await client.getByRole("button", { name: "Steer up", exact: true }).tap();
+    // Touch arrives over the actual DataChannel before the next grid step.
+    await expect
+      .poll(() => host.locator(".people-card").innerText())
+      .toContain("Emma");
+    await host.clock.runFor(300);
+    await expect(host.getByTestId("cycle-rider-1")).toHaveAttribute(
+      "data-direction",
+      "up",
+    );
+    await host.locator(".cycle-court").press("ArrowDown");
+    await host.clock.runFor(150);
+    await expect(client.getByTestId("cycle-rider-0")).toHaveAttribute(
+      "data-direction",
+      "down",
+    );
+    await client.getByRole("button", { name: "Steer down", exact: true }).tap();
+    await host.clock.runFor(300);
+    await expect(host.getByTestId("cycle-rider-1")).toHaveAttribute(
+      "data-direction",
+      "up",
+    );
+    await host
+      .getByRole("button", { name: "Pause Arena", exact: true })
+      .click();
+    await expect(client.locator(".cycle-status")).toHaveText("Arena paused");
+    const tick = await host.locator(".cycle-court").getAttribute("data-tick");
+    await host.clock.runFor(3000);
+    await expect(host.locator(".cycle-court")).toHaveAttribute(
+      "data-tick",
+      tick!,
+    );
+    for (const viewport of [
+      { width: 320, height: 700 },
+      { width: 390, height: 844 },
+      { width: 768, height: 1024 },
+    ]) {
+      await client.setViewportSize(viewport);
+      for (const font of ["system", "Arial-tall"]) {
+        const style =
+          font === "system"
+            ? null
+            : await client.addStyleTag({
+                content: ":root{font-family:Arial,sans-serif;line-height:1.3}",
+              });
+        await client.keyboard.press("Control+Home");
+        const controls = await client.locator(".cycle-controls").boundingBox();
+        expect(controls!.y + controls!.height).toBeLessThan(
+          viewport.height - 16,
+        );
+        expect(
+          await client.evaluate(() => document.documentElement.scrollWidth),
+        ).toBeLessThanOrEqual(viewport.width);
+        const button = await client
+          .getByRole("button", { name: "Steer up", exact: true })
+          .boundingBox();
+        expect(button!.width).toBeGreaterThanOrEqual(44);
+        expect(button!.height).toBeGreaterThanOrEqual(44);
+        await client.screenshot({
+          path: `test-results/cycle-${viewport.width}-${font}.png`,
+          fullPage: true,
+        });
+        await style?.evaluate((el) => el.remove());
+      }
+    }
+    await host.screenshot({
+      path: "test-results/cycle-desktop.png",
+      fullPage: true,
+    });
+    await host
+      .locator(".cycle-game-card")
+      .screenshot({ path: "test-results/cycle-game.png" });
+    await host
+      .getByRole("button", { name: "Resume Arena", exact: true })
+      .click();
+    await expect(client.locator(".cycle-status")).toHaveText("Get ready… 3");
+    // Re-select for a deterministic untouched round; equal wall distances draw.
+    await host
+      .getByRole("button", { name: "Choose Game", exact: true })
+      .click();
+    await host
+      .getByRole("button", { name: "Light-cycle Arena", exact: true })
+      .click();
+    await host
+      .getByRole("button", { name: "Start Arena", exact: true })
+      .click();
+    await host.clock.runFor(7500);
+    await expect(client.locator(".cycle-status")).toHaveText(
+      "Draw! Everyone crashed.",
+    );
+    await host.getByRole("button", { name: "Ride Again", exact: true }).click();
+    await expect(client.getByTestId("cycle-rider-1")).toHaveAttribute(
+      "data-alive",
+      "true",
+    );
+    await host.clock.runFor(3000);
+    await host.clock.resume();
+    await join(host, late, "Sam with a long family name");
+    await expect(host.locator(".cycle-status")).toHaveText("Arena paused");
+    await expect(late.locator(".cycle-feedback")).toContainText(
+      "You’re watching",
+    );
+    await expect(
+      late.getByRole("button", { name: "Steer up", exact: true }),
+    ).toBeDisabled();
+    await host
+      .getByRole("button", { name: "Resume Arena", exact: true })
+      .click();
+    await late
+      .getByRole("button", { name: "Return Home", exact: true })
+      .click();
+    await expect(
+      host.getByRole("button", { name: "Pause Arena", exact: true }),
+    ).toBeVisible();
+    await client
+      .getByRole("button", { name: "Return Home", exact: true })
+      .click();
+    await expect(
+      host.getByText("A player left. Choose players and start a new round.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      host.getByRole("button", { name: "Start Arena", exact: true }),
+    ).toBeDisabled();
+  } finally {
+    await context.close();
+    await lateContext.close();
+  }
+});
+
+test("eight Light-cycle riders fit a narrow phone and support swipe, background pause and host loss", async ({
+  browser,
+  page: host,
+}) => {
+  test.setTimeout(90_000);
+  const contexts = await Promise.all(
+    Array.from({ length: 7 }, () =>
+      browser.newContext({
+        viewport: { width: 320, height: 700 },
+        hasTouch: true,
+      }),
+    ),
+  );
+  try {
+    await host.goto("./");
+    await host.getByLabel("Your name").fill("Alex with a very long rider name");
+    await host
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    const clients: Page[] = [];
+    for (const [i, context] of contexts.entries()) {
+      const client = await context.newPage();
+      clients.push(client);
+      await join(host, client, `Rider ${i + 2} with a long family name`);
+    }
+    await host
+      .getByRole("button", { name: "Light-cycle Arena", exact: true })
+      .click();
+    await host.clock.install();
+    await host.clock.pauseAt(new Date(Date.now() + 1000));
+    await host
+      .getByRole("button", { name: "Start Arena", exact: true })
+      .click();
+    const client = clients[0];
+    await expect(client.locator(".cycle-riders li")).toHaveCount(8);
+    await client.addStyleTag({
+      content: ":root{font-family:Arial,sans-serif;line-height:1.3}",
+    });
+    await client.keyboard.press("Control+Home");
+    const bounds = await client.locator(".cycle-controls").boundingBox();
+    expect(bounds!.y + bounds!.height).toBeLessThan(684);
+    expect(
+      await client.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(320);
+    await client.screenshot({
+      path: "test-results/cycle-eight-phone.png",
+      fullPage: true,
+    });
+    await host.clock.runFor(3000);
+    // A physical-style touch swipe on the play surface must turn without scrolling.
+    const court = await client.locator(".cycle-court").boundingBox();
+    const x = court!.x + court!.width / 2,
+      y = court!.y + court!.height / 2;
+    const cdp = await client.context().newCDPSession(client);
+    const beforeScroll = await client.evaluate(() => scrollY);
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x, y }],
+    });
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x, y: y - 45 }],
+    });
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    await host.clock.runFor(300);
+    await expect(host.getByTestId("cycle-rider-1")).toHaveAttribute(
+      "data-direction",
+      "up",
+    );
+    expect(await client.evaluate(() => scrollY)).toBe(beforeScroll);
+    // Walk the host through all four directions using normal keyboard input.
+    for (const [key, direction] of [
+      ["s", "down"],
+      ["a", "left"],
+      ["w", "up"],
+      ["d", "right"],
+    ]) {
+      await host.locator(".cycle-court").press(key);
+      await host.clock.runFor(450);
+      await expect(client.getByTestId("cycle-rider-0")).toHaveAttribute(
+        "data-direction",
+        direction,
+      );
+    }
+    await host.evaluate(() => {
+      Object.defineProperty(document, "hidden", {
+        configurable: true,
+        value: true,
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await expect(client.locator(".cycle-status")).toHaveText("Arena paused");
+    await host.clock.runFor(2000);
+    await host.evaluate(() => {
+      Object.defineProperty(document, "hidden", {
+        configurable: true,
+        value: false,
+      });
+    });
+    await host
+      .getByRole("button", { name: "Resume Arena", exact: true })
+      .click();
+    await expect(client.locator(".cycle-status")).toHaveText("Get ready… 3");
+    await host
+      .getByRole("button", { name: "Return Home", exact: true })
+      .click();
+    await expect(client.locator(".cycle-status")).toHaveText(
+      "Host disconnected",
+    );
+    await expect(
+      client.getByRole("button", { name: "Steer up", exact: true }),
+    ).toBeDisabled();
+    await client.screenshot({
+      path: "test-results/cycle-host-disconnected.png",
+      fullPage: true,
+    });
+  } finally {
+    await Promise.all(contexts.map((context) => context.close()));
+  }
+});

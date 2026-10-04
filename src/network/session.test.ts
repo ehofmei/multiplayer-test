@@ -380,3 +380,96 @@ describe("shared game room", () => {
     vi.restoreAllMocks();
   });
 });
+
+describe("Light-cycle sessions", () => {
+  it("requires two players and host authority, synchronizes turns, rejects stale epochs and sequences, and freezes on pause", async () => {
+    const { host, client, hostChannel } = await pair();
+    client.selectGame("cycle");
+    expect(host.snapshot().room.kind).toBe("lobby");
+    host.selectGame("cycle");
+    client.startCycle();
+    expect(host.snapshot().room.cycle?.phase).toBe("ready");
+    host.startCycle();
+    await vi.advanceTimersByTimeAsync(3_020);
+    expect(client.snapshot().room.cycle?.phase).toBe("playing");
+    client.turnCycle("up");
+    await vi.advanceTimersByTimeAsync(150);
+    expect(client.snapshot().room.cycle?.riders[1].direction).toBe("up");
+    const epoch = host.snapshot().room.epoch;
+    const inject = (epoch: number, sequence: number, direction: string) =>
+      hostChannel.onmessage!({
+        data: JSON.stringify({
+          v: 2,
+          type: "input",
+          epoch,
+          sequence,
+          input: { kind: "cycle-turn", direction },
+        }),
+      });
+    inject(epoch - 1, 20, "left");
+    inject(epoch, 19, "left");
+    expect(host.snapshot().room.cycle?.riders[1].queued).toBeNull();
+    inject(epoch, 21, "left");
+    expect(host.snapshot().room.cycle?.riders[1].queued).toBe("left");
+    host.pauseGames();
+    const paused = structuredClone(host.snapshot().room.cycle);
+    expect(paused?.riders[1].queued).toBeNull();
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(host.snapshot().room.cycle).toEqual(paused);
+    host.resumeCycle();
+    await vi.advanceTimersByTimeAsync(3_160);
+    expect(host.snapshot().room.cycle?.riders[1].direction).toBe("up");
+    host.startCycle();
+    expect(host.snapshot().room.epoch).toBe(epoch + 1);
+    expect(host.snapshot().room.cycle?.ticks).toBe(0);
+    host.selectGame("lights");
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(client.snapshot().room.kind).toBe("lights");
+    expect(client.snapshot().links[0].channel).toBe("open");
+  });
+  it("lets late arrivals watch, preserves play when spectators leave, and resets when a rider leaves", async () => {
+    const { host, hostChannel } = await pair();
+    const offer = await host.offer();
+    host.selectGame("cycle");
+    host.startCycle();
+    const late = new Session("client", { id: "late", name: "Sam" }, () => {});
+    sessions.push(late);
+    await host.accept(await late.answer(offer));
+    const [a, b] = Peer.all.slice(-2);
+    a.channel.peer = b.channel;
+    b.channel.peer = a.channel;
+    b.ondatachannel!({ channel: b.channel });
+    a.channel.open();
+    b.channel.open();
+    await vi.advanceTimersByTimeAsync(3_020);
+    expect(late.snapshot().room.cycle?.riders).toHaveLength(2);
+    late.turnCycle("up");
+    await vi.advanceTimersByTimeAsync(20);
+    expect(
+      host.snapshot().room.cycle?.riders.every((r) => r.queued === null),
+    ).toBe(true);
+    a.channel.onclose!();
+    expect(host.snapshot().room.cycle?.phase).toBe("playing");
+    hostChannel.onclose!();
+    expect(host.snapshot().room.cycle?.phase).toBe("ready");
+    expect(host.snapshot().room.notice).toContain("A player left");
+    host.startCycle();
+    expect(host.snapshot().room.cycle?.phase).toBe("ready");
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(host.snapshot().room.cycle?.ticks).toBe(0);
+  });
+  it("pauses instead of fast-forwarding after a stalled host and clears timers on disposal", async () => {
+    const { host, client } = await pair();
+    host.selectGame("cycle");
+    host.startCycle();
+    const clock = vi.spyOn(performance, "now").mockReturnValue(5000);
+    await vi.advanceTimersByTimeAsync(25);
+    expect(host.snapshot().room.cycle?.phase).toBe("paused");
+    clock.mockRestore();
+    host.resumeCycle();
+    client.dispose();
+    host.dispose();
+    await vi.advanceTimersByTimeAsync(50);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});

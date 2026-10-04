@@ -1,3 +1,4 @@
+import { newCycle } from "../games/cycle";
 import { launchShip } from "../games/ship";
 import { newBreakout } from "../games/breakout";
 import { describe, expect, it } from "vitest";
@@ -132,4 +133,23 @@ describe("game sound transitions", () => {
     expect(soundEvents(before, last)).toEqual(["win"]);
     expect(soundEvents(last, last)).toEqual([]);
   });
+});
+
+it("announces cycle starts, personal crashes and wins once", () => {
+  const s = snapshot();
+  s.room = newRoom("cycle", 1);
+  s.room.cycle = newCycle(["a", "b", "c"]);
+  let before = frame(s);
+  s.room.cycle.phase = "playing";
+  expect(soundEvents(before, frame(s))).toEqual(["go"]);
+  before = frame(s);
+  s.room.cycle.riders[0].alive = false;
+  expect(soundEvents(before, frame(s))).toEqual(["miss"]);
+  before = frame(s);
+  s.room.cycle.phase = "finished";
+  expect(soundEvents(before, frame(s))).toEqual(["finish"]);
+  s.room.cycle.riders[0].alive = true;
+  expect(soundEvents(before, frame(s))).toEqual(["win"]);
+  expect(soundEvents(frame(s), frame(s))).toEqual([]);
+  expect(soundEvents(null, frame(s))).toEqual([]);
 });

@@ -1082,3 +1082,160 @@ select:focus-visible {
     margin: 4px 0;
   }
 }
+
+.cycle-status {
+  margin: 8px 0;
+  font-weight: 750;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.cycle-court {
+  width: 100%;
+  max-width: 440px;
+  margin: auto;
+  background: #122c29;
+  border: 2px solid #527064;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.cycle-court svg {
+  display: block;
+  width: 100%;
+}
+.cycle-court[data-active="true"] {
+  touch-action: none;
+  user-select: none;
+}
+.cycle-court:focus-visible,
+.cycle-controls button:focus-visible {
+  outline: 3px solid #527064;
+  outline-offset: 3px;
+}
+.cycle-controls {
+  display: grid;
+  grid-template-columns: repeat(3, 52px);
+  grid-template-rows: repeat(2, 46px);
+  gap: 5px;
+  justify-content: center;
+  margin: 10px auto 6px;
+}
+.cycle-controls button {
+  padding: 0;
+  min-height: 46px;
+  font-size: 26px;
+  touch-action: manipulation;
+}
+.cycle-up {
+  grid-area: 1 / 2;
+}
+.cycle-left {
+  grid-area: 2 / 1;
+}
+.cycle-down {
+  grid-area: 2 / 2;
+}
+.cycle-right {
+  grid-area: 2 / 3;
+}
+.cycle-control-center {
+  grid-area: 1 / 1;
+  align-self: center;
+  font-size: 10px;
+  font-weight: 750;
+  color: #527064;
+}
+.cycle-feedback {
+  margin: 8px 0;
+  text-align: center;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.cycle-riders {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.cycle-riders li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  min-width: 0;
+}
+.cycle-number {
+  color: #122c29;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.cycle-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cycle-riders small {
+  margin-left: auto;
+}
+.cycle-riders .crashed .cycle-name {
+  text-decoration: line-through;
+}
+.cycle-help {
+  font-size: 13px;
+}
+@media (max-width: 650px) {
+  .cycle-game-card {
+    padding: 12px;
+  }
+  .cycle-game-card > .board-heading {
+    font-size: 12px;
+  }
+  .cycle-game-card h2 {
+    font-size: 15px;
+  }
+  .cycle-court {
+    max-width: min(400px, max(210px, calc(100dvh - 420px)));
+  }
+  .cycle-status {
+    margin: 6px 0;
+    font-size: 14px;
+  }
+}
+
+/* Keep the arena and steering together on short screens. */
+@media (max-width: 650px), (max-height: 800px) {
+  main:has(.cycle-game-card) .session-heading {
+    padding-top: 14px;
+    gap: 8px;
+  }
+  main:has(.cycle-game-card) .session-heading h1 {
+    font-size: 24px;
+    letter-spacing: -0.8px;
+    margin: 8px 0;
+  }
+  main:has(.cycle-game-card) .session-heading .eyebrow {
+    display: none;
+  }
+  main:has(.cycle-game-card) .status {
+    margin: 8px 0;
+  }
+  main:has(.cycle-game-card) .game-bar {
+    margin: 8px 0;
+  }
+  .cycle-game-card .board-heading {
+    justify-content: flex-end;
+    margin: 0;
+  }
+  .cycle-game-card .board-heading h2 {
+    display: none;
+  }
+  .cycle-court {
+    max-width: min(360px, max(210px, calc(100dvh - 470px)));
+  }
+}

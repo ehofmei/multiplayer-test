@@ -1,3 +1,9 @@
+import {
+  CYCLE_SIZE,
+  CYCLE_COUNTDOWN,
+  CYCLE_LIMIT,
+  cycleDirections,
+} from "./cycle";
 import type { Room } from "./model";
 const record = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
@@ -19,6 +25,65 @@ export function validRoom(v: unknown): v is Room {
     v.notice.length > 200
   )
     return false;
+  if (v.kind !== "cycle" && v.cycle !== undefined && v.cycle !== null)
+    return false;
+  if (v.kind === "cycle") {
+    const c = v.cycle;
+    if (
+      !record(c) ||
+      v.pong !== null ||
+      v.race !== null ||
+      (v.ship !== undefined && v.ship !== null) ||
+      !["ready", "countdown", "playing", "paused", "finished"].includes(
+        String(c.phase),
+      ) ||
+      !integer(c.countdown, 0, CYCLE_COUNTDOWN) ||
+      !integer(c.ticks, 0, CYCLE_LIMIT) ||
+      typeof c.cells !== "string" ||
+      c.cells.length !== CYCLE_SIZE * CYCLE_SIZE ||
+      !Array.isArray(c.riders) ||
+      c.riders.length > 8 ||
+      (c.phase === "ready" ? c.riders.length !== 0 : c.riders.length < 2)
+    )
+      return false;
+    const riders = c.riders;
+    if (
+      !riders.every(
+        (r, i) =>
+          record(r) &&
+          id(r.id) &&
+          integer(r.x, 0, CYCLE_SIZE - 1) &&
+          integer(r.y, 0, CYCLE_SIZE - 1) &&
+          cycleDirections.some((d) => d === r.direction) &&
+          typeof r.alive === "boolean" &&
+          (r.queued === null ||
+            (c.phase === "playing" &&
+              r.alive &&
+              cycleDirections.some(
+                (d, n) =>
+                  d === r.queued &&
+                  n % 2 !==
+                    cycleDirections.findIndex((d) => d === r.direction) % 2,
+              ))) &&
+          (c.cells as string)[r.y * CYCLE_SIZE + r.x] === String(i + 1),
+      ) ||
+      new Set(riders.map((r) => r.id)).size !== riders.length ||
+      ![...c.cells].every(
+        (cell) => cell >= "0" && cell <= String(riders.length),
+      )
+    )
+      return false;
+    const alive = riders.filter((r) => r.alive).length;
+    return c.phase === "ready"
+      ? c.ticks === 0 && c.countdown === CYCLE_COUNTDOWN
+      : c.phase === "finished"
+        ? c.countdown === 0 && (alive <= 1 || c.ticks === CYCLE_LIMIT)
+        : alive >= 2 &&
+          c.ticks < CYCLE_LIMIT &&
+          (c.phase === "countdown"
+            ? c.countdown > 0
+            : c.phase !== "playing" || c.countdown === 0);
+  }
   if (v.kind !== "ship" && v.ship !== undefined && v.ship !== null)
     return false;
   if (v.kind === "ship") {

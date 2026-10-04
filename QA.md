@@ -132,3 +132,33 @@ unlock, device volume/mute behavior, and foreground recovery need physical testi
   iPad devices, play a full co-op mission with everyone talking; check whether
   the 18-to-10-second deadlines feel fair, quiet sound feedback, background pause
   and readability of all 24 system names. Update every device before pairing.
+
+## Light-cycle Arena
+
+QA inventory for this game:
+
+- Start requires 2–8 players and host authority; countdown, live movement,
+  elimination, simultaneous draw, sixty-second shared win, and fresh rematch.
+- Steering: all four touch buttons, keyboard arrows/WASD, swipe, one turn per
+  step, rejected reversals and rapid duplicate inputs, disabled spectator controls.
+- Pause/resume with a new countdown, pairing pause, host background/stall,
+  late spectators, rider/spectator departures, host loss, and game switching.
+- Desktop, tablet, 390px and 320px phone layouts; alternate taller font metrics,
+  eight long names, numbered riders, focus, 44px touch targets, normal surrounding
+  page scrolling, active-surface gesture handling, and no horizontal overflow.
+- Retain a deterministic arena screenshot and review full-page desktop/mobile
+  screenshots. Verify cached startup under `/multiplayer-test/` and update messaging.
+
+Automated coverage includes rules/protocol/session tests, actual two- and
+eight-player WebRTC rooms, touch-button and swipe input, keyboard steering,
+countdown focus, pause/resume, draws/rematches, late arrivals, departures and
+host loss. The live browser pass manually paired two players, steered both,
+paused/resumed, observed a winner, rematched, and checked a rider leaving.
+Desktop and mobile screenshots were reviewed; responsive checks include taller
+Arial metrics and all eight long names. Existing production-subpath offline,
+manifest, identity, and service-worker update tests remain part of `npm run verify`.
+
+Physical-device follow-up: pair two iPhones/iPads on Wi-Fi, then try a larger room.
+Check touch steering and swipe feel, numbered heads on small displays, optional
+sound, Safari/installed PWA background-and-resume, and all-device updates. Browser
+emulation does not establish physical-device latency or iOS behavior.
