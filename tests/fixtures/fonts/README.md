@@ -15,3 +15,9 @@ Text-heavy regions have explicit small rasterization allowances. The helper remo
 the fixture style before normal-font and taller-font layout checks. Long names are
 checked separately from the Home baseline to avoid platform-specific native input
 scroll positions.
+
+Home has separate `darwin` and `linux` baselines because CoreText and FreeType
+still rasterize its large heading and introductory text differently with the same
+font files. The Linux baseline was reviewed from the failing GitHub Actions
+artifact. Both retain the 250-pixel allowance; other regions share their existing
+baselines. Normal-font viewport checks remain independent of these images.

@@ -34,17 +34,20 @@ test("home, paged library, settings and all game setups fit the primary screen",
     await expectScreenFits(page);
     await page.screenshot({ path: `test-results/app-home-${size.width}.png` });
     if (size.width === 390) {
+      // CoreText and FreeType rasterize this large text differently even with
+      // identical font files. Keep reviewed OS baselines and strict tolerances.
+      const homeSnapshot = `app-home-${process.platform}.png`;
       // Keep the long-name fit check above, but avoid native input horizontal
       // scrolling (which differs by OS) in the shared visual baseline.
       await page.getByLabel("Your name").fill("Family Player");
-      await expectStableScreenshot(page, "main", "app-home.png", {
+      await expectStableScreenshot(page, "main", homeSnapshot, {
         maxDiffPixels: 250,
       });
       // Reuse the same baseline under different inherited metrics, as on CI.
       const alternateFont = await page.addStyleTag({
         content: ":root { font-family: serif; line-height: 1.6; }",
       });
-      await expectStableScreenshot(page, "main", "app-home.png", {
+      await expectStableScreenshot(page, "main", homeSnapshot, {
         maxDiffPixels: 250,
       });
       await alternateFont.evaluate((element) => element.remove());
