@@ -1,3 +1,4 @@
+import { GameSurface, GameHelp } from "./AppLayout";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   SUMO_BODY,
@@ -151,8 +152,10 @@ export function SumoGame({
   return (
     <section
       className="games-card sumo-game-card"
+      data-phase={game.phase}
       aria-label="Sumo Bumpers game"
       onKeyDown={(e) => {
+        if (!e.currentTarget.contains(e.target as Node)) return;
         const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
         if (!active || (!keyDirections[key] && key !== " ")) return;
         // Leave ordinary buttons usable with Space/assistive activation.
@@ -166,6 +169,7 @@ export function SumoGame({
         }
       }}
       onKeyUp={(e) => {
+        if (!e.currentTarget.contains(e.target as Node)) return;
         const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
         if (keyDirections[key]) {
           e.preventDefault();
@@ -184,85 +188,87 @@ export function SumoGame({
       <p className="sumo-status" aria-live="polite">
         {status}
       </p>
-      <div
-        className="sumo-court"
-        ref={court}
-        tabIndex={0}
-        role="group"
-        aria-label="Sumo ring. Use arrow keys or WASD to move and Space to dash."
-        data-tick={game.ticks}
-      >
-        <svg viewBox="0 0 1000 1000" aria-hidden="true">
-          <circle cx="500" cy="500" r="460" fill="#26483f" />
-          <circle
-            cx="500"
-            cy="500"
-            r={sumoRadius(game.ticks) * 1000}
-            fill="#122c29"
-            stroke="#c9ee87"
-            strokeWidth="8"
-          />
-          <circle
-            cx="500"
-            cy="500"
-            r="70"
-            fill="none"
-            stroke="#527064"
-            strokeWidth="3"
-          />
-          <path d="M480 500h40M500 480v40" stroke="#527064" strokeWidth="3" />
-          {game.bumpers.map((b, i) => (
-            <g
-              key={b.id}
-              ref={(element) => {
-                bodies.current[i] = element;
-              }}
-              data-testid={`sumo-bumper-${i}`}
-              data-dx={b.dx}
-              data-dy={b.dy}
-              data-x={b.x}
-              data-y={b.y}
-              data-alive={b.alive}
-              data-cooldown={b.cooldown}
-              opacity={b.alive ? 1 : 0.4}
-            >
-              <circle
-                r={SUMO_BODY * 1000 + 5}
-                fill={cycleColors[i]}
-                stroke={i === seat ? "#fff" : "#527064"}
-                strokeWidth={i === seat ? 9 : 4}
-              />
-              <circle
-                r={SUMO_BODY * 1000 - 7}
-                fill="none"
-                stroke="#122c29"
-                strokeWidth="4"
-              />
+      <GameSurface>
+        <div
+          className="sumo-court"
+          ref={court}
+          tabIndex={0}
+          role="group"
+          aria-label="Sumo ring. Use arrow keys or WASD to move and Space to dash."
+          data-tick={game.ticks}
+        >
+          <svg viewBox="0 0 1000 1000" aria-hidden="true">
+            <circle cx="500" cy="500" r="460" fill="#26483f" />
+            <circle
+              cx="500"
+              cy="500"
+              r={sumoRadius(game.ticks) * 1000}
+              fill="#122c29"
+              stroke="#c9ee87"
+              strokeWidth="8"
+            />
+            <circle
+              cx="500"
+              cy="500"
+              r="70"
+              fill="none"
+              stroke="#527064"
+              strokeWidth="3"
+            />
+            <path d="M480 500h40M500 480v40" stroke="#527064" strokeWidth="3" />
+            {game.bumpers.map((b, i) => (
+              <g
+                key={b.id}
+                ref={(element) => {
+                  bodies.current[i] = element;
+                }}
+                data-testid={`sumo-bumper-${i}`}
+                data-dx={b.dx}
+                data-dy={b.dy}
+                data-x={b.x}
+                data-y={b.y}
+                data-alive={b.alive}
+                data-cooldown={b.cooldown}
+                opacity={b.alive ? 1 : 0.4}
+              >
+                <circle
+                  r={SUMO_BODY * 1000 + 5}
+                  fill={cycleColors[i]}
+                  stroke={i === seat ? "#fff" : "#527064"}
+                  strokeWidth={i === seat ? 9 : 4}
+                />
+                <circle
+                  r={SUMO_BODY * 1000 - 7}
+                  fill="none"
+                  stroke="#122c29"
+                  strokeWidth="4"
+                />
+                <text
+                  y="1"
+                  dominantBaseline="central"
+                  textAnchor="middle"
+                  fontSize="35"
+                  fontWeight="800"
+                  fill="#122c29"
+                >
+                  {b.alive ? i + 1 : "×"}
+                </text>
+              </g>
+            ))}
+            {game.phase === "ready" && (
               <text
-                y="1"
-                dominantBaseline="central"
+                x="500"
+                y="620"
+                fill="#c9ee87"
                 textAnchor="middle"
                 fontSize="35"
-                fontWeight="800"
-                fill="#122c29"
               >
-                {b.alive ? i + 1 : "×"}
+                HOLD YOUR GROUND
               </text>
-            </g>
-          ))}
-          {game.phase === "ready" && (
-            <text
-              x="500"
-              y="620"
-              fill="#c9ee87"
-              textAnchor="middle"
-              fontSize="35"
-            >
-              HOLD YOUR GROUND
-            </text>
-          )}
-        </svg>
-      </div>
+            )}
+          </svg>
+        </div>
+      </GameSurface>
       <div className="sumo-controls">
         <div
           className="sumo-stick"
@@ -353,30 +359,60 @@ export function SumoGame({
             ? "2–8 players · Everyone here bumps."
             : "You’re watching. Join the next round."}
       </p>
-      {!!game.bumpers.length && (
-        <ol className="cycle-riders" aria-label="Bumpers">
-          {game.bumpers.map((b, i) => (
-            <li key={b.id} className={b.alive ? "" : "crashed"}>
-              <span
-                className="cycle-number"
-                style={{ background: cycleColors[i] }}
-              >
-                {i + 1}
-              </span>
-              <span className="cycle-name">
-                {name(b.id)}
-                {b.id === session.me.id ? " · You" : ""}
-              </span>
-              <small>{b.alive ? "In" : "Out"}</small>
-            </li>
-          ))}
-        </ol>
+      {configure && (
+        <>
+          {!!game.bumpers.length && (
+            <ol className="cycle-riders" aria-label="Bumpers">
+              {game.bumpers.map((b, i) => (
+                <li key={b.id} className={b.alive ? "" : "crashed"}>
+                  <span
+                    className="cycle-number"
+                    style={{ background: cycleColors[i] }}
+                  >
+                    {i + 1}
+                  </span>
+                  <span className="cycle-name">
+                    {name(b.id)}
+                    {b.id === session.me.id ? " · You" : ""}
+                  </span>
+                  <small>{b.alive ? "In" : "Out"}</small>
+                </li>
+              ))}
+            </ol>
+          )}
+        </>
       )}
-      <p className="muted sumo-help">
-        Drag the thumb pad to move; release to brake. Move and tap Dash to bump
-        harder (2s recharge). Keyboard: arrows / WASD + Space. Your center
-        crossing the shrinking edge means you’re out. Last survivor wins.
-      </p>
+      <GameHelp>
+        <p className="muted sumo-help">
+          Drag the thumb pad to move; release to brake. Move and tap Dash to
+          bump harder (2s recharge). Keyboard: arrows / WASD + Space. Your
+          center crossing the shrinking edge means you’re out. Last survivor
+          wins.
+        </p>
+        {!configure && (
+          <>
+            {!!game.bumpers.length && (
+              <ol className="cycle-riders" aria-label="Bumpers">
+                {game.bumpers.map((b, i) => (
+                  <li key={b.id} className={b.alive ? "" : "crashed"}>
+                    <span
+                      className="cycle-number"
+                      style={{ background: cycleColors[i] }}
+                    >
+                      {i + 1}
+                    </span>
+                    <span className="cycle-name">
+                      {name(b.id)}
+                      {b.id === session.me.id ? " · You" : ""}
+                    </span>
+                    <small>{b.alive ? "In" : "Out"}</small>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </>
+        )}
+      </GameHelp>
       {session.role === "host" ? (
         configure ? (
           <>

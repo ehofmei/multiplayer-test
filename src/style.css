@@ -1413,3 +1413,748 @@ select:focus-visible {
     max-width: min(360px, max(210px, calc(100dvh - 525px)));
   }
 }
+
+/* Installed-app shell: one primary screen, with secondary content in dialogs. */
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  overflow: hidden;
+}
+main.app-shell {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  padding: max(12px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.app-shell > header {
+  flex-shrink: 0;
+  min-height: 48px;
+  padding: 0 0 8px;
+  gap: 8px;
+}
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-weight: 750;
+}
+.app-title > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-shell .brand-icon {
+  font-size: 20px;
+  padding: 4px 8px;
+}
+.app-shell .header-tools {
+  gap: 6px;
+}
+.app-shell .header-tools button {
+  padding: 8px;
+  min-height: 44px;
+}
+.app-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.app-shell .home {
+  flex: 1;
+  width: 100%;
+  max-width: 560px;
+  margin: auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.app-shell .home h1 {
+  font-size: clamp(30px, 5vh, 48px);
+  margin: 12px 0;
+  letter-spacing: -1px;
+}
+.app-shell .intro {
+  font-size: 16px;
+  margin: 0;
+}
+.app-shell .home-card {
+  width: 100%;
+  max-width: none;
+  margin: 18px 0 0;
+  padding: 16px;
+}
+.room-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.room-toolbar button {
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.app-shell .status {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.3;
+}
+.app-shell .status .dot {
+  margin-right: 4px;
+}
+.app-shell .game-bar {
+  margin: 0;
+  min-height: 44px;
+}
+.app-shell .game-bar > span {
+  font-size: 13px;
+}
+.app-shell .game-bar button {
+  min-height: 44px;
+  padding: 8px 12px;
+}
+.app-shell .session-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 0;
+}
+.app-shell .games-card,
+.app-shell .board-card {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.app-shell .games-card > *,
+.app-shell .board-card > * {
+  flex-shrink: 0;
+}
+.app-shell .games-card > p,
+.app-shell .board-card > p {
+  margin: 0;
+  line-height: 1.35;
+}
+.app-shell .board-heading {
+  margin: 0;
+  min-height: 24px;
+}
+.app-shell .games-card h2 {
+  margin: 0;
+}
+.app-shell .game-surface {
+  flex: 1 1 0;
+  min-height: 100px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.surface-fit {
+  max-width: 100%;
+  flex: none;
+}
+.app-shell .surface-fit > .grid,
+.app-shell .surface-fit > .pong-court,
+.app-shell .surface-fit > .arena-court,
+.app-shell .surface-fit > .cycle-court,
+.app-shell .surface-fit > .sumo-court,
+.app-shell .surface-fit > .race-targets {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+.app-shell .surface-fit > .grid {
+  gap: 6px;
+}
+.app-shell .grid .cell {
+  min-height: 0;
+  padding: 6px;
+}
+.app-shell .game-score strong {
+  font-size: 28px;
+}
+.app-shell .game-score span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.app-shell .game-score > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.app-shell .arena-lives {
+  margin: 0;
+  gap: 4px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.app-shell .arena-lives li {
+  padding: 4px;
+}
+.app-shell .arena-lives span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+}
+.app-shell .arena-lives strong {
+  font-size: 12px;
+}
+.app-shell .seat-picker {
+  margin: 0;
+  gap: 6px;
+}
+.app-shell label {
+  margin: 0;
+}
+.app-shell select {
+  margin-top: 4px;
+  min-height: 44px;
+}
+.app-shell .games-card > button {
+  min-height: 44px;
+  padding: 8px 12px;
+}
+.app-shell .game-help-button {
+  align-self: flex-end;
+  order: 20;
+}
+.app-shell .race-cue {
+  min-height: 44px;
+  padding: 8px;
+}
+.app-shell .race-feedback,
+.app-shell .cycle-feedback,
+.app-shell .sumo-feedback {
+  min-height: 0;
+  font-size: 12px;
+}
+.app-shell .race-targets {
+  gap: 8px;
+}
+.app-shell .race-target {
+  min-height: 44px;
+  aspect-ratio: auto;
+  padding: 4px;
+}
+.app-shell .race-targets {
+  aspect-ratio: 3 / 2;
+}
+.app-shell .race-scores,
+.app-shell .cycle-riders {
+  margin: 0;
+  overflow: auto;
+  min-height: 0;
+  flex-shrink: 1;
+}
+.app-shell
+  .reaction-game-card:is([data-phase="waiting"], [data-phase="active"])
+  .race-scores {
+  display: none;
+}
+.app-shell .race-scores li {
+  padding: 6px 0;
+}
+.app-shell .cycle-controls {
+  margin: 0 auto;
+}
+.app-shell .sumo-controls {
+  margin: 0 auto;
+}
+.app-shell .sumo-stick {
+  width: 120px;
+  height: 120px;
+}
+.app-shell .ship-panels {
+  flex: 1;
+  min-height: 0;
+  align-content: center;
+}
+.app-shell .ship-order {
+  margin: 0;
+  min-height: 70px;
+  padding: 10px;
+}
+.app-shell .ship-command {
+  margin: 0;
+  font-size: clamp(18px, 3vh, 26px);
+}
+.app-shell .ship-duration {
+  margin: 0;
+}
+.app-shell .breakout-progress {
+  margin: 0;
+  gap: 6px;
+  font-size: 12px;
+}
+.app-shell .game-library {
+  max-width: 1000px;
+  margin: 0 auto;
+  overflow: auto;
+}
+.app-shell .game-choices {
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 8px;
+}
+.app-shell .game-choice {
+  min-height: 80px;
+  padding: 12px;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-content: center;
+  gap: 4px 8px;
+}
+.app-shell .game-choice small {
+  line-height: 1.3;
+  font-size: 12px;
+}
+.library-pages {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.library-pages button {
+  padding: 8px;
+  min-height: 44px;
+  font-size: 12px;
+}
+.library-pages span {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.app-panel {
+  color: #122c29;
+  background: #f5f4ee;
+  border: 1px solid #cbd6c4;
+  border-radius: 20px;
+  width: min(640px, calc(100% - 24px));
+  max-width: none;
+  max-height: calc(100dvh - 24px);
+  padding: 16px;
+  overflow: hidden;
+}
+.app-panel[open] {
+  display: flex;
+  flex-direction: column;
+}
+.app-panel::backdrop {
+  background: #122c2999;
+}
+.app-panel > header {
+  padding-bottom: 12px;
+  flex-shrink: 0;
+}
+.panel-content {
+  overflow: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+  padding: 4px;
+}
+.panel-content footer {
+  display: block;
+  margin-top: 20px;
+}
+.panel-content .install {
+  margin: 12px 0;
+}
+.panel-content .people-card {
+  padding: 12px;
+}
+.panel-content .how {
+  display: block;
+}
+.app-shell .pair-card {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+}
+.app-shell .pairing-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+.app-shell .qr-display {
+  width: clamp(240px, calc(100dvh - 390px), 340px);
+  max-width: 100%;
+  margin: 0 auto;
+}
+.app-shell .qr-display .footnote {
+  display: none;
+}
+.app-shell .pair-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.app-shell .pair-controls p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.app-shell .pair-controls button {
+  min-height: 44px;
+  padding: 8px;
+}
+.image-fallback summary {
+  font-size: 12px;
+  min-height: 44px;
+  padding: 10px 0;
+}
+@media (max-width: 650px) {
+  .app-shell .game-choice {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 14px;
+  }
+  .app-shell .game-choice .game-mark {
+    font-size: 24px;
+    align-self: flex-start;
+  }
+  .app-shell .game-choice small {
+    font-size: 12px;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .home {
+    max-width: 900px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 24px;
+    align-content: center;
+  }
+  .app-shell .home .home-card {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    margin: 0;
+  }
+  .app-shell .games-card:not(.game-library):not(.ship-game-card) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(200px, 1fr);
+    grid-template-rows: repeat(8, auto);
+    column-gap: 16px;
+    align-content: stretch;
+  }
+  .app-shell .games-card > * {
+    grid-column: 2;
+  }
+  .app-shell .games-card > .game-surface {
+    grid-column: 1;
+    grid-row: 1 / 9;
+    min-height: 0;
+  }
+  .app-shell .game-choice small {
+    display: none;
+  }
+  .app-shell .ship-panels {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .app-shell .pairing-body.has-code {
+    flex-direction: row;
+    align-items: center;
+  }
+  .app-shell .qr-display {
+    width: 240px;
+    flex-shrink: 0;
+  }
+}
+
+.app-shell .games-card:not(.game-library) {
+  padding-bottom: 64px;
+}
+.app-shell .games-card > .game-help-button {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+}
+.app-shell .games-card > button:not(.game-help-button) {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  max-width: calc(100% - 160px);
+}
+.app-shell .games-card > .muted {
+  font-size: 12px;
+}
+.app-shell .session-layout {
+  align-items: stretch;
+}
+.app-shell .spectator-status {
+  font-size: 12px;
+  color: #52665b;
+}
+.app-shell .qr-display {
+  width: clamp(240px, calc(100dvh - 460px), 340px);
+}
+.app-shell .status {
+  display: block;
+  overflow-wrap: anywhere;
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .game-library > .eyebrow,
+  .app-shell .game-library > .muted,
+  .app-shell .ship-game-card > .board-heading {
+    display: none;
+  }
+  .app-shell .game-choice {
+    min-height: 64px;
+  }
+  .app-shell .ship-order {
+    min-height: 60px;
+    padding: 6px;
+  }
+  .app-shell .ship-panel {
+    padding: 0 6px 6px;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .games-card:not(.game-library):not(.ship-game-card) {
+    grid-template-rows: repeat(5, auto);
+    row-gap: 4px;
+  }
+  .app-shell .games-card > .game-surface {
+    grid-row: 1 / 6;
+  }
+  .app-shell .games-card[data-phase="ready"] > .game-surface {
+    display: none;
+  }
+  .app-shell .games-card[data-phase="ready"] > .game-score,
+  .app-shell .games-card[data-phase="ready"] > .game-status,
+  .app-shell .games-card[data-phase="ready"] > .spectator-status,
+  .app-shell .games-card[data-phase="ready"] > .muted {
+    grid-column: 1;
+  }
+  .app-shell .games-card[data-phase="ready"] > .seat-picker {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .app-shell .pong-game-card[data-phase="ready"] > .seat-picker {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-self: start;
+  }
+  .app-shell .cycle-controls {
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: 64px;
+    gap: 6px;
+  }
+  .app-shell .cycle-controls button {
+    grid-area: auto;
+  }
+  .app-shell .cycle-controls .cycle-left {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .app-shell .cycle-controls .cycle-up {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .app-shell .cycle-controls .cycle-down {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .app-shell .cycle-controls .cycle-right {
+    grid-column: 4;
+    grid-row: 1;
+  }
+  .app-shell .cycle-control-center {
+    display: none;
+  }
+  .app-shell .sumo-stick {
+    width: 96px;
+    height: 96px;
+  }
+  .app-shell .sumo-controls {
+    gap: 8px;
+  }
+}
+/* The play stage occupies the screen even when a square court leaves spare space. */
+.app-shell .game-surface:has(.pong-court, .cycle-court, .sumo-court) {
+  background: #122c29;
+  border-radius: 12px;
+}
+main.app-shell {
+  height: var(--app-height, 100dvh);
+}
+.app-panel {
+  max-height: calc(var(--app-height, 100dvh) - 24px);
+}
+.app-shell.in-room .app-title .brand-icon {
+  display: none;
+}
+.app-shell .games-card > button {
+  font-size: 13px;
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .ship-hull {
+    display: none;
+  }
+  .app-shell .ship-panels {
+    min-height: 76px;
+  }
+  .app-shell .ship-order-heading {
+    font-size: 10px;
+    line-height: 12px;
+  }
+  .app-shell .ship-command {
+    line-height: 22px;
+  }
+  .app-shell .ship-deadline {
+    font-size: 12px;
+    line-height: 14px;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .ship-game-card[data-phase="ready"] {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(3, auto);
+    row-gap: 4px;
+  }
+  .app-shell .ship-game-card[data-phase="ready"] > .ship-stats,
+  .app-shell .ship-game-card[data-phase="ready"] > .ship-order,
+  .app-shell .ship-game-card[data-phase="ready"] > .muted {
+    grid-column: 1;
+  }
+  .app-shell .ship-game-card[data-phase="ready"] > .ship-duration {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+}
+/* Completed rounds show results and rematch options rather than disabled controls. */
+.app-shell .games-card[data-phase="finished"] > .game-surface,
+.app-shell .games-card[data-phase="finished"] > .cycle-controls,
+.app-shell .games-card[data-phase="finished"] > .sumo-controls,
+.app-shell .games-card[data-phase="finished"] > .ship-panels {
+  display: none;
+}
+.app-shell .games-card[data-phase="finished"] > .game-status,
+.app-shell .games-card[data-phase="finished"] > .cycle-status,
+.app-shell .games-card[data-phase="finished"] > .sumo-status {
+  font-size: 22px;
+}
+.app-shell .games-card[data-phase="finished"] > .cycle-riders,
+.app-shell .games-card[data-phase="finished"] > .race-scores {
+  flex: 1;
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .games-card[data-phase="finished"]:not(.ship-game-card) {
+    display: flex;
+  }
+  .app-shell .ship-game-card[data-phase="finished"] {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(4, auto);
+    row-gap: 4px;
+  }
+  .app-shell .ship-game-card[data-phase="finished"] > .ship-stats,
+  .app-shell .ship-game-card[data-phase="finished"] > .ship-order,
+  .app-shell .ship-game-card[data-phase="finished"] > .ship-summary,
+  .app-shell .ship-game-card[data-phase="finished"] > .muted {
+    grid-column: 1;
+  }
+  .app-shell .ship-game-card[data-phase="finished"] > .ship-duration {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    align-self: center;
+  }
+}
+.app-shell .ship-stats {
+  margin: 0;
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .ship-order {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .app-shell .ship-order-heading,
+  .app-shell .ship-deadline {
+    display: block;
+  }
+}
+.app-shell .board-card > .grid {
+  flex: 1;
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+}
+.app-shell .board-card .cell {
+  aspect-ratio: auto;
+  min-height: 44px;
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .board-card > .grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+}
+main.app-shell {
+  height: min(var(--app-height, 100dvh), 100dvh);
+}
+.app-shell .game-surface {
+  container-type: size;
+}
+.app-shell .surface-fit {
+  width: min(100cqw, calc(100cqh * var(--surface-ratio)));
+  aspect-ratio: var(--surface-ratio);
+}
+@media (min-width: 651px) and (min-height: 551px) {
+  .app-shell .pairing-body.has-code {
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+  }
+  .app-shell .pairing-body.has-code .qr-display {
+    width: 340px;
+    flex-shrink: 0;
+    margin: 0;
+  }
+  .app-shell .pairing-body.has-code .pair-controls {
+    width: min(100%, 320px);
+  }
+}
+@media (min-width: 1000px) and (min-height: 551px) {
+  .app-shell .pairing-body.has-code .qr-display {
+    width: 400px;
+  }
+}

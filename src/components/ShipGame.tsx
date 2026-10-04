@@ -1,3 +1,4 @@
+import { GameHelp } from "./AppLayout";
 import { useState } from "react";
 import { shipDuration, shipSystems, type ShipState } from "../games/ship";
 import type { Player } from "../network/protocol";
@@ -43,6 +44,7 @@ export function ShipGame({
   return (
     <section
       className="games-card ship-game-card"
+      data-phase={game.phase}
       aria-label="Spaceship Panic game"
     >
       <div className="board-heading">
@@ -109,11 +111,13 @@ export function ShipGame({
           )}
         </div>
       )}
-      <p className="muted ship-help">
-        {game.phase === "ready"
-          ? "Choose a 1, 2, or 3-minute mission. Each phone has three controls; your orders usually belong to someone else. Read them aloud, listen for yours, and set the requested number."
-          : "Read orders aloud. Only your three controls appear here. Missed orders cost 15 hull; wrong settings on a requested control cost 5. Repairs restore 3."}
-      </p>
+      <GameHelp>
+        <p className="muted ship-help">
+          {game.phase === "ready"
+            ? "Choose a 1, 2, or 3-minute mission. Each phone has three controls; your orders usually belong to someone else. Read them aloud, listen for yours, and set the requested number."
+            : "Read orders aloud. Only your three controls appear here. Missed orders cost 15 hull; wrong settings on a requested control cost 5. Repairs restore 3."}
+        </p>
+      </GameHelp>
       {configure && game.phase === "finished" && (
         <p className="ship-summary">
           {game.repairs} repairs · {game.mistakes} mistakes ·{" "}

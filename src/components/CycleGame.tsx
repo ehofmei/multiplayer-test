@@ -1,3 +1,4 @@
+import { GameSurface, GameHelp } from "./AppLayout";
 import {
   adjacentCyclePoints,
   cycleDrawPoint,
@@ -120,8 +121,10 @@ export function CycleGame({
   return (
     <section
       className="games-card cycle-game-card"
+      data-phase={game.phase}
       aria-label="Light-cycle Arena game"
       onKeyDown={(e) => {
+        if (!e.currentTarget.contains(e.target as Node)) return;
         const keys: Record<string, CycleDirection> = {
           ArrowUp: "up",
           ArrowRight: "right",
@@ -148,147 +151,149 @@ export function CycleGame({
       <p className="cycle-status" aria-live="polite">
         {status}
       </p>
-      <div
-        ref={court}
-        className="cycle-court"
-        role="group"
-        aria-label="Light-cycle arena. Use arrow keys or swipe to steer."
-        tabIndex={0}
-        data-active={active}
-        data-tick={game.ticks}
-        onPointerDown={(e) => {
-          if (!active) return;
-          e.currentTarget.focus();
-          e.currentTarget.setPointerCapture(e.pointerId);
-          swipe.current = { x: e.clientX, y: e.clientY };
-        }}
-        onPointerMove={(e) => {
-          if (
-            !active ||
-            !swipe.current ||
-            !e.currentTarget.hasPointerCapture(e.pointerId)
-          )
-            return;
-          const dx = e.clientX - swipe.current.x,
-            dy = e.clientY - swipe.current.y;
-          if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
-          steer(
-            Math.abs(dx) > Math.abs(dy)
-              ? dx > 0
-                ? "right"
-                : "left"
-              : dy > 0
-                ? "down"
-                : "up",
-          );
-          swipe.current = null;
-        }}
-        onPointerUp={() => {
-          swipe.current = null;
-        }}
-        onPointerCancel={() => {
-          swipe.current = null;
-        }}
-      >
-        <svg
-          viewBox={`0 0 ${CYCLE_SIZE * 10} ${CYCLE_SIZE * 10}`}
-          aria-hidden="true"
+      <GameSurface>
+        <div
+          ref={court}
+          className="cycle-court"
+          role="group"
+          aria-label="Light-cycle arena. Use arrow keys or swipe to steer."
+          tabIndex={0}
+          data-active={active}
+          data-tick={game.ticks}
+          onPointerDown={(e) => {
+            if (!active) return;
+            e.currentTarget.focus();
+            e.currentTarget.setPointerCapture(e.pointerId);
+            swipe.current = { x: e.clientX, y: e.clientY };
+          }}
+          onPointerMove={(e) => {
+            if (
+              !active ||
+              !swipe.current ||
+              !e.currentTarget.hasPointerCapture(e.pointerId)
+            )
+              return;
+            const dx = e.clientX - swipe.current.x,
+              dy = e.clientY - swipe.current.y;
+            if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
+            steer(
+              Math.abs(dx) > Math.abs(dy)
+                ? dx > 0
+                  ? "right"
+                  : "left"
+                : dy > 0
+                  ? "down"
+                  : "up",
+            );
+            swipe.current = null;
+          }}
+          onPointerUp={() => {
+            swipe.current = null;
+          }}
+          onPointerCancel={() => {
+            swipe.current = null;
+          }}
         >
-          <defs>
-            <pattern
-              id="cycle-grid"
-              width="10"
-              height="10"
-              patternUnits="userSpaceOnUse"
-            >
-              <path
-                d="M10 0H0V10"
-                fill="none"
-                stroke="#ffffff"
-                strokeOpacity=".07"
-                strokeWidth=".5"
-              />
-            </pattern>
-          </defs>
-          <rect width="320" height="320" fill="url(#cycle-grid)" />
-          {cycleColors.map((color, i) => (
-            <path
-              key={color}
-              fill={color}
-              fillOpacity=".72"
-              d={[...game.cells]
-                .flatMap((cell, n) =>
-                  Number(cell) === i + 1 && !movingHeads.has(n)
-                    ? [
-                        `M${(n % CYCLE_SIZE) * 10} ${Math.floor(n / CYCLE_SIZE) * 10}h10v10h-10z`,
-                      ]
-                    : [],
-                )
-                .join(" ")}
-            />
-          ))}
-          {game.riders.map((r, i) => (
-            <line
-              className="cycle-extension"
-              data-testid={`cycle-extension-${i}`}
-              key={`extension-${r.id}`}
-              ref={(element) => {
-                extensions.current[i] = element;
-              }}
-              stroke={cycleColors[i]}
-              strokeOpacity=".72"
-              strokeWidth="10"
-              strokeLinecap="butt"
-            />
-          ))}
-          {game.riders.map((r, i) => (
-            <g
-              key={r.id}
-              ref={(element) => {
-                heads.current[i] = element;
-              }}
-              data-testid={`cycle-rider-${i}`}
-              data-direction={r.direction}
-              data-alive={r.alive}
-              data-x={r.x}
-              data-y={r.y}
-            >
-              <rect
-                x={-6}
-                y={-6}
-                width="12"
-                height="12"
-                rx="3"
-                fill={r.alive ? cycleColors[i] : "#122c29"}
-                stroke={r.alive ? "#fff" : cycleColors[i]}
-                strokeWidth="1"
-              />
-              <text
-                x={0}
-                y={0.5}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize="9"
-                fontWeight="800"
-                fill={r.alive ? "#122c29" : cycleColors[i]}
+          <svg
+            viewBox={`0 0 ${CYCLE_SIZE * 10} ${CYCLE_SIZE * 10}`}
+            aria-hidden="true"
+          >
+            <defs>
+              <pattern
+                id="cycle-grid"
+                width="10"
+                height="10"
+                patternUnits="userSpaceOnUse"
               >
-                {r.alive ? i + 1 : "×"}
+                <path
+                  d="M10 0H0V10"
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeOpacity=".07"
+                  strokeWidth=".5"
+                />
+              </pattern>
+            </defs>
+            <rect width="320" height="320" fill="url(#cycle-grid)" />
+            {cycleColors.map((color, i) => (
+              <path
+                key={color}
+                fill={color}
+                fillOpacity=".72"
+                d={[...game.cells]
+                  .flatMap((cell, n) =>
+                    Number(cell) === i + 1 && !movingHeads.has(n)
+                      ? [
+                          `M${(n % CYCLE_SIZE) * 10} ${Math.floor(n / CYCLE_SIZE) * 10}h10v10h-10z`,
+                        ]
+                      : [],
+                  )
+                  .join(" ")}
+              />
+            ))}
+            {game.riders.map((r, i) => (
+              <line
+                className="cycle-extension"
+                data-testid={`cycle-extension-${i}`}
+                key={`extension-${r.id}`}
+                ref={(element) => {
+                  extensions.current[i] = element;
+                }}
+                stroke={cycleColors[i]}
+                strokeOpacity=".72"
+                strokeWidth="10"
+                strokeLinecap="butt"
+              />
+            ))}
+            {game.riders.map((r, i) => (
+              <g
+                key={r.id}
+                ref={(element) => {
+                  heads.current[i] = element;
+                }}
+                data-testid={`cycle-rider-${i}`}
+                data-direction={r.direction}
+                data-alive={r.alive}
+                data-x={r.x}
+                data-y={r.y}
+              >
+                <rect
+                  x={-6}
+                  y={-6}
+                  width="12"
+                  height="12"
+                  rx="3"
+                  fill={r.alive ? cycleColors[i] : "#122c29"}
+                  stroke={r.alive ? "#fff" : cycleColors[i]}
+                  strokeWidth="1"
+                />
+                <text
+                  x={0}
+                  y={0.5}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize="9"
+                  fontWeight="800"
+                  fill={r.alive ? "#122c29" : cycleColors[i]}
+                >
+                  {r.alive ? i + 1 : "×"}
+                </text>
+              </g>
+            ))}
+            {game.phase === "ready" && (
+              <text
+                x="160"
+                y="160"
+                textAnchor="middle"
+                fill="#c9ee87"
+                fontSize="13"
+              >
+                MAKE YOUR OWN ESCAPE ROUTE
               </text>
-            </g>
-          ))}
-          {game.phase === "ready" && (
-            <text
-              x="160"
-              y="160"
-              textAnchor="middle"
-              fill="#c9ee87"
-              fontSize="13"
-            >
-              MAKE YOUR OWN ESCAPE ROUTE
-            </text>
-          )}
-        </svg>
-      </div>
+            )}
+          </svg>
+        </div>
+      </GameSurface>
       <div
         className="cycle-controls"
         role="group"
@@ -327,30 +332,59 @@ export function CycleGame({
             ? "2–8 players · Everyone here rides."
             : "You’re watching. Join the next round."}
       </p>
-      {!!game.riders.length && (
-        <ol className="cycle-riders" aria-label="Riders">
-          {game.riders.map((r, i) => (
-            <li key={r.id} className={r.alive ? "" : "crashed"}>
-              <span
-                className="cycle-number"
-                style={{ background: cycleColors[i] }}
-              >
-                {i + 1}
-              </span>
-              <span className="cycle-name">
-                {name(r.id)}
-                {r.id === session.me.id ? " · You" : ""}
-              </span>
-              <small>{r.alive ? "Riding" : "Out"}</small>
-            </li>
-          ))}
-        </ol>
+      {configure && (
+        <>
+          {!!game.riders.length && (
+            <ol className="cycle-riders" aria-label="Riders">
+              {game.riders.map((r, i) => (
+                <li key={r.id} className={r.alive ? "" : "crashed"}>
+                  <span
+                    className="cycle-number"
+                    style={{ background: cycleColors[i] }}
+                  >
+                    {i + 1}
+                  </span>
+                  <span className="cycle-name">
+                    {name(r.id)}
+                    {r.id === session.me.id ? " · You" : ""}
+                  </span>
+                  <small>{r.alive ? "Riding" : "Out"}</small>
+                </li>
+              ))}
+            </ol>
+          )}
+        </>
       )}
-      <p className="muted cycle-help">
-        Keep moving. Avoid walls and every trail, including yours. Tap arrows,
-        swipe the arena, or focus it and use arrow keys / WASD. One turn per
-        step; no reversing. Last survivor wins.
-      </p>
+      <GameHelp>
+        <p className="muted cycle-help">
+          Keep moving. Avoid walls and every trail, including yours. Tap arrows,
+          swipe the arena, or focus it and use arrow keys / WASD. One turn per
+          step; no reversing. Last survivor wins.
+        </p>
+        {!configure && (
+          <>
+            {!!game.riders.length && (
+              <ol className="cycle-riders" aria-label="Riders">
+                {game.riders.map((r, i) => (
+                  <li key={r.id} className={r.alive ? "" : "crashed"}>
+                    <span
+                      className="cycle-number"
+                      style={{ background: cycleColors[i] }}
+                    >
+                      {i + 1}
+                    </span>
+                    <span className="cycle-name">
+                      {name(r.id)}
+                      {r.id === session.me.id ? " · You" : ""}
+                    </span>
+                    <small>{r.alive ? "Riding" : "Out"}</small>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </>
+        )}
+      </GameHelp>
       {session.role === "host" ? (
         configure ? (
           <>

@@ -63,7 +63,7 @@ unlock, device volume/mute behavior, and foreground recovery need physical testi
 
 ## App updates
 
-- Footer build identifier and 44px update control on desktop and narrow phone.
+- Menu build identifier and 44px update control on desktop and narrow phone.
 - Latest build reports up to date; offline check explains retry without interrupting play.
 - A new service worker waits during play, caches fully before Update app appears, and reloads on request.
 - Canceling an in-game update preserves the session; accepting returns home with the current assets.
@@ -80,7 +80,7 @@ unlock, device volume/mute behavior, and foreground recovery need physical testi
 
 ## Family play feedback
 
-- Reaction Race: touch drag of a few pixels on a live target still scores once and does not scroll; surrounding page can scroll; keyboard activation still works.
+- Reaction Race: touch drag of a few pixels on a live target still scores once and does not scroll; secondary panels can scroll; keyboard activation still works.
 - Both Pong games: gentle opening, acceleration visible by five seconds, capped speed, ramp resets after every miss, pause freezes timing.
 - Arena: host picks 1/3/5/7 lives, clients see the chosen setting, rematch keeps it, invalid wire values rejected.
 - Scanner: full-screen phone/desktop dialog, focus stays in modal, Escape/Stop restores focus and scrolling, camera tracks end, permission denial retains fallbacks. Check successful scanning and background close on real iPhone/iPad.
@@ -101,7 +101,7 @@ unlock, device volume/mute behavior, and foreground recovery need physical testi
   restart and game switching. A deterministic ready court snapshot is retained.
 - Review desktop and 320×700/390×844/768×1024 screenshots, including taller Arial
   metrics and four teammates with a long name. Check court clearance, focus,
-  touch targets, wrapping, contrast and page scrolling outside active play.
+  touch targets, wrapping, contrast and contained scrolling in secondary panels.
 - Live browser pass covers solo start, keyboard movement, palette, pause/resume,
   game selection and phone viewport inspection. Physical iPhone/iPad co-op feel,
   a complete team victory, sound audibility and host background/resume still need
@@ -232,3 +232,35 @@ cover this implementation; live interaction remains unverified. Physical iPhone/
 iPad follow-up should check two-thumb steering/dash feel, Wi-Fi latency, movement
 clarity, optional sound and Safari/installed-PWA background/resume. Update all
 devices before selecting this game.
+
+## Immersive iPhone/iPad app shell
+
+Inventory: compact Home/name/Create/Join; two phone library pages and full iPad
+library; host selection and waiting clients; setup assignments/options; play,
+pause/stop, results/rematch; Players/Menu and Help open/close/Escape/focus restore;
+paddle sliders/colors in Help; QR scan/image/text fallbacks, cancel and invalid
+text; connection loss; update checking and offline startup under the subpath.
+
+The live production-browser pass checked phone QR pairing and invalid text feedback,
+cancelled pairing, solo Breakout start/pause, paddle color selection in Help,
+Escape/focus restoration, and landscape rotation. Automated tests cover every
+game's setup, play, pause and results, with saved phone/tablet/desktop screenshots.
+Physical iPhone/iPad checks remain required below.
+
+- Check 320×700 and 390×844 phones, 844×390 landscape, 768×1024 and 1024×768 iPads,
+  plus a desktop development viewport. Check long names, four/eight participants,
+  spectators, and alternate/taller font metrics.
+- Measure primary content and card scroll dimensions, not just body overflow;
+  verify courts have nonzero bounds and review saved whole-screen screenshots.
+- Keep touch targets at least 44px; steering, thumb pad and Dash must stay together.
+  Short landscape setups may omit the preview but must retain every assignment,
+  options and Start. QR codes remain at least 240px wide on narrow portrait phones.
+- Dialogs contain focus, support Escape, return focus to the opener, and scroll
+  internally. Menu and Help preserve the room; Invite Player retains host pause
+  behavior. Help keyboard navigation must not steer a game through portal events.
+- On real installed iPhones/iPads, verify notch/home-indicator clearance, status
+  area contrast, portrait/landscape transitions, iPad split windows, name/text entry
+  with the keyboard, larger system text, two-thumb input and VoiceOver navigation.
+- Recheck real-camera pairing in both directions, denied access, text/image fallback,
+  foreground recovery, offline launch, and user-controlled updates across devices.
+  Chromium viewport tests do not certify Safari or installed-PWA behavior.

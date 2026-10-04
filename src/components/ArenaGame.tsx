@@ -1,3 +1,4 @@
+import { GameSurface, GameHelp } from "./AppLayout";
 import { brickBounds } from "../games/breakout";
 import { useEffect, useRef, useState } from "react";
 import { arenaWinner, sideNames, viewPosition } from "../games/arena";
@@ -112,6 +113,7 @@ export function ArenaGame({
   return (
     <section
       className={`games-card arena-game-card ${cooperative ? "breakout-game-card" : ""}`}
+      data-phase={game.phase}
       aria-label={`${title} game`}
     >
       <div className="board-heading">
@@ -179,147 +181,169 @@ export function ArenaGame({
           ))}
         </ul>
       )}
-      <div
-        className="pong-court arena-court"
-        role="group"
-        aria-label={cooperative ? "Breakout court" : "Arena court"}
-        style={{ touchAction: controllable ? "none" : "auto" }}
-        tabIndex={controllable ? 0 : -1}
-        onKeyDown={(e) => {
-          if (["ArrowLeft", "ArrowRight"].includes(e.key)) {
-            e.preventDefault();
-            move(local + (e.key === "ArrowLeft" ? -0.06 : 0.06));
-          }
-        }}
-        onPointerDown={(e) => {
-          if (controllable) {
-            e.currentTarget.setPointerCapture(e.pointerId);
-            drag(e);
-          }
-        }}
-        onPointerMove={(e) => {
-          if (e.currentTarget.hasPointerCapture(e.pointerId)) drag(e);
-        }}
-      >
-        <svg viewBox="0 0 1000 1000" aria-hidden="true">
-          <g transform={`rotate(${rotation} 500 500)`}>
-            <rect
-              x="55"
-              y="55"
-              width="890"
-              height="890"
-              rx="10"
-              fill="none"
-              stroke="#63837a"
-              strokeWidth="3"
-              strokeDasharray="10 16"
-            />
-            {[0, 1, 2, 3].map((i) => {
-              const active = cooperative
-                ? i < game.seats.length
-                : !!game.lives?.[i];
-              const pos =
-                (i === side ? viewPosition(side, local) : game.paddles[i]) *
-                1000;
-              const horizontal = i === 0 || i === 2;
-              return (
-                <rect
-                  key={i}
-                  data-testid={`arena-paddle-${i}`}
-                  data-side={sideNames[i]}
-                  data-active={active}
-                  x={
-                    horizontal ? (active ? pos - 120 : 55) : i === 1 ? 935 : 45
-                  }
-                  y={
-                    horizontal ? (i === 0 ? 935 : 45) : active ? pos - 120 : 55
-                  }
-                  width={horizontal ? (active ? 240 : 890) : 20}
-                  height={horizontal ? 20 : active ? 240 : 890}
-                  rx="8"
-                  fill={
-                    active
-                      ? paddleHex(
-                          players.find((p) => p.id === game.seats[i])?.color,
-                          i,
-                        )
-                      : "#63837a"
-                  }
-                />
-              );
-            })}
-            {cooperative &&
-              team?.bricks.map((hp, i) => {
-                if (!hp) return null;
-                const b = brickBounds(i);
+      <GameSurface>
+        <div
+          className="pong-court arena-court"
+          role="group"
+          aria-label={cooperative ? "Breakout court" : "Arena court"}
+          style={{ touchAction: controllable ? "none" : "auto" }}
+          tabIndex={controllable ? 0 : -1}
+          onKeyDown={(e) => {
+            if (["ArrowLeft", "ArrowRight"].includes(e.key)) {
+              e.preventDefault();
+              move(local + (e.key === "ArrowLeft" ? -0.06 : 0.06));
+            }
+          }}
+          onPointerDown={(e) => {
+            if (controllable) {
+              e.currentTarget.setPointerCapture(e.pointerId);
+              drag(e);
+            }
+          }}
+          onPointerMove={(e) => {
+            if (e.currentTarget.hasPointerCapture(e.pointerId)) drag(e);
+          }}
+        >
+          <svg viewBox="0 0 1000 1000" aria-hidden="true">
+            <g transform={`rotate(${rotation} 500 500)`}>
+              <rect
+                x="55"
+                y="55"
+                width="890"
+                height="890"
+                rx="10"
+                fill="none"
+                stroke="#63837a"
+                strokeWidth="3"
+                strokeDasharray="10 16"
+              />
+              {[0, 1, 2, 3].map((i) => {
+                const active = cooperative
+                  ? i < game.seats.length
+                  : !!game.lives?.[i];
+                const pos =
+                  (i === side ? viewPosition(side, local) : game.paddles[i]) *
+                  1000;
+                const horizontal = i === 0 || i === 2;
                 return (
-                  <g key={i} data-testid={`brick-${i}`} data-hp={hp}>
-                    <rect
-                      x={b.x * 1000}
-                      y={b.y * 1000}
-                      width={b.width * 1000}
-                      height={b.height * 1000}
-                      rx="8"
-                      fill={hp === 2 ? "#f4b66c" : "#d9f29d"}
-                      stroke="#122c29"
-                      strokeWidth="4"
-                    />
-                    {hp === 2 && (
-                      <path
-                        d={`M${(b.x + 0.022) * 1000} ${(b.y + 0.038) * 1000}h31`}
-                        stroke="#122c29"
-                        strokeWidth="8"
-                      />
-                    )}
-                  </g>
+                  <rect
+                    key={i}
+                    data-testid={`arena-paddle-${i}`}
+                    data-side={sideNames[i]}
+                    data-active={active}
+                    x={
+                      horizontal
+                        ? active
+                          ? pos - 120
+                          : 55
+                        : i === 1
+                          ? 935
+                          : 45
+                    }
+                    y={
+                      horizontal
+                        ? i === 0
+                          ? 935
+                          : 45
+                        : active
+                          ? pos - 120
+                          : 55
+                    }
+                    width={horizontal ? (active ? 240 : 890) : 20}
+                    height={horizontal ? 20 : active ? 240 : 890}
+                    rx="8"
+                    fill={
+                      active
+                        ? paddleHex(
+                            players.find((p) => p.id === game.seats[i])?.color,
+                            i,
+                          )
+                        : "#63837a"
+                    }
+                  />
                 );
               })}
-            <circle ref={ball} cx="500" cy="500" r="18" fill="#f5f4ee" />
-          </g>
-        </svg>
-      </div>
-      <p className="muted">
-        {side < 0
-          ? "You’re watching. The host picks the players."
-          : !alive && !configure
-            ? "You’re out. Your side is now a wall."
-            : "Your paddle is at the bottom. Drag left/right, use the slider, or press ← / →."}
-      </p>
-      {side >= 0 && (
-        <>
-          <label htmlFor="arena-paddle">Your paddle</label>
-          <input
-            id="arena-paddle"
-            type="range"
-            min="12"
-            max="88"
-            value={Math.round(local * 100)}
-            disabled={!controllable}
-            onChange={(e) => move(Number(e.target.value) / 100)}
-          />
-        </>
-      )}
-      <PaddleColors
-        session={session}
-        players={players}
-        fallback={paddleColors[Math.max(0, side)].name}
-      />
-      {!cooperative && (
-        <p className="muted">
-          {configure && session.role === "host"
-            ? startingLives
-            : (game.startingLives ?? 5)}{" "}
-          lives each. Miss the ball and lose a life. Empty and eliminated sides
-          become walls. Last player remaining wins.
+              {cooperative &&
+                team?.bricks.map((hp, i) => {
+                  if (!hp) return null;
+                  const b = brickBounds(i);
+                  return (
+                    <g key={i} data-testid={`brick-${i}`} data-hp={hp}>
+                      <rect
+                        x={b.x * 1000}
+                        y={b.y * 1000}
+                        width={b.width * 1000}
+                        height={b.height * 1000}
+                        rx="8"
+                        fill={hp === 2 ? "#f4b66c" : "#d9f29d"}
+                        stroke="#122c29"
+                        strokeWidth="4"
+                      />
+                      {hp === 2 && (
+                        <path
+                          d={`M${(b.x + 0.022) * 1000} ${(b.y + 0.038) * 1000}h31`}
+                          stroke="#122c29"
+                          strokeWidth="8"
+                        />
+                      )}
+                    </g>
+                  );
+                })}
+              <circle ref={ball} cx="500" cy="500" r="18" fill="#f5f4ee" />
+            </g>
+          </svg>
+        </div>
+      </GameSurface>
+      {!configure && (side < 0 || !alive) && (
+        <p className="spectator-status">
+          {side < 0
+            ? "You’re watching. The host picks the players."
+            : "You’re out. Your side is now a wall."}
         </p>
       )}
-      {cooperative && (
-        <p className="muted">
-          Clear all three levels with five shared lives. A miss costs everyone
-          one life; nobody is eliminated. Marked bricks take two hits. Late
-          arrivals watch until the next match.
-        </p>
-      )}
+      <GameHelp>
+        {side >= 0 && (
+          <p className="muted">
+            Your paddle is at the bottom. Drag left/right, use the slider, or
+            press ← / →.
+          </p>
+        )}
+        {side >= 0 && (
+          <>
+            <label htmlFor="arena-paddle">Your paddle</label>
+            <input
+              id="arena-paddle"
+              type="range"
+              min="12"
+              max="88"
+              value={Math.round(local * 100)}
+              disabled={!controllable}
+              onChange={(e) => move(Number(e.target.value) / 100)}
+            />
+          </>
+        )}
+        <PaddleColors
+          session={session}
+          players={players}
+          fallback={paddleColors[Math.max(0, side)].name}
+        />
+        {!cooperative && (
+          <p className="muted">
+            {configure && session.role === "host"
+              ? startingLives
+              : (game.startingLives ?? 5)}{" "}
+            lives each. Miss the ball and lose a life. Empty and eliminated
+            sides become walls. Last player remaining wins.
+          </p>
+        )}
+        {cooperative && (
+          <p className="muted">
+            Clear all three levels with five shared lives. A miss costs everyone
+            one life; nobody is eliminated. Marked bricks take two hits. Late
+            arrivals watch until the next match.
+          </p>
+        )}
+      </GameHelp>
       {session.role === "host" && configure && (
         <>
           {!cooperative && (

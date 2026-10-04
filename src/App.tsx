@@ -1,3 +1,4 @@
+import { AppPanel } from "./components/AppLayout";
 import { SumoGame } from "./components/SumoGame";
 import { CycleGame } from "./components/CycleGame";
 import { ShipGame } from "./components/ShipGame";
@@ -5,12 +6,7 @@ import { ArenaGame } from "./components/ArenaGame";
 import { applyUpdate, checkForUpdate, useUpdates } from "./pwa/updates";
 import { useEffect, useRef, useState } from "react";
 import { useGameSounds } from "./audio/useGameSounds";
-import {
-  GamePicker,
-  GameBar,
-  PongGame,
-  ReactionGame,
-} from "./components/Games";
+import { GamePicker, PongGame, ReactionGame } from "./components/Games";
 import { gameNames } from "./games/model";
 import { QrDisplay, QrReader } from "./components/QrPairing";
 import type { LatencySummary } from "./network/latency";
@@ -40,6 +36,8 @@ export function App() {
   const [output, setOutput] = useState("");
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const [transfer, setTransfer] = useState(false);
   const [pairing, setPairing] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -68,6 +66,24 @@ export function App() {
       sessionRef.current?.dispose();
     };
   }, []);
+  // Safari's keyboard changes the visual viewport, not always the CSS viewport.
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const resize = () => {
+      if (viewport.scale === 1)
+        document.documentElement.style.setProperty(
+          "--app-height",
+          `${viewport.height}px`,
+        );
+    };
+    resize();
+    viewport.addEventListener("resize", resize);
+    return () => {
+      viewport.removeEventListener("resize", resize);
+      document.documentElement.style.removeProperty("--app-height");
+    };
+  }, []);
   const start = (role: "host" | "client") => {
     window.scrollTo(0, 0);
     const player = {
@@ -85,6 +101,8 @@ export function App() {
     setInput("");
     setError("");
     setNotice("");
+    setMenu(false);
+    setTransfer(false);
     setPairing(role === "client");
   };
   const home = () => {
@@ -99,6 +117,8 @@ export function App() {
     setNotice("");
     setBusy(false);
     setPairing(false);
+    setMenu(false);
+    setTransfer(false);
   };
   const action = async (task: () => Promise<void>) => {
     setBusy(true);
@@ -133,10 +153,12 @@ export function App() {
         await current.accept(raw);
         setNotice("Join code accepted. Waiting for the direct connection.");
         setPairing(false);
+        setTransfer(false);
         setOutput("");
         setInput("");
       } else {
         setOutput(await current.answer(raw));
+        setTransfer(false);
         setInput("");
       }
     });
@@ -145,7 +167,7 @@ export function App() {
       setPairing(false);
   }, [session, snapshot?.players.length]);
   useEffect(() => {
-    window.scrollTo(0, 0);
+    setTransfer(false);
   }, [pairing]);
   const connected =
     session?.role === "host" || (snapshot?.players.length ?? 0) > 0;
@@ -158,25 +180,26 @@ export function App() {
   );
 
   return (
-    <main>
+    <main
+      className={`app-shell ${session ? "in-room" : "at-home"} ${showPairing ? "is-pairing" : ""}`}
+    >
       <header>
-        <a
-          href={import.meta.env.BASE_URL}
-          onClick={(e) => {
-            e.preventDefault();
-            if (!busy) home();
-          }}
-          aria-label="P2P Game Lab home"
-        >
+        <div className="app-title">
           <span className="brand-icon" aria-hidden="true">
             ▦
           </span>
-          <span>P2P Game Lab</span>
-        </a>
-        <div className="header-tools">
-          <span className="badge">
-            {standalone ? "Installed PWA" : "Browser"}
+          <span>
+            {!session
+              ? "Game Lab"
+              : showPairing
+                ? "Pair devices"
+                : gameNames[snapshot?.room.kind ?? "lobby"]}
           </span>
+        </div>
+        <div className="header-tools">
+          <button className="quiet menu-button" onClick={() => setMenu(true)}>
+            Menu{update.ready ? " •" : ""}
+          </button>
           <button
             className="quiet sound-toggle"
             aria-label="Sound"
@@ -195,479 +218,530 @@ export function App() {
       )}
       {update.ready && (
         <aside className="banner">
-          An update is ready. Use Update app below when you’re done playing.
+          An update is ready in Menu when you’re done playing.
         </aside>
       )}
-      {!session ? (
-        <section className="home">
-          <p className="eyebrow">THE SAME WI-FI. A SHARED EXPERIMENT.</p>
-          <h1>
-            Same Wi-Fi.
-            <br />
-            <span>More play.</span>
-          </h1>
-          <p className="intro">
-            Connect your family's devices, pick a game, and play together. One
-            device hosts. Everyone can join.
-          </p>
-          <div className="home-card">
-            <label htmlFor="name">Your name</label>
-            <input
-              id="name"
-              placeholder="Player"
-              maxLength={32}
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                setPersisted(
-                  savePlayer({
-                    ...identity.player,
-                    color: loadPlayer().player.color,
-                    name: e.target.value.trim() || "Player",
-                  }),
-                );
-              }}
-              autoComplete="nickname"
-            />
-            {!persisted && (
-              <p role="status">
-                Storage is unavailable. Your identity will last only for this
-                visit.
-              </p>
-            )}
-            <button disabled={!supported} onClick={() => start("host")}>
-              Create Game <span aria-hidden="true">→</span>
-            </button>
-            <button
-              className="secondary"
-              disabled={!supported}
-              onClick={() => start("client")}
-            >
-              Join Game
-            </button>
-          </div>
-          {!supported && (
-            <p className="error" role="alert">
-              Open this app over HTTPS in a browser with WebRTC support. Desktop
-              localhost also works.
+      <div className="app-content">
+        {!session ? (
+          <section className="home">
+            <p className="eyebrow">THE SAME WI-FI. A SHARED EXPERIMENT.</p>
+            <h1>
+              Same Wi-Fi.
+              <br />
+              <span>More play.</span>
+            </h1>
+            <p className="intro">
+              Connect your family's devices, pick a game, and play together. One
+              device hosts. Everyone can join.
             </p>
-          )}
-          <div className="how">
-            <p>
-              <strong>01 / Connect</strong> Use the same Wi-Fi network.
-            </p>
-            <p>
-              <strong>02 / Pair</strong> Scan each other’s QR codes.
-            </p>
-            <p>
-              <strong>03 / Play</strong> The host picks the game.
-            </p>
-          </div>
-          <details className="install">
-            <summary>Install on iPhone or iPad</summary>
-            <p>
-              Open in Safari, tap Share, then Add to Home Screen. Visit online
-              once before testing offline. Each device must finish loading the
-              app first.
-            </p>
-          </details>
-          <p className="footnote">
-            {offlineReady
-              ? "App shell cached for offline use."
-              : "Offline caching is available in the production build."}{" "}
-            Gameplay uses direct WebRTC connections with no STUN or TURN.
-          </p>
-        </section>
-      ) : (
-        <>
-          <div className="session-heading">
-            <div>
-              <p className="eyebrow">
-                {session.role === "host"
-                  ? "YOU ARE THE HOST"
-                  : "YOU ARE A PLAYER"}
-              </p>
-              <h1>
-                {showPairing
-                  ? "Pair devices"
-                  : connected
-                    ? snapshot?.room.kind === "lights"
-                      ? "Shared grid"
-                      : gameNames[snapshot?.room.kind ?? "lobby"]
-                    : "Join the fun"}
-              </h1>
-            </div>
-            <button className="quiet" disabled={busy} onClick={home}>
-              Return Home
-            </button>
-          </div>
-          <p className="status" role="status">
-            <span className={connected ? "dot live" : "dot"} />
-            {snapshot?.status}
-          </p>
-          {!showPairing && (error || snapshot?.error) && (
-            <p className="error" role="alert">
-              {error || snapshot?.error}
-            </p>
-          )}
-          {!showPairing && (
-            <>
-              {snapshot?.room.kind !== "lobby" && (
-                <GameBar
-                  session={session}
-                  kind={snapshot?.room.kind ?? "lobby"}
-                />
-              )}
-              {snapshot?.room.notice && (
-                <p className="banner" aria-live="polite">
-                  {snapshot.room.notice}
+            <div className="home-card">
+              <label htmlFor="name">Your name</label>
+              <input
+                id="name"
+                placeholder="Player"
+                maxLength={32}
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setPersisted(
+                    savePlayer({
+                      ...identity.player,
+                      color: loadPlayer().player.color,
+                      name: e.target.value.trim() || "Player",
+                    }),
+                  );
+                }}
+                autoComplete="nickname"
+              />
+              {!persisted && (
+                <p role="status">
+                  Storage is unavailable. Your identity will last only for this
+                  visit.
                 </p>
               )}
-              <div className="session-layout">
-                {snapshot?.room.kind === "lobby" && (
-                  <GamePicker session={session} />
+              <button disabled={!supported} onClick={() => start("host")}>
+                Create Game <span aria-hidden="true">→</span>
+              </button>
+              <button
+                className="secondary"
+                disabled={!supported}
+                onClick={() => start("client")}
+              >
+                Join Game
+              </button>
+            </div>
+            {!supported && (
+              <p className="error" role="alert">
+                Open this app over HTTPS in a browser with WebRTC support.
+                Desktop localhost also works.
+              </p>
+            )}
+          </section>
+        ) : (
+          <>
+            <div className="room-toolbar">
+              <p className="status" role="status">
+                <span className={connected ? "dot live" : "dot"} />
+                {snapshot?.status}
+              </p>
+              <button
+                className="quiet players-button"
+                onClick={() => setMenu(true)}
+                aria-label="Players"
+              >
+                {snapshot?.players.length ?? 0}/8
+              </button>
+              {session.role === "host" &&
+                !showPairing &&
+                snapshot?.room.kind === "lobby" && (
+                  <button
+                    className="secondary"
+                    disabled={busy}
+                    onClick={() =>
+                      action(async () => {
+                        session.pauseGames();
+                        setOutput(await session.offer());
+                        setInput("");
+                        setTransfer(false);
+                        setPairing(true);
+                      })
+                    }
+                  >
+                    Add Player
+                  </button>
                 )}
-                {(snapshot?.room.kind === "arena" ||
-                  snapshot?.room.kind === "breakout") &&
-                  snapshot.room.pong && (
-                    <ArenaGame
-                      cooperative={snapshot.room.kind === "breakout"}
+              {session.role === "host" &&
+                !showPairing &&
+                snapshot?.room.kind !== "lobby" && (
+                  <button
+                    className="quiet"
+                    onClick={() => session.selectGame("lobby")}
+                  >
+                    Choose Game
+                  </button>
+                )}
+            </div>
+            {!showPairing && (error || snapshot?.error) && (
+              <p className="error" role="alert">
+                {error || snapshot?.error}
+              </p>
+            )}
+            {!showPairing && (
+              <>
+                {snapshot?.room.notice && (
+                  <p className="banner" aria-live="polite">
+                    {snapshot.room.notice}
+                  </p>
+                )}
+                <div className="session-layout">
+                  {snapshot?.room.kind === "lobby" && (
+                    <GamePicker session={session} />
+                  )}
+                  {(snapshot?.room.kind === "arena" ||
+                    snapshot?.room.kind === "breakout") &&
+                    snapshot.room.pong && (
+                      <ArenaGame
+                        cooperative={snapshot.room.kind === "breakout"}
+                        key={snapshot.room.epoch}
+                        game={snapshot.room.pong}
+                        players={snapshot.players}
+                        session={session}
+                        connected={connected}
+                      />
+                    )}
+                  {snapshot?.room.kind === "pong" && snapshot.room.pong && (
+                    <PongGame
                       key={snapshot.room.epoch}
                       game={snapshot.room.pong}
+                      epoch={snapshot.room.epoch}
                       players={snapshot.players}
                       session={session}
                       connected={connected}
                     />
                   )}
-                {snapshot?.room.kind === "pong" && snapshot.room.pong && (
-                  <PongGame
-                    key={snapshot.room.epoch}
-                    game={snapshot.room.pong}
-                    epoch={snapshot.room.epoch}
-                    players={snapshot.players}
-                    session={session}
-                    connected={connected}
-                  />
-                )}
-                {snapshot?.room.kind === "sumo" && snapshot.room.sumo && (
-                  <SumoGame
-                    key={snapshot.room.epoch}
-                    game={snapshot.room.sumo}
-                    players={snapshot.players}
-                    session={session}
-                    connected={connected}
-                  />
-                )}
-                {snapshot?.room.kind === "cycle" && snapshot.room.cycle && (
-                  <CycleGame
-                    key={snapshot.room.epoch}
-                    game={snapshot.room.cycle}
-                    players={snapshot.players}
-                    session={session}
-                    connected={connected}
-                  />
-                )}
-                {snapshot?.room.kind === "ship" && snapshot.room.ship && (
-                  <ShipGame
-                    key={snapshot.room.epoch}
-                    game={snapshot.room.ship}
-                    players={snapshot.players}
-                    session={session}
-                    connected={connected}
-                  />
-                )}
-                {snapshot?.room.race && (
-                  <ReactionGame
-                    game={snapshot.room.race}
-                    players={snapshot.players}
-                    session={session}
-                    connected={connected}
-                  />
-                )}
-                {snapshot?.room.kind === "lights" && (
-                  <section className="board-card" aria-label="Shared grid">
-                    <div className="board-heading">
-                      <h2>Light board</h2>
-                      <span>Revision {snapshot?.grid.revision ?? 0}</span>
-                    </div>
-                    <div className="grid">
-                      {snapshot?.grid.cells.map((on, i) => (
-                        <button
-                          key={i}
-                          className={on ? "cell on" : "cell"}
-                          aria-label={"Cell " + (i + 1)}
-                          aria-pressed={on}
-                          disabled={!connected}
-                          onClick={() => session.toggle(i)}
-                        >
-                          <span className="light" aria-hidden="true" />
-                          <span>{i + 1}</span>
-                          <span className="cell-state">
-                            {on ? "ON" : "OFF"}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                    <p className="board-note">
-                      {connected
-                        ? "Tap any light. The host shares every change."
-                        : "Pair with a host to activate the board."}
-                    </p>
-                  </section>
-                )}
-                <aside className="people-card">
-                  <div className="board-heading">
-                    <h2>At the table</h2>
-                    <span>{snapshot?.players.length ?? 0}/8</span>
-                  </div>
-                  <ul>
-                    {snapshot?.players.map((p, i) => (
-                      <li key={p.id}>
-                        <span className="avatar">
-                          {p.name.slice(0, 1).toUpperCase()}
-                        </span>
-                        <span>
-                          {p.name}
-                          <small>
-                            {i === 0 ? "Host" : "Player"}
-                            {p.id === identity.player.id ? " · You" : ""}
-                          </small>
-                        </span>
-                        <span className="dot live" />
-                      </li>
-                    ))}
-                  </ul>
-                  {session.role === "host" && (
-                    <button
-                      className="secondary"
-                      disabled={busy || pairing}
-                      onClick={() =>
-                        action(async () => {
-                          session.pauseGames();
-                          setOutput(await session.offer());
-                          setInput("");
-                          setPairing(true);
-                        })
-                      }
-                    >
-                      Add Player
-                    </button>
-                  )}
-                  {session.role === "client" && !connected && (
-                    <p className="muted">
-                      The host and players will appear here after pairing.
-                    </p>
-                  )}
-                  <p className="footnote">
-                    Keep the host app open and awake. Leaving the app may
-                    interrupt connections.
-                  </p>
-                </aside>
-              </div>
-            </>
-          )}
-          {showPairing && (
-            <section className="pair-card">
-              <p className="eyebrow">PAIR WITH A QR CODE</p>
-              <h2>
-                {session.role === "host"
-                  ? "Invite one device"
-                  : output
-                    ? "Show your join code"
-                    : "Scan the host’s invite code"}
-              </h2>
-              {(error || snapshot?.error) && (
-                <p className="error" role="alert">
-                  {error || snapshot?.error}
-                </p>
-              )}
-              <div className={`pairing-body ${output ? "has-code" : ""}`}>
-                {output && (
-                  <QrDisplay
-                    value={output}
-                    kind={session.role === "host" ? "Invite" : "Join"}
-                  />
-                )}
-                <div className="pair-controls">
-                  <p className="pair-instructions">
-                    {session.role === "host"
-                      ? "1. Have the player scan your invite code. 2. Scan their join code. Create a fresh invite for each player."
-                      : output
-                        ? "Show your join QR code to the host. Keep this screen open while they scan it."
-                        : "Scan the host’s QR code. Your join code will appear here."}
-                  </p>
-                  {!(session.role === "client" && output) && (
-                    <QrReader
-                      kind={session.role === "host" ? "Join" : "Invite"}
-                      disabled={busy}
-                      onRead={applyConnection}
+                  {snapshot?.room.kind === "sumo" && snapshot.room.sumo && (
+                    <SumoGame
+                      key={snapshot.room.epoch}
+                      game={snapshot.room.sumo}
+                      players={snapshot.players}
+                      session={session}
+                      connected={connected}
                     />
                   )}
-                  {output && (
-                    <>
-                      <details className="text-fallback">
-                        <summary>Copy/paste instead</summary>
-                        <label htmlFor="output">
-                          {session.role === "host"
-                            ? "Invite text"
-                            : "Join text"}
-                        </label>
-                        <textarea
-                          id="output"
-                          readOnly
-                          value={output}
-                          onFocus={(e) => e.target.select()}
-                          spellCheck={false}
-                        />
-                        <button className="secondary" onClick={copy}>
-                          Copy {session.role === "host" ? "Invite" : "Join"}
-                        </button>
-                      </details>
-                    </>
+                  {snapshot?.room.kind === "cycle" && snapshot.room.cycle && (
+                    <CycleGame
+                      key={snapshot.room.epoch}
+                      game={snapshot.room.cycle}
+                      players={snapshot.players}
+                      session={session}
+                      connected={connected}
+                    />
                   )}
-                  {!(session.role === "client" && output) && (
-                    <details className="text-fallback">
-                      <summary>Paste connection text instead</summary>
-                      <label htmlFor="input">
-                        {session.role === "host"
-                          ? "Paste player join code"
-                          : "Paste host invite code"}
-                      </label>
-                      <textarea
-                        id="input"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder="Paste the complete connection text here…"
-                        spellCheck={false}
-                        autoCapitalize="off"
-                        autoCorrect="off"
-                      />
-                      <button
-                        disabled={busy || !input.trim()}
-                        onClick={() => applyConnection(input)}
-                      >
-                        {busy
-                          ? "Preparing connection…"
-                          : session.role === "host"
-                            ? "Connect Player"
-                            : "Create Join Code"}
-                      </button>
-                    </details>
+                  {snapshot?.room.kind === "ship" && snapshot.room.ship && (
+                    <ShipGame
+                      key={snapshot.room.epoch}
+                      game={snapshot.room.ship}
+                      players={snapshot.players}
+                      session={session}
+                      connected={connected}
+                    />
                   )}
-                  {session.role === "host" && (
-                    <button
-                      className="quiet"
-                      disabled={busy}
-                      onClick={() => {
-                        session.cancelOffer(output);
-                        setError("");
-                        setPairing(false);
-                        setOutput("");
-                        setInput("");
-                        setNotice("");
-                      }}
-                    >
-                      Cancel Invite
-                    </button>
+                  {snapshot?.room.race && (
+                    <ReactionGame
+                      game={snapshot.room.race}
+                      players={snapshot.players}
+                      session={session}
+                      connected={connected}
+                    />
                   )}
-                  {session.role === "client" && output && (
-                    <p className="muted">
-                      Keep this screen open until the host scans your join code.
-                      Pairing expires after three minutes.
-                    </p>
+                  {snapshot?.room.kind === "lights" && (
+                    <section className="board-card" aria-label="Shared grid">
+                      <div className="board-heading">
+                        <h2>Light board</h2>
+                        <span>Revision {snapshot?.grid.revision ?? 0}</span>
+                      </div>
+                      <div className="grid">
+                        {snapshot?.grid.cells.map((on, i) => (
+                          <button
+                            key={i}
+                            className={on ? "cell on" : "cell"}
+                            aria-label={"Cell " + (i + 1)}
+                            aria-pressed={on}
+                            disabled={!connected}
+                            onClick={() => session.toggle(i)}
+                          >
+                            <span className="light" aria-hidden="true" />
+                            <span>{i + 1}</span>
+                            <span className="cell-state">
+                              {on ? "ON" : "OFF"}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="board-note">
+                        {connected
+                          ? "Tap any light. The host shares every change."
+                          : "Pair with a host to activate the board."}
+                      </p>
+                    </section>
                   )}
-                  {notice && <p role="status">{notice}</p>}
                 </div>
-              </div>
-            </section>
-          )}
-          <details className="debug">
-            <summary>
-              Connection details · {snapshot?.links.length ?? 0} peer(s)
-            </summary>
-            <p className="footnote">
-              Round-trip time includes both directions and peer processing.
-              Samples update once per second; median and p95 use the latest 60
-              samples. Tap response measures a client action until its host
-              state arrives, before screen rendering. Keep both devices
-              foregrounded for useful results.
-            </p>
-            {!snapshot?.links.length && <p>No active peer connections.</p>}
-            {snapshot?.links.map((link) => (
-              <div className="connection" key={link.id}>
-                <h3>{link.name}</h3>
-                <dl>
-                  <dt>Connection</dt>
-                  <dd>{link.connection}</dd>
-                  <dt>ICE</dt>
-                  <dd>{link.ice}</dd>
-                  <dt>Signaling</dt>
-                  <dd>{link.signaling}</dd>
-                  <dt>DataChannel</dt>
-                  <dd>{link.channel}</dd>
-                  <dt>Messages sent / received</dt>
-                  <dd>
-                    {link.sent} / {link.received}
-                  </dd>
-                  <dt>Last message</dt>
-                  <dd>
-                    {link.lastMessage
-                      ? new Date(link.lastMessage).toLocaleTimeString()
-                      : "None yet"}
-                  </dd>
-                  <dt>Round-trip time</dt>
-                  <dd data-testid="rtt">{latencyText(link.rtt)}</dd>
-                  <dt>Unanswered probes</dt>
-                  <dd>{link.missed}</dd>
-                  {session.role === "client" && (
-                    <>
-                      <dt>Tap response</dt>
-                      <dd data-testid="tap-response">
-                        {link.taps
-                          ? latencyText(link.taps)
-                          : "Tap a light or race target to measure"}
-                      </dd>
-                    </>
+              </>
+            )}
+            {showPairing && (
+              <section className="pair-card">
+                <p className="eyebrow">PAIR WITH A QR CODE</p>
+                <h2>
+                  {session.role === "host"
+                    ? "Invite one device"
+                    : output
+                      ? "Show your join code"
+                      : "Scan the host’s invite code"}
+                </h2>
+                {!transfer && (error || snapshot?.error) && (
+                  <p className="error" role="alert">
+                    {error || snapshot?.error}
+                  </p>
+                )}
+                <div className={`pairing-body ${output ? "has-code" : ""}`}>
+                  {output && (
+                    <QrDisplay
+                      value={output}
+                      kind={session.role === "host" ? "Invite" : "Join"}
+                    />
                   )}
-                </dl>
-              </div>
-            ))}
-          </details>
-        </>
-      )}
-      <footer>
-        <div>
-          LOCAL WI-FI LAB <span>One host. Everyone connected.</span>
-        </div>
-        <div className="app-updates">
-          <span className="build-id" title="UTC build time and source revision">
-            Build {__BUILD_ID__}
-          </span>
+                  <div className="pair-controls">
+                    <p className="pair-instructions">
+                      {session.role === "host"
+                        ? "1. Have the player scan your invite code. 2. Scan their join code. Create a fresh invite for each player."
+                        : output
+                          ? "Show your join QR code to the host. Keep this screen open while they scan it."
+                          : "Scan the host’s QR code. Your join code will appear here."}
+                    </p>
+                    {!(session.role === "client" && output) && (
+                      <QrReader
+                        kind={session.role === "host" ? "Join" : "Invite"}
+                        disabled={busy}
+                        onRead={applyConnection}
+                      />
+                    )}
+                    <button className="quiet" onClick={() => setTransfer(true)}>
+                      Other ways to connect
+                    </button>
+                    <AppPanel
+                      title="Connection text"
+                      open={transfer}
+                      onClose={() => setTransfer(false)}
+                    >
+                      {(error || snapshot?.error) && (
+                        <p className="error" role="alert">
+                          {error || snapshot?.error}
+                        </p>
+                      )}
+                      {output && (
+                        <>
+                          <details className="text-fallback">
+                            <summary>Copy/paste instead</summary>
+                            <label htmlFor="output">
+                              {session.role === "host"
+                                ? "Invite text"
+                                : "Join text"}
+                            </label>
+                            <textarea
+                              id="output"
+                              readOnly
+                              value={output}
+                              onFocus={(e) => e.target.select()}
+                              spellCheck={false}
+                            />
+                            <button className="secondary" onClick={copy}>
+                              Copy {session.role === "host" ? "Invite" : "Join"}
+                            </button>
+                          </details>
+                        </>
+                      )}
+                      {!(session.role === "client" && output) && (
+                        <details className="text-fallback">
+                          <summary>Paste connection text instead</summary>
+                          <label htmlFor="input">
+                            {session.role === "host"
+                              ? "Paste player join code"
+                              : "Paste host invite code"}
+                          </label>
+                          <textarea
+                            id="input"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder="Paste the complete connection text here…"
+                            spellCheck={false}
+                            autoCapitalize="off"
+                            autoCorrect="off"
+                          />
+                          <button
+                            disabled={busy || !input.trim()}
+                            onClick={() => applyConnection(input)}
+                          >
+                            {busy
+                              ? "Preparing connection…"
+                              : session.role === "host"
+                                ? "Connect Player"
+                                : "Create Join Code"}
+                          </button>
+                        </details>
+                      )}
+                    </AppPanel>
+                    {session.role === "host" && (
+                      <button
+                        className="quiet"
+                        disabled={busy}
+                        onClick={() => {
+                          session.cancelOffer(output);
+                          setError("");
+                          setPairing(false);
+                          setOutput("");
+                          setInput("");
+                          setNotice("");
+                        }}
+                      >
+                        Cancel Invite
+                      </button>
+                    )}
+                    {session.role === "client" && output && (
+                      <p className="muted">
+                        Keep this screen open. Code expires in three minutes.
+                      </p>
+                    )}
+                    {notice && <p role="status">{notice}</p>}
+                  </div>
+                </div>
+              </section>
+            )}
+          </>
+        )}
+      </div>
+      <AppPanel
+        title="Room & settings"
+        open={menu}
+        onClose={() => setMenu(false)}
+      >
+        {session?.role === "host" && !showPairing && (
           <button
-            className="quiet"
-            disabled={update.busy}
-            onClick={() => {
-              if (!update.ready) void checkForUpdate();
-              else if (
-                !session ||
-                window.confirm(
-                  "Updating reloads the app and ends your connection to this game. Update now?",
-                )
-              )
-                void applyUpdate();
-            }}
+            className="secondary"
+            disabled={busy}
+            onClick={() =>
+              action(async () => {
+                session.pauseGames();
+                setMenu(false);
+                setOutput(await session.offer());
+                setInput("");
+                setTransfer(false);
+                setPairing(true);
+              })
+            }
           >
-            {update.busy
-              ? update.ready
-                ? "Updating…"
-                : "Checking…"
-              : update.ready
-                ? "Update app"
-                : "Check for updates"}
+            Invite Player
           </button>
-          <p aria-live="polite">{update.message}</p>
+        )}
+        {session && (
+          <button className="quiet" disabled={busy} onClick={home}>
+            Return Home
+          </button>
+        )}
+        <p className="muted">
+          {standalone
+            ? "Installed on this device"
+            : "Open from your Home Screen for the app experience."}
+        </p>
+        {session && (
+          <>
+            <aside className="people-card">
+              <div className="board-heading">
+                <h2>At the table</h2>
+                <span>{snapshot?.players.length ?? 0} connected</span>
+              </div>
+              <ul>
+                {snapshot?.players.map((p, i) => (
+                  <li key={p.id}>
+                    <span className="avatar">
+                      {p.name.slice(0, 1).toUpperCase()}
+                    </span>
+                    <span>
+                      {p.name}
+                      <small>
+                        {i === 0 ? "Host" : "Player"}
+                        {p.id === identity.player.id ? " · You" : ""}
+                      </small>
+                    </span>
+                    <span className="dot live" />
+                  </li>
+                ))}
+              </ul>
+              {session.role === "client" && !connected && (
+                <p className="muted">
+                  The host and players will appear here after pairing.
+                </p>
+              )}
+              <p className="footnote">
+                Keep the host app open and awake. Leaving the app may interrupt
+                connections.
+              </p>
+            </aside>
+            <details className="debug">
+              <summary>
+                Connection details · {snapshot?.links.length ?? 0} peer(s)
+              </summary>
+              <p className="footnote">
+                Round-trip time includes both directions and peer processing.
+                Samples update once per second; median and p95 use the latest 60
+                samples. Tap response measures a client action until its host
+                state arrives, before screen rendering. Keep both devices
+                foregrounded for useful results.
+              </p>
+              {!snapshot?.links.length && <p>No active peer connections.</p>}
+              {snapshot?.links.map((link) => (
+                <div className="connection" key={link.id}>
+                  <h3>{link.name}</h3>
+                  <dl>
+                    <dt>Connection</dt>
+                    <dd>{link.connection}</dd>
+                    <dt>ICE</dt>
+                    <dd>{link.ice}</dd>
+                    <dt>Signaling</dt>
+                    <dd>{link.signaling}</dd>
+                    <dt>DataChannel</dt>
+                    <dd>{link.channel}</dd>
+                    <dt>Messages sent / received</dt>
+                    <dd>
+                      {link.sent} / {link.received}
+                    </dd>
+                    <dt>Last message</dt>
+                    <dd>
+                      {link.lastMessage
+                        ? new Date(link.lastMessage).toLocaleTimeString()
+                        : "None yet"}
+                    </dd>
+                    <dt>Round-trip time</dt>
+                    <dd data-testid="rtt">{latencyText(link.rtt)}</dd>
+                    <dt>Unanswered probes</dt>
+                    <dd>{link.missed}</dd>
+                    {session.role === "client" && (
+                      <>
+                        <dt>Tap response</dt>
+                        <dd data-testid="tap-response">
+                          {link.taps
+                            ? latencyText(link.taps)
+                            : "Tap a light or race target to measure"}
+                        </dd>
+                      </>
+                    )}
+                  </dl>
+                </div>
+              ))}
+            </details>
+          </>
+        )}
+        <div className="how">
+          <p>
+            <strong>01 / Connect</strong> Use the same Wi-Fi network.
+          </p>
+          <p>
+            <strong>02 / Pair</strong> Scan each other’s QR codes.
+          </p>
+          <p>
+            <strong>03 / Play</strong> The host picks the game.
+          </p>
         </div>
-      </footer>
+        <details className="install">
+          <summary>Install on iPhone or iPad</summary>
+          <p>
+            Open in Safari, tap Share, then Add to Home Screen. Visit online
+            once before testing offline. Each device must finish loading the app
+            first.
+          </p>
+        </details>
+        <p className="footnote">
+          {offlineReady
+            ? "App shell cached for offline use."
+            : "Offline caching is available in the production build."}{" "}
+          Gameplay uses direct WebRTC connections with no STUN or TURN.
+        </p>
+        <footer>
+          <div>
+            LOCAL WI-FI LAB <span>One host. Everyone connected.</span>
+          </div>
+          <div className="app-updates">
+            <span
+              className="build-id"
+              title="UTC build time and source revision"
+            >
+              Build {__BUILD_ID__}
+            </span>
+            <button
+              className="quiet"
+              disabled={update.busy}
+              onClick={() => {
+                if (!update.ready) void checkForUpdate();
+                else if (
+                  !session ||
+                  window.confirm(
+                    "Updating reloads the app and ends your connection to this game. Update now?",
+                  )
+                )
+                  void applyUpdate();
+              }}
+            >
+              {update.busy
+                ? update.ready
+                  ? "Updating…"
+                  : "Checking…"
+                : update.ready
+                  ? "Update app"
+                  : "Check for updates"}
+            </button>
+            <p aria-live="polite">{update.message}</p>
+          </div>
+        </footer>
+      </AppPanel>
     </main>
   );
 }

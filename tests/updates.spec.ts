@@ -1,9 +1,10 @@
+import { openMenu, closePanels } from "./ui";
 import { test, expect } from "@playwright/test";
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-test("footer checks the current build and fails gracefully offline", async ({
+test("settings checks the current build and fails gracefully offline", async ({
   page,
   context,
 }) => {
@@ -11,6 +12,7 @@ test("footer checks the current build and fails gracefully offline", async ({
   await page.evaluate(() =>
     navigator.serviceWorker.ready.then(() => undefined),
   );
+  await openMenu(page);
   await expect(page.locator(".build-id")).toContainText(/Build \d{8}T\d{6}Z/);
   await page
     .getByRole("button", { name: "Check for updates", exact: true })
@@ -25,9 +27,11 @@ test("footer checks the current build and fails gracefully offline", async ({
   await expect(page.locator(".app-updates")).toContainText(
     "Couldn’t check for updates.",
   );
+  await closePanels(page);
   await page.getByRole("button", { name: "Create Game", exact: true }).click();
   await expect(page.getByRole("region", { name: "Game picker" })).toBeVisible();
   await page.setViewportSize({ width: 320, height: 700 });
+  await openMenu(page);
   await page.locator(".app-updates").scrollIntoViewIfNeeded();
   const bounds = await page
     .getByRole("button", { name: "Check for updates", exact: true })
@@ -104,6 +108,7 @@ test("a cached new build waits for consent, cancel preserves play, updating relo
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
     latest = true;
+    await openMenu(page);
     await page
       .getByRole("button", { name: "Check for updates", exact: true })
       .click();
@@ -125,6 +130,7 @@ test("a cached new build waits for consent, cancel preserves play, updating relo
       page.getByRole("button", { name: "Create Game", exact: true }),
     ).toBeVisible();
     await expect(page.locator(".build-id")).toContainText("20990101T000000Z");
+    await openMenu(page);
     await expect(
       page.getByRole("button", { name: "Check for updates", exact: true }),
     ).toBeVisible();
@@ -133,6 +139,7 @@ test("a cached new build waits for consent, cancel preserves play, updating relo
       other.getByRole("region", { name: "Game picker" }),
     ).toBeVisible();
     await expect(other.locator(".build-id")).toHaveText(oldBuild!);
+    await openMenu(other);
     await expect(
       other.getByRole("button", { name: "Update app", exact: true }),
     ).toBeVisible();

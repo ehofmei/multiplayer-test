@@ -1,3 +1,14 @@
+import {
+  addPlayer,
+  join,
+  chooseGame,
+  closePanels,
+  connectionDetails,
+  openMenu,
+  returnHome,
+  showHelp,
+  transferText,
+} from "./ui";
 import { expectStableScreenshot } from "./screenshot";
 import { chromium, expect, test, type Page } from "@playwright/test";
 import QRCode from "qrcode";
@@ -32,7 +43,7 @@ test("compressed QR images pair offline and expose live latency on a phone", asy
     await host.goto("./");
     await host.getByLabel("Your name").fill("Alex");
     await createLights(host);
-    await host.getByRole("button", { name: "Add Player", exact: true }).click();
+    await addPlayer(host);
     const offer = host.getByRole("img", {
       name: "Invite QR code",
       exact: true,
@@ -64,7 +75,7 @@ test("compressed QR images pair offline and expose live latency on a phone", asy
     await expect(host.getByText("2/8", { exact: true })).toBeVisible();
     await client.getByRole("button", { name: "Cell 1", exact: true }).click();
     await expect(host.getByText("Revision 1", { exact: true })).toBeVisible();
-    await client.getByText("Connection details", { exact: false }).click();
+    await connectionDetails(client);
     await expect(client.getByTestId("rtt")).toContainText("ms", {
       timeout: 10_000,
     });
@@ -108,9 +119,7 @@ test("camera denial and unrelated QR images preserve the text fallback", async (
   ).toBeEnabled();
   await page.locator('input[type="file"]').setInputFiles("public/icon-192.png");
   await expect(page.getByRole("alert")).toContainText("No readable QR");
-  await page
-    .getByText("Paste connection text instead", { exact: true })
-    .click();
+  await transferText(page, "Paste connection text instead");
   await expect(page.getByLabel("Paste host invite code")).toBeVisible();
 });
 
@@ -195,9 +204,7 @@ test("scanner modal fills the viewport, traps focus and releases the stream on c
 
 async function createLights(page: Page) {
   await page.getByRole("button", { name: "Create Game", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Shared Lights", exact: true })
-    .click();
+  await chooseGame(page, "Shared Lights");
 }
 
 async function monitorAudio(page: Page) {
@@ -214,44 +221,6 @@ const audioStarts = (page: Page) =>
   page.evaluate(
     () => (window as unknown as { audioStarts: number }).audioStarts,
   );
-
-async function join(host: Page, client: Page, name: string) {
-  await client.goto("./");
-  await client.getByLabel("Your name").fill(name);
-  await client.getByRole("button", { name: "Join Game", exact: true }).click();
-  await host.getByRole("button", { name: "Add Player", exact: true }).click();
-  await host.getByText("Copy/paste instead", { exact: true }).click();
-  await host
-    .getByText("Paste connection text instead", { exact: true })
-    .click();
-  await client
-    .getByText("Paste connection text instead", { exact: true })
-    .click();
-  await expect(host.getByLabel("Invite text")).toBeVisible({ timeout: 20_000 });
-  const offer = await host.getByLabel("Invite text").inputValue();
-  const parsed = JSON.parse(offer);
-  expect(parsed.description.sdp).toContain("a=candidate:");
-  await client.getByLabel("Paste host invite code").fill(offer);
-  await client
-    .getByRole("button", { name: "Create Join Code", exact: true })
-    .click();
-  await client.getByText("Copy/paste instead", { exact: true }).click();
-  await expect(client.getByLabel("Join text")).toBeVisible({
-    timeout: 20_000,
-  });
-  await host
-    .getByLabel("Paste player join code")
-    .fill(await client.getByLabel("Join text").inputValue());
-  await host
-    .getByRole("button", { name: "Connect Player", exact: true })
-    .click();
-  await expect(client.getByRole("status")).toHaveText("Connected to host", {
-    timeout: 20_000,
-  });
-  await expect(
-    host.locator(".people-card li").filter({ hasText: name }),
-  ).toBeVisible();
-}
 
 for (const missed of ["hello", "state"] as const)
   test(`pairing recovers when the first ${missed} message is missed`, async ({
@@ -289,7 +258,7 @@ for (const missed of ["hello", "state"] as const)
         await expect(
           page.getByText("Revision 1", { exact: true }),
         ).toBeVisible();
-      await client.getByText("Connection details", { exact: false }).click();
+      await connectionDetails(client);
       const helloCount = () =>
         client.evaluate(
           () => (window as unknown as { helloCount?: number }).helloCount,
@@ -300,9 +269,7 @@ for (const missed of ["hello", "state"] as const)
       await client.clock.runFor(35_000);
       expect(await helloCount()).toBe(acknowledged);
       await expect(client.getByRole("status")).toHaveText("Connected to host");
-      await host
-        .getByRole("button", { name: "Return Home", exact: true })
-        .click();
+      await returnHome(host);
       await expect(client.getByRole("status")).toHaveText("Host disconnected");
     } finally {
       await context.close();
@@ -346,11 +313,11 @@ test("host and three clients pair, synchronize concurrent taps, and disconnect c
       p.getByRole("button", { name: "Cell 7", exact: true }),
     ).toHaveAttribute("aria-pressed", "false");
   }
-  await host.getByText("Connection details", { exact: false }).click();
+  await connectionDetails(host);
   await expect(host.getByText("open", { exact: true })).toHaveCount(3);
   for (const rtt of await host.getByTestId("rtt").all())
     await expect(rtt).toContainText("ms", { timeout: 10_000 });
-  await clients[0].getByText("Connection details", { exact: false }).click();
+  await connectionDetails(clients[0]);
   await expect(clients[0].getByTestId("rtt")).toContainText("ms", {
     timeout: 10_000,
   });
@@ -358,12 +325,12 @@ test("host and three clients pair, synchronize concurrent taps, and disconnect c
   await host
     .locator(".debug")
     .screenshot({ path: "test-results/connected-details.png" });
+  await closePanels(host);
+  await closePanels(clients[0]);
   await expect(
     host.getByRole("region", { name: "Shared grid" }).locator(".grid"),
   ).toHaveScreenshot("shared-grid.png", { maxDiffPixelRatio: 0.03 });
-  await clients[2]
-    .getByRole("button", { name: "Return Home", exact: true })
-    .click();
+  await returnHome(clients[2]);
   await expect(host.getByText("3/8", { exact: true })).toBeVisible();
   await host.getByRole("button", { name: "Cell 16", exact: true }).click();
   await expect(
@@ -373,7 +340,7 @@ test("host and three clients pair, synchronize concurrent taps, and disconnect c
   await expect(
     clients[2].getByText("Revision 25", { exact: true }),
   ).toBeVisible();
-  await host.getByRole("button", { name: "Return Home", exact: true }).click();
+  await returnHome(host);
   for (const p of clients) {
     await expect(p.getByRole("status")).toHaveText("Host disconnected");
     await expect(
@@ -398,15 +365,13 @@ test("mobile controls, keyboard, invalid input, cancellation and persistent iden
   // A saved default from an earlier visit also stays out of the editable text.
   await expect(page.getByLabel("Your name")).toHaveValue("");
   await createLights(page);
-  await page.getByRole("button", { name: "Return Home", exact: true }).click();
+  await returnHome(page);
   await expect(page.getByLabel("Your name")).toHaveValue("");
   await page.getByLabel("Your name").pressSequentially("Family Player");
   await page.reload();
   await expect(page.getByLabel("Your name")).toHaveValue("Family Player");
   await page.getByRole("button", { name: "Join Game", exact: true }).click();
-  await page
-    .getByText("Paste connection text instead", { exact: true })
-    .click();
+  await transferText(page, "Paste connection text instead");
   await page.getByLabel("Paste host invite code").fill("not an offer");
   await page
     .getByRole("button", { name: "Create Join Code", exact: true })
@@ -414,7 +379,7 @@ test("mobile controls, keyboard, invalid input, cancellation and persistent iden
   await expect(page.getByRole("alert")).toContainText(
     "Invalid connection text",
   );
-  await page.getByRole("button", { name: "Return Home", exact: true }).click();
+  await returnHome(page);
   await createLights(page);
   await page.getByRole("button", { name: "Cell 1", exact: true }).focus();
   await page.keyboard.press("Space");
@@ -429,23 +394,22 @@ test("mobile controls, keyboard, invalid input, cancellation and persistent iden
   expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.width);
   expect(metrics.gridBottom).toBeLessThan(844);
   await page.screenshot({ path: "test-results/mobile-host.png" });
-  await page.getByRole("button", { name: "Add Player", exact: true }).click();
-  await page.getByText("Copy/paste instead", { exact: true }).click();
-  await page
-    .getByText("Paste connection text instead", { exact: true })
-    .click();
+  await addPlayer(page);
+  await transferText(page, "Copy/paste instead");
+  await transferText(page, "Paste connection text instead");
   await expect(page.getByLabel("Invite text")).toBeVisible({ timeout: 20_000 });
   await page.getByLabel("Paste player join code").fill("{}");
   await page
     .getByRole("button", { name: "Connect Player", exact: true })
     .click();
   await expect(page.getByRole("alert")).toContainText("valid join code");
+  await closePanels(page);
   await page
     .getByRole("button", { name: "Cancel Invite", exact: true })
     .click();
   await expect(page.getByLabel("Invite text")).toHaveCount(0);
   await expect(page.getByRole("alert")).toHaveCount(0);
-  await page.getByRole("button", { name: "Return Home", exact: true }).click();
+  await returnHome(page);
   await page.getByLabel("Your name").fill("");
   await page.reload();
   await expect(page.getByLabel("Your name")).toHaveValue("");
@@ -485,15 +449,13 @@ test("production subpath manifest, cache, offline startup and identity survive r
     page.getByRole("button", { name: "Cell 5", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Choose Game", exact: true }).click();
-  await page.getByRole("button", { name: "Pong", exact: true }).click();
+  await chooseGame(page, "Pong");
   await expect(page.getByRole("region", { name: "Pong game" })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Start Pong", exact: true }),
   ).toBeDisabled();
   await page.getByRole("button", { name: "Choose Game", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Reaction Race", exact: true })
-    .click();
+  await chooseGame(page, "Reaction Race");
   await page.getByRole("button", { name: "Start Race", exact: true }).click();
   await expect(
     page.getByText("Wait… hands ready!", { exact: true }),
@@ -531,7 +493,7 @@ test("the complete board fits desktop, tablet and narrow phone viewports", async
     await page.screenshot({
       path: `test-results/host-${viewport.width}x${viewport.height}-${font}.png`,
     });
-    await page.getByRole("button", { name: "Add Player", exact: true }).click();
+    await addPlayer(page);
     const qr = page.getByRole("img", { name: "Invite QR code", exact: true });
     await expect(qr).toBeVisible();
     const qrBounds = await qr.boundingBox();
@@ -578,10 +540,11 @@ test("host picks games, assigns two Pong players, spectators watch, and switchin
     await host.getByRole("button", { name: "Sound", exact: true }).click();
     await expect.poll(() => audioStarts(host)).toBeGreaterThan(0);
     const beforePong = await audioStarts(host);
+    await emma.getByRole("button", { name: "More games", exact: true }).click();
     await expect(
       emma.getByRole("button", { name: "Pong", exact: true }),
     ).toBeDisabled();
-    await host.getByRole("button", { name: "Pong", exact: true }).click();
+    await chooseGame(host, "Pong");
     await expect(emma.getByRole("region", { name: "Pong game" })).toBeVisible();
     await expect(host.locator(".pong-court")).toHaveScreenshot(
       "pong-court.png",
@@ -594,16 +557,20 @@ test("host picks games, assigns two Pong players, spectators watch, and switchin
     ).toBeDisabled();
     await host.getByLabel("Right player").selectOption({ label: "Sam" });
     await host.getByRole("button", { name: "Start Pong", exact: true }).click();
+    await showHelp(host);
     await expect(
       host.getByText("You’re watching this match.", { exact: false }),
     ).toBeVisible();
+    await closePanels(host);
     await expect(host.getByLabel("Your paddle")).toHaveCount(0);
     await expect(emma.getByLabel("Your paddle")).toBeEnabled();
     await expect(
       host.getByText("First to seven", { exact: true }),
     ).toBeVisible();
     await expect.poll(() => audioStarts(host)).toBeGreaterThan(beforePong);
+    await showHelp(emma);
     await emma.getByLabel("Your paddle").press("End");
+    await closePanels(emma);
     await expect
       .poll(async () =>
         Math.round(
@@ -633,7 +600,7 @@ test("host picks games, assigns two Pong players, spectators watch, and switchin
       .getByRole("button", { name: "Resume Pong", exact: true })
       .click();
     await expect(emma.getByLabel("Your paddle")).toBeEnabled();
-    await sam.getByRole("button", { name: "Return Home", exact: true }).click();
+    await returnHome(sam);
     await expect(
       host.getByText("A player left.", { exact: false }),
     ).toBeVisible();
@@ -643,18 +610,14 @@ test("host picks games, assigns two Pong players, spectators watch, and switchin
     await host
       .getByRole("button", { name: "Choose Game", exact: true })
       .click();
-    await host
-      .getByRole("button", { name: "Reaction Race", exact: true })
-      .click();
+    await chooseGame(host, "Reaction Race");
     await expect(
       emma.getByRole("region", { name: "Reaction Race game" }),
     ).toBeVisible();
     await host
       .getByRole("button", { name: "Choose Game", exact: true })
       .click();
-    await host
-      .getByRole("button", { name: "Shared Lights", exact: true })
-      .click();
+    await chooseGame(host, "Shared Lights");
     await emma.getByRole("button", { name: "Cell 1", exact: true }).click();
     await expect(
       host.getByRole("button", { name: "Cell 1", exact: true }),
@@ -699,9 +662,7 @@ test("Reaction Race penalizes early/wrong taps, mixes hold rounds, finishes and 
       }
       throw new Error(`Race did not reach ${text}`);
     };
-    await host
-      .getByRole("button", { name: "Reaction Race", exact: true })
-      .click();
+    await chooseGame(host, "Reaction Race");
     await expect(host.locator(".race-targets")).toHaveScreenshot(
       "race-targets.png",
       { maxDiffPixelRatio: 0.03 },
@@ -794,7 +755,7 @@ test("game picker and new game controls fit phones, tablet and desktop with long
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
     for (const name of ["Pong", "Arena Pong", "Reaction Race"] as const) {
-      await page.getByRole("button", { name, exact: true }).click();
+      await chooseGame(page, name);
       const surface = page.locator(
         name === "Reaction Race" ? ".race-targets" : ".pong-court",
       );
@@ -906,13 +867,15 @@ test("Arena Pong synchronizes four players, rotated controls, colors, pause and 
     await join(host, emma, "Emma");
     await join(host, sam, "Sam");
     await join(host, lee, "Lee");
-    await host.getByRole("button", { name: "Arena Pong", exact: true }).click();
+    await chooseGame(host, "Arena Pong");
     await expect(
       emma.getByRole("region", { name: "Arena Pong game" }),
     ).toBeVisible();
+    await showHelp(emma);
     await emma
       .getByRole("button", { name: "Coral paddle", exact: true })
       .click();
+    await closePanels(emma);
     await expect(
       host.getByRole("button", { name: "Start Arena Pong", exact: true }),
     ).toBeEnabled();
@@ -920,9 +883,11 @@ test("Arena Pong synchronizes four players, rotated controls, colors, pause and 
       .getByRole("button", { name: "Start Arena Pong", exact: true })
       .click();
     for (const page of [host, emma, sam, lee]) {
+      await showHelp(page);
       await expect(
         page.getByText("Your paddle is at the bottom.", { exact: false }),
       ).toBeVisible();
+      await closePanels(page);
       await expect(page.getByTestId("arena-lives-0")).toContainText("5 lives");
       await expect(page.getByTestId("arena-paddle-1")).toHaveAttribute(
         "fill",
@@ -983,7 +948,7 @@ test("Arena Pong synchronizes four players, rotated controls, colors, pause and 
     await host
       .getByRole("button", { name: "Choose Game", exact: true })
       .click();
-    await host.getByRole("button", { name: "Arena Pong", exact: true }).click();
+    await chooseGame(host, "Arena Pong");
     await host.getByLabel("Left player", { exact: true }).selectOption("");
     await host
       .getByLabel("Lives per player", { exact: true })
@@ -1006,11 +971,13 @@ test("Arena Pong synchronizes four players, rotated controls, colors, pause and 
     ).toBeVisible();
     await expect(lee.getByLabel("Your paddle", { exact: true })).toHaveCount(0);
     await expect(
-      emma.getByRole("button", { name: "Coral paddle", exact: true }),
+      emma.getByRole("button", {
+        name: "Coral paddle",
+        exact: true,
+        includeHidden: true,
+      }),
     ).toHaveAttribute("aria-pressed", "true");
-    await emma
-      .getByRole("button", { name: "Return Home", exact: true })
-      .click();
+    await returnHome(emma);
     await expect(
       host.getByText("A player left. Choose players and start a new round.", {
         exact: true,
@@ -1023,9 +990,13 @@ test("Arena Pong synchronizes four players, rotated controls, colors, pause and 
     await emma
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
-    await emma.getByRole("button", { name: "Pong", exact: true }).click();
+    await chooseGame(emma, "Pong");
     await expect(
-      emma.getByRole("button", { name: "Coral paddle", exact: true }),
+      emma.getByRole("button", {
+        name: "Coral paddle",
+        exact: true,
+        includeHidden: true,
+      }),
     ).toHaveAttribute("aria-pressed", "true");
   } finally {
     await Promise.all(contexts.map((c) => c.close()));
@@ -1049,9 +1020,7 @@ test("a slight touch drag on a reaction target registers without scrolling", asy
     await page
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
-    await page
-      .getByRole("button", { name: "Reaction Race", exact: true })
-      .click();
+    await chooseGame(page, "Reaction Race");
     await page.getByRole("button", { name: "Start Race", exact: true }).click();
     await expect(
       page.getByText("Hit the marked target!", { exact: true }),
@@ -1101,9 +1070,7 @@ test("Co-op Breakout pairs teammates, rotates controls, pauses and handles spect
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
     await join(host, client, "Emma");
-    await host
-      .getByRole("button", { name: "Co-op Breakout", exact: true })
-      .click();
+    await chooseGame(host, "Co-op Breakout");
     await expect(
       client.getByRole("region", { name: "Co-op Breakout game" }),
     ).toBeVisible();
@@ -1137,9 +1104,7 @@ test("Co-op Breakout pairs teammates, rotates controls, pauses and handles spect
     await host
       .getByRole("button", { name: "Choose Game", exact: true })
       .click();
-    await host
-      .getByRole("button", { name: "Co-op Breakout", exact: true })
-      .click();
+    await chooseGame(host, "Co-op Breakout");
     await host
       .getByRole("button", { name: "Start Co-op Breakout", exact: true })
       .click();
@@ -1219,9 +1184,7 @@ test("Co-op Breakout pairs teammates, rotates controls, pauses and handles spect
         Number(await host.getByTestId("arena-paddle-1").getAttribute("y")),
       )
       .toBeGreaterThan(550);
-    await client
-      .getByRole("button", { name: "Return Home", exact: true })
-      .click();
+    await returnHome(client);
     await expect(
       host.getByText("A player left. Choose players and start a new round.", {
         exact: true,
@@ -1257,9 +1220,7 @@ test("four Breakout teammates fit narrow phones with long names and taller fonts
       .click();
     for (const [i, client] of clients.entries())
       await join(host, client, ["Emma", "Sam", "Lee"][i]);
-    await host
-      .getByRole("button", { name: "Co-op Breakout", exact: true })
-      .click();
+    await chooseGame(host, "Co-op Breakout");
     await host
       .getByRole("button", { name: "Start Co-op Breakout", exact: true })
       .click();
@@ -1317,9 +1278,7 @@ test("Spaceship Panic pairs crew, shares orders and repairs, pauses, and handles
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
     await join(host, client, "Emma");
-    await host
-      .getByRole("button", { name: "Spaceship Panic", exact: true })
-      .click();
+    await chooseGame(host, "Spaceship Panic");
     await expect(
       client.getByRole("region", { name: "Spaceship Panic game" }),
     ).toBeVisible();
@@ -1422,15 +1381,11 @@ test("Spaceship Panic pairs crew, shares orders and repairs, pauses, and handles
     await expect(late.locator(".ship-command")).toHaveText(
       "You’re watching. Join the next mission.",
     );
-    await late
-      .getByRole("button", { name: "Return Home", exact: true })
-      .click();
+    await returnHome(late);
     await expect(
       host.getByRole("button", { name: "Pause Mission", exact: true }),
     ).toBeVisible();
-    await client
-      .getByRole("button", { name: "Return Home", exact: true })
-      .click();
+    await returnHome(client);
     await expect(
       host.getByText("A player left. Choose players and start a new round.", {
         exact: true,
@@ -1443,9 +1398,7 @@ test("Spaceship Panic pairs crew, shares orders and repairs, pauses, and handles
     await host
       .getByRole("button", { name: "Choose Game", exact: true })
       .click();
-    await host
-      .getByRole("button", { name: "Co-op Breakout", exact: true })
-      .click();
+    await chooseGame(host, "Co-op Breakout");
     await expect(
       host.getByRole("region", { name: "Co-op Breakout game" }),
     ).toBeVisible();
@@ -1461,9 +1414,7 @@ test("Spaceship Panic loses an unattended mission, rematches and pauses on host 
   await page.clock.install();
   await page.goto("./");
   await page.getByRole("button", { name: "Create Game", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Spaceship Panic", exact: true })
-    .click();
+  await chooseGame(page, "Spaceship Panic");
   await page
     .getByRole("button", { name: "Launch Mission", exact: true })
     .click();
@@ -1509,9 +1460,7 @@ test("Spaceship Panic survives a complete mission with correct orders", async ({
   await page.clock.pauseAt(start);
   await page.goto("./");
   await page.getByRole("button", { name: "Create Game", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Spaceship Panic", exact: true })
-    .click();
+  await chooseGame(page, "Spaceship Panic");
   await page
     .getByRole("button", { name: "Launch Mission", exact: true })
     .click();
@@ -1554,9 +1503,7 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
     await host
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
-    await host
-      .getByRole("button", { name: "Light-cycle Arena", exact: true })
-      .click();
+    await chooseGame(host, "Light-cycle Arena");
     await expect(
       host.getByRole("button", { name: "Start Arena", exact: true }),
     ).toBeDisabled();
@@ -1608,7 +1555,7 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
     await client.getByRole("button", { name: "Steer up", exact: true }).tap();
     // Touch arrives over the actual DataChannel before the next grid step.
     await expect
-      .poll(() => host.locator(".people-card").innerText())
+      .poll(() => host.locator(".people-card").textContent())
       .toContain("Emma");
     await host.clock.runFor(300);
     await expect(host.getByTestId("cycle-rider-1")).toHaveAttribute(
@@ -1711,9 +1658,7 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
     await host
       .getByRole("button", { name: "Choose Game", exact: true })
       .click();
-    await host
-      .getByRole("button", { name: "Light-cycle Arena", exact: true })
-      .click();
+    await chooseGame(host, "Light-cycle Arena");
     await host
       .getByRole("button", { name: "Start Arena", exact: true })
       .click();
@@ -1739,15 +1684,11 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
     await host
       .getByRole("button", { name: "Resume Arena", exact: true })
       .click();
-    await late
-      .getByRole("button", { name: "Return Home", exact: true })
-      .click();
+    await returnHome(late);
     await expect(
       host.getByRole("button", { name: "Pause Arena", exact: true }),
     ).toBeVisible();
-    await client
-      .getByRole("button", { name: "Return Home", exact: true })
-      .click();
+    await returnHome(client);
     await expect(
       host.getByText("A player left. Choose players and start a new round.", {
         exact: true,
@@ -1787,9 +1728,7 @@ test("eight Light-cycle riders fit a narrow phone and support swipe, background 
       clients.push(client);
       await join(host, client, `Rider ${i + 2} with a long family name`);
     }
-    await host
-      .getByRole("button", { name: "Light-cycle Arena", exact: true })
-      .click();
+    await chooseGame(host, "Light-cycle Arena");
     await host.clock.install();
     await host.clock.pauseAt(new Date(Date.now() + 1000));
     await host
@@ -1868,9 +1807,7 @@ test("eight Light-cycle riders fit a narrow phone and support swipe, background 
       .getByRole("button", { name: "Resume Arena", exact: true })
       .click();
     await expect(client.locator(".cycle-status")).toHaveText("Get ready… 3");
-    await host
-      .getByRole("button", { name: "Return Home", exact: true })
-      .click();
+    await returnHome(host);
     await expect(client.locator(".cycle-status")).toHaveText(
       "Host disconnected",
     );
@@ -1897,9 +1834,7 @@ test("Spaceship mission length selects 1/2/3 minutes, survives pause and reports
   });
   await page.goto("./");
   await page.getByRole("button", { name: "Create Game", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Spaceship Panic", exact: true })
-    .click();
+  await chooseGame(page, "Spaceship Panic");
   await expect(
     page.getByRole("button", { name: "3 minutes", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
@@ -1963,9 +1898,7 @@ test("Spaceship mission length selects 1/2/3 minutes, survives pause and reports
   await page.getByRole("button", { name: "Launch Again", exact: true }).click();
   await expect(page.getByTestId("ship-clock")).toHaveText("2:00");
   await page.getByRole("button", { name: "Choose Game", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Spaceship Panic", exact: true })
-    .click();
+  await chooseGame(page, "Spaceship Panic");
   await page.getByRole("button", { name: "3 minutes", exact: true }).click();
   await page
     .getByRole("button", { name: "Launch Mission", exact: true })
@@ -1991,9 +1924,7 @@ test("Sumo Bumpers pairs, moves by thumb pad and keyboard, dashes, pauses, finis
     await host
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
-    await host
-      .getByRole("button", { name: "Sumo Bumpers", exact: true })
-      .click();
+    await chooseGame(host, "Sumo Bumpers");
     await expect(
       host.getByRole("button", { name: "Start Bumpers", exact: true }),
     ).toBeDisabled();
@@ -2190,10 +2121,8 @@ test("Sumo Bumpers pairs, moves by thumb pad and keyboard, dashes, pauses, finis
     await expect(
       late.getByRole("button", { name: "Dash", exact: true }),
     ).toBeDisabled();
-    await late
-      .getByRole("button", { name: "Return Home", exact: true })
-      .click();
-    await expect(host.locator(".people-card")).toContainText("2/8");
+    await returnHome(late);
+    await expect(host.locator(".people-card")).toContainText("2 connected");
     await host
       .getByRole("button", { name: "Resume Bumpers", exact: true })
       .click();
@@ -2219,9 +2148,7 @@ test("Sumo Bumpers pairs, moves by thumb pad and keyboard, dashes, pauses, finis
       "data-x",
       "0.25",
     );
-    await client
-      .getByRole("button", { name: "Return Home", exact: true })
-      .click();
+    await returnHome(client);
     await expect(
       host.getByText("A player left. Choose players and start a new round.", {
         exact: true,
@@ -2269,9 +2196,7 @@ test("eight Sumo bumpers fit narrow phones, clear movement on background and han
       clients.push(client);
       await join(host, client, `Bumper ${i + 2} with a long name`);
     }
-    await host
-      .getByRole("button", { name: "Sumo Bumpers", exact: true })
-      .click();
+    await chooseGame(host, "Sumo Bumpers");
     await host.clock.install();
     await host.clock.pauseAt(new Date(Date.now() + 1000));
     await host
@@ -2319,9 +2244,7 @@ test("eight Sumo bumpers fit narrow phones, clear movement on background and han
       .getByRole("button", { name: "Resume Bumpers", exact: true })
       .click();
     await expect(client.locator(".sumo-status")).toHaveText("Get ready… 3");
-    await host
-      .getByRole("button", { name: "Return Home", exact: true })
-      .click();
+    await returnHome(host);
     await expect(client.locator(".sumo-status")).toHaveText(
       "Host disconnected",
     );

@@ -19,12 +19,12 @@ export default defineConfig({
       manifest: {
         name: "P2P Game Lab",
         short_name: "Game Lab",
-        description: "A shared grid over local Wi-Fi.",
+        description: "Family games together over local Wi-Fi.",
         start_url: "./",
         scope: "./",
         display: "standalone",
         background_color: "#f5f4ee",
-        theme_color: "#122c29",
+        theme_color: "#f5f4ee",
         icons: [
           { src: "icon-192.png", sizes: "192x192", type: "image/png" },
           {

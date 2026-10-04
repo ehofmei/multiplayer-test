@@ -188,42 +188,45 @@ export function QrReader({
       >
         Scan {kind}
       </button>
-      <label
-        className={`image-import ${disabled || reading || scanning ? "unavailable" : ""}`}
-      >
-        Import {kind} QR image
-        <input
-          type="file"
-          accept="image/*"
-          disabled={disabled || reading || scanning}
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            e.target.value = "";
-            if (!file) return;
-            if (file.size > 10_000_000) {
-              setError("Choose a QR image smaller than 10 MB.");
-              return;
-            }
-            setError("");
-            setReading(true);
-            try {
-              const result = await QrScanner.scanImage(file, {
-                returnDetailedScanResult: true,
-                alsoTryWithoutScanRegion: true,
-              });
-              if (alive.current) await readRef.current(result.data);
-            } catch (error) {
-              console.debug("[Game Lab] QR image decoding failed:", error);
-              if (alive.current)
-                setError(
-                  "No readable QR found in this image. Choose a clear QR image or use copy/paste.",
-                );
-            } finally {
-              if (alive.current) setReading(false);
-            }
-          }}
-        />
-      </label>
+      <details className="image-fallback">
+        <summary>Import QR image</summary>
+        <label
+          className={`image-import ${disabled || reading || scanning ? "unavailable" : ""}`}
+        >
+          Import {kind} QR image
+          <input
+            type="file"
+            accept="image/*"
+            disabled={disabled || reading || scanning}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (!file) return;
+              if (file.size > 10_000_000) {
+                setError("Choose a QR image smaller than 10 MB.");
+                return;
+              }
+              setError("");
+              setReading(true);
+              try {
+                const result = await QrScanner.scanImage(file, {
+                  returnDetailedScanResult: true,
+                  alsoTryWithoutScanRegion: true,
+                });
+                if (alive.current) await readRef.current(result.data);
+              } catch (error) {
+                console.debug("[Game Lab] QR image decoding failed:", error);
+                if (alive.current)
+                  setError(
+                    "No readable QR found in this image. Choose a clear QR image or use copy/paste.",
+                  );
+              } finally {
+                if (alive.current) setReading(false);
+              }
+            }}
+          />
+        </label>
+      </details>
       {scanning &&
         createPortal(
           <dialog

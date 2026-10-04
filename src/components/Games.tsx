@@ -1,9 +1,9 @@
+import { GameSurface, GameHelp } from "./AppLayout";
 import { PaddleColors } from "./ArenaGame";
 import { paddleHex } from "../games/colors";
 import { useEffect, useRef, useState } from "react";
 import {
   clampPaddle,
-  gameNames,
   type GameKind,
   type PongState,
   type RaceState,
@@ -68,8 +68,22 @@ const choices: {
   },
 ];
 export function GamePicker({ session }: { session: Session }) {
+  const [page, setPage] = useState(0);
+  const [compact, setCompact] = useState(
+    () => matchMedia("(max-width: 650px), (max-height: 550px)").matches,
+  );
+  useEffect(() => {
+    const media = matchMedia("(max-width: 650px), (max-height: 550px)");
+    const change = () => {
+      setCompact(media.matches);
+      setPage(0);
+    };
+    media.addEventListener("change", change);
+    return () => media.removeEventListener("change", change);
+  }, []);
+  const pages = compact ? 2 : 1;
   return (
-    <section className="games-card" aria-label="Game picker">
+    <section className="games-card game-library" aria-label="Game picker">
       <p className="eyebrow">WHAT SHALL WE PLAY?</p>
       <h2>
         {session.role === "host"
@@ -78,41 +92,49 @@ export function GamePicker({ session }: { session: Session }) {
       </h2>
       <p className="muted">Pair once. Play as many games as you like.</p>
       <div className="game-choices">
-        {choices.map((c) => (
-          <button
-            key={c.kind}
-            aria-label={c.title}
-            className="game-choice"
-            disabled={session.role !== "host"}
-            onClick={() => session.selectGame(c.kind)}
-          >
-            <span className="game-mark" aria-hidden="true">
-              {c.mark}
-            </span>
-            <strong>{c.title}</strong>
-            <small>{c.detail}</small>
-          </button>
-        ))}
+        {choices
+          .slice(
+            compact ? page * 4 : 0,
+            compact ? page * 4 + 4 : choices.length,
+          )
+          .map((c) => (
+            <button
+              key={c.kind}
+              aria-label={c.title}
+              className="game-choice"
+              disabled={session.role !== "host"}
+              onClick={() => session.selectGame(c.kind)}
+            >
+              <span className="game-mark" aria-hidden="true">
+                {c.mark}
+              </span>
+              <strong>{c.title}</strong>
+              <small>{c.detail}</small>
+            </button>
+          ))}
       </div>
-    </section>
-  );
-}
-export function GameBar({
-  session,
-  kind,
-}: {
-  session: Session;
-  kind: GameKind;
-}) {
-  return (
-    <div className="game-bar">
-      <span>{gameNames[kind]}</span>
-      {session.role === "host" && (
-        <button className="quiet" onClick={() => session.selectGame("lobby")}>
-          Choose Game
-        </button>
+      {pages > 1 && (
+        <nav className="library-pages" aria-label="Game library pages">
+          <button
+            className="quiet"
+            disabled={page === 0}
+            onClick={() => setPage(0)}
+          >
+            Previous games
+          </button>
+          <span>
+            {page + 1} / {pages}
+          </span>
+          <button
+            className="quiet"
+            disabled={page === 1}
+            onClick={() => setPage(1)}
+          >
+            More games
+          </button>
+        </nav>
       )}
-    </div>
+    </section>
   );
 }
 const playerName = (players: Player[], id?: string) =>
@@ -188,7 +210,11 @@ export function PongGame({
             ? "Get ready…"
             : "First to seven";
   return (
-    <section className="games-card" aria-label="Pong game">
+    <section
+      className="games-card pong-game-card"
+      data-phase={game.phase}
+      aria-label="Pong game"
+    >
       <div className="game-score" aria-label="Pong score">
         {[0, 1].map((i) => (
           <div key={i}>
@@ -200,88 +226,97 @@ export function PongGame({
       <p className="game-status" aria-live="polite">
         {status}
       </p>
-      <div
-        className="pong-court"
-        role="group"
-        aria-label="Pong court"
-        tabIndex={controllable ? 0 : -1}
-        onKeyDown={(e) => {
-          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-            e.preventDefault();
-            move(local + (e.key === "ArrowUp" ? -0.06 : 0.06));
-          }
-        }}
-        onPointerDown={(e) => {
-          if (controllable) {
-            e.currentTarget.setPointerCapture(e.pointerId);
-            const bounds = e.currentTarget.getBoundingClientRect();
-            move((e.clientY - bounds.top) / bounds.height);
-          }
-        }}
-        onPointerMove={(e) => {
-          if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-            const bounds = e.currentTarget.getBoundingClientRect();
-            move((e.clientY - bounds.top) / bounds.height);
-          }
-        }}
-      >
-        <svg viewBox="0 0 1000 650" aria-hidden="true">
-          <path
-            d="M500 0V650"
-            stroke="#63837a"
-            strokeWidth="4"
-            strokeDasharray="12 16"
-          />
-          {[0, 1].map((i) => (
-            <rect
-              key={i}
-              data-testid={`paddle-${i}`}
-              x={i === 0 ? 35 : 945}
-              y={((i === seat ? local : game.paddles[i]) - 0.12) * 650}
-              width="20"
-              height="156"
-              rx="8"
-              fill={
-                players.find((p) => p.id === game.seats[i])?.color
-                  ? paddleHex(
-                      players.find((p) => p.id === game.seats[i])?.color,
-                      i,
-                    )
-                  : i === seat
-                    ? "#d9f29d"
-                    : "#f5f4ee"
-              }
+      <GameSurface ratio={1000 / 650}>
+        <div
+          className="pong-court"
+          role="group"
+          aria-label="Pong court"
+          tabIndex={controllable ? 0 : -1}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+              e.preventDefault();
+              move(local + (e.key === "ArrowUp" ? -0.06 : 0.06));
+            }
+          }}
+          onPointerDown={(e) => {
+            if (controllable) {
+              e.currentTarget.setPointerCapture(e.pointerId);
+              const bounds = e.currentTarget.getBoundingClientRect();
+              move((e.clientY - bounds.top) / bounds.height);
+            }
+          }}
+          onPointerMove={(e) => {
+            if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+              const bounds = e.currentTarget.getBoundingClientRect();
+              move((e.clientY - bounds.top) / bounds.height);
+            }
+          }}
+        >
+          <svg viewBox="0 0 1000 650" aria-hidden="true">
+            <path
+              d="M500 0V650"
+              stroke="#63837a"
+              strokeWidth="4"
+              strokeDasharray="12 16"
             />
-          ))}
-          <circle ref={ball} cx="500" cy="325" r="17" fill="#f5f4ee" />
-        </svg>
-      </div>
-      {game.seats.length === 2 && (
-        <p className="muted">
-          {seat >= 0
-            ? `You play ${seat === 0 ? "left" : "right"}. Drag up/down on the court, use the slider, or press ↑ / ↓.`
-            : "You’re watching this match. The host can choose you for the next one."}
+            {[0, 1].map((i) => (
+              <rect
+                key={i}
+                data-testid={`paddle-${i}`}
+                x={i === 0 ? 35 : 945}
+                y={((i === seat ? local : game.paddles[i]) - 0.12) * 650}
+                width="20"
+                height="156"
+                rx="8"
+                fill={
+                  players.find((p) => p.id === game.seats[i])?.color
+                    ? paddleHex(
+                        players.find((p) => p.id === game.seats[i])?.color,
+                        i,
+                      )
+                    : i === seat
+                      ? "#d9f29d"
+                      : "#f5f4ee"
+                }
+              />
+            ))}
+            <circle ref={ball} cx="500" cy="325" r="17" fill="#f5f4ee" />
+          </svg>
+        </div>
+      </GameSurface>
+      {game.seats.length === 2 && seat < 0 && (
+        <p className="spectator-status">
+          You’re watching this match. The host can choose you for the next one.
         </p>
       )}
-      {seat >= 0 && (
-        <>
-          <label htmlFor="paddle">Your paddle</label>
-          <input
-            id="paddle"
-            type="range"
-            min="12"
-            max="88"
-            value={Math.round(local * 100)}
-            disabled={!controllable}
-            onChange={(e) => move(Number(e.target.value) / 100)}
-          />
-        </>
-      )}
-      <PaddleColors
-        session={session}
-        players={players}
-        fallback={seat === 1 ? "White" : "Lime"}
-      />
+      <GameHelp>
+        {game.seats.length === 2 && seat >= 0 && (
+          <p className="muted">
+            {seat >= 0
+              ? `You play ${seat === 0 ? "left" : "right"}. Drag up/down on the court, use the slider, or press ↑ / ↓.`
+              : "You’re watching this match. The host can choose you for the next one."}
+          </p>
+        )}
+        {seat >= 0 && (
+          <>
+            <label htmlFor="paddle">Your paddle</label>
+            <input
+              id="paddle"
+              type="range"
+              min="12"
+              max="88"
+              value={Math.round(local * 100)}
+              disabled={!controllable}
+              onChange={(e) => move(Number(e.target.value) / 100)}
+            />
+          </>
+        )}
+        <PaddleColors
+          session={session}
+          players={players}
+          fallback={seat === 1 ? "White" : "Lime"}
+        />
+      </GameHelp>
       {session.role === "host" && configure && (
         <>
           <div className="seat-picker">
@@ -385,7 +420,11 @@ export function ReactionGame({
             ? "Round complete"
             : "Ready for a reaction race?";
   return (
-    <section className="games-card" aria-label="Reaction Race game">
+    <section
+      className="games-card reaction-game-card"
+      data-phase={game.phase}
+      aria-label="Reaction Race game"
+    >
       <div className="board-heading">
         <h2>Reaction Race</h2>
         <span>Round {game.round} / 10</span>
@@ -393,37 +432,39 @@ export function ReactionGame({
       <p className={`race-cue ${active ? game.rule : ""}`} aria-live="polite">
         {title}
       </p>
-      <div className="race-targets">
-        {Array.from({ length: 6 }, (_, i) => (
-          <button
-            key={i}
-            aria-label={`Target ${i + 1}`}
-            aria-pressed={active && game.target === i}
-            className={`race-target ${active && game.target === i ? (game.rule === "hit" ? "lit" : "decoy") : ""}`}
-            disabled={!playable}
-            onPointerDown={(e) => {
-              touchTap.current = e.pointerType === "touch";
-              if (touchTap.current && e.isPrimary && playable) {
-                e.preventDefault();
-                session.tapTarget(i);
-              }
-            }}
-            onClick={(e) => {
-              // Touch already scored on contact; keyboard/assistive clicks use detail 0.
-              if (e.detail === 0 || !touchTap.current) session.tapTarget(i);
-            }}
-          >
-            <strong>{i + 1}</strong>
-            <span aria-hidden="true">
-              {active && game.target === i
-                ? game.rule === "hit"
-                  ? "✦ TAP"
-                  : "✕ HOLD"
-                : "·"}
-            </span>
-          </button>
-        ))}
-      </div>
+      <GameSurface ratio={3 / 2}>
+        <div className="race-targets">
+          {Array.from({ length: 6 }, (_, i) => (
+            <button
+              key={i}
+              aria-label={`Target ${i + 1}`}
+              aria-pressed={active && game.target === i}
+              className={`race-target ${active && game.target === i ? (game.rule === "hit" ? "lit" : "decoy") : ""}`}
+              disabled={!playable}
+              onPointerDown={(e) => {
+                touchTap.current = e.pointerType === "touch";
+                if (touchTap.current && e.isPrimary && playable) {
+                  e.preventDefault();
+                  session.tapTarget(i);
+                }
+              }}
+              onClick={(e) => {
+                // Touch already scored on contact; keyboard/assistive clicks use detail 0.
+                if (e.detail === 0 || !touchTap.current) session.tapTarget(i);
+              }}
+            >
+              <strong>{i + 1}</strong>
+              <span aria-hidden="true">
+                {active && game.target === i
+                  ? game.rule === "hit"
+                    ? "✦ TAP"
+                    : "✕ HOLD"
+                  : "·"}
+              </span>
+            </button>
+          ))}
+        </div>
+      </GameSurface>
       <p className="race-feedback" aria-live="polite">
         {me && me.result !== "pending"
           ? `${resultText[me.result]}${me.elapsed !== null ? ` · ${me.elapsed} ms` : ""}`
@@ -433,10 +474,12 @@ export function ReactionGame({
               ? "You’re watching. Join the next race."
               : "Hit the marked target when it lights up. Some rounds say Hold!"}
       </p>
-      <p className="muted">
-        Faster correct hits earn up to 100 points. Wrong or early taps cost 25.
-        Hold rounds earn 75 for leaving every target alone.
-      </p>
+      <GameHelp>
+        <p className="muted">
+          Faster correct hits earn up to 100 points. Wrong or early taps cost
+          25. Hold rounds earn 75 for leaving every target alone.
+        </p>
+      </GameHelp>
       {!!game.entries.length && (
         <ol className="race-scores" aria-label="Race scores">
           {[...game.entries]

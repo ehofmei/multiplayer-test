@@ -55,18 +55,50 @@ to Home, so there are no nested-route refresh errors. If the repository is renam
 update the Vite base path. Other HTTPS static hosts can serve dist/ under that path,
 or rebuild with `npm run build -- --base=/` for root hosting.
 
+## App experience on iPhone and iPad
+
+This is a household game lab for experimenting with Codex, designed primarily
+for iPhones and iPads installed from Safari using Add to Home Screen. Android
+support is not a project requirement. Desktop browsers remain useful for testing.
+
+The app uses a viewport-filling shell with safe-area padding. Home, the game
+library, pairing, setup, and play are focused views rather than a long page.
+Phones and short windows show four games per library page; larger iPad windows
+show all eight. During games, courts fit their remaining space without changing
+the game geometry. Landscape layouts place courts beside controls; very short
+setup screens omit the court preview to keep assignments and Start reachable.
+
+Menu (or the player-count button) opens the roster, connection details,
+installation help, app build/update controls, and Return Home. Add Player is
+available in the lobby; during games use Menu → Invite Player, which retains the
+existing pause/stop behavior before pairing. Each game's Controls & help panel
+contains instructions and, for paddle games, color choices and an alternative
+slider. Pause/stop, essential status, and touch controls stay on the play screen.
+Detailed rider/bumper lists move into Help while playing and appear with results.
+
+Pairing keeps the QR and scan action prominent. Import QR image expands the image
+fallback; Other ways to connect opens the text-transfer panel. Closing that panel
+preserves the invite and entered text. Camera scanning remains a separate native
+modal and releases the stream when closed. Selecting another game keeps the room
+connected; Return Home ends the local session.
+
+Primary screens aim to fit without scrolling at ordinary text sizes. Secondary
+panels can scroll, and constrained windows, larger text, or the on-screen keyboard
+can use contained scrolling to keep content accessible. The installed PWA removes
+browser navigation UI; iOS still controls its status area and home indicator.
+
 ## Install and pair
 
 1. On each iPhone/iPad, open the HTTPS site in Safari while online. Let it load.
 2. Tap Share → Add to Home Screen. Launch the installed app.
 3. Connect every device to the same Wi-Fi. Enter a different display name per device.
-4. On the host, tap Create Game, then Add Player.
+4. On the host, tap Create Game, then Add Player. During a game, use Menu → Invite Player.
 5. On the client, tap Join Game, then Scan Invite. Allow camera access and scan
    the host's invite QR code. Your join QR code appears and the camera stops.
 6. On the host, tap Scan Join and scan the player's join QR code. The camera stops
    and both devices enter the room after the direct connection is acknowledged.
 7. If scanning is awkward, use Import Invite/Join QR image with a saved screenshot.
-   Copy/paste instead and Paste connection text instead retain the text workflow:
+   Under Other ways to connect, Copy/paste instead and Paste connection text instead retain the text workflow:
    paste an invite, Create Join Code, then paste that join code on the host and
    Connect Player. AirDrop/Notes can transfer text or screenshots.
 8. Repeat Add Player with a fresh invite for each additional client.
@@ -75,9 +107,10 @@ or rebuild with `npm run build -- --base=/` for root hosting.
 
 ## Games
 
-**Shared Lights** retains the original 4×4 shared board. Every device can toggle
-cells; the host serializes actions and shares state. Selecting it starts a fresh
-board. It remains a cooperative experiment rather than a scored game.
+**Shared Lights** has sixteen shared cells, arranged as 4×4 in portrait and 8×2
+in short landscape windows. Every device can toggle cells; the host serializes
+actions and shares state. Selecting it starts a fresh board. It remains a
+cooperative experiment rather than a scored game.
 
 **Pong** plays to seven points. The host chooses any two connected players (they
 can be two clients); other players watch. Drag vertically anywhere on the court,
@@ -314,13 +347,13 @@ remote fonts, scripts, or media. Identity/name storage is versioned locally; the
 and connections are intentionally temporary and reset when the host leaves/reloads.
 There is no saved game progress requiring export/import.
 
-A new service worker waits rather than forcing an update during play. The footer’s
+A new service worker waits rather than forcing an update during play. Menu’s
 **Check for updates** fetches the latest service worker when online. Once its assets
 are cached, **Update app** activates it and reloads the app. During a session, a
 confirmation explains that this ends the connection; canceling keeps the game open.
 Updating a host disconnects its players. Update each device between games. Other
 open tabs keep playing until their own reload. Failed/offline checks preserve the
-current playable build. A small UTC build timestamp appears in the footer, followed
+current playable build. A small UTC build timestamp appears in Menu, followed
 by the short GitHub commit ID in CI or “local” for local builds. Real installed iOS
 update behavior still needs device testing.
 After deploying this checkpoint, update every participating device before pairing;
