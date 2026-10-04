@@ -29,6 +29,14 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
                 : pong.seats[pong.score[0] === 7 ? 0 : 1]) === me,
         }
       : null,
+    ship: room.ship
+      ? {
+          phase: room.ship.phase,
+          hull: room.ship.hull,
+          repairs: room.ship.repairs,
+          mistakes: room.ship.mistakes,
+        }
+      : null,
     race: race
       ? {
           phase: race.phase,
@@ -48,6 +56,14 @@ export function soundEvents(
   if (!before || before.key !== after.key) return [];
   if (after.kind === "lights" && after.revision > before.revision)
     return [after.lit >= before.lit ? "on" : "off"];
+  const ship = after.ship,
+    previousShip = before.ship;
+  if (ship && previousShip) {
+    if (ship.phase === "finished" && previousShip.phase !== "finished")
+      return [ship.hull > 0 ? "win" : "finish"];
+    if (ship.repairs > previousShip.repairs) return ["success"];
+    if (ship.mistakes > previousShip.mistakes) return ["wrong"];
+  }
   const a = after.pong,
     b = before.pong;
   if (a && b) {

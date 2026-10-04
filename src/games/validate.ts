@@ -19,6 +19,53 @@ export function validRoom(v: unknown): v is Room {
     v.notice.length > 200
   )
     return false;
+  if (v.kind !== "ship" && v.ship !== undefined && v.ship !== null)
+    return false;
+  if (v.kind === "ship") {
+    const s = v.ship;
+    if (
+      !record(s) ||
+      v.pong !== null ||
+      v.race !== null ||
+      !["ready", "playing", "paused", "finished"].includes(String(s.phase)) ||
+      !integer(s.remaining, 0, 180_000) ||
+      !integer(s.hull, 0, 100) ||
+      !integer(s.repairs, 0, 100_000) ||
+      !integer(s.mistakes, 0, 100_000) ||
+      !Array.isArray(s.crew) ||
+      s.crew.length > 8 ||
+      !s.crew.every(id) ||
+      new Set(s.crew).size !== s.crew.length ||
+      !Array.isArray(s.controls) ||
+      s.controls.length !== s.crew.length * 3 ||
+      !s.controls.every(
+        (c, i) =>
+          record(c) &&
+          c.owner === (s.crew as string[])[Math.floor(i / 3)] &&
+          integer(c.value, 0, 3) &&
+          integer(c.revision, 0, 100_000),
+      ) ||
+      !Array.isArray(s.orders) ||
+      s.orders.length !== (s.phase === "ready" ? 0 : s.crew.length) ||
+      (s.phase !== "ready" && s.crew.length < 1) ||
+      (s.phase === "finished"
+        ? s.hull !== 0 && s.remaining !== 0
+        : s.hull === 0 || s.remaining === 0)
+    )
+      return false;
+    return (
+      s.orders.every(
+        (o, i) =>
+          record(o) &&
+          o.caller === (s.crew as string[])[i] &&
+          integer(o.control, 0, (s.controls as unknown[]).length - 1) &&
+          Math.floor(o.control / 3) === (i + 1) % (s.crew as string[]).length &&
+          integer(o.value, 0, 3) &&
+          integer(o.remaining, 0, 18_000) &&
+          ["pending", "done", "missed"].includes(String(o.status)),
+      ) && new Set(s.orders.map((o) => o.control)).size === s.orders.length
+    );
+  }
   if (v.kind === "lobby" || v.kind === "lights")
     return v.pong === null && v.race === null;
   if (v.kind === "pong" || v.kind === "arena" || v.kind === "breakout") {

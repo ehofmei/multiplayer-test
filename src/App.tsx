@@ -1,3 +1,4 @@
+import { ShipGame } from "./components/ShipGame";
 import { ArenaGame } from "./components/ArenaGame";
 import { applyUpdate, checkForUpdate, useUpdates } from "./pwa/updates";
 import { useEffect, useRef, useState } from "react";
@@ -341,6 +342,15 @@ export function App() {
                     key={snapshot.room.epoch}
                     game={snapshot.room.pong}
                     epoch={snapshot.room.epoch}
+                    players={snapshot.players}
+                    session={session}
+                    connected={connected}
+                  />
+                )}
+                {snapshot?.room.kind === "ship" && snapshot.room.ship && (
+                  <ShipGame
+                    key={snapshot.room.epoch}
+                    game={snapshot.room.ship}
                     players={snapshot.players}
                     session={session}
                     connected={connected}

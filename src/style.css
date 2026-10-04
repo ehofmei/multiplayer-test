@@ -981,3 +981,104 @@ select:focus-visible {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.ship-stats {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 12px 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+.ship-hull {
+  display: block;
+  width: 100%;
+  height: 8px;
+  accent-color: #44765b;
+}
+.ship-order {
+  background: #122c29;
+  color: #f5f4ee;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 12px 0;
+  min-height: 90px;
+}
+.ship-order-heading {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #d9f29d;
+}
+.ship-command {
+  font-size: 20px;
+  font-weight: 750;
+  line-height: 1.25;
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+.ship-deadline {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.ship-panels {
+  display: grid;
+  gap: 8px;
+}
+.ship-panel {
+  border: 1px solid #c3cdc3;
+  border-radius: 10px;
+  padding: 4px 8px 8px;
+  margin: 0;
+  min-width: 0;
+}
+.ship-panel legend {
+  font-size: 14px;
+  font-weight: 700;
+  padding: 0 4px;
+}
+.ship-panel > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.ship-panel button {
+  background: #edf1e7;
+  color: #122c29;
+  border-color: #c3cdc3;
+  min-height: 44px;
+  padding: 6px;
+  font-size: 18px;
+  touch-action: manipulation;
+}
+.ship-panel button[aria-pressed="true"] {
+  background: #122c29;
+  color: #f5f4ee;
+  border-color: #122c29;
+  opacity: 1;
+}
+.ship-panel button:focus-visible {
+  outline: 3px solid #5e8c28;
+  outline-offset: 2px;
+}
+@media (max-width: 650px) {
+  .ship-game-card {
+    padding: 12px;
+  }
+  .ship-game-card > .board-heading {
+    display: none;
+  }
+  .ship-stats {
+    margin-top: 0;
+    font-size: 14px;
+  }
+  .ship-order {
+    padding: 8px 10px;
+    margin: 8px 0;
+    min-height: 80px;
+  }
+  .ship-command {
+    font-size: 18px;
+    margin: 4px 0;
+  }
+}

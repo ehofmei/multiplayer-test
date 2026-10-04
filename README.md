@@ -5,7 +5,7 @@ device has one direct WebRTC DataChannel to that host. There is no gameplay serv
 signaling service, STUN/TURN configuration, database, or account.
 
 Pair up to eight devices once using QR codes or copy/paste, then let the host choose
-Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, or Reaction Race. Switching games keeps the same
+Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, or Reaction Race. Switching games keeps the same
 connections. The app is installable and includes latency diagnostics.
 
 ## Run and verify
@@ -125,6 +125,29 @@ pairing, background handling, color preferences and muted local sounds use the
 existing game lifecycle. Update every device before selecting Co-op Breakout;
 older builds cannot validate its room snapshots. No pairing protocol or saved
 identity/sound storage change is required.
+
+**Spaceship Panic** is a cooperative three-minute mission for two to eight
+players, with solo practice available. Everyone present at launch joins the crew.
+Each device owns three uniquely named controls with settings 0–3, and sees one
+instruction for the next crew member's panel. Read your order aloud, listen for
+orders naming your controls, and set the requested number. Solo orders address
+your own panel. Controls are host-authoritative; selected settings update after
+confirmation. Per-control revisions reject stale/repeated settings.
+
+The ship starts with 100 hull. Completed orders restore 3 hull (capped at 100);
+a missed deadline costs 15, and a wrong setting on a currently requested control
+costs 5. Changing an unrelated control does not damage the ship. Orders reset
+after two seconds of feedback, and deadlines shorten from 18 to 10 seconds as
+the mission progresses. Orders never conflict on a control. Keep hull above zero
+until the mission timer ends to win together; zero hull ends the mission early.
+The host can pause/resume with timers frozen, or launch again after either result.
+Pairing/backgrounding the host pauses the mission; a long scheduling stall pauses
+instead of fast-forwarding. Late arrivals watch until the next launch. Losing a
+crew member resets the mission, while a spectator leaving preserves it. Existing
+connections, offline support and muted local sound preferences remain in use.
+Update every device before selecting Spaceship Panic; older builds do not
+understand its new room state and control action. Saved identities/sound settings
+and pairing formats are unchanged.
 
 **Reaction Race** has six targets and ten rounds for everyone present at the start
 (or solo practice). After a random 1.2–3 second wait, hit the marked target within

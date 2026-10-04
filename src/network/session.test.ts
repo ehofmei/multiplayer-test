@@ -173,6 +173,85 @@ describe("shared game room", () => {
     await vi.advanceTimersByTimeAsync(10_000);
     expect(host.snapshot().room.race?.phase).toBe("ready");
   });
+  it("synchronizes ship repairs and rejects stale/foreign control inputs", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const { host, client, hostChannel } = await pair();
+    client.selectGame("ship");
+    expect(host.snapshot().room.kind).toBe("lobby");
+    host.selectGame("ship");
+    client.startShip();
+    expect(host.snapshot().room.ship?.phase).toBe("ready");
+    host.startShip();
+    await vi.advanceTimersByTimeAsync(20);
+    client.setShipControl(0, 1, 0);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(host.snapshot().room.ship?.repairs).toBe(0);
+    client.setShipControl(3, 2, 0);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(host.snapshot().room.ship?.hull).toBe(95);
+    client.setShipControl(3, 1, 1);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(client.snapshot().room.ship?.repairs).toBe(1);
+    expect(client.snapshot().room.ship?.hull).toBe(98);
+    client.setShipControl(3, 3, 1);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(host.snapshot().room.ship?.controls[3].value).toBe(1);
+    host.pauseGames();
+    await vi.advanceTimersByTimeAsync(20);
+    const paused = client.snapshot().room.ship;
+    client.setShipControl(3, 3, 2);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(client.snapshot().room.ship).toEqual(paused);
+    host.resumeShip();
+    await vi.advanceTimersByTimeAsync(250);
+    expect(client.snapshot().room.ship?.phase).toBe("playing");
+    const epoch = host.snapshot().room.epoch;
+    host.startShip();
+    hostChannel.onmessage!({
+      data: JSON.stringify({
+        v: 2,
+        type: "input",
+        epoch,
+        sequence: 999,
+        input: { kind: "ship-control", control: 3, value: 1, revision: 0 },
+      }),
+    });
+    expect(host.snapshot().room.ship?.repairs).toBe(0);
+    hostChannel.onclose!();
+    expect(host.snapshot().room.ship?.phase).toBe("ready");
+    expect(host.snapshot().room.notice).toContain("A player left");
+    host.startShip();
+    host.selectGame("lights");
+    await vi.advanceTimersByTimeAsync(20000);
+    expect(host.snapshot().room.ship).toBeNull();
+    host.dispose();
+    client.dispose();
+    expect(vi.getTimerCount()).toBe(0);
+    vi.restoreAllMocks();
+  });
+  it("keeps late crew as spectators until the next launch", async () => {
+    const { host } = await pair();
+    const offer = await host.offer();
+    host.selectGame("ship");
+    host.startShip();
+    const late = new Session("client", { id: "late", name: "Sam" }, () => {});
+    sessions.push(late);
+    await host.accept(await late.answer(offer));
+    const [a, b] = Peer.all.slice(-2);
+    a.channel.peer = b.channel;
+    b.channel.peer = a.channel;
+    b.ondatachannel!({ channel: b.channel });
+    a.channel.open();
+    b.channel.open();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(late.snapshot().room.ship?.crew).toEqual(["host", "client"]);
+    late.setShipControl(0, 1, 0);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(host.snapshot().room.ship?.repairs).toBe(0);
+    a.channel.onclose!();
+    expect(host.snapshot().room.ship?.phase).toBe("playing");
+    expect(host.snapshot().players).toHaveLength(2);
+  });
   it("runs Breakout with shared state, host controls, stale input protection and disconnect cleanup", async () => {
     const { host, client, hostChannel } = await pair();
     host.selectGame("breakout");

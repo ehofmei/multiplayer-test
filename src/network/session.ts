@@ -1,3 +1,4 @@
+import { launchShip, stepShip, setShipControl } from "../games/ship";
 import { newBreakout, stepBreakout } from "../games/breakout";
 import { newArena, moveArena, stepArena } from "../games/arena";
 import { validColor, type PaddleColor } from "../games/colors";
@@ -74,6 +75,7 @@ export class Session {
   private paddleTimer?: ReturnType<typeof setTimeout>;
   private queuedPaddle?: { epoch: number; position: number };
   private raceShownAt = 0;
+  private shipTickAt = 0;
   private lastRaceRound = "";
   private players: Player[];
   private status: string;
@@ -411,6 +413,7 @@ export class Session {
       if (
         link.player &&
         (this.room.pong?.seats.includes(link.player.id) ||
+          this.room.ship?.crew.includes(link.player.id) ||
           this.room.race?.entries.some((e) => e.id === link.player!.id))
       ) {
         this.stopGameTimers();
@@ -593,6 +596,12 @@ export class Session {
   }
   pauseGames() {
     if (this.role !== "host") return;
+    if (this.room.ship?.phase === "playing") {
+      this.stopGameTimers();
+      this.room.ship = { ...this.room.ship, phase: "paused" };
+      this.broadcast();
+      return;
+    }
     const pong = this.room.pong;
     if (pong && ["serve", "playing"].includes(pong.phase)) {
       this.stopGameTimers();
@@ -614,6 +623,56 @@ export class Session {
     this.room.pong = { ...this.room.pong, phase: "serve", serveIn: 1 };
     this.runPong();
     this.broadcast();
+  }
+  startShip() {
+    if (this.role !== "host" || this.disposed || this.room.kind !== "ship")
+      return;
+    this.stopGameTimers();
+    this.room.epoch++;
+    this.room.notice = "";
+    this.room.ship = launchShip(this.players.map((p) => p.id));
+    this.runShip();
+    this.broadcast();
+  }
+  resumeShip() {
+    if (this.role !== "host" || this.room.ship?.phase !== "paused") return;
+    this.room.ship = { ...this.room.ship, phase: "playing" };
+    this.runShip();
+    this.broadcast();
+  }
+  private runShip() {
+    this.shipTickAt = performance.now();
+    this.gameTimer = setInterval(() => {
+      this.advanceShip();
+      this.broadcast();
+    }, 250);
+  }
+  private advanceShip() {
+    if (this.room.ship?.phase !== "playing") return;
+    const now = performance.now();
+    const elapsed = Math.floor(now - this.shipTickAt);
+    if (elapsed > 1000) {
+      this.pauseGames();
+      return;
+    }
+    this.shipTickAt += elapsed;
+    this.room.ship = stepShip(this.room.ship, elapsed);
+    if (this.room.ship.phase === "finished") this.stopGameTimers();
+  }
+  setShipControl(control: number, value: number, revision: number) {
+    if (
+      !Number.isInteger(control) ||
+      control < 0 ||
+      control >= 24 ||
+      !Number.isInteger(value) ||
+      value < 0 ||
+      value > 3 ||
+      !Number.isInteger(revision) ||
+      revision < 0 ||
+      revision > 100_000
+    )
+      return;
+    this.input({ kind: "ship-control", control, value, revision });
   }
   startRace() {
     if (this.role !== "host" || this.room.kind !== "reaction") return;
@@ -681,6 +740,21 @@ export class Session {
         player.color = input.color;
         this.broadcast();
       }
+    } else if (
+      input.kind === "ship-control" &&
+      this.room.kind === "ship" &&
+      this.room.ship
+    ) {
+      this.advanceShip();
+      this.room.ship = setShipControl(
+        this.room.ship,
+        id,
+        input.control,
+        input.value,
+        input.revision,
+      );
+      if (this.room.ship.phase === "finished") this.stopGameTimers();
+      this.broadcast();
     } else if (input.kind === "paddle" && this.room.pong) {
       this.room.pong =
         this.room.kind === "arena"

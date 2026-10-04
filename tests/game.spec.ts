@@ -1294,3 +1294,230 @@ test("four Breakout teammates fit narrow phones with long names and taller fonts
     await Promise.all(contexts.map((c) => c.close()));
   }
 });
+
+test("Spaceship Panic pairs crew, shares orders and repairs, pauses, and handles late arrivals", async ({
+  browser,
+  page: host,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+  });
+  const lateContext = await browser.newContext();
+  try {
+    await host.addInitScript(() => {
+      Math.random = () => 0;
+    });
+    const client = await context.newPage(),
+      late = await lateContext.newPage();
+    await host.goto("./");
+    await host.getByLabel("Your name").fill("Alex");
+    await host
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await join(host, client, "Emma");
+    await host
+      .getByRole("button", { name: "Spaceship Panic", exact: true })
+      .click();
+    await expect(
+      client.getByRole("region", { name: "Spaceship Panic game" }),
+    ).toBeVisible();
+    await expect(
+      client.getByRole("button", { name: "Launch Mission", exact: true }),
+    ).toHaveCount(0);
+    await host
+      .getByRole("button", { name: "Launch Mission", exact: true })
+      .click();
+    await expect(host.locator(".ship-command")).toHaveText("Set Reactor to 1.");
+    await expect(client.locator(".ship-command")).toHaveText(
+      "Set Shields to 1.",
+    );
+    await expect(
+      host.getByRole("group", { name: "Reactor", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      client.getByRole("group", { name: "Shields", exact: true }),
+    ).toHaveCount(0);
+    await client
+      .getByRole("button", { name: "Reactor 2", exact: true })
+      .press("Enter");
+    await expect(host.getByTestId("ship-hull")).toHaveText("Hull 95%");
+    await client.getByRole("button", { name: "Reactor 1", exact: true }).tap();
+    await expect(host.locator(".ship-command")).toHaveText(
+      "Order complete! +3 hull",
+    );
+    await expect(host.getByTestId("ship-hull")).toHaveText("Hull 98%");
+    await host.getByRole("button", { name: "Shields 1", exact: true }).click();
+    await expect(client.locator(".ship-command")).toHaveText(
+      "Order complete! +3 hull",
+    );
+    await expect(client.getByTestId("ship-repairs")).toHaveText("2 repairs");
+    await host
+      .getByRole("button", { name: "Pause Mission", exact: true })
+      .click();
+    await expect(client.locator(".ship-command")).toHaveText(
+      "Mission paused · take a breath.",
+    );
+    await expect(
+      client.getByRole("button", { name: "Reactor 2", exact: true }),
+    ).toBeDisabled();
+    await expect(host.locator(".ship-panels")).toHaveScreenshot(
+      "ship-panels.png",
+    );
+    for (const viewport of [
+      { width: 320, height: 700 },
+      { width: 390, height: 844 },
+      { width: 768, height: 1024 },
+    ]) {
+      await client.setViewportSize(viewport);
+      for (const font of ["system", "Arial-tall"]) {
+        const style =
+          font === "system"
+            ? null
+            : await client.addStyleTag({
+                content: ":root {font-family:Arial,sans-serif;line-height:1.3}",
+              });
+        await client.keyboard.press("Control+Home");
+        const bounds = await client.locator(".ship-panels").boundingBox();
+        expect(bounds!.y + bounds!.height).toBeLessThan(viewport.height - 16);
+        expect(
+          await client.evaluate(() => document.documentElement.scrollWidth),
+        ).toBeLessThanOrEqual(viewport.width);
+        await client.screenshot({
+          path: `test-results/ship-${viewport.width}-${font}.png`,
+          fullPage: true,
+        });
+        await style?.evaluate((el) => el.remove());
+      }
+    }
+    await host.screenshot({
+      path: "test-results/ship-desktop.png",
+      fullPage: true,
+    });
+    await host
+      .getByRole("button", { name: "Resume Mission", exact: true })
+      .click();
+    await expect(
+      client.getByRole("button", { name: "Reactor 2", exact: true }),
+    ).toBeEnabled();
+    await join(host, late, "Sam with a long family name");
+    await expect(late.locator(".ship-panels")).toHaveCount(0);
+    await host
+      .getByRole("button", { name: "Resume Mission", exact: true })
+      .click();
+    await expect(late.locator(".ship-command")).toHaveText(
+      "You’re watching. Join the next mission.",
+    );
+    await late
+      .getByRole("button", { name: "Return Home", exact: true })
+      .click();
+    await expect(
+      host.getByRole("button", { name: "Pause Mission", exact: true }),
+    ).toBeVisible();
+    await client
+      .getByRole("button", { name: "Return Home", exact: true })
+      .click();
+    await expect(
+      host.getByText("A player left. Choose players and start a new round.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await host
+      .getByRole("button", { name: "Launch Mission", exact: true })
+      .click();
+    await expect(host.locator(".ship-command")).toHaveText("Set Shields to 1.");
+    await host
+      .getByRole("button", { name: "Choose Game", exact: true })
+      .click();
+    await host
+      .getByRole("button", { name: "Co-op Breakout", exact: true })
+      .click();
+    await expect(
+      host.getByRole("region", { name: "Co-op Breakout game" }),
+    ).toBeVisible();
+  } finally {
+    await context.close();
+    await lateContext.close();
+  }
+});
+
+test("Spaceship Panic loses an unattended mission, rematches and pauses on host background", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await page.goto("./");
+  await page.getByRole("button", { name: "Create Game", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Spaceship Panic", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Launch Mission", exact: true })
+    .click();
+  await page.clock.runFor(180000);
+  await expect(page.locator(".ship-command")).toHaveText(
+    "Hull lost. Try again together!",
+  );
+  await page.getByRole("button", { name: "Launch Again", exact: true }).click();
+  await expect(page.getByTestId("ship-hull")).toHaveText("Hull 100%");
+  await expect(page.getByTestId("ship-repairs")).toHaveText("0 repairs");
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: true,
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await expect(page.locator(".ship-command")).toHaveText(
+    "Mission paused · take a breath.",
+  );
+  const clock = await page.getByTestId("ship-clock").innerText();
+  await page.clock.runFor(10000);
+  await expect(page.getByTestId("ship-clock")).toHaveText(clock);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: false,
+    });
+  });
+  await page
+    .getByRole("button", { name: "Resume Mission", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Pause Mission", exact: true }),
+  ).toBeVisible();
+});
+
+test("Spaceship Panic survives a complete mission with correct orders", async ({
+  page,
+}) => {
+  const start = new Date("2026-10-03T12:00:00Z");
+  await page.clock.install({ time: start });
+  await page.clock.pauseAt(start);
+  await page.goto("./");
+  await page.getByRole("button", { name: "Create Game", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Spaceship Panic", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Launch Mission", exact: true })
+    .click();
+  for (let i = 0; i < 90; i++) {
+    const command = await page.locator(".ship-command").innerText();
+    const match = /^Set (.+) to ([0-3])\.$/.exec(command);
+    expect(match).not.toBeNull();
+    await page
+      .getByRole("button", { name: `${match![1]} ${match![2]}`, exact: true })
+      .click();
+    await page.clock.runFor(2000);
+  }
+  await expect(page.locator(".ship-command")).toHaveText(
+    "Mission complete! Everyone made it.",
+  );
+  await expect(page.getByTestId("ship-hull")).toHaveText("Hull 100%");
+  await expect(page.getByTestId("ship-clock")).toHaveText("0:00");
+  await expect(page.getByTestId("ship-repairs")).toHaveText("90 repairs");
+  await page.screenshot({
+    path: "test-results/ship-victory.png",
+    fullPage: true,
+  });
+});

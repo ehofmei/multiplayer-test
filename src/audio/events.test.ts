@@ -1,3 +1,4 @@
+import { launchShip } from "../games/ship";
 import { newBreakout } from "../games/breakout";
 import { describe, expect, it } from "vitest";
 import { soundEvents, soundFrame } from "./events";
@@ -76,6 +77,27 @@ describe("game sound transitions", () => {
     before = frame(s);
     s.room.pong.phase = "finished";
     s.room.pong.breakout!.lives = 0;
+    expect(soundEvents(before, frame(s))).toEqual(["finish"]);
+  });
+  it("announces ship repair, damage and shared outcomes without replay", () => {
+    const s = snapshot();
+    s.room = newRoom("ship", 1);
+    s.room.ship = launchShip(["a"]);
+    let before = frame(s);
+    s.room.ship.repairs++;
+    expect(soundEvents(before, frame(s))).toEqual(["success"]);
+    before = frame(s);
+    s.room.ship.mistakes++;
+    s.room.ship.hull -= 5;
+    expect(soundEvents(before, frame(s))).toEqual(["wrong"]);
+    before = frame(s);
+    s.room.ship.phase = "finished";
+    s.room.ship.remaining = 0;
+    expect(soundEvents(before, frame(s))).toEqual(["win"]);
+    expect(soundEvents(frame(s), frame(s))).toEqual([]);
+    expect(soundEvents(null, frame(s))).toEqual([]);
+    before = { ...frame(s), ship: { ...frame(s).ship!, phase: "playing" } };
+    s.room.ship.hull = 0;
     expect(soundEvents(before, frame(s))).toEqual(["finish"]);
   });
   it("announces target and hold cues, individual results and finishes without repeats", () => {

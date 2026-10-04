@@ -106,3 +106,29 @@ unlock, device volume/mute behavior, and foreground recovery need physical testi
   game selection and phone viewport inspection. Physical iPhone/iPad co-op feel,
   a complete team victory, sound audibility and host background/resume still need
   device testing; update all devices before pairing with this mode.
+
+## Spaceship Panic
+
+- Inventory: host launch/rematch, 2–8 crew plus solo practice, three controls per
+  device, orders sent to another panel, setting selection, shared hull/repairs,
+  order deadlines, three-minute mission, victory/loss, pause/resume, spectators,
+  switching, disconnect and host background/stall handling.
+- Rule tests cover ownership, conflict-free assignments, revision rejection,
+  wrong-setting damage, unrelated controls, completed/expired orders, deadline
+  ramp, terminal states, frozen timers and an entire eight-player successful
+  mission. Network tests cover malformed inputs/state, epochs, real session
+  synchronization, late spectators, disconnect cleanup and timer disposal.
+- Production Chromium tests pair crew through WebRTC, complete each other's
+  orders with keyboard/touch input, exercise damage/repair and pause/resume,
+  join/leave a spectator, disconnect crew and switch games. Controlled-clock
+  tests cover an unattended loss, rematch, background pause and a complete win.
+- Keep the deterministic control-panel screenshot and review desktop,
+  320×700/390×844/768×1024 screenshots with normal and taller Arial metrics.
+  Check that all three panels fit with viewport clearance, selected numbers
+  remain distinct, controls are at least 44px, focus is visible, and surrounding
+  content scrolls normally. Review active orders as well as paused/results views.
+- Live browser QA covers solo launch, an actual requested repair, pause/resume,
+  keyboard controls, responsive screenshots and switching. On physical iPhone/
+  iPad devices, play a full co-op mission with everyone talking; check whether
+  the 18-to-10-second deadlines feel fair, quiet sound feedback, background pause
+  and readability of all 24 system names. Update every device before pairing.

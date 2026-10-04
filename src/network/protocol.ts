@@ -50,6 +50,16 @@ export function parseMessage(raw: unknown): Message | null {
       record(m.input)
     ) {
       const i = m.input;
+      if (
+        i.kind === "ship-control" &&
+        integer(i.control) &&
+        i.control < 24 &&
+        integer(i.value) &&
+        i.value <= 3 &&
+        integer(i.revision) &&
+        i.revision <= 100_000
+      )
+        return m as Message;
       if (i.kind === "color" && validColor(i.color)) return m as Message;
       if (
         i.kind === "paddle" &&

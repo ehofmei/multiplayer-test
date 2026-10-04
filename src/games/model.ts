@@ -1,8 +1,9 @@
+import { newShip, type ShipState } from "./ship";
 import { rallyBall } from "./speed";
 import { newBreakout } from "./breakout";
 import { newArena } from "./arena";
 export type GameKind =
-  "lobby" | "lights" | "pong" | "arena" | "breakout" | "reaction";
+  "lobby" | "lights" | "pong" | "arena" | "breakout" | "reaction" | "ship";
 export interface PongState {
   phase: "ready" | "serve" | "playing" | "paused" | "finished";
   seats: string[];
@@ -34,10 +35,12 @@ export interface Room {
   notice: string;
   pong: PongState | null;
   race: RaceState | null;
+  ship?: ShipState | null;
 }
 export type GameInput =
   | { kind: "color"; color: import("./colors").PaddleColor }
   | { kind: "paddle"; position: number }
+  | { kind: "ship-control"; control: number; value: number; revision: number }
   | { kind: "target"; round: number; index: number; elapsed: number };
 export const gameNames: Record<GameKind, string> = {
   lobby: "Game night",
@@ -46,12 +49,14 @@ export const gameNames: Record<GameKind, string> = {
   arena: "Arena Pong",
   breakout: "Co-op Breakout",
   reaction: "Reaction Race",
+  ship: "Spaceship Panic",
 };
 export function newRoom(kind: GameKind, epoch: number): Room {
   return {
     epoch,
     kind,
     notice: "",
+    ship: kind === "ship" ? newShip() : null,
     pong:
       kind === "pong"
         ? newPong([])

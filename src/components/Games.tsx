@@ -18,6 +18,13 @@ const choices: {
   mark: string;
 }[] = [
   {
+    kind: "ship",
+    title: "Spaceship Panic",
+    detail:
+      "Call out orders. Work your controls. Keep the ship alive together.",
+    mark: "✧",
+  },
+  {
     kind: "breakout",
     title: "Co-op Breakout",
     detail: "One team, five shared lives. Clear three levels together.",
