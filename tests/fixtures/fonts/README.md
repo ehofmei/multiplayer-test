@@ -16,8 +16,11 @@ the fixture style before normal-font and taller-font layout checks. Long names a
 checked separately from the Home baseline to avoid platform-specific native input
 scroll positions.
 
-Home has separate `darwin` and `linux` baselines because CoreText and FreeType
-still rasterize its large heading and introductory text differently with the same
-font files. The Linux baseline was reviewed from the failing GitHub Actions
-artifact. Both retain the 250-pixel allowance; other regions share their existing
-baselines. Normal-font viewport checks remain independent of these images.
+The two full-screen baselines (Home and game library) have separate `darwin` and
+`linux` images because CoreText and FreeType still rasterize their text and fallback
+icon glyphs differently with the same font files. Both Linux images were reviewed
+from failing GitHub Actions artifacts. Both screens retain the 250-pixel allowance;
+all seven game-region baselines remain shared and pass on both platforms.
+Normal-font viewport checks remain independent of these images. New full-screen
+baselines should include reviewed images from both macOS and Linux rather than
+assuming a local macOS pass certifies the Linux comparison.

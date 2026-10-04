@@ -74,9 +74,12 @@ test("home, paged library, settings and all game setups fit the primary screen",
       path: `test-results/app-library-${size.width}.png`,
     });
     if (size.width === 390)
-      await expectStableScreenshot(page, "main", "app-library.png", {
-        maxDiffPixels: 250,
-      });
+      await expectStableScreenshot(
+        page,
+        "main",
+        `app-library-${process.platform}.png`,
+        { maxDiffPixels: 250 },
+      );
     await openMenu(page);
     await page.getByText("Install on iPhone or iPad", { exact: true }).click();
     await expect(page.getByRole("dialog")).toContainText("Add to Home Screen");
