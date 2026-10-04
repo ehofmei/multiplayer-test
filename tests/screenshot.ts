@@ -8,8 +8,8 @@ const bold = readFileSync(
   new URL("./fixtures/fonts/AtkinsonHyperlegible-Bold.ttf", import.meta.url),
 ).toString("base64");
 
-// Only the snapshot region gets a fixture font. Remove it before exercising the
-// real system/alternate fonts in the responsive layout checks that follow.
+// Normalize the entire layout, including text outside the captured region that
+// determines its available space. Remove this before normal/alternate-font QA.
 export async function expectStableScreenshot(
   page: Page,
   selector: string,
@@ -28,7 +28,7 @@ export async function expectStableScreenshot(
         src: url("data:font/ttf;base64,${bold}") format("truetype");
         font-weight: 600 900;
       }
-      ${selector}, ${selector} * {
+      :root, body, body * {
         font-family: "Snapshot Fixture" !important;
         line-height: 1.25 !important;
       }

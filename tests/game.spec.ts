@@ -327,9 +327,9 @@ test("host and three clients pair, synchronize concurrent taps, and disconnect c
     .screenshot({ path: "test-results/connected-details.png" });
   await closePanels(host);
   await closePanels(clients[0]);
-  await expect(
-    host.getByRole("region", { name: "Shared grid" }).locator(".grid"),
-  ).toHaveScreenshot("shared-grid.png", { maxDiffPixelRatio: 0.03 });
+  await expectStableScreenshot(host, ".grid", "shared-grid.png", {
+    maxDiffPixels: 512,
+  });
   await returnHome(clients[2]);
   await expect(host.getByText("3/8", { exact: true })).toBeVisible();
   await host.getByRole("button", { name: "Cell 16", exact: true }).click();
@@ -546,10 +546,13 @@ test("host picks games, assigns two Pong players, spectators watch, and switchin
     ).toBeDisabled();
     await chooseGame(host, "Pong");
     await expect(emma.getByRole("region", { name: "Pong game" })).toBeVisible();
-    await expect(host.locator(".pong-court")).toHaveScreenshot(
-      "pong-court.png",
-      { maxDiffPixelRatio: 0.02 },
-    );
+    await expectStableScreenshot(host, ".pong-court", "pong-court.png");
+    // Text above the court must not change the shared baseline's geometry.
+    const alternateFont = await host.addStyleTag({
+      content: ":root { font-family: serif; line-height: 1.6; }",
+    });
+    await expectStableScreenshot(host, ".pong-court", "pong-court.png");
+    await alternateFont.evaluate((element) => element.remove());
     await host.getByLabel("Left player").selectOption({ label: "Emma" });
     await host.getByLabel("Right player").selectOption({ label: "Emma" });
     await expect(
@@ -663,10 +666,9 @@ test("Reaction Race penalizes early/wrong taps, mixes hold rounds, finishes and 
       throw new Error(`Race did not reach ${text}`);
     };
     await chooseGame(host, "Reaction Race");
-    await expect(host.locator(".race-targets")).toHaveScreenshot(
-      "race-targets.png",
-      { maxDiffPixelRatio: 0.03 },
-    );
+    await expectStableScreenshot(host, ".race-targets", "race-targets.png", {
+      maxDiffPixels: 250,
+    });
     await host.getByRole("button", { name: "Start Race", exact: true }).click();
     await expect(
       client.getByText("Wait… hands ready!", { exact: true }),
@@ -1077,9 +1079,7 @@ test("Co-op Breakout pairs teammates, rotates controls, pauses and handles spect
     await expect(
       client.getByRole("button", { name: "Start Co-op Breakout", exact: true }),
     ).toHaveCount(0);
-    await expect(
-      host.getByRole("group", { name: "Breakout court", exact: true }),
-    ).toHaveScreenshot("breakout-court.png");
+    await expectStableScreenshot(host, ".arena-court", "breakout-court.png");
     // Reject duplicate assignments, and allow solo practice with spectators.
     await host
       .getByLabel("Right player", { exact: true })
@@ -1332,8 +1332,7 @@ test("Spaceship Panic pairs crew, shares orders and repairs, pauses, and handles
     await expect(
       host.locator('.ship-panels button[aria-pressed="true"]'),
     ).toHaveText(["1", "0", "0"]);
-    // Linux differs from the shared-font macOS baseline by 396 pixels, under
-    // 0.3% of this region. Allow 512 here; keep the smaller arena budget at 64.
+    // Text-heavy regions need a small rasterization allowance; dimensions stay strict.
     await expectStableScreenshot(host, ".ship-panels", "ship-panels.png", {
       maxDiffPixels: 512,
     });

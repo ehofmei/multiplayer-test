@@ -33,10 +33,25 @@ test("home, paged library, settings and all game setups fit the primary screen",
     await page.getByLabel("Your name").fill("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456");
     await expectScreenFits(page);
     await page.screenshot({ path: `test-results/app-home-${size.width}.png` });
-    if (size.width === 390)
+    if (size.width === 390) {
+      // Keep the long-name fit check above, but avoid native input horizontal
+      // scrolling (which differs by OS) in the shared visual baseline.
+      await page.getByLabel("Your name").fill("Family Player");
       await expectStableScreenshot(page, "main", "app-home.png", {
         maxDiffPixels: 250,
       });
+      // Reuse the same baseline under different inherited metrics, as on CI.
+      const alternateFont = await page.addStyleTag({
+        content: ":root { font-family: serif; line-height: 1.6; }",
+      });
+      await expectStableScreenshot(page, "main", "app-home.png", {
+        maxDiffPixels: 250,
+      });
+      await alternateFont.evaluate((element) => element.remove());
+      await page
+        .getByLabel("Your name")
+        .fill("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456");
+    }
     await page
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
