@@ -122,7 +122,8 @@ reverse passing on that reveal; even numbers cancel out. With two bakers, an odd
 number skips that pass instead, so the gremlin still changes your choices. Passing begins clockwise
 in batch one and counterclockwise in batch two. Gremlins affect remaining hands,
 never treats already collected. Each batch scores separately; scores add together,
-and ties share the win. A shuffled room-wide deck contains two cookies and one of
+and ties share the win. Results keep names compact; Table & scores shows full names
+and both batch totals. A shuffled room-wide deck contains two cookies and one of
 each other card per player per batch, giving varied hands without additional assets
 or dependencies. The characters are local SVG artwork and work offline.
 

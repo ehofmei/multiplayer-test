@@ -296,3 +296,10 @@ and the pair bonus are understandable, and whether gremlin reversals are fun.
 Check installed-PWA safe areas, touch focus, background/resume, updates on every
 device, and offline startup/pairing after an online visit. Browser tests cannot
 establish real iOS behavior or whether the family enjoys the balance.
+
+Bakery cross-platform regression checks: keep separate reviewed Darwin and Linux
+hand baselines with the same strict pixel budget; text rasterization differs even
+with the bundled fixture font. Exercise tied results with long names and taller
+Arial metrics at every Bakery viewport. Primary results show compact names and
+final scores; Table & scores retains full names and both batch totals. Fit
+assertions remain unchanged.

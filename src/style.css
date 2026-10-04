@@ -2492,9 +2492,6 @@ main.app-shell {
     height: 32px;
     min-height: 32px;
   }
-  .bakery-results .bakery-scores {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 @media (max-height: 550px) and (min-width: 500px) {
   .bakery-treat .treat-art {
@@ -2534,14 +2531,6 @@ main.app-shell {
   }
   .bakery-game-card .board-heading h2 {
     display: none;
-  }
-  .bakery-results .bakery-scores small {
-    display: none;
-  }
-  .bakery-results .bakery-scores li > span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 }
 .bakery-workspace {
@@ -2668,4 +2657,17 @@ main.app-shell {
   .app-shell .bakery-game-card {
     gap: 4px;
   }
+}
+/* Keep the primary results compact even with long names or taller system fonts.
+   The score panel retains complete names and both batch totals. */
+.bakery-results .bakery-scores {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.bakery-results .bakery-scores li > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bakery-results .bakery-scores small {
+  display: none;
 }

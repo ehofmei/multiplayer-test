@@ -156,7 +156,9 @@ export function BakeryGame({
     : game.phase === "ready"
       ? "The ovens are ready. Are you?"
       : finished
-        ? `${winners.map((b) => name(b.id)).join(" & ")} ${winners.length > 1 ? "share the win!" : "wins!"}`
+        ? winners.length > 1
+          ? `${winners.length} bakers share the win!`
+          : `${name(winners[0].id)} wins!`
         : game.phase === "paused"
           ? `Bakery paused${!me ? " · You’re watching." : ""}`
           : game.phase === "round-results"

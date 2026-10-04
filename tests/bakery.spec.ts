@@ -105,9 +105,14 @@ test("Bakery pairs, previews, secretly locks, passes, scores two batches and rem
       await style.evaluate((e) => e.remove());
     }
     await client.setViewportSize(sizes[1]);
-    await expectStableScreenshot(client, ".bakery-hand", "bakery-hand.png", {
-      maxDiffPixels: 180,
-    });
+    await expectStableScreenshot(
+      client,
+      ".bakery-hand",
+      `bakery-hand-${process.platform}.png`,
+      {
+        maxDiffPixels: 180,
+      },
+    );
     await card(client).tap();
     await expect(client.locator(".bakery-preview")).toContainText("points");
     await client
@@ -210,6 +215,13 @@ test("eight bakers fit, late arrivals spectate, and losing the host disables pic
   const contexts = await Promise.all(
     Array.from({ length: 7 }, () => browser.newContext({ viewport: sizes[0] })),
   );
+  await host.addInitScript(() => {
+    Math.random = () => 0.999999;
+  });
+  for (const context of contexts)
+    await context.addInitScript(() => {
+      Math.random = () => 0.999999;
+    });
   try {
     await host.goto("./");
     await host.getByLabel("Your name").fill("Alex");
@@ -221,7 +233,9 @@ test("eight bakers fit, late arrivals spectate, and losing the host disables pic
       await join(
         host,
         clients[i],
-        i === 0 ? "Emma with a very long name" : `Baker ${i + 1}`,
+        i === 0
+          ? "Emma with a very long name"
+          : `Baker ${i + 1} ABCDEFGHIJKLMNOPQRSTUV`,
       );
     await chooseGame(host, "Midnight Bakery");
     await host
@@ -270,6 +284,31 @@ test("eight bakers fit, late arrivals spectate, and losing the host disables pic
           .getByRole("button", { name: "Start Batch Two", exact: true })
           .click();
     }
+    await expect(clients[0].locator(".bakery-status")).toHaveText(
+      "7 bakers share the win!",
+    );
+    for (const size of sizes) {
+      await clients[0].setViewportSize(size);
+      const style = await clients[0].addStyleTag({
+        content: ":root {font-family:Arial,sans-serif;line-height:1.5}",
+      });
+      await expectScreenFits(clients[0]);
+      await clients[0].screenshot({
+        path: `test-results/bakery-tied-results-${size.width}.png`,
+      });
+      await style.evaluate((e) => e.remove());
+    }
+    await clients[0].setViewportSize(sizes[0]);
+    await clients[0]
+      .getByRole("button", { name: "Table & scores", exact: true })
+      .click();
+    await expect(
+      clients[0].getByRole("dialog", { name: "Table & scores", exact: true }),
+    ).toContainText("Baker 2 ABCDEFGHIJKLMNOPQRSTUV");
+    await expect(
+      clients[0].getByRole("dialog", { name: "Table & scores", exact: true }),
+    ).toContainText("Batch 2:");
+    await closePanels(clients[0]);
     await expectScreenFits(clients[0]);
     await clients[0].screenshot({
       path: "test-results/bakery-seven-results.png",
