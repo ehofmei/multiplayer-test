@@ -81,9 +81,14 @@ test("Treasure pairs, secretly locks, banks, times out, pauses, finishes and swi
     await host.clock.install();
     await host.clock.pauseAt(new Date(Date.now() + 1000));
     await host.setViewportSize(sizes[1]);
-    await expectStableScreenshot(host, ".dive-game-card", "dive-ready.png", {
-      maxDiffPixels: 180,
-    });
+    // The fixture normalizes font metrics, but macOS/Linux rasterize text
+    // differently. Keep reviewed OS baselines and the same strict pixel budget.
+    await expectStableScreenshot(
+      host,
+      ".dive-game-card",
+      `dive-ready-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
     await fit(host, "ready");
     await host.getByRole("button", { name: "Start Dive", exact: true }).click();
     await host.clock.runFor(3000);
@@ -136,9 +141,12 @@ test("Treasure pairs, secretly locks, banks, times out, pauses, finishes and swi
       document.querySelector(".dive-update-fixture")!.remove(),
     );
     await client.setViewportSize(sizes[1]);
-    await expectStableScreenshot(client, ".dive-board", "dive-active.png", {
-      maxDiffPixels: 180,
-    });
+    await expectStableScreenshot(
+      client,
+      ".dive-board",
+      `dive-active-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
     await showHelp(client);
     await expect(client.getByRole("dialog")).toContainText(
       "Missing a choice defaults to Return",
@@ -176,9 +184,12 @@ test("Treasure pairs, secretly locks, banks, times out, pauses, finishes and swi
     await fit(host, "results");
     await fit(client, "results-client");
     await host.setViewportSize(sizes[1]);
-    await expectStableScreenshot(host, ".dive-game-card", "dive-results.png", {
-      maxDiffPixels: 180,
-    });
+    await expectStableScreenshot(
+      host,
+      ".dive-game-card",
+      `dive-results-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
     await host.getByRole("button", { name: "Dive Again", exact: true }).click();
     await expect(game(client)).toHaveAttribute("data-phase", "countdown");
     await host.getByRole("button", { name: "Stop Dive", exact: true }).click();
