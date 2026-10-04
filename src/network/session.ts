@@ -1,4 +1,13 @@
 import {
+  newTreasure,
+  treasureView,
+  chooseTreasure,
+  stepTreasure,
+  pauseTreasure,
+  resumeTreasure,
+  type TreasureChoice,
+} from "../games/treasure";
+import {
   newBakery,
   pickBakery,
   advanceBakery,
@@ -127,9 +136,7 @@ export class Session {
   snapshot(): Snapshot {
     return {
       grid: this.grid,
-      room: this.room.bakery
-        ? { ...this.room, bakery: bakeryView(this.room.bakery, this.me.id) }
-        : this.room,
+      room: this.roomView(this.me.id),
       players: this.players,
       status: this.status,
       error: this.error,
@@ -372,6 +379,13 @@ export class Session {
       this.startMetrics(link);
     } else this.fail("Ignored an unexpected host message.");
   }
+  private roomView(viewer: string): Room {
+    if (this.room.treasure)
+      return { ...this.room, treasure: treasureView(this.room.treasure) };
+    if (this.room.bakery)
+      return { ...this.room, bakery: bakeryView(this.room.bakery, viewer) };
+    return this.room;
+  }
   private broadcast() {
     this.players = [
       this.me,
@@ -395,12 +409,7 @@ export class Session {
       )
         this.send(link, {
           ...message,
-          room: this.room.bakery
-            ? {
-                ...this.room,
-                bakery: bakeryView(this.room.bakery, link.player.id),
-              }
-            : this.room,
+          room: this.roomView(link.player.id),
           ...(link.sequence >= 0 ? { ack: link.sequence } : {}),
         });
       // A failed send removes the peer and broadcasts a newer roster.
@@ -455,6 +464,7 @@ export class Session {
           this.room.ship?.crew.includes(link.player.id) ||
           this.room.cycle?.riders.some((r) => r.id === link.player!.id) ||
           this.room.sumo?.bumpers.some((b) => b.id === link.player!.id) ||
+          this.room.treasure?.divers.some((d) => d.id === link.player!.id) ||
           this.room.bakery?.bakers.some((b) => b.id === link.player!.id) ||
           this.room.race?.entries.some((e) => e.id === link.player!.id))
       ) {
@@ -638,6 +648,15 @@ export class Session {
   }
   pauseGames() {
     if (this.role !== "host") return;
+    if (this.room.treasure) {
+      const next = pauseTreasure(this.room.treasure);
+      if (next !== this.room.treasure) {
+        this.stopGameTimers();
+        this.room.treasure = next;
+        this.broadcast();
+      }
+      return;
+    }
     if (
       this.room.bakery &&
       (this.room.bakery.phase === "picking" ||
@@ -701,6 +720,56 @@ export class Session {
     this.room.pong = { ...this.room.pong, phase: "serve", serveIn: 1 };
     this.runPong();
     this.broadcast();
+  }
+  startTreasure() {
+    if (
+      this.role !== "host" ||
+      this.disposed ||
+      this.room.kind !== "treasure" ||
+      this.players.length < 2 ||
+      !["ready", "finished"].includes(this.room.treasure?.phase ?? "")
+    )
+      return;
+    this.stopGameTimers();
+    this.room.epoch++;
+    this.room.notice = "";
+    this.room.treasure = newTreasure(this.players.map((p) => p.id));
+    this.runTreasure();
+    this.broadcast();
+  }
+  chooseTreasure(choice: TreasureChoice, dive: number, door: number) {
+    this.input({ kind: "dive-choice", choice, dive, door });
+  }
+  resumeTreasure() {
+    if (this.role !== "host" || this.room.treasure?.phase !== "paused") return;
+    this.room.treasure = resumeTreasure(this.room.treasure);
+    this.runTreasure();
+    this.broadcast();
+  }
+  private treasureTickAt = 0;
+  private advanceTreasure() {
+    if (
+      !this.room.treasure ||
+      ["ready", "paused", "finished"].includes(this.room.treasure.phase)
+    )
+      return;
+    const now = performance.now();
+    const elapsed = Math.floor(now - this.treasureTickAt);
+    if (elapsed > 500) {
+      this.pauseGames();
+      return;
+    }
+    if (elapsed <= 0) return;
+    this.treasureTickAt += elapsed;
+    this.room.treasure = stepTreasure(this.room.treasure, elapsed);
+    if (this.room.treasure.phase === "finished") this.stopGameTimers();
+  }
+  private runTreasure() {
+    this.treasureTickAt = performance.now();
+    this.gameTimer = setInterval(() => {
+      this.advanceTreasure();
+      this.broadcast();
+    }, 100);
   }
   startBakery() {
     if (
@@ -989,6 +1058,23 @@ export class Session {
   }
   private applyInput(id: string, input: GameInput) {
     if (
+      input.kind === "dive-choice" &&
+      this.room.kind === "treasure" &&
+      this.room.treasure
+    ) {
+      this.advanceTreasure();
+      const previous = this.room.treasure;
+      this.room.treasure = chooseTreasure(
+        previous,
+        id,
+        input.dive,
+        input.door,
+        input.choice,
+      );
+      if (this.room.treasure.phase !== previous.phase)
+        this.treasureTickAt = performance.now();
+      this.broadcast();
+    } else if (
       input.kind === "bakery-pick" &&
       this.room.kind === "bakery" &&
       this.room.bakery

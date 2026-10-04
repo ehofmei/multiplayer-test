@@ -670,3 +670,136 @@ it("Bakery protects hands, rejects stale/duplicate picks, pauses reveals and rem
   Peer.all[0].channel.onclose?.();
   expect(host.snapshot().room.bakery!.phase).toBe("ready");
 });
+
+it("Treasure requires two players and host authority, hides future cards/choices, preserves paused locks and rejects stale inputs", async () => {
+  const solo = new Session("host", { id: "solo", name: "Solo" }, () => {});
+  sessions.push(solo);
+  solo.selectGame("treasure");
+  solo.startTreasure();
+  expect(solo.snapshot().room.treasure!.phase).toBe("ready");
+  const { host, client, hostChannel, clientChannel } = await pair();
+  const sent = vi.spyOn(hostChannel, "send");
+  host.selectGame("treasure");
+  host.startTreasure();
+  await vi.advanceTimersByTimeAsync(3020);
+  const view = () => host.snapshot().room.treasure!;
+  const epoch = host.snapshot().room.epoch;
+  client.startTreasure();
+  expect(client.snapshot().room.epoch).toBe(epoch);
+  client.chooseTreasure("shield", 1, 1);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(view().divers[1].locked).toBe(true);
+  expect(view().divers[1].choice).toBeNull();
+  expect(view().deck).toBeNull();
+  for (const [raw] of sent.mock.calls) {
+    const m = JSON.parse(raw);
+    if (m.type === "state") {
+      expect(m.room.treasure.deck).toBeNull();
+      expect(
+        m.room.treasure.divers.every(
+          (d: { choice: unknown }) => d.choice === null,
+        ),
+      ).toBe(true);
+    }
+  }
+  client.chooseTreasure("return", 1, 1);
+  await vi.advanceTimersByTimeAsync(20);
+  host.pauseGames();
+  const paused = view();
+  await vi.advanceTimersByTimeAsync(15000);
+  expect(view()).toEqual(paused);
+  client.resumeTreasure();
+  expect(view().phase).toBe("paused");
+  host.resumeTreasure();
+  await vi.advanceTimersByTimeAsync(3020);
+  expect(view().phase).toBe("choosing");
+  expect(view().divers[1].locked).toBe(true);
+  host.chooseTreasure("return", 1, 1);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(view().phase).toBe("reveal");
+  expect(view().divers[1].shield).toBe(false);
+  await vi.advanceTimersByTimeAsync(2100);
+  const before = structuredClone(view());
+  const inject = (
+    epoch: number,
+    sequence: number,
+    dive: number,
+    door: number,
+  ) =>
+    clientChannel.send(
+      JSON.stringify({
+        v: 2,
+        type: "input",
+        epoch,
+        sequence,
+        input: { kind: "dive-choice", dive, door, choice: "return" },
+      }),
+    );
+  inject(epoch - 1, 100, 1, 2);
+  inject(epoch, 101, 1, 1);
+  inject(epoch, 100, 1, 2);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(view().divers).toEqual(before.divers);
+  host.selectGame("lights");
+  await vi.advanceTimersByTimeAsync(20000);
+  expect(host.snapshot().room.kind).toBe("lights");
+});
+
+it("Treasure timeouts automatically finish, rematch resets scores/epoch, and disposal clears all timers", async () => {
+  const { host, client } = await pair();
+  host.selectGame("treasure");
+  host.startTreasure();
+  await vi.advanceTimersByTimeAsync(46000);
+  expect(client.snapshot().room.treasure!.phase).toBe("finished");
+  expect(
+    client
+      .snapshot()
+      .room.treasure!.divers.every((d) => d.scores.every((n) => n === 0)),
+  ).toBe(true);
+  const epoch = host.snapshot().room.epoch;
+  host.startTreasure();
+  expect(host.snapshot().room.epoch).toBe(epoch + 1);
+  expect(host.snapshot().room.treasure!.phase).toBe("countdown");
+  host.dispose();
+  client.dispose();
+  await vi.advanceTimersByTimeAsync(20);
+  expect(vi.getTimerCount()).toBe(0);
+});
+
+it("Treasure late arrivals spectate; spectator loss preserves play, participant loss resets, stalls pause", async () => {
+  const { host } = await pair();
+  host.selectGame("treasure");
+  host.startTreasure();
+  await vi.advanceTimersByTimeAsync(3020);
+  const spectator = new Session(
+    "client",
+    { id: "watch", name: "Watcher" },
+    () => {},
+  );
+  sessions.push(spectator);
+  const offer = await host.offer();
+  const answer = await spectator.answer(offer);
+  await host.accept(answer);
+  const a = Peer.all[2],
+    b = Peer.all[3];
+  a.channel.peer = b.channel;
+  b.channel.peer = a.channel;
+  b.ondatachannel!({ channel: b.channel });
+  a.channel.open();
+  b.channel.open();
+  await vi.advanceTimersByTimeAsync(20);
+  spectator.chooseTreasure("explore", 1, 1);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(host.snapshot().room.treasure!.divers).toHaveLength(2);
+  expect(spectator.snapshot().room.treasure!.deck).toBeNull();
+  a.channel.onclose?.();
+  expect(host.snapshot().room.treasure!.phase).toBe("choosing");
+  const clock = vi
+    .spyOn(performance, "now")
+    .mockReturnValue(performance.now() + 1000);
+  await vi.advanceTimersByTimeAsync(100);
+  expect(host.snapshot().room.treasure!.phase).toBe("paused");
+  clock.mockRestore();
+  Peer.all[0].channel.onclose?.();
+  expect(host.snapshot().room.treasure!.phase).toBe("ready");
+});

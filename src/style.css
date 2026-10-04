@@ -2671,3 +2671,398 @@ main.app-shell {
 .bakery-results .bakery-scores small {
   display: none;
 }
+
+/* Treasure Dive keeps the personal decision prominent and the roster in a dialog. */
+.app-shell .games-card.dive-game-card:not(.game-library) {
+  display: flex;
+  flex-direction: column;
+  container-type: size;
+  gap: 10px;
+  padding: 16px;
+}
+.dive-game-card .board-heading {
+  margin: 0;
+  flex-shrink: 0;
+}
+.dive-game-card .board-heading h2 {
+  font-size: 20px;
+}
+.app-shell .dive-game-card > .dive-workspace {
+  flex: 1 1 0;
+}
+.dive-workspace {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+}
+.dive-board,
+.dive-decision {
+  min-width: 0;
+}
+.dive-board {
+  background: #102f41;
+  color: #f4f3dc;
+  border-radius: 18px;
+  padding: 16px;
+}
+.dive-progress {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+}
+.dive-art {
+  display: block;
+  width: 100%;
+  max-height: min(220px, max(24px, calc(100cqh - 305px)));
+}
+.dive-path {
+  display: flex;
+  justify-content: space-between;
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 12px;
+  gap: 8px;
+}
+.dive-path li {
+  display: grid;
+  place-items: center;
+  border: 1px solid #77b9c8;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  font-weight: 750;
+}
+.dive-path li[aria-current] {
+  background: #e7bb59;
+  color: #102f41;
+  border: 2px solid white;
+}
+.dive-path li[data-passed="true"] {
+  background: #225469;
+}
+.dive-odds {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0;
+  font-size: 14px;
+}
+.dive-stats {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #77b9c8;
+  padding-top: 10px;
+}
+.dive-stats span {
+  display: grid;
+  gap: 3px;
+  font-size: 13px;
+}
+.dive-stats strong {
+  font-size: 26px;
+}
+.dive-status {
+  margin: 0 0 10px;
+  font-weight: 750;
+  min-height: 44px;
+  overflow-wrap: anywhere;
+}
+.dive-card {
+  font-size: 14px;
+  margin: 8px 0;
+  min-height: 36px;
+}
+.dive-choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.dive-choices button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 90px;
+  padding: 8px;
+  background: #e6ece7;
+  color: #122c29;
+  font-size: 14px;
+  line-height: 1.2;
+}
+.dive-choices button span {
+  font-size: 28px;
+}
+.dive-choices button[aria-pressed="true"] {
+  background: #102f41;
+  color: #f4f3dc;
+  border: 2px solid #ae6b16;
+}
+.dive-choices button:focus-visible {
+  outline: 3px solid #ae6b16;
+  outline-offset: 2px;
+}
+.dive-preview {
+  font-size: 13px;
+  margin: 10px 0;
+  min-height: 36px;
+}
+.dive-lock {
+  width: 100%;
+  min-height: 48px;
+}
+.dive-footer {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 8px;
+}
+.dive-footer button {
+  min-width: 44px;
+  padding: 8px 12px;
+  min-height: 44px;
+  font-size: 13px;
+}
+.dive-scores {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+.dive-scores li {
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: #e6ece7;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.dive-scores li > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dive-scores small {
+  display: block;
+  font-size: 13px;
+  margin-top: 4px;
+}
+.dive-results .dive-scores li {
+  padding: 6px 10px;
+  font-size: 14px;
+}
+.dive-results .dive-scores li > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dive-intro {
+  line-height: 1.5;
+}
+@media (max-width: 650px) and (min-height: 551px) {
+  .app-shell .games-card.dive-game-card:not(.game-library) {
+    padding: 12px;
+    gap: 8px;
+  }
+  .dive-game-card .board-heading {
+    display: none;
+  }
+  .dive-workspace {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+  }
+  .dive-board,
+  .dive-decision {
+    width: 100%;
+  }
+  .dive-board {
+    padding: 12px;
+  }
+  /* Available card height also accounts for room notices and pending updates. */
+  .dive-art {
+    max-height: min(150px, max(24px, calc(100cqh - 500px)));
+  }
+  .dive-stats strong {
+    font-size: 22px;
+  }
+  .dive-status {
+    font-size: 14px;
+    margin-bottom: 6px;
+    min-height: 36px;
+  }
+  .dive-card {
+    margin: 4px 0;
+    min-height: 18px;
+    font-size: 13px;
+  }
+  .dive-preview {
+    margin: 6px 0;
+    min-height: 32px;
+  }
+  .dive-progress,
+  .dive-odds,
+  .dive-stats,
+  .dive-status,
+  .dive-card,
+  .dive-preview {
+    line-height: 1.25;
+  }
+  .dive-choices button {
+    min-height: 76px;
+    font-size: 13px;
+    padding: 6px;
+  }
+  .dive-choices button span {
+    font-size: 22px;
+  }
+  .dive-path {
+    margin-bottom: 6px;
+  }
+  .dive-results .dive-scores {
+    gap: 4px;
+  }
+  .dive-footer {
+    gap: 6px;
+  }
+  .dive-footer button {
+    font-size: 12px;
+    padding: 6px;
+    min-width: 44px;
+  }
+}
+@media (max-width: 650px) {
+  .dive-results .dive-scores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 650px) and (min-height: 551px) and (max-height: 740px) {
+  .dive-workspace {
+    gap: 8px;
+  }
+  .dive-board {
+    padding: 8px 12px;
+  }
+  .dive-art {
+    max-height: 24px;
+  }
+  .dive-path li {
+    height: 24px;
+    width: 24px;
+  }
+  .dive-path,
+  .dive-odds {
+    margin: 4px 0;
+  }
+  .dive-stats {
+    padding-top: 6px;
+  }
+  .dive-stats strong {
+    font-size: 20px;
+  }
+}
+@media (max-height: 550px) {
+  .app-shell .games-card.dive-game-card:not(.game-library) {
+    padding: 8px;
+    gap: 6px;
+  }
+  .dive-game-card .board-heading {
+    display: contents;
+  }
+  .dive-game-card .board-heading h2 {
+    display: none;
+  }
+  .dive-game-card .game-help-button {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    min-height: 44px;
+    padding: 8px;
+    font-size: 12px;
+  }
+  .dive-footer {
+    padding-right: 132px;
+  }
+  .dive-workspace {
+    gap: 16px;
+  }
+  .dive-board {
+    padding: 8px 12px;
+  }
+  .dive-art {
+    max-height: 28px;
+  }
+  .dive-path,
+  .dive-odds {
+    margin: 4px 0;
+  }
+  .dive-path li {
+    height: 24px;
+    width: 24px;
+  }
+  .dive-stats {
+    padding-top: 4px;
+  }
+  .dive-stats strong {
+    font-size: 18px;
+  }
+  .dive-status {
+    font-size: 13px;
+    min-height: 32px;
+    margin-bottom: 0;
+  }
+  .dive-card {
+    font-size: 12px;
+    min-height: 0;
+    margin: 2px 0;
+  }
+  .dive-status,
+  .dive-card,
+  .dive-preview {
+    line-height: 1.25;
+  }
+  .dive-choices button {
+    min-height: 48px;
+    font-size: 12px;
+    padding: 4px;
+    flex-direction: row;
+    gap: 4px;
+  }
+  .dive-choices button span {
+    font-size: 20px;
+  }
+  .dive-preview {
+    min-height: 24px;
+    margin: 2px 0;
+    font-size: 12px;
+  }
+  .dive-lock {
+    min-height: 44px;
+    padding: 8px;
+  }
+  .dive-results .dive-scores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .dive-results .dive-scores li {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+  .dive-intro {
+    font-size: 14px;
+    line-height: 1.25;
+    margin: 8px 0;
+  }
+}
+@media (max-height: 550px) {
+  /* Menu retains the update indicator and action in short play windows. */
+  .app-shell:has(.dive-game-card) > aside.banner {
+    display: none;
+  }
+}

@@ -99,6 +99,7 @@ test("home, paged library, settings and all game setups fit the primary screen",
       "Reaction Race",
       "Shared Lights",
       "Midnight Bakery",
+      "Treasure Dive",
     ]) {
       await chooseGame(page, name);
       await expectScreenFits(page);

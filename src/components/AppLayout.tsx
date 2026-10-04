@@ -54,12 +54,22 @@ export function AppPanel({
   );
 }
 
-export function GameHelp({ children }: { children: ReactNode }) {
+export function GameHelp({
+  children,
+  label = "Controls & help",
+}: {
+  children: ReactNode;
+  label?: string;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button className="quiet game-help-button" onClick={() => setOpen(true)}>
-        Controls & help
+      <button
+        className="quiet game-help-button"
+        aria-label="Controls & help"
+        onClick={() => setOpen(true)}
+      >
+        {label}
       </button>
       <AppPanel
         title="Controls & help"

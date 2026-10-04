@@ -303,3 +303,48 @@ with the bundled fixture font. Exercise tied results with long names and taller
 Arial metrics at every Bakery viewport. Primary results show compact names and
 final scores; Table & scores retains full names and both batch totals. Fit
 assertions remain unchanged.
+
+## Treasure Dive
+
+QA inventory:
+
+- Select through the paged picker; Start requires 2–8 players. Three dives, six
+  numbered doors, secret preview/lock/confirmation, full shared treasure,
+  Return before hazards, shield consumption on both card types, caught/boat
+  waiting, timeout banking, sixth-door auto-bank, automatic summaries and ties.
+- Pause/Resume in countdown, choices, reveal and summary preserves state and
+  remaining time. Reorientation pauses can repeat without losing the saved phase.
+  Stop returns to setup; rematch resets scores/epoch/deck; switching retains pairing.
+- Standings and Help open/close/Escape/focus restore; full names and dive-score
+  breakdowns remain in scrollable dialogs. Keyboard Tab/Enter and tap controls.
+- Ready, choosing, lock, reveal, boat, summary, and results at 320×700, 390×844,
+  844×390, 768×1024, and 1280×720. Eight long names, taller serif metrics, reduced
+  motion, 44px targets, region bounds, readable contrast and no primary overflow.
+- Host background/stall pauses; client misses default to Return; stale/duplicate
+  epoch/dive/door actions are rejected. Late arrivals spectate and join the next
+  match; spectator departures preserve play, participant loss resets, host loss
+  disables input. Timer disposal and game switching stop all game timers.
+- Verify production `/multiplayer-test/` assets, refresh, manifest/icons, cached
+  offline startup, persistence and user-controlled updates with the existing PWA suite.
+
+Automated coverage includes scoring/odds, Return-before-hazard, protected and
+unprotected outcomes, shields spent on treasure, sixth-door banking, timeouts,
+phase overshoot and the 195-second budget, ties, paused phases, private views,
+stale/duplicate inputs, disposal, and complete maximal eight-player messages
+(including escaped names/IDs). Real WebRTC tests complete a seeded match, test
+rematch/switching, eight long names, spectators, disconnects and background pause.
+Ready/active/results regression snapshots use the bundled font fixture. Saved
+screen checks include taller metrics and pending-update notices.
+
+The live production preview paired two players, confirmed a secret shield lock,
+paused/resumed without losing it, revealed shared treasure, and Returned to bank
+the haul before another draw. Phone and desktop screenshots were inspected;
+manual Help/Standings, keyboard and responsive follow-up checks complement the
+deterministic suite. The existing production-subpath offline/update tests remain
+in the complete verification command.
+
+Physical iPhone/iPad follow-up: pair on household Wi-Fi, play all three dives in
+Safari and installed PWAs, check safe areas, readable risk/haul/shield feedback,
+touch selection/lock, background/resume, and updates across devices. Ask whether
+the shield creates an interesting decision and the short boat wait stays fun.
+Browser emulation cannot establish real iOS lifecycle or family balance.

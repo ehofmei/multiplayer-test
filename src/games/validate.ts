@@ -1,3 +1,4 @@
+import { validTreasure } from "./treasure-validate";
 import { bakeryCards } from "./bakery";
 import { SUMO_COUNTDOWN, SUMO_LIMIT, SUMO_LEASE, SUMO_COOLDOWN } from "./sumo";
 import {
@@ -28,6 +29,17 @@ export function validRoom(v: unknown): v is Room {
     v.notice.length > 200
   )
     return false;
+  if (v.kind !== "treasure" && v.treasure !== undefined && v.treasure !== null)
+    return false;
+  if (v.kind === "treasure")
+    return (
+      v.pong === null &&
+      v.race === null &&
+      [v.bakery, v.sumo, v.cycle, v.ship].every(
+        (x) => x === undefined || x === null,
+      ) &&
+      validTreasure(v.treasure)
+    );
   if (v.kind !== "bakery" && v.bakery !== undefined && v.bakery !== null)
     return false;
   if (v.kind === "bakery") {

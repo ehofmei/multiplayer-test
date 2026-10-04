@@ -1,3 +1,8 @@
+import {
+  newTreasure,
+  type TreasureState,
+  type TreasureChoice,
+} from "./treasure";
 import { newBakery, type BakeryState } from "./bakery";
 import { newSumo, type SumoState } from "./sumo";
 import { newCycle, type CycleState, type CycleDirection } from "./cycle";
@@ -15,7 +20,8 @@ export type GameKind =
   | "ship"
   | "cycle"
   | "sumo"
-  | "bakery";
+  | "bakery"
+  | "treasure";
 export interface PongState {
   phase: "ready" | "serve" | "playing" | "paused" | "finished";
   seats: string[];
@@ -51,8 +57,10 @@ export interface Room {
   cycle?: CycleState | null;
   sumo?: SumoState | null;
   bakery?: BakeryState | null;
+  treasure?: TreasureState | null;
 }
 export type GameInput =
+  | { kind: "dive-choice"; dive: number; door: number; choice: TreasureChoice }
   | { kind: "bakery-pick"; round: number; pick: number; index: number }
   | { kind: "sumo-move"; x: number; y: number }
   | { kind: "sumo-dash" }
@@ -72,12 +80,14 @@ export const gameNames: Record<GameKind, string> = {
   cycle: "Light-cycle Arena",
   sumo: "Sumo Bumpers",
   bakery: "Midnight Bakery",
+  treasure: "Treasure Dive",
 };
 export function newRoom(kind: GameKind, epoch: number): Room {
   return {
     epoch,
     kind,
     notice: "",
+    treasure: kind === "treasure" ? newTreasure() : null,
     bakery: kind === "bakery" ? newBakery() : null,
     cycle: kind === "cycle" ? newCycle() : null,
     sumo: kind === "sumo" ? newSumo() : null,

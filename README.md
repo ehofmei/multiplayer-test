@@ -5,8 +5,12 @@ device has one direct WebRTC DataChannel to that host. There is no gameplay serv
 signaling service, STUN/TURN configuration, database, or account.
 
 Pair up to eight devices once using QR codes or copy/paste, then let the host choose
-Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, Sumo Bumpers, Reaction Race, or Midnight Bakery. Switching games keeps the same
+Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, Sumo Bumpers, Reaction Race, Midnight Bakery, or Treasure Dive. Switching games keeps the same
 connections. The app is installable and includes latency diagnostics.
+
+For possible future additions, [GAME_IDEAS.md](GAME_IDEAS.md) describes ten short
+family game proposals with rules, controls, scoring, timing, and implementation
+notes. Treasure Dive is now available; the remaining entries are design proposals.
 
 ## Run and verify
 
@@ -64,7 +68,7 @@ support is not a project requirement. Desktop browsers remain useful for testing
 The app uses a viewport-filling shell with safe-area padding. Home, the game
 library, pairing, setup, and play are focused views rather than a long page.
 Phones and short windows show four games per library page across three pages; larger iPad windows
-show all nine. During games, courts fit their remaining space without changing
+show all ten. During games, courts fit their remaining space without changing
 the game geometry. Landscape layouts place courts beside controls; very short
 setup screens omit the court preview to keep assignments and Start reachable.
 
@@ -408,3 +412,40 @@ Every selection/match has a new epoch, so delayed inputs from an earlier game or
 All game timers stop on switching, cancellation, disconnect, and disposal.
 Pong skips snapshots while a channel is backed up, then sends the latest state
 when it drains; the existing overall buffer limit still bounds slow connections.
+
+## Treasure Dive
+
+A 2–8 player push-your-luck expedition through a sunken ship. Everyone connected
+at Start joins three dives of up to six shared doors. Select Return, Explore, or
+Explore with shield, then Lock choice. The host confirms the lock; other choices
+stay secret until the shared reveal. Each door allows at most eight seconds to
+choose; a missing choice Returns safely. All locks can reveal early.
+
+Return banks your entire haul before a card is drawn. Each dive starts with a
+fresh host-shuffled deck: four hazards and treasures 2, 2, 3, 3, 4, 4, 6, 10.
+Everyone exploring gets the full treasure value. An unprotected hazard loses
+only the temporary haul and sends you to the boat for this dive. One shield per
+dive protects one door, even against a hazard, but is spent on treasure too.
+Remaining hazard odds are visible; future cards and locked actions stay only on
+the host. Survivors bank automatically at door six. Banked points never decrease.
+
+A three-second countdown, two-second reveals, and four-second automatic summaries
+keep the match within 3:15 of active time. Empty expeditions skip the remaining
+doors. Everyone rejoins each new dive with a fresh shield. Highest banked total
+wins, with shared wins for ties. Standings shows full names, per-dive scores,
+status, and revealed outcomes; the main screen emphasizes your own haul and choices.
+
+The host can Pause, Resume (with a three-second reorientation countdown), Stop to
+setup, rematch, or switch games without re-pairing. Pauses preserve the phase,
+remaining time, deck, and locked choices. Inviting a player, host backgrounding,
+or a scheduling stall pauses play; a backgrounded client gets the normal timeout
+fallback. Late arrivals watch until the rematch. A participant disconnect resets
+to setup; spectator departures preserve play. Games and scores are temporary.
+
+During a dive, Help and Standings stay beside the host controls. Pending updates
+use a short notice; short landscape windows retain the indicator and update
+action in Menu to keep the play surface clear.
+
+Update the app on **every device** before selecting Treasure Dive, then pair again
+if versions differ. Identity and sound preferences retain their existing storage.
+No new services, dependencies, external media, or persistent progression are used.

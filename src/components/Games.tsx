@@ -72,6 +72,12 @@ const choices: {
     detail: "Pick, reveal, pass. Bake silly treats and dodge spoon gremlins.",
     mark: "♧",
   },
+  {
+    kind: "treasure",
+    title: "Treasure Dive",
+    detail: "2–8 divers. Bank your haul or brave one more sunken room.",
+    mark: "⚓",
+  },
 ];
 export function GamePicker({ session }: { session: Session }) {
   const [page, setPage] = useState(0);

@@ -1,3 +1,4 @@
+import { TreasureGame } from "./components/TreasureGame";
 import { BakeryGame } from "./components/BakeryGame";
 import { AppPanel } from "./components/AppLayout";
 import { SumoGame } from "./components/SumoGame";
@@ -219,7 +220,9 @@ export function App() {
       )}
       {update.ready && (
         <aside className="banner">
-          An update is ready in Menu when you’re done playing.
+          {snapshot?.room.kind === "treasure"
+            ? "Update ready in Menu."
+            : "An update is ready in Menu when you’re done playing."}
         </aside>
       )}
       <div className="app-content">
@@ -360,6 +363,16 @@ export function App() {
                       connected={connected}
                     />
                   )}
+                  {snapshot?.room.kind === "treasure" &&
+                    snapshot.room.treasure && (
+                      <TreasureGame
+                        key={snapshot.room.epoch}
+                        game={snapshot.room.treasure}
+                        players={snapshot.players}
+                        session={session}
+                        connected={connected}
+                      />
+                    )}
                   {snapshot?.room.kind === "bakery" && snapshot.room.bakery && (
                     <BakeryGame
                       key={snapshot.room.epoch}
