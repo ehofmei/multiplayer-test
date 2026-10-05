@@ -544,3 +544,11 @@ rotation, VoiceOver, sound unlock/volume, background/resume and offline startup
 with updated apps on both devices. Existing production-subpath PWA/cache/update
 checks remain in the full verification command. Browser emulation does not verify
 physical iOS/iPadOS behavior.
+
+Light Seek’s four Linux baselines and refreshed library pagination baseline were
+rendered by [the review-branch Linux run](https://github.com/ehofmei/multiplayer-test/actions/runs/37350302052)
+and returned in commit `cb82f94`. Every image was visually reviewed alongside its
+Darwin counterpart. No cross-OS copying or tolerance changes were used. The
+review-only workflow runs on `codex/light-seek`, obtains missing Linux renders
+once, returns them to that branch, and runs full verification without deploying
+Pages. Subsequent pushes compare the committed baselines normally.

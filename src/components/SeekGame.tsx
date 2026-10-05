@@ -4,6 +4,7 @@ import {
   fitsSeek,
   placedSeekCells,
   seekCoordinate,
+  seekCells,
   seekPieces,
   validSeekLayout,
   type SeekPlacement,
@@ -12,6 +13,13 @@ import {
 } from "../games/seek";
 import type { Player } from "../network/protocol";
 import type { Session } from "../network/session";
+// Clip invalid previews in two dimensions before converting to row-major cells.
+// Otherwise a shape extending past column 10 appears to wrap into the next row.
+function previewCells(p: SeekPlacement): number[] {
+  return seekCells(p.piece, p.rotation)
+    .filter(([x, y]) => x + p.x < 10 && y + p.y < 10)
+    .map(([x, y]) => (y + p.y) * 10 + x + p.x);
+}
 function Board({
   seat,
   layout,
@@ -26,7 +34,7 @@ function Board({
   const cells = new Map(
     layout.flatMap((p) => placedSeekCells(p).map((c) => [c, p.piece] as const)),
   );
-  const shown = new Set(preview ? placedSeekCells(preview) : []);
+  const shown = new Set(preview ? previewCells(preview) : []);
   return (
     <svg
       className="seek-board"
@@ -507,8 +515,7 @@ export function SeekGame({
               ? layout.find((p) => placedSeekCells(p).includes(c))
               : opponent?.found.find((p) => placedSeekCells(p).includes(c));
             const mark = setup ? "0" : (opponent?.search[c] ?? "0");
-            const shown =
-              setup && preview && placedSeekCells(preview).includes(c);
+            const shown = setup && preview && previewCells(preview).includes(c);
             const accessible = setup
               ? placed
                 ? seekPieces[placed.piece].name

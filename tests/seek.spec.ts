@@ -151,6 +151,11 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     await host
       .getByRole("button", { name: "Choose anchor", exact: true })
       .click();
+    await area(host, 9);
+    await host.getByRole("button", { name: "A10, empty", exact: true }).click();
+    await expect(host.locator('.seek-art rect[stroke="#ffffff"]')).toHaveCount(
+      1,
+    );
     await area(host, 99);
     await host.getByRole("button", { name: "J10, empty", exact: true }).click();
     await expect(
