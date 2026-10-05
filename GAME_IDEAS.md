@@ -1,11 +1,12 @@
 # Short family game ideas
 
-This is a design catalog for eleven additions to P2P Game Lab. Treasure Dive,
-Meteor Minigolf, Patchwork Picnic, and Light Seek have been implemented; see README.md for their shipped behavior.
+This is a design catalog for twelve additions to P2P Game Lab. Treasure Dive,
+Meteor Minigolf, Patchwork Picnic, Light Seek, and Glow Clash have been implemented;
+see README.md for their shipped behavior.
 The remaining entries are proposals. Each proposal defines a first
 playable version closely enough that a later Codex session can choose one and
 build it without inventing the core rules. Implement the game the user selects;
-the catalog is not an instruction to build all eleven.
+the catalog is not an instruction to build all twelve.
 
 The goal is meaningful participation plus enough uncertainty for an occasional
 underdog win. Choices, observation, coordination, or touch skill should improve
@@ -26,6 +27,7 @@ balance. Preserve each concept's identity when tuning them after family play.
 | [9. Doodle Dice](#9-doodle-dice)                   | Creative party game    | Draw, guess, and award pictures     |
 | [10. Kitchen Catastrophe](#10-kitchen-catastrophe) | Cooperative planning   | Prepare, serve, or clean together   |
 | [11. Light Seek](#11-light-seek)                   | Hidden-grid deduction  | Place shapes, then illuminate cells |
+| [12. Glow Clash](#12-glow-clash)                   | Prediction / avoidance | Pick tiles; reveal unique claims    |
 
 ## Shared product and implementation requirements
 
@@ -1215,3 +1217,192 @@ reviewed setup, active-search, and found-piece/result snapshots on both required
 platforms. Live QA should cover narrow-phone selection and zoom, touch rotation,
 keyboard navigation, ready/waiting states, sound mute/unlock/deduplication, and
 readability of adjacent found pieces. Real iPhone/iPad checks remain necessary.
+
+## 12. Glow Clash
+
+### Experience and match structure
+
+A simultaneous hidden-choice game for 3–8 players. Everyone picks spaces on the
+same small grid, trying to choose tiles nobody else chooses. Once everyone
+locks their selections, reveal the whole board together: uncontested tiles glow
+in their owner's neon color, while contested tiles display all the selecting
+players' colors in diagonal stripes.
+
+Use a dark board and bright neon tiles, consistent with Arena Pong, Light-cycle
+Arena, and Light Seek. Players choose distinct colors before the match begins.
+The host chooses **5, 8, or 12 rounds**, defaulting to 8; display this setting to
+everyone and freeze it at Start. Use a short starting countdown, then alternate
+secret selection and a proposed 6-second result display. Advance automatically
+to the next round; after the last reveal, keep final results visible to everyone.
+
+Selection is deliberately untimed, overriding the shared timeout requirement:
+reveal only when every participant has committed their picks. Do not expose
+partial results, auto-pick, or treat a missing selection as an empty submission.
+Show readiness so the group knows who is still choosing; the host can pause or
+stop if someone needs a break. Match length depends on the group's pace.
+
+### Rules and scoring
+
+Use **four columns and one row per starting player**, with **exactly three
+distinct picks per player per round**. Thus three players use 3×4, four use 4×4,
+and so on through eight players on 8×4 (rows × columns). Freeze dimensions from
+the starting roster for the whole match; late spectators do not resize it.
+Picks do not need to touch or form a shape. All players use the same grid
+coordinates, and previously chosen cells are available again next round.
+
+These proposed defaults intentionally make collisions frequent. As a baseline,
+assume each player independently chooses a uniformly random set of three cells.
+For `P` players and `N = 4P` cells, a selected cell scores if all `P - 1`
+opponents avoid it. Expected points per player per round are
+`3 × (1 - 3/N)^(P - 1)`. The probability of scoring all three is
+`[C(N - 3, 3) / C(N, 3)]^(P - 1)`, where `C(n, k)` counts k-cell subsets.
+This accounts for each player's picks being distinct, rather than treating
+their three score outcomes as independent.
+
+| Players | Grid (rows × columns) | Average points | Chance of 3 points | Chance of 0 points |
+| ------: | --------------------- | -------------: | -----------------: | -----------------: |
+|       3 | 3×4                   |           1.69 |              14.6% |               5.9% |
+|       4 | 4×4                   |           1.61 |              13.3% |               8.2% |
+|       5 | 5×4                   |           1.57 |              12.7% |               9.5% |
+|       6 | 6×4                   |           1.54 |              12.3% |              10.4% |
+|       7 | 7×4                   |           1.52 |              12.0% |              11.0% |
+|       8 | 8×4                   |           1.51 |              11.8% |              11.5% |
+
+Most random rounds award a player one or two points; at least one of their picks
+collides in roughly 85–88% of rounds. Larger groups are slightly more crowded
+in scoring terms, but full-score rounds remain occasional and zeroes uncommon.
+Actual results depend on prediction and selection habits; this is a balancing
+baseline, not a forced score distribution or a reason to manipulate outcomes.
+
+Draft selections stay local and can be toggled until **Lock picks**. Enable Lock
+only with exactly three selected cells. A host-confirmed lock is final for that
+round. Reveal neither selected coordinates nor tile occupancy counts until
+everyone has locked; publish only readiness beforehand.
+
+For each cell, count how many different players selected it:
+
+- Exactly one player: that player earns **1 point** for the cell.
+- Two or more players: every selecting player earns **0 points** for that cell.
+- Nobody: the tile stays dark and earns nothing.
+
+Score cells independently. A collision on one pick does not cancel points from
+your other picks. Each player can earn 0–3 points per round; there are no
+penalties, shared points, bonuses, or first-arrival advantages. Add each round's
+points to the running total exactly once, then clear the board's selections for
+the next round. Highest total after the configured rounds wins; tied leaders
+share the win. Nobody is eliminated.
+
+Example in a four-player round: you choose A1, B3, and D4. Another player also
+chooses B3, but nobody chooses A1 or D4. You earn 2 points; B3 shows all the colors
+that chose it and earns nobody a point.
+
+### Colors and setup
+
+Provide **12 fixed neon colors** as unlabeled glowing swatches, each with an
+accessible color name. On
+entering this game's setup, the host assigns each player a random unused color,
+without replacement. Players can select any currently unused color before
+Start; taken colors are visibly unavailable and identify their owner. Everyone
+can see the confirmed color assignments. Changing color releases the old one
+only after the host accepts the new one.
+
+Enforce uniqueness on the host, including simultaneous requests for the same
+available color. Accept a claim only if the color is still free; a rejected
+request retains the player's existing color and shows the updated availability.
+No player loses their color because another player requested it. Start requires
+3–8 participants with valid, unique assignments, explicitly overriding the
+catalog's usual two-player minimum. Freeze colors throughout the match;
+spectators cannot claim or change participant colors. Retain remaining
+players' assignments when returning to setup or rematching, allow changes there,
+and release assignments when players leave the room.
+
+### Screens, reveal, and controls
+
+Setup shows the round options, your color picker, and a compact player/color
+roster. During selection, emphasize the grid, round number, your score, and
+“2 of 3 selected.” Tap to toggle a cell; when three are chosen, additional empty
+cells remain unselected until you deselect one. Your draft tiles use your color
+with a selection outline and no visible markings. Provide Clear and Lock picks,
+visible focus, and arrow
+navigation with Space to toggle for keyboard users. After lock acknowledgement,
+show your picks and “Waiting for players” with readiness, without allowing edits.
+
+At reveal, light all selected tiles together. A unique tile is filled with its
+player's color without markings. A contested tile uses **one broad, equal-width
+diagonal band per selecting player's color**, in a stable player order;
+do not blend colors, show only two colors, or suggest anyone won that tile.
+Ensure all contributing colors are visible even for an eight-player collision.
+Unselected tiles remain dark. Keep every tile free of labels and symbols;
+accessible labels describe coordinates and scoring. Tapping a revealed tile opens a small detail view
+listing every selecting player and whether it scored; this is informational.
+
+Show your round gain, updated total, and compact standings alongside the reveal.
+Use stable player symbols and names alongside colors in the legend and tile
+details so color alone never carries identity or scoring. Keep the four-column
+board's cells at least 44px on narrow phones and essential controls within the
+viewport, including clearance for the tallest eight-row board. Full rosters,
+tile details, help, and standings may use focused scrollable
+dialogs. Keep glow restrained enough for readable boundaries and text; respect
+reduced motion. Optional locally synthesized reveal and scoring sounds follow
+the existing muted-by-default preference and never replace visible feedback.
+
+The final screen shows winners, every player's color/name/total, and a per-round
+score breakdown. All devices receive the same results. Preserve the last
+revealed board for inspection; rematch starts fresh scores and picks.
+
+### Skill, luck, and comeback potential
+
+Players anticipate popular spaces, vary their patterns, and use earlier reveals
+to predict opponents. Outcomes depend on everyone's hidden choices, with no
+random scoring or secret handicaps. Random default colors are cosmetic only.
+Every round clears the board, so a collision does not block future choices and
+a trailing player retains the same three-point opportunity as everyone else.
+Playtest prediction, collision frequency, and zero-point frustration with both
+three and eight players before tuning the four-cells-per-player scaling rule.
+
+### State and implementation notes
+
+The host owns participants, unique color IDs, configured round count, current
+round/phase, roster-derived board dimensions, committed pick sets, reveal timing,
+per-round scores, and totals. Validate three distinct integer cell indices from
+`0` through `4 × startingPlayerCount - 1`, allowed color IDs and round counts,
+setup-only color changes, and current epoch/round/phase. Reject spectator inputs,
+malformed picks, stale actions, and duplicate locks. Derive
+collision counts from the complete committed sets and resolve independently of
+message arrival order. Guard both scoring and phase advancement against repeats.
+
+Keep picks private in every recipient-specific view, including the host's
+rendered UI and spectator snapshots. Each player may see their own confirmed
+picks, but nobody sees another player's picks or partial aggregate occupancy
+before reveal. Publish the complete resolved board and gains to everyone at the
+same phase transition. Bound retained round scores to at most 12×8 entries;
+only the current/last reveal board is needed, not an unbounded board history.
+Verify the full eight-player message budget with maximal names and IDs.
+
+Follow shared room lifecycle rules: pauses preserve committed picks, colors,
+scores, and remaining reveal time; participant departure resets to setup,
+spectator departure preserves play, and rematches start a fresh epoch. Prevent
+replayed snapshots from awarding points or replaying sounds. No new services,
+assets, accounts, or persistent progression are needed.
+
+### First-version scope and acceptance checks
+
+Implement the roster-scaled four-column grid, one pick count, twelve colors,
+the three round options, all-locked reveals, diagonal collision stripes, and
+cumulative scoring. Exclude power-ups, territory retained between rounds, bots,
+teams, and extra scoring
+rules. Record shipped behavior in README and device checks in QA when built.
+
+Test zero/one/two/eight-player cell occupancy, mixed unique and contested picks,
+all-collision zeroes, independent cell scoring, all six roster-derived board
+sizes and their cell bounds, spectator joins preserving dimensions, exact
+pick-count validation, color assignment without replacement, color-change
+conflicts, rejection of Start with fewer than three players, setup-only settings,
+all-locked reveal gating, duplicate scoring prevention, every round
+option, shared final ties, privacy, and lifecycle cleanup. Retain real paired
+browser flows through a complete short match and an eight-player collision.
+When implementing, deliver reviewed Darwin/Linux snapshots for setup, secret
+selection, mixed reveal, all-eight-color stripes, and final results, and follow
+the repository's complete verification gate. Live and real-device QA should
+cover small-phone touch targets, long names, taller fonts, color identification,
+readable stripes, keyboard controls, reduced motion, and waiting/paused states.
