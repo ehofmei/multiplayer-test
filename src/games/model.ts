@@ -1,3 +1,4 @@
+import { newGlow, type GlowState, type GlowAction } from "./glow";
 import { newSeek, type SeekState, type SeekAction } from "./seek";
 import { newPicnic, type PicnicState, type PicnicAction } from "./picnic";
 import { newGolf, type GolfState } from "./minigolf";
@@ -27,7 +28,8 @@ export type GameKind =
   | "treasure"
   | "minigolf"
   | "picnic"
-  | "seek";
+  | "seek"
+  | "glow";
 export interface PongState {
   phase: "ready" | "serve" | "playing" | "paused" | "finished";
   seats: string[];
@@ -67,8 +69,10 @@ export interface Room {
   minigolf?: GolfState | null;
   picnic?: PicnicState | null;
   seek?: SeekState | null;
+  glow?: GlowState | null;
 }
 export type GameInput =
+  | GlowAction
   | SeekAction
   | PicnicAction
   | { kind: "golf-shot"; hole: number; angle: number; power: number }
@@ -96,12 +100,14 @@ export const gameNames: Record<GameKind, string> = {
   minigolf: "Meteor Minigolf",
   picnic: "Patchwork Picnic",
   seek: "Light Seek",
+  glow: "Glow Clash",
 };
 export function newRoom(kind: GameKind, epoch: number): Room {
   return {
     epoch,
     kind,
     notice: "",
+    glow: kind === "glow" ? newGlow() : null,
     seek: kind === "seek" ? newSeek() : null,
     picnic: kind === "picnic" ? newPicnic() : null,
     minigolf: kind === "minigolf" ? newGolf() : null,

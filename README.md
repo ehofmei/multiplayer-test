@@ -5,12 +5,12 @@ device has one direct WebRTC DataChannel to that host. There is no gameplay serv
 signaling service, STUN/TURN configuration, database, or account.
 
 Pair up to eight devices once using QR codes or copy/paste, then let the host choose
-Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, Sumo Bumpers, Reaction Race, Midnight Bakery, Treasure Dive, Meteor Minigolf, Patchwork Picnic, or Light Seek. Switching games keeps the same
+Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, Sumo Bumpers, Reaction Race, Midnight Bakery, Treasure Dive, Meteor Minigolf, Patchwork Picnic, Light Seek, or Glow Clash. Switching games keeps the same
 connections. The app is installable and includes latency diagnostics.
 
-For possible future additions, [GAME_IDEAS.md](GAME_IDEAS.md) describes eleven
-family game proposals with rules, controls, scoring, timing, and implementation
-notes. Treasure Dive, Meteor Minigolf, Patchwork Picnic, and Light Seek are now available; the remaining entries are
+For possible future additions, [GAME_IDEAS.md](GAME_IDEAS.md) describes twelve
+family game ideas with rules, controls, scoring, timing, and implementation
+notes. Treasure Dive, Meteor Minigolf, Patchwork Picnic, Light Seek, and Glow Clash are now available; the remaining entries are
 design proposals. Ideally games finish within five minutes; proposed timers are
 playtest starting points, not hard limits.
 
@@ -74,8 +74,8 @@ support is not a project requirement. Desktop browsers remain useful for testing
 
 The app uses a viewport-filling shell with safe-area padding. Home, the game
 library, pairing, setup, and play are focused views rather than a long page.
-Phones and short windows show four games per library page across three pages; larger iPad windows
-show six games per page across two pages. During games, courts fit their remaining space without changing
+Phones and short windows show four games per library page across four pages; larger iPad windows
+show six games per page across three pages. During games, courts fit their remaining space without changing
 the game geometry. Landscape layouts place courts beside controls; very short
 setup screens omit the court preview to keep assignments and Start reachable.
 
@@ -564,3 +564,43 @@ host backgrounding and scheduling stalls pause countdowns. A participant leaving
 resets setup; a spectator leaving preserves play. Stop resets setup, and Seek
 Again resets the epoch, boards and first-player draw. Update every device before
 playing; protocol version 2 and saved identity/sound preferences are retained.
+
+## Glow Clash
+
+A simultaneous hidden-choice game for 3–8 players. The host chooses 5, 8 or 12
+rounds (8 by default). Everyone gets a random unused one of twelve named neon
+colors in setup and may claim another free color. The host resolves competing
+color requests; taken colors keep their owner. Settings, colors, participants
+and the four-column board (one row per starting player) freeze at Start.
+
+Tap exactly three different cells, then **Lock picks**. **Clear** resets the local
+draft; a host-confirmed lock is final. Only readiness and your own confirmed
+picks are visible before the last player locks. Selection is untimed: there are
+no automatic picks, missing submissions or speed bonuses. **Players & scores**
+shows who is still choosing. The last lock reveals every tile and scores the
+round once. A unique claim earns 1 point; a collision earns nobody points.
+Collision tiles show equal diagonal bands for every selecting color, ordered by
+player number. Tap any revealed tile for full names, numbered identities, color
+names and its score explanation.
+
+Reveals last six seconds, then a fresh board opens automatically. After the last
+reveal, winners and totals remain visible with the last board. Tied leaders
+share the win; **Players & scores** includes every per-round gain and full name.
+**Clash Again** starts fresh scores with the current roster and retained colors.
+Stop returns to setup, where colors and round count can be adjusted again.
+
+Keyboard: Tab to the grid, arrows to move focus, Space/Enter to toggle. Narrow
+portrait phones keep all four columns and at least 44px tiles. Short landscape
+screens use **Pick tiles** / **Inspect board** for a scrollable full-size board;
+**Colors & rounds** opens setup there. Full rosters, help and details scroll in
+focused dialogs. The tiles stay unmarked: vibrant neon rainbow fills show unique claims, and diagonal
+bands show collisions. Numbered identities, coordinates and score explanations
+remain available in accessible labels, the legend and tile details. No sound is needed.
+
+Pause, pairing, host backgrounding and long timer stalls preserve locks, scores,
+colors and remaining reveal time. Resume adds a three-second countdown. Late
+arrivals spectate without resizing the board; a participant leaving resets setup
+and releases their color while retaining everyone else's assignments. All devices
+must update before playing Glow Clash; older apps cannot recognize the new game.
+Saved identity and sound settings keep their existing versions. Match length
+follows the group's pace because choosing is deliberately untimed.

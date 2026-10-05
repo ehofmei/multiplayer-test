@@ -1,4 +1,18 @@
 import {
+  newGlow,
+  glowRoster,
+  setupGlow,
+  startGlow,
+  claimGlowColor,
+  commitGlow,
+  stepGlow,
+  pauseGlow,
+  resumeGlow,
+  glowView,
+  validGlowRounds,
+  type GlowRounds,
+} from "../games/glow";
+import {
   newSeek,
   readySeek,
   guessSeek,
@@ -407,6 +421,8 @@ export class Session {
     } else this.fail("Ignored an unexpected host message.");
   }
   private roomView(viewer: string): Room {
+    if (this.room.glow)
+      return { ...this.room, glow: glowView(this.room.glow, viewer) };
     if (this.room.seek)
       return { ...this.room, seek: seekView(this.room.seek, viewer) };
     if (this.room.picnic)
@@ -424,6 +440,11 @@ export class Session {
       this.me,
       ...[...this.links.values()].flatMap((l) => (l.player ? [l.player] : [])),
     ];
+    if (this.room.glow?.phase === "ready")
+      this.room.glow = glowRoster(
+        this.room.glow,
+        this.players.map((p) => p.id),
+      );
     const message: Message = {
       v: 2,
       type: "state",
@@ -497,6 +518,8 @@ export class Session {
           this.room.ship?.crew.includes(link.player.id) ||
           this.room.cycle?.riders.some((r) => r.id === link.player!.id) ||
           this.room.sumo?.bumpers.some((b) => b.id === link.player!.id) ||
+          (this.room.glow?.phase !== "ready" &&
+            this.room.glow?.seats.some((s) => s.id === link.player!.id)) ||
           this.room.seek?.seats.some((s) => s.id === link.player!.id) ||
           this.room.picnic?.picnickers.some((p) => p.id === link.player!.id) ||
           this.room.minigolf?.balls.some((b) => b.id === link.player!.id) ||
@@ -505,7 +528,15 @@ export class Session {
           this.room.race?.entries.some((e) => e.id === link.player!.id))
       ) {
         this.stopGameTimers();
+        const glow = this.room.glow;
         this.room = newRoom(this.room.kind, this.room.epoch + 1);
+        if (glow)
+          this.room.glow = setupGlow(
+            glow,
+            this.players
+              .filter((p) => p.id !== link.player!.id)
+              .map((p) => p.id),
+          );
         this.room.notice =
           "A player left. Choose players and start a new round.";
       }
@@ -618,7 +649,18 @@ export class Session {
   selectGame(kind: GameKind) {
     if (this.role !== "host" || this.disposed) return;
     this.stopGameTimers();
+    const glow = this.room.glow;
     this.room = newRoom(kind, this.room.epoch + 1);
+    if (kind === "glow")
+      this.room.glow = glow
+        ? setupGlow(
+            glow,
+            this.players.map((p) => p.id),
+          )
+        : glowRoster(
+            newGlow(),
+            this.players.map((p) => p.id),
+          );
     this.grid = initialGrid();
     this.broadcast();
   }
@@ -684,6 +726,15 @@ export class Session {
   }
   pauseGames() {
     if (this.role !== "host") return;
+    if (this.room.glow) {
+      const next = pauseGlow(this.room.glow);
+      if (next !== this.room.glow) {
+        this.stopGameTimers();
+        this.room.glow = next;
+        this.broadcast();
+      }
+      return;
+    }
     if (this.room.seek) {
       const next = pauseSeek(this.room.seek);
       if (next !== this.room.seek) {
@@ -783,6 +834,79 @@ export class Session {
     this.room.pong = { ...this.room.pong, phase: "serve", serveIn: 1 };
     this.runPong();
     this.broadcast();
+  }
+  setGlowRounds(rounds: GlowRounds) {
+    if (
+      this.role !== "host" ||
+      this.disposed ||
+      this.room.glow?.phase !== "ready" ||
+      !validGlowRounds(rounds)
+    )
+      return;
+    this.room.glow = { ...this.room.glow, rounds };
+    this.broadcast();
+  }
+  startGlow() {
+    if (
+      this.role !== "host" ||
+      this.disposed ||
+      this.room.kind !== "glow" ||
+      !this.room.glow ||
+      !["ready", "finished"].includes(this.room.glow.phase)
+    )
+      return;
+    const setup = setupGlow(
+      this.room.glow,
+      this.players.map((p) => p.id),
+    );
+    const next = startGlow(setup);
+    if (next === setup) return;
+    this.stopGameTimers();
+    this.room.epoch++;
+    this.room.notice = "";
+    this.room.glow = next;
+    this.runGlow();
+    this.broadcast();
+  }
+  claimGlowColor(color: number) {
+    this.input({ kind: "glow-color", color });
+  }
+  lockGlowPicks(round: number, picks: number[]) {
+    this.input({ kind: "glow-picks", round, picks });
+  }
+  resumeGlow() {
+    if (
+      this.role !== "host" ||
+      this.disposed ||
+      this.room.glow?.phase !== "paused"
+    )
+      return;
+    this.room.glow = resumeGlow(this.room.glow);
+    this.runGlow();
+    this.broadcast();
+  }
+  private glowTickAt = 0;
+  private runGlow() {
+    this.stopGameTimers();
+    this.glowTickAt = performance.now();
+    if (
+      !this.room.glow ||
+      !["countdown", "reorient", "reveal"].includes(this.room.glow.phase)
+    )
+      return;
+    this.gameTimer = setInterval(() => {
+      if (!this.room.glow) return;
+      const elapsed = Math.floor(performance.now() - this.glowTickAt);
+      if (elapsed > 500) {
+        this.pauseGames();
+        return;
+      }
+      this.glowTickAt += elapsed;
+      this.room.glow = stepGlow(this.room.glow, elapsed);
+      if (!["countdown", "reorient", "reveal"].includes(this.room.glow.phase))
+        this.stopGameTimers();
+      this.broadcast();
+    }, 100);
   }
   startSeek() {
     if (
@@ -1266,6 +1390,19 @@ export class Session {
   }
   private applyInput(id: string, input: GameInput) {
     if (
+      this.room.kind === "glow" &&
+      this.room.glow &&
+      (input.kind === "glow-color" || input.kind === "glow-picks")
+    ) {
+      const previous = this.room.glow;
+      this.room.glow =
+        input.kind === "glow-color"
+          ? claimGlowColor(previous, id, input.color)
+          : commitGlow(previous, id, input.round, input.picks);
+      if (previous.phase !== this.room.glow.phase) this.runGlow();
+      // A rejected color claim still returns current availability and the old assignment.
+      this.broadcast();
+    } else if (
       this.room.kind === "seek" &&
       this.room.seek &&
       (input.kind === "seek-ready" || input.kind === "seek-guess")

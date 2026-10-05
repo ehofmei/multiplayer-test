@@ -552,3 +552,56 @@ Darwin counterpart. No cross-OS copying or tolerance changes were used. The
 review-only workflow runs on `codex/light-seek`, obtains missing Linux renders
 once, returns them to that branch, and runs full verification without deploying
 Pages. Subsequent pushes compare the committed baselines normally.
+
+## Glow Clash
+
+QA inventory:
+
+- Find Glow Clash through the paged library; Start requires 3–8 players. Verify
+  5/8/12 rounds, random unique colors, taken-color owner labels, changing colors,
+  conflicting claims retaining the old color, and frozen setup settings at Start.
+- Toggle three distinct tiles, reject a fourth until deselection, Clear, Lock
+  picks, authoritative confirmation, untimed waiting and Players & scores
+  readiness. Before reveal, other devices and spectators see no picks or counts.
+- Reveal mixed unique/colliding cells together, independently score 0–3 points,
+  inspect every selecting player, check equal diagonal bands for all eight colors,
+  six-second automatic advancement, cumulative scores, ties and retained final
+  board. Per-round breakdowns remain in the scores panel; rematch resets scores.
+- Tab/arrows/Space/Enter, focus visibility, Help/score/tile dialogs, Escape and
+  restored focus. Check 320×568, 320×700, 390×844, 844×390, 768×1024 and 1280×720,
+  including eight long names, taller serif metrics and reduced motion. Portrait
+  tiles retain 44px targets. Short landscape uses a preview plus Pick tiles /
+  Inspect board; the dialog has the full four-column board with 44px cells.
+- Pause/resume preserves secret locks and reveal time; repeating reorientation
+  pauses does not replace the saved phase. Pairing/background/stalls pause the
+  host; backgrounding a client cannot stall the host timer. Spectators preserve
+  board dimensions and cannot claim colors or pick. Participant loss resets to
+  setup, releasing the departed color; spectator loss preserves play. Stop,
+  rematch, switching without pairing again, host loss and disposal stop timers.
+- Reuse the complete production-subpath manifest/icons/offline/update/identity/
+  sound-persistence suite. Update every device before playing.
+
+Rules and session tests cover all six board sizes, exact/distinct pick validation,
+all round options, zero/one/two/eight claimants, mixed gains, arrival-order
+independence, duplicate scoring prevention, untimed selection, shared ties,
+random color boundaries/conflicts, retained assignments, private host/client/
+spectator snapshots, maximal escaped eight-player envelopes, invalid inputs,
+epochs/sequences, pauses, long stalls, rematches, disconnects and disposal.
+Real WebRTC browser flows complete five-round three- and eight-player matches,
+exercise touch and keyboard input, setup colors, pause/resume, tile detail,
+standings, rematch, game switching, late spectators and background pauses.
+
+Retain separate genuine Darwin/Linux setup, secret-selection, mixed-reveal,
+eight-color collision and final-result snapshots using the bundled font fixture,
+strict dimensions and the unchanged 180-pixel budget. Generate missing Linux
+images through the non-deploying `codex/glow-clash` review workflow, fetch its
+baseline-return commit, review every image, and then require a normal full Linux
+verification run for the exact final commit. Do not update snapshots to conceal
+layout failures.
+
+Physical iPhone/iPad follow-up: play with three and eight family members over
+household Wi-Fi in Safari and installed PWAs. Check all twelve color names,
+numbered identity, readable eight-color stripes, comfortable untimed choosing,
+zero-point frustration, touch accuracy, 44px selection, safe areas, larger text,
+rotation, VoiceOver, background/resume, installation, cached startup and updates.
+Browser checks cannot establish real iOS lifecycle or family enjoyment/balance.

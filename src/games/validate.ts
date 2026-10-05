@@ -1,3 +1,4 @@
+import { validGlow } from "./glow-validate";
 import { validSeek } from "./seek-validate";
 import { validPicnic } from "./picnic-validate";
 import { validGolf } from "./minigolf-validate";
@@ -32,6 +33,24 @@ export function validRoom(v: unknown): v is Room {
     v.notice.length > 200
   )
     return false;
+  if (v.kind !== "glow" && v.glow !== undefined && v.glow !== null)
+    return false;
+  if (v.kind === "glow")
+    return (
+      v.pong === null &&
+      v.race === null &&
+      [
+        v.seek,
+        v.picnic,
+        v.minigolf,
+        v.treasure,
+        v.bakery,
+        v.sumo,
+        v.cycle,
+        v.ship,
+      ].every((x) => x === undefined || x === null) &&
+      validGlow(v.glow)
+    );
   if (v.kind !== "seek" && v.seek !== undefined && v.seek !== null)
     return false;
   if (v.kind === "seek")

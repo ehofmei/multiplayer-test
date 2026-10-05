@@ -97,6 +97,13 @@ const choices: {
     detail: "Two players. Hide five glowing shapes. Find every tile.",
     mark: "✚",
   },
+  {
+    kind: "glow",
+    title: "Glow Clash",
+    detail:
+      "3–8 players. Pick three secret tiles. Unique claims glow; collisions clash.",
+    mark: "▩",
+  },
 ];
 export function GamePicker({ session }: { session: Session }) {
   const [page, setPage] = useState(0);

@@ -1211,3 +1211,176 @@ it("Light Seek spectators cannot ready or guess, spectator loss preserves play, 
   host.startSeek();
   expect(host.snapshot().room.seek?.phase).toBe("ready");
 });
+
+async function glowJoin(host: Session, id: string) {
+  const client = new Session("client", { id, name: id }, () => {});
+  sessions.push(client);
+  const invite = await host.offer();
+  await host.accept(await client.answer(invite));
+  const [a, b] = Peer.all.slice(-2);
+  a.channel.peer = b.channel;
+  b.channel.peer = a.channel;
+  b.ondatachannel!({ channel: b.channel });
+  a.channel.open();
+  b.channel.open();
+  await vi.advanceTimersByTimeAsync(20);
+  return { client, a, b };
+}
+describe("Glow room", () => {
+  it("enforces host settings, secret host/client/spectator views, locks, epochs, sequences and complete scoring", async () => {
+    const { host, client, clientChannel } = await pair();
+    host.selectGame("glow");
+    host.startGlow();
+    expect(host.snapshot().room.glow?.phase).toBe("ready");
+    const { client: third } = await glowJoin(host, "third");
+    const original = client
+      .snapshot()
+      .room.glow!.seats.find((s) => s.id === "client")!.color;
+    host.claimGlowColor(10);
+    client.claimGlowColor(10);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(
+      host.snapshot().room.glow!.seats.find((s) => s.id === "client")!.color,
+    ).toBe(original);
+    expect(
+      client.snapshot().room.glow!.seats.find((s) => s.id === "host")!.color,
+    ).toBe(10);
+    client.setGlowRounds(5);
+    expect(host.snapshot().room.glow?.rounds).toBe(8);
+    host.setGlowRounds(5);
+    await vi.advanceTimersByTimeAsync(20);
+    host.startGlow();
+    client.startGlow();
+    host.setGlowRounds(12);
+    await vi.advanceTimersByTimeAsync(3020);
+    expect(host.snapshot().room.glow?.rounds).toBe(5);
+    const epoch = host.snapshot().room.epoch;
+    host.lockGlowPicks(1, [0, 1, 2]);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(client.snapshot().room.glow?.seats[0].picks).toBeNull();
+    client.lockGlowPicks(1, [0, 3, 4]);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(host.snapshot().room.glow?.seats[1].picks).toBeNull();
+    expect(client.snapshot().room.glow?.seats[1].picks).toEqual([0, 3, 4]);
+    host.pauseGames();
+    host.resumeGlow();
+    await vi.advanceTimersByTimeAsync(3020);
+    expect(client.snapshot().room.glow?.seats[1].locked).toBe(true);
+    await vi.advanceTimersByTimeAsync(100000);
+    expect(host.snapshot().room.glow?.phase).toBe("choosing");
+    third.lockGlowPicks(1, [0, 4, 5]);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(host.snapshot().room.glow?.seats.map((s) => s.scores)).toEqual([
+      [2],
+      [1],
+      [1],
+    ]);
+    host.pauseGames();
+    await vi.advanceTimersByTimeAsync(50000);
+    host.resumeGlow();
+    await vi.advanceTimersByTimeAsync(3020);
+    expect(host.snapshot().room.glow?.phase).toBe("reveal");
+    await vi.advanceTimersByTimeAsync(6000);
+    clientChannel.send(
+      JSON.stringify({
+        v: 2,
+        type: "input",
+        epoch: epoch - 1,
+        sequence: 100,
+        input: { kind: "glow-picks", round: 2, picks: [0, 1, 2] },
+      }),
+    );
+    clientChannel.send(
+      JSON.stringify({
+        v: 2,
+        type: "input",
+        epoch,
+        sequence: 99,
+        input: { kind: "glow-picks", round: 2, picks: [0, 1, 2] },
+      }),
+    );
+    await vi.advanceTimersByTimeAsync(20);
+    expect(host.snapshot().room.glow?.seats[1].locked).toBe(false);
+    // Subsequent genuine messages need a newer sequence after the injected probes.
+    for (let r = 2; r <= 5; r++) {
+      host.lockGlowPicks(r, [0, 1, 2]);
+      clientChannel.send(
+        JSON.stringify({
+          v: 2,
+          type: "input",
+          epoch,
+          sequence: 100 + r,
+          input: { kind: "glow-picks", round: r, picks: [0, 3, 4] },
+        }),
+      );
+      third.lockGlowPicks(r, [0, 4, 5]);
+      await vi.advanceTimersByTimeAsync(20);
+      expect(host.snapshot().room.glow?.phase).toBe("reveal");
+      await vi.advanceTimersByTimeAsync(6000);
+    }
+    expect(client.snapshot().room.glow?.phase).toBe("finished");
+    expect(
+      host
+        .snapshot()
+        .room.glow?.seats.map((s) => s.scores.reduce((a, b) => a + b, 0)),
+    ).toEqual([10, 5, 5]);
+    const colors = host.snapshot().room.glow?.seats.map((s) => s.color);
+    host.startGlow();
+    expect(host.snapshot().room.epoch).toBe(epoch + 1);
+    expect(host.snapshot().room.glow?.seats.map((s) => s.color)).toEqual(
+      colors,
+    );
+    expect(
+      host
+        .snapshot()
+        .room.glow?.seats.every((s) => !s.scores.length && s.picks === null),
+    ).toBe(true);
+  });
+  it("freezes late spectators, resets on participant loss, retains colors and cleans timers on stop/switch/disposal", async () => {
+    const { host } = await pair();
+    const third = await glowJoin(host, "third");
+    host.selectGame("glow");
+    host.startGlow();
+    await vi.advanceTimersByTimeAsync(3020);
+    host.lockGlowPicks(1, [0, 1, 2]);
+    const late = await glowJoin(host, "late");
+    expect(late.client.snapshot().room.glow?.seats).toHaveLength(3);
+    expect(
+      late.client.snapshot().room.glow?.seats.every((s) => s.picks === null),
+    ).toBe(true);
+    late.client.lockGlowPicks(1, [0, 1, 2]);
+    late.client.claimGlowColor(11);
+    await vi.advanceTimersByTimeAsync(20);
+    late.a.channel.onclose?.();
+    expect(host.snapshot().room.glow?.phase).toBe("choosing");
+    const colors = host
+      .snapshot()
+      .room.glow?.seats.filter((s) => s.id !== "third")
+      .map((s) => s.color);
+    third.a.channel.onclose?.();
+    expect(host.snapshot().room.glow?.phase).toBe("ready");
+    expect(host.snapshot().room.glow?.seats.map((s) => s.color)).toEqual(
+      colors,
+    );
+    expect(host.snapshot().room.glow?.seats.every((s) => !s.locked)).toBe(true);
+    await glowJoin(host, "replacement");
+    host.startGlow();
+    const clock = vi
+      .spyOn(performance, "now")
+      .mockReturnValue(performance.now() + 1000);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(host.snapshot().room.glow?.phase).toBe("paused");
+    clock.mockRestore();
+    host.resumeGlow();
+    host.selectGame("glow");
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(host.snapshot().room.glow?.phase).toBe("ready");
+    host.startGlow();
+    host.selectGame("lights");
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(host.snapshot().room.glow).toBeNull();
+    for (const session of sessions) session.dispose();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});

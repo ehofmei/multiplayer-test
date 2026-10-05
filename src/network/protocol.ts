@@ -1,3 +1,4 @@
+import { glowInt, validGlowPicks } from "../games/glow";
 import { validSeekLayout, seekInteger } from "../games/seek";
 import { validPlacement } from "../games/picnic";
 import { validShot } from "../games/minigolf";
@@ -55,6 +56,19 @@ export function parseMessage(raw: unknown): Message | null {
       record(m.input)
     ) {
       const i = m.input;
+      if (
+        i.kind === "glow-color" &&
+        Object.keys(i).length === 2 &&
+        glowInt(i.color, 0, 11)
+      )
+        return m as Message;
+      if (
+        i.kind === "glow-picks" &&
+        Object.keys(i).length === 3 &&
+        glowInt(i.round, 1, 12) &&
+        validGlowPicks(i.picks)
+      )
+        return m as Message;
       if (
         i.kind === "seek-ready" &&
         Object.keys(i).length === 2 &&
