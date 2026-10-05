@@ -177,6 +177,13 @@ For tests that include `process.platform` in screenshot names, retain reviewed
 baselines; the Pages workflow runs on Linux. A successful local run does not
 establish that Linux baselines exist or match.
 
+`npm run verify` finishes with `npm run check:snapshots`, which fails if a
+platform baseline lacks its Darwin/Linux counterpart in the same test folder.
+This catches missing Linux files during local macOS verification. It checks file
+presence only; review genuine OS renders and run Linux CI to verify their contents.
+The check runs after Playwright so a failing Linux run can still retain actual
+images in its failure artifact for review.
+
 When adding or changing screenshots:
 
 1. Build the app, then generate the focused baselines on each corresponding OS,
@@ -477,8 +484,9 @@ phone/tablet layouts. The 320×568 Arrange panel and full-size squares were visu
 reviewed. Saved desktop/mobile/tablet images and all three Darwin regression
 baselines were reviewed.
 
-The three new Linux screenshot baselines are still missing. This environment has
-no Linux runner; Linux CI will need to generate them or supply actual images for
-review using the portability workflow above before publishing. Linux CI and
-physical-device behavior have not been verified in this implementation session.
-Never substitute Darwin renders for missing Linux baselines.
+All three Linux baselines were recovered from the `browser-failure-results`
+artifact of [the matching CI run](https://github.com/ehofmei/multiplayer-test/actions/runs/37340763661)
+for commit `537c41e`. The artifact digest was verified and the actual ready,
+active and results images were visually reviewed before adding them. Both platform
+baseline sets retain strict dimensions and the unchanged 180-pixel budget.
+A passing Linux CI rerun and physical-device behavior remain unverified.
