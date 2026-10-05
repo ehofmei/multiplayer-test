@@ -3375,3 +3375,300 @@ main.app-shell {
     line-height: 1.2;
   }
 }
+
+/* Picnic uses a stable blanket and a focused placement panel on short screens. */
+.app-shell .games-card.picnic-game-card:not(.game-library) {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 8px;
+}
+.picnic-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.25;
+}
+.picnic-bonus {
+  text-align: center;
+  background: #f4e5b9;
+  color: #594019;
+  border-radius: 8px;
+  padding: 6px;
+  font-size: 13px;
+  line-height: 1.25;
+}
+.app-shell .picnic-game-card > .picnic-workspace {
+  flex: 1 1 0;
+}
+.picnic-workspace {
+  container-type: size;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(264px, 1fr) minmax(240px, 1fr);
+  gap: 24px;
+  align-items: center;
+}
+.picnic-blanket {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 0;
+}
+.picnic-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  width: 100%;
+  max-width: min(408px, 100cqh);
+  min-width: 264px;
+  aspect-ratio: 1;
+  background: #b77c52;
+  border-radius: 10px;
+  padding: 0;
+  gap: 0;
+  flex-shrink: 0;
+}
+.picnic-cell {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 3px;
+  border: 1px solid #d2b091;
+  border-radius: 4px;
+  background: #fff2dc;
+  color: #122c29;
+  aspect-ratio: 1;
+  touch-action: manipulation;
+}
+.picnic-cell:nth-child(12n + 1),
+.picnic-cell:nth-child(12n + 3),
+.picnic-cell:nth-child(12n + 5),
+.picnic-cell:nth-child(12n + 8),
+.picnic-cell:nth-child(12n + 10),
+.picnic-cell:nth-child(12n + 12) {
+  background: #f3dbc0;
+}
+.picnic-cell:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.picnic-cell[data-bonus="true"] {
+  box-shadow: inset 0 0 0 2px #ad791c;
+}
+.picnic-cell[data-preview="true"] {
+  background: #d5ead5;
+  outline: 2px dashed #265c3b;
+  outline-offset: -3px;
+}
+.picnic-cell[data-invalid="true"] {
+  background: #f5c8ca;
+  outline-color: #a3253a;
+}
+.picnic-cell[aria-pressed="true"],
+.picnic-cell:focus-visible {
+  outline: 3px solid #102f41;
+  outline-offset: -3px;
+}
+.picnic-cell[data-row="true"] {
+  border-bottom: 4px solid #265c3b;
+}
+.picnic-food {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.picnic-controls {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.picnic-status {
+  margin: 0;
+  min-height: 36px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.picnic-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.picnic-options button {
+  padding: 6px;
+  min-height: 64px;
+  background: #e6ece7;
+  color: #122c29;
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 12px;
+  line-height: 1.25;
+}
+.picnic-options button[aria-pressed="true"] {
+  border-color: #265c3b;
+  background: #d3e7c2;
+}
+.picnic-piece {
+  width: 100%;
+  max-width: 120px;
+  height: 70px;
+}
+.picnic-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+.picnic-actions button,
+.picnic-footer button {
+  padding: 6px;
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 13px;
+}
+.picnic-footer {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 6px;
+}
+.picnic-progress {
+  font-size: 12px;
+}
+.picnic-intro {
+  margin: 0;
+  line-height: 1.4;
+}
+.picnic-final {
+  font-size: 14px;
+  line-height: 1.4;
+}
+.picnic-mini {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  width: 100%;
+  max-width: min(340px, 100cqh);
+  aspect-ratio: 1;
+  background: #b77c52;
+  padding: 4px;
+  border-radius: 10px;
+  gap: 2px;
+}
+.picnic-mini span {
+  background: #fff2dc;
+  border-radius: 3px;
+  min-height: 0;
+}
+.picnic-mini span:nth-child(even) {
+  background: #f3dbc0;
+}
+.picnic-standings {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+.picnic-standings h3 {
+  overflow-wrap: anywhere;
+  font-size: 16px;
+}
+.picnic-standings h3 strong {
+  display: block;
+}
+.picnic-standings .picnic-mini {
+  max-width: 240px;
+}
+.picnic-standings p {
+  font-size: 14px;
+}
+.panel-content .picnic-grid {
+  margin: 12px auto;
+  max-width: 350px;
+}
+.panel-content .picnic-actions {
+  position: sticky;
+  bottom: -4px;
+  background: #f5f4ee;
+  padding: 8px 0;
+}
+@media (max-width: 650px) and (min-height: 651px) {
+  .picnic-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+  }
+  .picnic-blanket {
+    height: auto;
+    width: 100%;
+  }
+  .picnic-grid {
+    max-width: min(100%, calc(100cqh - 205px));
+  }
+  .picnic-controls {
+    width: 100%;
+    gap: 6px;
+  }
+  .picnic-piece {
+    height: 48px;
+  }
+  .picnic-options button {
+    min-height: 70px;
+    padding: 4px;
+  }
+  .picnic-status {
+    min-height: 32px;
+  }
+}
+@media (max-width: 650px) and (max-height: 650px) {
+  .picnic-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+  }
+  .picnic-blanket {
+    height: auto;
+    width: 100%;
+  }
+  .picnic-mini {
+    max-width: min(240px, calc(100cqh - 100px));
+  }
+  .picnic-controls {
+    width: 100%;
+    gap: 6px;
+  }
+}
+@media (max-height: 650px) and (min-width: 651px) {
+  .picnic-workspace {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .picnic-mini {
+    max-width: min(260px, 100cqh);
+  }
+}
+
+@media (max-width: 650px) and (min-height: 651px) {
+  .picnic-game-card[data-phase="ready"] .picnic-mini {
+    max-width: min(300px, calc(100cqh - 120px));
+  }
+}
+
+.picnic-final p {
+  margin: 4px 0 0;
+}
+@media (max-width: 650px) and (min-height: 651px) {
+  .picnic-game-card[data-compact="true"] .picnic-mini {
+    max-width: min(260px, calc(100cqh - 100px));
+  }
+}
+
+.app-panel:has(.picnic-grid) {
+  width: min(640px, calc(100% - 12px));
+  padding: 12px;
+}

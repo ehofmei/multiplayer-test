@@ -1,3 +1,4 @@
+import { newPicnic, type PicnicState, type PicnicAction } from "./picnic";
 import { newGolf, type GolfState } from "./minigolf";
 import {
   newTreasure,
@@ -23,7 +24,8 @@ export type GameKind =
   | "sumo"
   | "bakery"
   | "treasure"
-  | "minigolf";
+  | "minigolf"
+  | "picnic";
 export interface PongState {
   phase: "ready" | "serve" | "playing" | "paused" | "finished";
   seats: string[];
@@ -61,8 +63,10 @@ export interface Room {
   bakery?: BakeryState | null;
   treasure?: TreasureState | null;
   minigolf?: GolfState | null;
+  picnic?: PicnicState | null;
 }
 export type GameInput =
+  | PicnicAction
   | { kind: "golf-shot"; hole: number; angle: number; power: number }
   | { kind: "dive-choice"; dive: number; door: number; choice: TreasureChoice }
   | { kind: "bakery-pick"; round: number; pick: number; index: number }
@@ -86,12 +90,14 @@ export const gameNames: Record<GameKind, string> = {
   bakery: "Midnight Bakery",
   treasure: "Treasure Dive",
   minigolf: "Meteor Minigolf",
+  picnic: "Patchwork Picnic",
 };
 export function newRoom(kind: GameKind, epoch: number): Room {
   return {
     epoch,
     kind,
     notice: "",
+    picnic: kind === "picnic" ? newPicnic() : null,
     minigolf: kind === "minigolf" ? newGolf() : null,
     treasure: kind === "treasure" ? newTreasure() : null,
     bakery: kind === "bakery" ? newBakery() : null,

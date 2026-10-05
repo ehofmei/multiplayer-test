@@ -101,6 +101,7 @@ test("home, paged library, settings and all game setups fit the primary screen",
       "Midnight Bakery",
       "Treasure Dive",
       "Meteor Minigolf",
+      "Patchwork Picnic",
     ]) {
       await chooseGame(page, name);
       await expectScreenFits(page);

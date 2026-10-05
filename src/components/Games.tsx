@@ -84,6 +84,13 @@ const choices: {
     detail: "2–8 divers. Bank your haul or brave one more sunken room.",
     mark: "⚓",
   },
+  {
+    kind: "picnic",
+    title: "Patchwork Picnic",
+    detail:
+      "2–8 puzzlers. Fit food shapes, match neighbors, and fill your blanket.",
+    mark: "▧",
+  },
 ];
 export function GamePicker({ session }: { session: Session }) {
   const [page, setPage] = useState(0);

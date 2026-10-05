@@ -5,12 +5,12 @@ device has one direct WebRTC DataChannel to that host. There is no gameplay serv
 signaling service, STUN/TURN configuration, database, or account.
 
 Pair up to eight devices once using QR codes or copy/paste, then let the host choose
-Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, Sumo Bumpers, Reaction Race, Midnight Bakery, Treasure Dive, or Meteor Minigolf. Switching games keeps the same
+Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, Sumo Bumpers, Reaction Race, Midnight Bakery, Treasure Dive, Meteor Minigolf, or Patchwork Picnic. Switching games keeps the same
 connections. The app is installable and includes latency diagnostics.
 
 For possible future additions, [GAME_IDEAS.md](GAME_IDEAS.md) describes ten short
 family game proposals with rules, controls, scoring, timing, and implementation
-notes. Treasure Dive and Meteor Minigolf are now available; the remaining entries are
+notes. Treasure Dive, Meteor Minigolf, and Patchwork Picnic are now available; the remaining entries are
 design proposals. Ideally games finish within five minutes; proposed timers are
 playtest starting points, not hard limits.
 
@@ -496,3 +496,38 @@ version-2 bounded protocol and leaves saved identity and sound preferences intac
 Courses, artwork, rules, and cached startup are local; no new service or dependency
 is required. Matches and scores are temporary. Physical iPhone/iPad touch, home-screen
 layout, Wi-Fi pairing, and background/resume checks remain in QA.md.
+
+## Patchwork Picnic
+
+A simultaneous spatial puzzle for 2–8 players. Everyone gets the same three food
+shapes each round and fills a separate 6×6 picnic blanket. Tap a piece, tap its
+top-left anchor, rotate if needed, and Place to lock. Reset clears the local
+preview; Skip leaves your blanket unchanged. Invalid placements cannot be committed.
+On short screens, Arrange piece opens a scrollable panel with full-size tap squares.
+Keyboard players can Tab to a piece or the board, move with arrows, rotate with R,
+and Place with Enter on the board.
+
+Ten rounds follow a short countdown. Each placement window lasts up to 15 seconds;
+when everyone locks it ends early. Placements appear together in a three-second
+reveal, and the next round starts automatically. Missing input skips that round.
+No one takes another player's piece, and speed gives no extra points. Previews stay
+local; the host retains committed choices until reveal and owns all offers.
+
+Each filled cell earns 1 point, each orthogonal matching-food edge earns 1, and
+completed rows earn 6. Rows never disappear. The shared bonus is drawn at Start:
+strawberry corners earn 3 each, cheese border cells 1 each, or the middle four
+grape cells 2 each. Its projected value appears throughout and is added once at
+match end. Standings shows everyone's blanket and cells/edges/rows/bonus breakdown;
+equal highest totals share the win.
+
+Offers use shuffled six-shape and three-food bags. The first round and rounds
+7–10 always offer a single square, leaving a useful way to finish crowded rows.
+Rotation uses quarter-turns without reflection. Food symbols and outlines supplement
+color; the gold outline marks bonus squares. No extra assets or dependencies are needed.
+
+Pause, pairing, host backgrounding, and scheduling stalls preserve the current offer,
+remaining time, boards and locks. Resume adds a short countdown. Late arrivals watch
+and join the rematch; a participant leaving resets setup, while a spectator leaving
+preserves play. Stop returns to setup, and Picnic Again resets the roster and scores.
+Switching games retains pairing. Update every device before playing: older builds
+cannot understand the new game, while saved identity and sound preferences stay intact.

@@ -1,3 +1,4 @@
+import { PicnicGame } from "./components/PicnicGame";
 import { MinigolfGame } from "./components/MinigolfGame";
 import { TreasureGame } from "./components/TreasureGame";
 import { BakeryGame } from "./components/BakeryGame";
@@ -221,7 +222,9 @@ export function App() {
       )}
       {update.ready && (
         <aside className="banner">
-          {["treasure", "minigolf"].includes(snapshot?.room.kind ?? "")
+          {["treasure", "minigolf", "picnic"].includes(
+            snapshot?.room.kind ?? "",
+          )
             ? "Update ready in Menu."
             : "An update is ready in Menu when you’re done playing."}
         </aside>
@@ -384,6 +387,15 @@ export function App() {
                         connected={connected}
                       />
                     )}
+                  {snapshot?.room.kind === "picnic" && snapshot.room.picnic && (
+                    <PicnicGame
+                      key={snapshot.room.epoch}
+                      game={snapshot.room.picnic}
+                      players={snapshot.players}
+                      session={session}
+                      connected={connected}
+                    />
+                  )}
                   {snapshot?.room.kind === "bakery" && snapshot.room.bakery && (
                     <BakeryGame
                       key={snapshot.room.epoch}

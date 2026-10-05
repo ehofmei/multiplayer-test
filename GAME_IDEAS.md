@@ -1,7 +1,7 @@
 # Short family game ideas
 
-This is a design catalog for ten additions to P2P Game Lab. Treasure Dive and
-Meteor Minigolf have been implemented; see README.md for their shipped behavior.
+This is a design catalog for ten additions to P2P Game Lab. Treasure Dive,
+Meteor Minigolf, and Patchwork Picnic have been implemented; see README.md for their shipped behavior.
 The remaining entries are proposals. Each proposal defines a first
 playable version closely enough that a later Codex session can choose one and
 build it without inventing the core rules. Implement the game the user selects;

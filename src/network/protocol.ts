@@ -1,3 +1,4 @@
+import { validPlacement } from "../games/picnic";
 import { validShot } from "../games/minigolf";
 import { treasureChoices } from "../games/treasure";
 import { cycleDirections } from "../games/cycle";
@@ -53,6 +54,14 @@ export function parseMessage(raw: unknown): Message | null {
       record(m.input)
     ) {
       const i = m.input;
+      if (
+        i.kind === "picnic-place" &&
+        integer(i.round) &&
+        i.round >= 1 &&
+        i.round <= 10 &&
+        (i.placement === null || validPlacement(i.placement))
+      )
+        return m as Message;
       if (
         i.kind === "golf-shot" &&
         integer(i.hole) &&

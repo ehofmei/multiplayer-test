@@ -436,3 +436,49 @@ and installed PWAs. Check real touch dragging/cancellation, safe areas and rotat
 Adjust aim with larger text, app background/resume, cached startup and updates.
 Family play should tune aiming time, drag sensitivity and course balance; the
 five-minute preference is a pacing goal, not an exact match-time requirement.
+
+## Patchwork Picnic
+
+QA inventory:
+
+- Find the game on the paged picker; Start requires two players. Select one of the
+  shared shapes, preview an anchor, Rotate, Reset, Place and Skip. Try blocked,
+  off-board and crowded previews. Confirm exactly one lock and a simultaneous reveal.
+- Play ten rounds with automatic timeouts, late single squares, completed rows,
+  food-edge scoring and a separately added shared bonus. Standings shows every
+  blanket and a readable cells/edges/rows/bonus breakdown. Ties share the win.
+- Check keyboard Tab/Enter, arrows and R, touch targets, colored food symbols,
+  bonus outlines, invalid outlines and focus. Short screens use Arrange piece;
+  its native dialog scrolls, contains focus, closes with Escape and restores focus.
+- Check 320×568, 320×700, 390×844, 844×390, 768×1024 and 1280×720. Include taller
+  serif metrics, reduced motion, eight long names, missed input and results. Primary
+  content must fit; placement squares and essential buttons remain at least 44px.
+- Pause/Resume preserves offers, boards, locks and remaining active time, including
+  repeated reorientation pauses. Pairing/background/stalls pause; clients may timeout.
+  Late arrivals spectate, spectator loss preserves play, participant loss resets,
+  host loss disables controls. Rematch and game switching retain normal lifecycle cleanup.
+- Run the existing production-subpath manifest/icons/offline/update/storage checks.
+  On real iPhones/iPads, check installation, safe areas, touch accuracy, rotation,
+  larger text, foreground recovery and household-Wi-Fi pairing. Ask the family whether
+  15 seconds feels comfortable and whether matching edges and the shared bonus are clear.
+
+Rules tests cover every rotation, bounds/overlap, one-time edge/row/bonus scoring,
+shuffled bags, forced singles, seeded ten-piece play, crowded rotated fits and Skip,
+timeout/overshoot, frozen pauses, ties and maximal eight-player wire messages.
+Session tests cover host permissions, privacy, epochs/sequences, duplicate locks,
+pause/resume, late arrivals, departures, stalls, rematches and timer disposal.
+The production-browser suite pairs real WebRTC contexts and retains ready, active
+and result screenshots with the bundled font fixture and strict 180-pixel budget.
+`npm run verify` passed locally: formatting, 130 unit/session tests, the production
+build and 39 Playwright tests. The live production-preview pass paired two devices,
+checked invalid previews, rotation, keyboard anchoring/confirmation, private locks,
+pause/resume, simultaneous reveal, timeout, standings/Escape, app updates and
+phone/tablet layouts. The 320×568 Arrange panel and full-size squares were visually
+reviewed. Saved desktop/mobile/tablet images and all three Darwin regression
+baselines were reviewed.
+
+The three new Linux screenshot baselines are still missing. This environment has
+no Linux runner; Linux CI will need to generate them or supply actual images for
+review using the portability workflow above before publishing. Linux CI and
+physical-device behavior have not been verified in this implementation session.
+Never substitute Darwin renders for missing Linux baselines.

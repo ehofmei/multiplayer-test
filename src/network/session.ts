@@ -1,4 +1,13 @@
 import {
+  newPicnic,
+  commitPicnic,
+  stepPicnic,
+  pausePicnic,
+  resumePicnic,
+  picnicView,
+  type Placement,
+} from "../games/picnic";
+import {
   newGolf,
   commitGolf,
   golfView,
@@ -388,6 +397,8 @@ export class Session {
     } else this.fail("Ignored an unexpected host message.");
   }
   private roomView(viewer: string): Room {
+    if (this.room.picnic)
+      return { ...this.room, picnic: picnicView(this.room.picnic) };
     if (this.room.minigolf)
       return { ...this.room, minigolf: golfView(this.room.minigolf) };
     if (this.room.treasure)
@@ -474,6 +485,7 @@ export class Session {
           this.room.ship?.crew.includes(link.player.id) ||
           this.room.cycle?.riders.some((r) => r.id === link.player!.id) ||
           this.room.sumo?.bumpers.some((b) => b.id === link.player!.id) ||
+          this.room.picnic?.picnickers.some((p) => p.id === link.player!.id) ||
           this.room.minigolf?.balls.some((b) => b.id === link.player!.id) ||
           this.room.treasure?.divers.some((d) => d.id === link.player!.id) ||
           this.room.bakery?.bakers.some((b) => b.id === link.player!.id) ||
@@ -659,6 +671,15 @@ export class Session {
   }
   pauseGames() {
     if (this.role !== "host") return;
+    if (this.room.picnic) {
+      const next = pausePicnic(this.room.picnic);
+      if (next !== this.room.picnic) {
+        this.stopGameTimers();
+        this.room.picnic = next;
+        this.broadcast();
+      }
+      return;
+    }
     if (this.room.minigolf) {
       const next = pauseGolf(this.room.minigolf);
       if (next !== this.room.minigolf) {
@@ -740,6 +761,55 @@ export class Session {
     this.room.pong = { ...this.room.pong, phase: "serve", serveIn: 1 };
     this.runPong();
     this.broadcast();
+  }
+  startPicnic() {
+    if (
+      this.role !== "host" ||
+      this.disposed ||
+      this.room.kind !== "picnic" ||
+      this.players.length < 2 ||
+      !["ready", "finished"].includes(this.room.picnic?.phase ?? "")
+    )
+      return;
+    this.stopGameTimers();
+    this.room.epoch++;
+    this.room.notice = "";
+    this.room.picnic = newPicnic(this.players.map((p) => p.id));
+    this.runPicnic();
+    this.broadcast();
+  }
+  placePicnic(round: number, placement: Placement | null) {
+    this.input({ kind: "picnic-place", round, placement });
+  }
+  resumePicnic() {
+    if (this.role !== "host" || this.room.picnic?.phase !== "paused") return;
+    this.room.picnic = resumePicnic(this.room.picnic);
+    this.runPicnic();
+    this.broadcast();
+  }
+  private picnicTickAt = 0;
+  private advancePicnic() {
+    if (
+      !this.room.picnic ||
+      ["ready", "paused", "finished"].includes(this.room.picnic.phase)
+    )
+      return;
+    const elapsed = Math.floor(performance.now() - this.picnicTickAt);
+    if (elapsed > 500) {
+      this.pauseGames();
+      return;
+    }
+    if (elapsed <= 0) return;
+    this.picnicTickAt += elapsed;
+    this.room.picnic = stepPicnic(this.room.picnic, elapsed);
+    if (this.room.picnic.phase === "finished") this.stopGameTimers();
+  }
+  private runPicnic() {
+    this.picnicTickAt = performance.now();
+    this.gameTimer = setInterval(() => {
+      this.advancePicnic();
+      this.broadcast();
+    }, 100);
   }
   startGolf() {
     if (
@@ -1128,6 +1198,22 @@ export class Session {
   }
   private applyInput(id: string, input: GameInput) {
     if (
+      input.kind === "picnic-place" &&
+      this.room.kind === "picnic" &&
+      this.room.picnic
+    ) {
+      this.advancePicnic();
+      const previous = this.room.picnic;
+      this.room.picnic = commitPicnic(
+        previous,
+        id,
+        input.round,
+        input.placement,
+      );
+      if (this.room.picnic.phase !== previous.phase)
+        this.picnicTickAt = performance.now();
+      if (this.room.picnic !== previous) this.broadcast();
+    } else if (
       input.kind === "golf-shot" &&
       this.room.kind === "minigolf" &&
       this.room.minigolf

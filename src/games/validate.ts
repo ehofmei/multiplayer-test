@@ -1,3 +1,4 @@
+import { validPicnic } from "./picnic-validate";
 import { validGolf } from "./minigolf-validate";
 import { validTreasure } from "./treasure-validate";
 import { bakeryCards } from "./bakery";
@@ -30,6 +31,17 @@ export function validRoom(v: unknown): v is Room {
     v.notice.length > 200
   )
     return false;
+  if (v.kind !== "picnic" && v.picnic !== undefined && v.picnic !== null)
+    return false;
+  if (v.kind === "picnic")
+    return (
+      v.pong === null &&
+      v.race === null &&
+      [v.minigolf, v.treasure, v.bakery, v.sumo, v.cycle, v.ship].every(
+        (x) => x === undefined || x === null,
+      ) &&
+      validPicnic(v.picnic)
+    );
   if (v.kind !== "minigolf" && v.minigolf !== undefined && v.minigolf !== null)
     return false;
   if (v.kind === "minigolf")

@@ -914,3 +914,124 @@ it("Golf late arrivals watch, spectator disconnect preserves play, host stalls p
   Peer.all[0].channel.onclose?.();
   expect(host.snapshot().room.minigolf!.phase).toBe("ready");
 });
+
+it("Picnic requires host/two players, keeps placements private, preserves pause, rejects stale actions, finishes and rematches", async () => {
+  vi.spyOn(Math, "random").mockReturnValue(0);
+  const solo = new Session("host", { id: "solo", name: "Solo" }, () => {});
+  sessions.push(solo);
+  solo.selectGame("picnic");
+  solo.startPicnic();
+  expect(solo.snapshot().room.picnic!.phase).toBe("ready");
+  const { host, client, hostChannel, clientChannel } = await pair();
+  const sent = vi.spyOn(hostChannel, "send");
+  host.selectGame("picnic");
+  host.startPicnic();
+  await vi.advanceTimersByTimeAsync(3020);
+  const view = () => host.snapshot().room.picnic!;
+  const epoch = host.snapshot().room.epoch;
+  client.startPicnic();
+  expect(host.snapshot().room.epoch).toBe(epoch);
+  client.placePicnic(1, { option: 0, x: 0, y: 0, rotation: 0 });
+  await vi.advanceTimersByTimeAsync(20);
+  expect(view().picnickers[1].locked).toBe(true);
+  expect(view().picnickers[1].board).toBe("0".repeat(36));
+  for (const [raw] of sent.mock.calls) {
+    const m = JSON.parse(raw);
+    if (m.type === "state") {
+      expect(m.room.picnic.bags).toBeNull();
+      expect(
+        m.room.picnic.picnickers.every(
+          (p: { placement: unknown }) => p.placement === null,
+        ),
+      ).toBe(true);
+    }
+  }
+  client.placePicnic(1, null);
+  await vi.advanceTimersByTimeAsync(20);
+  host.pauseGames();
+  const paused = structuredClone(view());
+  await vi.advanceTimersByTimeAsync(15000);
+  expect(view()).toEqual(paused);
+  client.resumePicnic();
+  expect(view().phase).toBe("paused");
+  host.resumePicnic();
+  await vi.advanceTimersByTimeAsync(3020);
+  expect(view().picnickers[1].locked).toBe(true);
+  host.placePicnic(1, null);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(view().phase).toBe("reveal");
+  expect(view().picnickers[1].board[0]).not.toBe("0");
+  host.pauseGames();
+  const reveal = structuredClone(view());
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(view()).toEqual(reveal);
+  host.resumePicnic();
+  await vi.advanceTimersByTimeAsync(6100);
+  expect(view().round).toBe(2);
+  for (const [e, sequence, round] of [
+    [epoch - 1, 100, 2],
+    [epoch, 101, 1],
+    [epoch, 100, 2],
+  ])
+    clientChannel.send(
+      JSON.stringify({
+        v: 2,
+        type: "input",
+        epoch: e,
+        sequence,
+        input: { kind: "picnic-place", round, placement: null },
+      }),
+    );
+  await vi.advanceTimersByTimeAsync(20);
+  expect(view().picnickers.every((p) => !p.locked)).toBe(true);
+  await vi.advanceTimersByTimeAsync(165000);
+  expect(view().phase).toBe("finished");
+  host.startPicnic();
+  expect(host.snapshot().room.epoch).toBe(epoch + 1);
+  expect(view().picnickers.every((p) => p.board === "0".repeat(36))).toBe(true);
+  host.selectGame("lights");
+  await vi.advanceTimersByTimeAsync(20000);
+  expect(host.snapshot().room.kind).toBe("lights");
+  host.dispose();
+  client.dispose();
+  solo.dispose();
+  await vi.advanceTimersByTimeAsync(20);
+  expect(vi.getTimerCount()).toBe(0);
+});
+it("Picnic spectators cannot place; spectator departures preserve play, stalls pause and participant loss resets", async () => {
+  const { host } = await pair();
+  host.selectGame("picnic");
+  host.startPicnic();
+  await vi.advanceTimersByTimeAsync(3020);
+  const spectator = new Session(
+    "client",
+    { id: "watch", name: "Watcher" },
+    () => {},
+  );
+  sessions.push(spectator);
+  const offer = await host.offer();
+  await host.accept(await spectator.answer(offer));
+  const [a, b] = Peer.all.slice(-2);
+  a.channel.peer = b.channel;
+  b.channel.peer = a.channel;
+  b.ondatachannel!({ channel: b.channel });
+  a.channel.open();
+  b.channel.open();
+  await vi.advanceTimersByTimeAsync(20);
+  spectator.placePicnic(1, null);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(host.snapshot().room.picnic!.picnickers).toHaveLength(2);
+  expect(host.snapshot().room.picnic!.picnickers.every((p) => !p.locked)).toBe(
+    true,
+  );
+  a.channel.onclose?.();
+  expect(host.snapshot().room.picnic!.phase).toBe("placing");
+  const clock = vi
+    .spyOn(performance, "now")
+    .mockReturnValue(performance.now() + 1000);
+  await vi.advanceTimersByTimeAsync(100);
+  expect(host.snapshot().room.picnic!.phase).toBe("paused");
+  clock.mockRestore();
+  Peer.all[0].channel.onclose?.();
+  expect(host.snapshot().room.picnic!.phase).toBe("ready");
+});
