@@ -1,11 +1,11 @@
 # Short family game ideas
 
-This is a design catalog for ten additions to P2P Game Lab. Treasure Dive,
+This is a design catalog for eleven additions to P2P Game Lab. Treasure Dive,
 Meteor Minigolf, and Patchwork Picnic have been implemented; see README.md for their shipped behavior.
 The remaining entries are proposals. Each proposal defines a first
 playable version closely enough that a later Codex session can choose one and
 build it without inventing the core rules. Implement the game the user selects;
-the catalog is not an instruction to build all ten.
+the catalog is not an instruction to build all eleven.
 
 The goal is meaningful participation plus enough uncertainty for an occasional
 underdog win. Choices, observation, coordination, or touch skill should improve
@@ -13,18 +13,19 @@ your chances, while a single mistake should not make the remaining match feel
 pointless. Numeric values below are proposed starting defaults, not proven
 balance. Preserve each concept's identity when tuning them after family play.
 
-| Idea                                               | Type                   | Main interaction                   |
-| -------------------------------------------------- | ---------------------- | ---------------------------------- |
-| [1. Treasure Dive](#1-treasure-dive)               | Push your luck         | Return, explore, or spend a shield |
-| [2. Meteor Minigolf](#2-meteor-minigolf)           | Touch aiming / physics | Aim and power a single shot        |
-| [3. Patchwork Picnic](#3-patchwork-picnic)         | Spatial puzzle         | Select, rotate, and place shapes   |
-| [4. Secret Suitcases](#4-secret-suitcases)         | Bluffing / deduction   | Claim, trust, or challenge         |
-| [5. Cloud Couriers](#5-cloud-couriers)             | Route-planning race    | Choose a route and optional boost  |
-| [6. Monster Market](#6-monster-market)             | Auction / prediction   | Bid on one item or pass            |
-| [7. Treasure Shuffle](#7-treasure-shuffle)         | Memory / observation   | Follow chests and choose one       |
-| [8. Castle Critters](#8-castle-critters)           | Tactics / dice         | Allocate three critters            |
-| [9. Doodle Dice](#9-doodle-dice)                   | Creative party game    | Draw, guess, and award pictures    |
-| [10. Kitchen Catastrophe](#10-kitchen-catastrophe) | Cooperative planning   | Prepare, serve, or clean together  |
+| Idea                                               | Type                   | Main interaction                    |
+| -------------------------------------------------- | ---------------------- | ----------------------------------- |
+| [1. Treasure Dive](#1-treasure-dive)               | Push your luck         | Return, explore, or spend a shield  |
+| [2. Meteor Minigolf](#2-meteor-minigolf)           | Touch aiming / physics | Aim and power a single shot         |
+| [3. Patchwork Picnic](#3-patchwork-picnic)         | Spatial puzzle         | Select, rotate, and place shapes    |
+| [4. Secret Suitcases](#4-secret-suitcases)         | Bluffing / deduction   | Claim, trust, or challenge          |
+| [5. Cloud Couriers](#5-cloud-couriers)             | Route-planning race    | Choose a route and optional boost   |
+| [6. Monster Market](#6-monster-market)             | Auction / prediction   | Bid on one item or pass             |
+| [7. Treasure Shuffle](#7-treasure-shuffle)         | Memory / observation   | Follow chests and choose one        |
+| [8. Castle Critters](#8-castle-critters)           | Tactics / dice         | Allocate three critters             |
+| [9. Doodle Dice](#9-doodle-dice)                   | Creative party game    | Draw, guess, and award pictures     |
+| [10. Kitchen Catastrophe](#10-kitchen-catastrophe) | Cooperative planning   | Prepare, serve, or clean together   |
+| [11. Light Seek](#11-light-seek)                   | Hidden-grid deduction  | Place shapes, then illuminate cells |
 
 ## Shared product and implementation requirements
 
@@ -1069,3 +1070,148 @@ cleaning, rotating priority, missing-ingredient fallback, exact six-beat
 expiration, event timing, and score thresholds for 2 and 8 players. Simulate
 coordinated and random teams across many seeds to confirm the target is
 attainable and tune documented numbers before shipping.
+
+## 11. Light Seek
+
+### Experience and match structure
+
+A two-player game based on classic Battleship, using glowing colored grid tiles
+instead of ships. Each player secretly arranges five pieces, then takes turns
+searching the other player's board. A hit lights up a tile; illuminating every
+tile of a piece means it has been **Found**, rather than destroyed or sunk.
+Use the clean colored-grid visual style of Arena Pong and Light-cycle Arena.
+**Light Seek** is a working title.
+
+Both players set up their boards at the same time. Play begins only after both
+have tapped **Ready** and the host has accepted both complete, legal layouts.
+Ready locks your layout; while waiting, show your own board and the opponent's
+readiness without exposing their arrangement. Follow this with a short starting
+countdown. The host randomly chooses the first player once per match.
+
+This proposal explicitly differs from the shared catalog defaults: it requires
+exactly two players and uses alternating turns, with untimed setup and turns.
+Do not auto-place pieces, auto-ready a player, or make an automatic guess after
+a timeout. A classic search match may exceed five minutes; preserving the
+requested rules takes priority over the usual short-match target. Disable Start
+unless exactly two players are connected; later arrivals spectate with only
+public information. Retain the shared pause, stop, disconnect, and rematch rules.
+
+### Rules and scoring
+
+Use a 10×10 board per player as a proposed starting default. Each player has
+exactly one of each of these five pieces, occupying 19 tiles in total:
+
+| Piece            | Tiles | Unrotated footprint `(x, y)`      |
+| ---------------- | ----: | --------------------------------- |
+| Three-line       |     3 | `[(0,0),(1,0),(2,0)]`             |
+| Three-corner (L) |     3 | `[(0,0),(0,1),(1,1)]`             |
+| Four-line        |     4 | `[(0,0),(1,0),(2,0),(3,0)]`       |
+| Four-square      |     4 | `[(0,0),(1,0),(0,1),(1,1)]`       |
+| Five-plus        |     5 | `[(1,0),(0,1),(1,1),(2,1),(1,2)]` |
+
+Rotate pieces in 90-degree steps, normalizing the footprint to a top-left
+bounding-box anchor. Rotation does not change the square or plus footprint.
+No reflections are needed. All tiles must remain inside the board and pieces
+cannot overlap. Pieces may touch along edges or corners; there is no mandatory
+gap. Players can move and rotate placed pieces before Ready. Give each piece a
+distinct color plus a shape symbol so color is never the only identifier.
+
+On your turn, select one previously unsearched cell on the opponent's grid and
+confirm **Illuminate**. The host resolves it immediately:
+
+- **Miss:** the cell is empty; mark it permanently with a clear miss symbol.
+- **Hit:** the cell belongs to a hidden piece; light that tile permanently.
+- **Piece found:** this hit lights the last unlit tile of a piece. Reveal its
+  identity and outline all its tiles together, with a “Four-square found!” style
+  announcement. Already lit tiles remain visible.
+
+Ordinary hits reveal occupancy only, not which piece was hit. Use a common hit
+appearance until the entire piece is found, then reveal its color and symbol.
+Touching pieces remain distinct, tracked by their original piece identities.
+Keep misses, hits, and found outlines readable without animation or sound.
+
+Players alternate after every valid guess, including a hit or a found piece;
+there are no bonus turns. Reject repeated cells and out-of-turn guesses without
+consuming a turn. The first player to find all five opposing pieces wins
+immediately. There is no points system or extra final reply turn. Reveal both
+complete boards in the result screen.
+
+### Screens and controls
+
+Setup shows your board, the five-piece tray, a placement preview, **Rotate**,
+and **Ready**. Tap a piece and then an anchor cell to preview its position;
+confirm placement with a large button. Selecting a placed piece allows moving
+or rotating it. Mark invalid placements and disable confirmation and Ready
+until appropriate. Ready requires all five legally placed pieces. Keep drafts
+local until the complete layout is submitted and show host confirmation.
+
+During play, emphasize the opponent's search grid, whose turn it is, the latest
+result, and a compact five-piece found tracker. Put your own board with incoming
+guesses behind a **My board** view; switching views never changes the turn.
+Use row letters and column numbers so a selected cell can also be described as
+“B7.” A preview and separate Illuminate button prevent accidental guesses.
+Disable guessing while waiting for host acknowledgement or the opponent's turn.
+
+A 10×10 board needs a deliberate narrow-phone interaction: provide a focused
+zoomed selection view if cells cannot have comfortable touch targets at full
+size. Keep large placement, rotation, view-switch, and confirmation controls;
+do not require precise dragging or page scrolling through active play. Support
+keyboard cell navigation, rotation, and confirmation. Keep help and diagnostics
+in scrollable dialogs and respect reduced motion.
+
+### Sound and feedback
+
+Synthesize three satisfying, distinct effects locally: a soft hollow pulse for
+a miss, a bright short chime for a hit, and a richer rising chord for finding a
+whole piece. On a completing hit, play the found effect instead of stacking it
+with the ordinary hit effect. Pair effects with visible cell feedback and a
+short result label. Sound follows the existing preference, muted by default and
+unlocked by a user gesture. Replay neither sounds nor celebrations when an
+unchanged snapshot arrives or a view is reopened.
+
+### Skill, luck, and comeback potential
+
+Secret placement, systematic searching, and reasoning about the five possible
+footprints provide the strategy. The corner, square, and plus create different
+search patterns from traditional straight ships. Luck comes from hidden
+placements, early guesses, and the first-player draw; there are no random
+power-ups or catch-up bonuses. A player behind in found pieces can still finish
+several partly lit pieces in succession. Every piece remains in place for the
+whole match.
+
+### State and implementation notes
+
+The host owns both committed layouts, readiness, phase, current player, turn
+number, searched cells, found-piece flags, latest result, and winner. Store
+bounded piece IDs, anchors, and rotations; derive occupied cells from the fixed
+catalog and validate the complete layout before accepting Ready. Accept one
+layout per player per setup and one cell per active turn. Include epoch and turn
+identity in guesses so delayed or duplicate inputs cannot search twice.
+
+Filter every view, including the host's UI: a player sees their own layout and
+incoming guesses, but only their search results on the opponent's board.
+Spectators see public guesses, readiness, and found pieces without either
+unrevealed layout. Do not leak hidden piece IDs through hit-cell metadata,
+placement previews, or result payloads. Reveal full layouts only when finished.
+Give resolved guesses stable event identities for feedback deduplication.
+Preserve layouts, searches, readiness, and the current turn across pauses; a
+rematch starts with fresh setup and a fresh first-player draw.
+
+### First-version scope and acceptance checks
+
+Build only two-player classic search with these five pieces, rotation, manual
+setup, both-ready start, alternating guesses, and the three sound effects.
+Exclude ships, damage language, special attacks, simultaneous salvos, AI,
+teams, and additional piece catalogs.
+
+Test every distinct rotation, invariant square/plus rotations, 19 occupied
+tiles, touching pieces, overlap/bounds rejection, incomplete setup, and layout
+locking. Verify neither player can start searching before both valid Ready
+actions, each result type, one-time piece discovery, alternating turns after
+hits, repeat/out-of-turn/stale-input rejection, immediate victory, private-view
+filtering, pause/resume, disconnect cleanup, and fresh rematches. Retain a real
+paired-browser flow from placement through a seeded complete match, with
+reviewed setup, active-search, and found-piece/result snapshots on both required
+platforms. Live QA should cover narrow-phone selection and zoom, touch rotation,
+keyboard navigation, ready/waiting states, sound mute/unlock/deduplication, and
+readability of adjacent found pieces. Real iPhone/iPad checks remain necessary.
