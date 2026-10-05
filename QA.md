@@ -607,6 +607,19 @@ tile details, Escape/focus restoration, standings, Help, automatic next round,
 and Stop retaining colors. Review the live preview and saved desktop/phone/tablet
 images separately from physical-device behavior.
 
+Verification status (2026-10-05): the final broad-band/unlabeled-swatch version
+passed formatting, 157 Vitest tests, four script tests, the production build,
+and all 43 Playwright tests via `npm run verify`. That command then failed
+`check:snapshots` because the five genuine Glow Linux images are still missing.
+All five Darwin baselines and representative desktop/phone/tablet renders were
+visually reviewed. Linux execution is pending: GitHub reports an
+[Actions runner-assignment incident](https://www.githubstatus.com/incidents/3q1yb5m7ltvb),
+and the non-deploying review run remains queued. The feature is incomplete until
+its Linux renders are fetched/reviewed and a normal full Ubuntu verification
+passes for the exact final commit. The live paired pass covered the game rules;
+the final cosmetic revision was checked with production-browser regression
+flows and screenshots after live preview controls stalled during an update.
+
 Physical iPhone/iPad follow-up: play with three and eight family members over
 household Wi-Fi in Safari and installed PWAs. Check all twelve color names,
 numbered identity, readable eight-color stripes, comfortable untimed choosing,
