@@ -1,3 +1,4 @@
+import { SeekGame } from "./components/SeekGame";
 import { PicnicGame } from "./components/PicnicGame";
 import { MinigolfGame } from "./components/MinigolfGame";
 import { TreasureGame } from "./components/TreasureGame";
@@ -222,7 +223,7 @@ export function App() {
       )}
       {update.ready && (
         <aside className="banner">
-          {["treasure", "minigolf", "picnic"].includes(
+          {["treasure", "minigolf", "picnic", "seek"].includes(
             snapshot?.room.kind ?? "",
           )
             ? "Update ready in Menu."
@@ -387,6 +388,15 @@ export function App() {
                         connected={connected}
                       />
                     )}
+                  {snapshot?.room.kind === "seek" && snapshot.room.seek && (
+                    <SeekGame
+                      key={snapshot.room.epoch}
+                      game={snapshot.room.seek}
+                      players={snapshot.players}
+                      session={session}
+                      connected={connected}
+                    />
+                  )}
                   {snapshot?.room.kind === "picnic" && snapshot.room.picnic && (
                     <PicnicGame
                       key={snapshot.room.epoch}

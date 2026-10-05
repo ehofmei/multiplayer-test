@@ -1,4 +1,7 @@
 export type Cue =
+  | "seek-miss"
+  | "seek-hit"
+  | "seek-found"
   | "enable"
   | "on"
   | "off"
@@ -15,6 +18,20 @@ export type Cue =
   | "finish";
 type Note = [frequency: number, duration: number, delay?: number];
 const notes: Record<Cue, Note[]> = {
+  "seek-miss": [
+    [180, 0.16],
+    [360, 0.08],
+  ],
+  "seek-hit": [
+    [880, 0.09],
+    [1320, 0.16, 0.06],
+  ],
+  "seek-found": [
+    [523, 0.18],
+    [659, 0.18, 0.08],
+    [784, 0.24, 0.16],
+    [1046, 0.25, 0.24],
+  ],
   enable: [[740, 0.08]],
   on: [[700, 0.06]],
   off: [[420, 0.06]],

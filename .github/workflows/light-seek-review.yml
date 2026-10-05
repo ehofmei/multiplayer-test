@@ -1,0 +1,42 @@
+name: Light Seek review
+on:
+  push:
+    branches: [codex/light-seek]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Obtain genuine Linux baselines once
+        run: |
+          if [ ! -f tests/seek.spec.ts-snapshots/seek-results-linux.png ]; then
+            npx playwright test tests/seek.spec.ts --update-snapshots
+            npx playwright test tests/app-layout.spec.ts --grep 'home, paged library' --update-snapshots=all
+          fi
+      - name: Return Linux renders to the review branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/seek.spec.ts-snapshots/*-linux.png tests/app-layout.spec.ts-snapshots/*-linux.png
+          if ! git diff --cached --quiet; then
+            git commit -m 'Generated Linux Light Seek baselines'
+            git push origin HEAD:codex/light-seek
+          fi
+      - run: npm run verify
+      - name: Save browser evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-failure-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7

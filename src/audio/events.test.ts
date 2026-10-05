@@ -175,3 +175,25 @@ it("announces Sumo starts, dashes, ring-outs and outcomes once", () => {
   expect(soundEvents(before, frame(s))).toEqual(["win"]);
   expect(soundEvents(frame(s), frame(s))).toEqual([]);
 });
+
+it("plays one Light Seek cue per event, uses found instead of hit, and never replays on reopening", () => {
+  const s = snapshot();
+  s.room = newRoom("seek", 1);
+  let before = frame(s);
+  for (const [i, result] of (["miss", "hit", "found"] as const).entries()) {
+    s.room.seek!.last = {
+      event: i + 1,
+      player: "a",
+      cell: i,
+      result,
+      piece: result === "found" ? 0 : null,
+    };
+    const after = frame(s);
+    expect(soundEvents(before, after)).toEqual([`seek-${result}`]);
+    expect(soundEvents(after, after)).toEqual([]);
+    expect(soundEvents(null, after)).toEqual([]);
+    before = after;
+  }
+  s.room.epoch++;
+  expect(soundEvents(before, frame(s))).toEqual([]);
+});

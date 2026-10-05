@@ -3672,3 +3672,310 @@ main.app-shell {
   width: min(640px, calc(100% - 12px));
   padding: 12px;
 }
+
+/* A whole-board preview and four focused 5×5 areas keep phone targets generous. */
+.app-shell .games-card.seek-game-card:not(.game-library) {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 8px;
+  background: #0e2034;
+  color: #eef5ff;
+}
+.seek-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.25;
+}
+.seek-status {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.3;
+  min-height: 20px;
+}
+.app-shell .seek-game-card > .seek-workspace {
+  flex: 1 1 0;
+}
+.seek-workspace {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 1fr);
+  gap: 18px;
+  align-items: center;
+}
+.seek-art {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+}
+.seek-board {
+  width: 100%;
+  max-width: min(440px, 100cqh);
+  max-height: 100%;
+  aspect-ratio: 1;
+  display: block;
+  background: #0e2034;
+  border-radius: 8px;
+}
+.panel-content .seek-board {
+  max-width: 330px;
+  margin: 0 auto;
+}
+.seek-controls {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.seek-controls > p {
+  margin: 0;
+  line-height: 1.35;
+}
+.seek-tray {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.seek-tray button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 6px;
+  text-align: left;
+  min-height: 48px;
+  background: #233b55;
+  color: #eef5ff;
+}
+.seek-tray button > span:first-child {
+  font-size: 24px;
+}
+.seek-tray small {
+  display: block;
+  font-size: 11px;
+}
+.seek-game-card button[aria-pressed="true"],
+.seek-quadrants button[aria-pressed="true"] {
+  outline: 2px solid #67d8ef;
+  outline-offset: -2px;
+}
+.seek-footer {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 6px;
+}
+.seek-footer button {
+  padding: 6px 8px;
+  font-size: 12px;
+  min-width: 44px;
+  min-height: 44px;
+}
+.seek-game-card button.secondary,
+.seek-game-card button.quiet {
+  background: #233b55;
+  color: #eef5ff;
+}
+.seek-tracker {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+.seek-tracker span {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 6px;
+  border: 1px solid #8099b0;
+  border-radius: 6px;
+}
+.seek-tracker b {
+  font-size: 23px;
+}
+.seek-tracker [data-found="true"] {
+  background: #2c4c43;
+  border-color: #99e181;
+}
+.seek-result {
+  font-size: 14px;
+  min-height: 36px;
+}
+.seek-quadrants {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.seek-quadrants button {
+  padding: 6px;
+  min-height: 44px;
+}
+.seek-zoom {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(44px, 1fr));
+  width: 100%;
+  max-width: 360px;
+  margin: auto;
+  gap: 2px;
+  touch-action: manipulation;
+}
+.seek-cell {
+  position: relative;
+  min-width: 44px;
+  min-height: 48px;
+  padding: 2px;
+  border: 1px solid #66819d;
+  border-radius: 4px;
+  background: #192e46;
+  color: #eef5ff;
+}
+.seek-cell[style*="background"] {
+  color: #0e2034;
+}
+.seek-cell small {
+  display: block;
+  font-size: 10px;
+}
+.seek-cell span {
+  display: block;
+  font-size: 21px;
+  line-height: 1;
+}
+.seek-cell[data-preview="true"] {
+  outline: 3px solid #4b9dcc;
+  outline-offset: -3px;
+}
+.seek-cell[data-invalid="true"] {
+  outline-color: #d44848;
+}
+.seek-cell[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 3px #ffd05b;
+}
+.seek-selection {
+  min-height: 24px;
+  font-size: 14px;
+}
+.seek-actions {
+  display: flex;
+  gap: 8px;
+}
+.seek-actions button {
+  flex: 1;
+}
+.seek-final-boards {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.seek-final-boards > div {
+  min-width: 0;
+}
+.seek-final-boards strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.seek-final-boards .seek-board {
+  max-width: 100%;
+}
+@media (max-width: 650px) and (min-height: 551px) {
+  .seek-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .seek-art {
+    width: 100%;
+    flex: 1 1 0;
+  }
+  .seek-controls {
+    width: 100%;
+    flex-shrink: 0;
+  }
+  .seek-tray {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .seek-tray button {
+    font-size: 11px;
+    gap: 3px;
+  }
+  .seek-tray button > span:first-child {
+    font-size: 20px;
+  }
+  .seek-controls > button {
+    min-height: 44px;
+    padding: 6px;
+  }
+}
+@media (max-height: 550px) {
+  .app-shell .games-card.seek-game-card:not(.game-library) {
+    padding: 8px;
+    gap: 4px;
+  }
+  .seek-workspace {
+    gap: 8px;
+  }
+  .seek-tray {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .seek-tray button {
+    min-height: 44px;
+    padding: 3px;
+  }
+  .seek-controls {
+    gap: 4px;
+  }
+  .seek-controls > button {
+    min-height: 44px;
+    padding: 4px;
+  }
+  .seek-status {
+    font-size: 13px;
+  }
+  .seek-result {
+    font-size: 12px;
+    min-height: 0;
+  }
+}
+@media (max-height: 550px) {
+  .seek-controls > .seek-tray {
+    display: none;
+  }
+}
+.panel-content .seek-tray {
+  margin-bottom: 12px;
+}
+@media (max-height: 550px) {
+  .seek-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .seek-controls > p,
+  .seek-controls > .seek-tracker {
+    grid-column: 1 / -1;
+  }
+  .seek-tracker {
+    line-height: 1.2;
+  }
+  .seek-tracker b {
+    line-height: 1;
+  }
+}
+.seek-final-boards {
+  max-width: min(100%, calc(200cqh - 48px));
+}
+@media (max-width: 650px) and (min-height: 551px) {
+  .seek-final-boards {
+    grid-template-columns: 1fr;
+    max-width: min(100%, calc((100cqh - 48px) / 2));
+  }
+}

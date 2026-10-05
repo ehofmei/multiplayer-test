@@ -91,6 +91,12 @@ const choices: {
       "2–8 puzzlers. Fit food shapes, match neighbors, and fill your blanket.",
     mark: "▧",
   },
+  {
+    kind: "seek",
+    title: "Light Seek",
+    detail: "Two players. Hide five glowing shapes. Find every tile.",
+    mark: "✚",
+  },
 ];
 export function GamePicker({ session }: { session: Session }) {
   const [page, setPage] = useState(0);

@@ -490,3 +490,57 @@ for commit `537c41e`. The artifact digest was verified and the actual ready,
 active and results images were visually reviewed before adding them. Both platform
 baseline sets retain strict dimensions and the unchanged 180-pixel budget.
 A passing Linux CI rerun and physical-device behavior remain unverified.
+
+## Light Seek
+
+QA inventory:
+
+- Exactly two connected players can Start. Select each shape, tap an anchor,
+  preview, rotate, place and edit placed pieces. Try overlap, off-board placement,
+  incomplete Ready, untimed waiting and authoritative Ready confirmation. Both
+  layouts lock before the countdown; the first-player draw happens once.
+- Select and confirm a search, including keyboard arrows/Enter and touch. Alternate
+  after misses, hits and discoveries; reject repeats, stale turns and out-of-turn
+  actions without consuming a turn. Ordinary hits show occupancy only; found
+  pieces reveal their whole color/symbol outline even when adjacent.
+- Find all five for immediate victory with no reply turn. Review both full boards,
+  My board/incoming guesses, Help/Escape/focus return, fresh rematch and switching
+  games without reconnecting. Optional miss/hit/found sounds follow the existing
+  saved mute preference and gesture unlock; completing hits play only found, and
+  repeated snapshots/view reopening never replay effects.
+- Pause/Resume preserves layout, readiness, searches and turn, including repeated
+  reorientation pauses. Pairing/background/stalls pause active countdowns. Late
+  arrivals see only public boards and can leave without changing the match;
+  participant loss resets setup, host loss disables controls, and disposal clears
+  timers. More than two connected players prevents starting a fresh match.
+- Check 320×568, 320×700, 390×844, 844×390, 768×1024 and 1280×720, taller serif
+  metrics, reduced motion, eight long names, waiting and results. Primary content
+  must fit with clearance; the full board is a preview. Four 5×5 selection areas
+  retain 44px targets; short landscape setup moves the tray into that dialog.
+  Check scrolling only in secondary dialogs, contrast, coordinate labels and
+  adjacent revealed shapes. Results show both complete boards.
+
+Rules/session/protocol tests cover rotations and invariant square/plus shapes,
+19 touching tiles, illegal/incomplete layouts, one-time locks, random draw bounds,
+untimed phases, all results, immediate victory, turn/epoch/sequence rejection,
+private host/client/spectator views, paused state, fresh matches, disconnects,
+countdown stalls, disposal and maximum escaped eight-device messages. Sound tests
+cover one event/one cue, found replacing hit, and no replay on view/epoch changes.
+The real WebRTC browser flows cover manual setup through a seeded complete match,
+eight connected devices/spectators, lifecycle and game switching. Retain separate
+setup, active, found-piece and results baselines on Darwin/Linux using the bundled
+font fixture, strict dimensions and the unchanged 180-pixel budget.
+
+Live persistent Playwright QA paired two current production-preview devices and
+exercised tap placement, editing/rotation, keyboard confirmation, Ready/waiting,
+a keyboard-selected hit at 320×568, My board/Escape, sound toggle/unlock and
+pause/resume. Desktop/mobile/tablet screenshots are reviewed alongside automated
+fit checks. The in-app browser stalled while applying a cached preview update;
+the persistent local Playwright session provided the live pass.
+
+Physical iPhone/iPad follow-up: play a complete match on household Wi-Fi in Safari
+and installed PWAs. Check comfortable 5×5 selection, larger text, safe areas,
+rotation, VoiceOver, sound unlock/volume, background/resume and offline startup
+with updated apps on both devices. Existing production-subpath PWA/cache/update
+checks remain in the full verification command. Browser emulation does not verify
+physical iOS/iPadOS behavior.

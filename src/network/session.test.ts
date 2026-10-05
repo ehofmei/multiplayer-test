@@ -1035,3 +1035,179 @@ it("Picnic spectators cannot place; spectator departures preserve play, stalls p
   Peer.all[0].channel.onclose?.();
   expect(host.snapshot().room.picnic!.phase).toBe("ready");
 });
+
+describe("Light Seek session", () => {
+  const layout = [
+    { piece: 0, x: 0, y: 0, rotation: 0 },
+    { piece: 1, x: 0, y: 1, rotation: 0 },
+    { piece: 2, x: 0, y: 3, rotation: 0 },
+    { piece: 3, x: 0, y: 4, rotation: 0 },
+    { piece: 4, x: 0, y: 6, rotation: 0 },
+  ];
+  it("pairs, locks privately, rejects stale epochs/sequence/turns, pauses, rematches, switches and disposes", async () => {
+    const { host, client, clientChannel } = await pair();
+    const random = vi.spyOn(Math, "random").mockReturnValue(0);
+    try {
+      client.selectGame("seek");
+      expect(host.snapshot().room.kind).toBe("lobby");
+      host.selectGame("seek");
+      client.startSeek();
+      expect(host.snapshot().room.seek?.phase).toBe("ready");
+      host.startSeek();
+      await vi.advanceTimersByTimeAsync(20);
+      const epoch = host.snapshot().room.epoch;
+      host.readySeek(layout);
+      await vi.advanceTimersByTimeAsync(20);
+      expect(client.snapshot().room.seek?.seats[0].layout).toBeNull();
+      expect(host.snapshot().room.seek?.seats[0].layout).toEqual(layout);
+      await vi.advanceTimersByTimeAsync(100000);
+      expect(host.snapshot().room.seek?.phase).toBe("setup");
+      client.readySeek(layout);
+      await vi.advanceTimersByTimeAsync(20);
+      expect(host.snapshot().room.seek?.seats[1].layout).toBeNull();
+      host.pauseGames();
+      await vi.advanceTimersByTimeAsync(10000);
+      expect(host.snapshot().room.seek?.phase).toBe("paused");
+      host.resumeSeek();
+      await vi.advanceTimersByTimeAsync(6020);
+      expect(client.snapshot().room.seek?.phase).toBe("playing");
+      client.guessSeek(1, 0);
+      await vi.advanceTimersByTimeAsync(20);
+      expect(host.snapshot().room.seek?.turn).toBe(1);
+      host.guessSeek(1, 0);
+      await vi.advanceTimersByTimeAsync(20);
+      expect(client.snapshot().room.seek?.last?.piece).toBeNull();
+      clientChannel.send(
+        JSON.stringify({
+          v: 2,
+          type: "input",
+          epoch: epoch - 1,
+          sequence: 1,
+          input: { kind: "seek-guess", turn: 2, cell: 99 },
+        }),
+      );
+      await vi.advanceTimersByTimeAsync(20);
+      expect(host.snapshot().room.seek?.turn).toBe(2);
+      client.guessSeek(2, 99);
+      await vi.advanceTimersByTimeAsync(20);
+      expect(host.snapshot().room.seek?.turn).toBe(3);
+      clientChannel.send(
+        JSON.stringify({
+          v: 2,
+          type: "input",
+          epoch,
+          sequence: 1,
+          input: { kind: "seek-guess", turn: 3, cell: 98 },
+        }),
+      );
+      await vi.advanceTimersByTimeAsync(20);
+      expect(host.snapshot().room.seek?.turn).toBe(3);
+      host.guessSeek(3, 0);
+      expect(host.snapshot().room.seek?.turn).toBe(3);
+      const { placedSeekCells } = await import("../games/seek");
+      for (const [i, c] of layout.flatMap(placedSeekCells).slice(1).entries()) {
+        host.guessSeek(host.snapshot().room.seek!.turn, c);
+        await vi.advanceTimersByTimeAsync(20);
+        if (i < 17) {
+          client.guessSeek(client.snapshot().room.seek!.turn, 98 - i);
+          await vi.advanceTimersByTimeAsync(20);
+        }
+      }
+      expect(client.snapshot().room.seek?.phase).toBe("finished");
+      expect(
+        client.snapshot().room.seek?.seats.every((s) => s.layout?.length === 5),
+      ).toBe(true);
+      host.startSeek();
+      await vi.advanceTimersByTimeAsync(20);
+      expect(host.snapshot().room.epoch).toBeGreaterThan(epoch);
+      expect(client.snapshot().room.seek?.seats.every((s) => !s.ready)).toBe(
+        true,
+      );
+      host.selectGame("lights");
+      await vi.advanceTimersByTimeAsync(20);
+      client.toggle(0);
+      await vi.advanceTimersByTimeAsync(20);
+      expect(host.snapshot().grid.cells[0]).toBe(true);
+      host.dispose();
+      client.dispose();
+      await vi.advanceTimersByTimeAsync(20);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      random.mockRestore();
+    }
+  });
+  it("requires exactly two and resets on participant loss", async () => {
+    const { host, client, hostChannel } = await pair();
+    host.selectGame("seek");
+    host.startSeek();
+    host.readySeek(layout);
+    hostChannel.onclose?.();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(host.snapshot().room.seek?.phase).toBe("ready");
+    host.startSeek();
+    expect(host.snapshot().room.seek?.phase).toBe("ready");
+    client.dispose();
+  });
+});
+
+it("Light Seek spectators cannot ready or guess, spectator loss preserves play, and stalls pause countdowns", async () => {
+  const { host } = await pair();
+  host.selectGame("seek");
+  host.startSeek();
+  const spectator = new Session(
+    "client",
+    { id: "watch", name: "Watcher" },
+    () => {},
+  );
+  sessions.push(spectator);
+  const offer = await host.offer();
+  await host.accept(await spectator.answer(offer));
+  const [a, b] = Peer.all.slice(-2);
+  a.channel.peer = b.channel;
+  b.channel.peer = a.channel;
+  b.ondatachannel!({ channel: b.channel });
+  a.channel.open();
+  b.channel.open();
+  await vi.advanceTimersByTimeAsync(20);
+  expect(
+    spectator.snapshot().room.seek?.seats.every((s) => s.layout === null),
+  ).toBe(true);
+  spectator.guessSeek(1, 0);
+  spectator.readySeek([
+    { piece: 0, x: 0, y: 0, rotation: 0 },
+    { piece: 1, x: 0, y: 1, rotation: 0 },
+    { piece: 2, x: 0, y: 3, rotation: 0 },
+    { piece: 3, x: 0, y: 4, rotation: 0 },
+    { piece: 4, x: 0, y: 6, rotation: 0 },
+  ]);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(host.snapshot().room.seek?.seats.every((s) => !s.ready)).toBe(true);
+  a.channel.onclose?.();
+  expect(host.snapshot().room.seek?.phase).toBe("setup");
+  host.pauseGames();
+  host.resumeSeek();
+  const clock = vi
+    .spyOn(performance, "now")
+    .mockReturnValue(performance.now() + 1000);
+  await vi.advanceTimersByTimeAsync(100);
+  expect(host.snapshot().room.seek?.phase).toBe("paused");
+  clock.mockRestore();
+  host.resumeSeek();
+  await vi.advanceTimersByTimeAsync(3020);
+  expect(host.snapshot().room.seek?.phase).toBe("setup");
+  // Exactly-two guard also applies when extra devices are connected before Start.
+  host.selectGame("seek");
+  const extra = new Session("client", { id: "extra", name: "Extra" }, () => {});
+  sessions.push(extra);
+  const invite = await host.offer();
+  await host.accept(await extra.answer(invite));
+  const [c, d] = Peer.all.slice(-2);
+  c.channel.peer = d.channel;
+  d.channel.peer = c.channel;
+  d.ondatachannel!({ channel: d.channel });
+  c.channel.open();
+  d.channel.open();
+  await vi.advanceTimersByTimeAsync(20);
+  host.startSeek();
+  expect(host.snapshot().room.seek?.phase).toBe("ready");
+});

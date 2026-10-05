@@ -11,6 +11,9 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
   return {
     key: `${session}/${room.epoch}/${room.kind}`,
     kind: room.kind,
+    seek: room.seek?.last
+      ? { event: room.seek.last.event, result: room.seek.last.result }
+      : null,
     revision: grid.revision,
     lit: grid.cells.filter(Boolean).length,
     pong: pong
@@ -67,6 +70,14 @@ export function soundEvents(
   after: SoundFrame,
 ): Cue[] {
   if (!before || before.key !== after.key) return [];
+  if (after.seek && after.seek.event !== before.seek?.event)
+    return [
+      after.seek.result === "found"
+        ? "seek-found"
+        : after.seek.result === "hit"
+          ? "seek-hit"
+          : "seek-miss",
+    ];
   if (after.kind === "lights" && after.revision > before.revision)
     return [after.lit >= before.lit ? "on" : "off"];
   if (after.sumo && before.sumo) {

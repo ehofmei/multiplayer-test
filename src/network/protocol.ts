@@ -1,3 +1,4 @@
+import { validSeekLayout, seekInteger } from "../games/seek";
 import { validPlacement } from "../games/picnic";
 import { validShot } from "../games/minigolf";
 import { treasureChoices } from "../games/treasure";
@@ -54,6 +55,19 @@ export function parseMessage(raw: unknown): Message | null {
       record(m.input)
     ) {
       const i = m.input;
+      if (
+        i.kind === "seek-ready" &&
+        Object.keys(i).length === 2 &&
+        validSeekLayout(i.layout)
+      )
+        return m as Message;
+      if (
+        i.kind === "seek-guess" &&
+        Object.keys(i).length === 3 &&
+        seekInteger(i.turn, 1, 200) &&
+        seekInteger(i.cell, 0, 99)
+      )
+        return m as Message;
       if (
         i.kind === "picnic-place" &&
         integer(i.round) &&

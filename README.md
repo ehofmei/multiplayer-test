@@ -5,12 +5,12 @@ device has one direct WebRTC DataChannel to that host. There is no gameplay serv
 signaling service, STUN/TURN configuration, database, or account.
 
 Pair up to eight devices once using QR codes or copy/paste, then let the host choose
-Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, Sumo Bumpers, Reaction Race, Midnight Bakery, Treasure Dive, Meteor Minigolf, or Patchwork Picnic. Switching games keeps the same
+Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, Sumo Bumpers, Reaction Race, Midnight Bakery, Treasure Dive, Meteor Minigolf, Patchwork Picnic, or Light Seek. Switching games keeps the same
 connections. The app is installable and includes latency diagnostics.
 
-For possible future additions, [GAME_IDEAS.md](GAME_IDEAS.md) describes ten short
+For possible future additions, [GAME_IDEAS.md](GAME_IDEAS.md) describes eleven
 family game proposals with rules, controls, scoring, timing, and implementation
-notes. Treasure Dive, Meteor Minigolf, and Patchwork Picnic are now available; the remaining entries are
+notes. Treasure Dive, Meteor Minigolf, Patchwork Picnic, and Light Seek are now available; the remaining entries are
 design proposals. Ideally games finish within five minutes; proposed timers are
 playtest starting points, not hard limits.
 
@@ -531,3 +531,36 @@ and join the rematch; a participant leaving resets setup, while a spectator leav
 preserves play. Stop returns to setup, and Picnic Again resets the roster and scores.
 Switching games retains pairing. Update every device before playing: older builds
 cannot understand the new game, while saved identity and sound preferences stay intact.
+
+## Light Seek
+
+Exactly two connected players can Start Seek. Each secretly places five shapes on a
+10×10 board: a three-line, three-corner, four-line, four-square and five-plus
+(19 tiles). Select a piece, Choose anchor, tap an anchor, Rotate and Place piece.
+Placed pieces can be edited until Ready locks a complete legal layout. Pieces may
+touch; overlaps and off-board tiles are rejected. Drafts stay on your device.
+Setup and turns are untimed: nobody is auto-readied or given an automatic guess.
+
+After both Ready actions are accepted, a three-second countdown reveals the
+host’s single first-player draw. Select a cell and confirm Illuminate. Misses (×)
+and hits (●) remain visible; ordinary hits hide the piece identity. The last tile
+reveals that piece’s color, symbol and complete outline. Turns alternate after
+every valid guess, including hits. Find all five first to win immediately, without
+an extra reply turn. Results reveal both boards; there are no scores or ties.
+
+The primary screen shows a whole-board preview. Its focused selection dialog has
+four 5×5 areas with large touch targets, row letters and column numbers. Arrow
+keys navigate the whole grid, R rotates during setup and Enter confirms. My board
+shows incoming guesses; changing views preserves the turn. On short landscape
+screens the piece tray lives inside the placement dialog. Help and secondary
+views scroll when necessary. Miss, hit and found use distinct locally synthesized
+sounds, with the existing muted-by-default preference and gesture unlock.
+
+The host’s rendered view is filtered just like clients. Only your own committed
+layout is visible before results; spectators see readiness, guesses and found
+pieces. Late arrivals watch until a fresh match. Pause preserves layouts,
+readiness and the turn; Resume gives a short reorientation countdown. Pairing,
+host backgrounding and scheduling stalls pause countdowns. A participant leaving
+resets setup; a spectator leaving preserves play. Stop resets setup, and Seek
+Again resets the epoch, boards and first-player draw. Update every device before
+playing; protocol version 2 and saved identity/sound preferences are retained.

@@ -1,4 +1,14 @@
 import {
+  newSeek,
+  readySeek,
+  guessSeek,
+  seekView,
+  stepSeek,
+  pauseSeek,
+  resumeSeek,
+  type SeekPlacement,
+} from "../games/seek";
+import {
   newPicnic,
   commitPicnic,
   stepPicnic,
@@ -397,6 +407,8 @@ export class Session {
     } else this.fail("Ignored an unexpected host message.");
   }
   private roomView(viewer: string): Room {
+    if (this.room.seek)
+      return { ...this.room, seek: seekView(this.room.seek, viewer) };
     if (this.room.picnic)
       return { ...this.room, picnic: picnicView(this.room.picnic) };
     if (this.room.minigolf)
@@ -485,6 +497,7 @@ export class Session {
           this.room.ship?.crew.includes(link.player.id) ||
           this.room.cycle?.riders.some((r) => r.id === link.player!.id) ||
           this.room.sumo?.bumpers.some((b) => b.id === link.player!.id) ||
+          this.room.seek?.seats.some((s) => s.id === link.player!.id) ||
           this.room.picnic?.picnickers.some((p) => p.id === link.player!.id) ||
           this.room.minigolf?.balls.some((b) => b.id === link.player!.id) ||
           this.room.treasure?.divers.some((d) => d.id === link.player!.id) ||
@@ -671,6 +684,15 @@ export class Session {
   }
   pauseGames() {
     if (this.role !== "host") return;
+    if (this.room.seek) {
+      const next = pauseSeek(this.room.seek);
+      if (next !== this.room.seek) {
+        this.stopGameTimers();
+        this.room.seek = next;
+        this.broadcast();
+      }
+      return;
+    }
     if (this.room.picnic) {
       const next = pausePicnic(this.room.picnic);
       if (next !== this.room.picnic) {
@@ -761,6 +783,52 @@ export class Session {
     this.room.pong = { ...this.room.pong, phase: "serve", serveIn: 1 };
     this.runPong();
     this.broadcast();
+  }
+  startSeek() {
+    if (
+      this.role !== "host" ||
+      this.disposed ||
+      this.room.kind !== "seek" ||
+      this.players.length !== 2 ||
+      !["ready", "finished"].includes(this.room.seek?.phase ?? "")
+    )
+      return;
+    this.stopGameTimers();
+    this.room.epoch++;
+    this.room.notice = "";
+    this.room.seek = newSeek(this.players.map((p) => p.id));
+    this.broadcast();
+  }
+  readySeek(layout: SeekPlacement[]) {
+    this.input({ kind: "seek-ready", layout });
+  }
+  guessSeek(turn: number, cell: number) {
+    this.input({ kind: "seek-guess", turn, cell });
+  }
+  resumeSeek() {
+    if (this.role !== "host" || this.room.seek?.phase !== "paused") return;
+    this.room.seek = resumeSeek(this.room.seek);
+    this.runSeek();
+    this.broadcast();
+  }
+  private seekTickAt = 0;
+  private runSeek() {
+    this.stopGameTimers();
+    this.seekTickAt = performance.now();
+    this.gameTimer = setInterval(() => {
+      if (!this.room.seek) return;
+      const now = performance.now(),
+        elapsed = Math.floor(now - this.seekTickAt);
+      if (elapsed > 500) {
+        this.pauseGames();
+        return;
+      }
+      this.seekTickAt += elapsed;
+      this.room.seek = stepSeek(this.room.seek, elapsed);
+      if (!["countdown", "reorient"].includes(this.room.seek.phase))
+        this.stopGameTimers();
+      this.broadcast();
+    }, 100);
   }
   startPicnic() {
     if (
@@ -1198,6 +1266,24 @@ export class Session {
   }
   private applyInput(id: string, input: GameInput) {
     if (
+      this.room.kind === "seek" &&
+      this.room.seek &&
+      (input.kind === "seek-ready" || input.kind === "seek-guess")
+    ) {
+      const previous = this.room.seek;
+      this.room.seek =
+        input.kind === "seek-ready"
+          ? readySeek(previous, id, input.layout)
+          : guessSeek(previous, id, input.turn, input.cell);
+      if (previous !== this.room.seek) {
+        if (
+          this.room.seek.phase === "countdown" &&
+          previous.phase !== "countdown"
+        )
+          this.runSeek();
+        this.broadcast();
+      }
+    } else if (
       input.kind === "picnic-place" &&
       this.room.kind === "picnic" &&
       this.room.picnic

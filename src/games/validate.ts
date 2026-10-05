@@ -1,3 +1,4 @@
+import { validSeek } from "./seek-validate";
 import { validPicnic } from "./picnic-validate";
 import { validGolf } from "./minigolf-validate";
 import { validTreasure } from "./treasure-validate";
@@ -31,6 +32,23 @@ export function validRoom(v: unknown): v is Room {
     v.notice.length > 200
   )
     return false;
+  if (v.kind !== "seek" && v.seek !== undefined && v.seek !== null)
+    return false;
+  if (v.kind === "seek")
+    return (
+      v.pong === null &&
+      v.race === null &&
+      [
+        v.picnic,
+        v.minigolf,
+        v.treasure,
+        v.bakery,
+        v.sumo,
+        v.cycle,
+        v.ship,
+      ].every((x) => x === undefined || x === null) &&
+      validSeek(v.seek)
+    );
   if (v.kind !== "picnic" && v.picnic !== undefined && v.picnic !== null)
     return false;
   if (v.kind === "picnic")
