@@ -171,6 +171,33 @@ emulation does not establish physical-device latency or iOS behavior.
 
 ## Screenshot portability
 
+For tests that include `process.platform` in screenshot names, retain reviewed
+`-darwin.png` and `-linux.png` files for every captured state in
+`tests/<test-file>-snapshots/`. `npm run verify` on macOS checks only Darwin
+baselines; the Pages workflow runs on Linux. A successful local run does not
+establish that Linux baselines exist or match.
+
+When adding or changing screenshots:
+
+1. Build the app, then generate the focused baselines on each corresponding OS,
+   for example `npm run build` followed by
+   `npx playwright test tests/minigolf.spec.ts --update-snapshots`.
+   Keep the screenshot helper active and visually review every updated image.
+2. If Linux CI reports missing baselines, download `browser-failure-results` from
+   that exact run within its seven-day retention period. Review the relevant
+   `*-linux-actual.png` images in the failed test's directory. For an intentional
+   new state, copy each accepted image to the reported expected snapshot path,
+   removing `-actual` from its filename. Existing-baseline mismatches require
+   investigating the difference before accepting an update.
+3. Confirm every new platform-specific state has both OS baselines, preserve
+   strict dimensions and existing pixel budgets, and run `npm run verify`.
+   Commit the reviewed baselines with the test change. Confirm a passing Linux
+   CI run before claiming cross-platform verification; if it has not run, say so.
+
+Never substitute a Darwin render for a Linux baseline or disable comparisons to
+resolve a missing file. The font fixture stabilizes metrics but does not make
+text rasterization identical across operating systems.
+
 Ship-panel and Light-cycle arena regression snapshots temporarily use the checked-in,
 OFL-licensed Atkinson Hyperlegible font fixture. The app continues to use system
 fonts. The helper waits for the fixture faces, aligns the region to whole pixels, compares strict image dimensions,
@@ -391,6 +418,9 @@ messages, permissions, stale/duplicate input, pause/resume, disconnects, and tim
 cleanup. Browser flows use real WebRTC pairing, drag/keyboard/touch controls,
 short-screen adjustments, a deterministic five-hole match, rematch and game switch,
 late spectators, host backgrounding, and retained ready/active/result screenshots.
+Golf's ready, active and results snapshots use separate reviewed Darwin/Linux
+baselines, the bundled font fixture, strict dimensions and a 180-pixel budget.
+Follow the screenshot portability workflow above when adding or updating them.
 The complete verification command also checks manifest/icons, repository-subpath
 startup and caching, offline reload, identity/sound persistence and controlled updates.
 

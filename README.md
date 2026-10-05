@@ -44,6 +44,11 @@ host-only selection, spectators, stale input rejection, pause/resume and disconn
 Grid, Pong court and race target snapshots provide visual regression coverage. QA.md lists the
 interactive and real-device checks. Browser tests do not prove iOS LAN connectivity.
 
+Platform-specific screenshot tests need reviewed macOS (`darwin`) and Linux
+baselines. Local verification compares only the current OS's images; GitHub
+Actions verifies Linux. See [QA.md](QA.md#screenshot-portability) for baseline
+generation and recovery from CI artifacts.
+
 ## GitHub Pages
 
 The app base path is /multiplayer-test/. The Pages workflow builds and verifies
@@ -53,7 +58,7 @@ files to main, then check the workflow and open:
 
 https://ehofmei.github.io/multiplayer-test/
 
-Failed workflow runs retain browser traces and error contexts in the
+Failed workflow runs retain browser screenshots, traces and error contexts in the
 `browser-failure-results` artifact for seven days.
 
 No client-side path routes are used; Create/Join are in-app modes. Refresh returns
