@@ -560,11 +560,12 @@ QA inventory:
 - Find Glow Clash through the paged library; Start requires 3–8 players. Verify
   5/8/12 rounds, random unique colors, taken-color owner labels, changing colors,
   conflicting claims retaining the old color, and frozen setup settings at Start.
+  Swatches have no visible color names; accessible names and owner details remain.
 - Toggle three distinct tiles, reject a fourth until deselection, Clear, Lock
   picks, authoritative confirmation, untimed waiting and Players & scores
   readiness. Before reveal, other devices and spectators see no picks or counts.
 - Reveal mixed unique/colliding cells together, independently score 0–3 points,
-  inspect every selecting player, check equal diagonal bands for all eight colors,
+  inspect every selecting player, check one broad diagonal band per color (all eight),
   six-second automatic advancement, cumulative scores, ties and retained final
   board. Per-round breakdowns remain in the scores panel; rematch resets scores.
 - Tab/arrows/Space/Enter, focus visibility, Help/score/tile dialogs, Escape and
@@ -598,6 +599,13 @@ images through the non-deploying `codex/glow-clash` review workflow, fetch its
 baseline-return commit, review every image, and then require a normal full Linux
 verification run for the exact final commit. Do not update snapshots to conceal
 layout failures.
+
+Live production-preview QA paired three independent players through text invites,
+changed their colors, and exercised mouse/keyboard selection, rejecting a fourth
+pick, Clear, private locks, paused locks, resume countdown, mixed 2/1/1 scoring,
+tile details, Escape/focus restoration, standings, Help, automatic next round,
+and Stop retaining colors. Review the live preview and saved desktop/phone/tablet
+images separately from physical-device behavior.
 
 Physical iPhone/iPad follow-up: play with three and eight family members over
 household Wi-Fi in Safari and installed PWAs. Check all twelve color names,

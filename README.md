@@ -568,8 +568,9 @@ playing; protocol version 2 and saved identity/sound preferences are retained.
 ## Glow Clash
 
 A simultaneous hidden-choice game for 3–8 players. The host chooses 5, 8 or 12
-rounds (8 by default). Everyone gets a random unused one of twelve named neon
-colors in setup and may claim another free color. The host resolves competing
+rounds (8 by default). Everyone gets a random unused one of twelve neon
+colors in setup and may claim another free color. Setup uses glowing swatches
+without visible color names; accessible labels identify each color and owner. The host resolves competing
 color requests; taken colors keep their owner. Settings, colors, participants
 and the four-column board (one row per starting player) freeze at Start.
 
@@ -579,7 +580,7 @@ picks are visible before the last player locks. Selection is untimed: there are
 no automatic picks, missing submissions or speed bonuses. **Players & scores**
 shows who is still choosing. The last lock reveals every tile and scores the
 round once. A unique claim earns 1 point; a collision earns nobody points.
-Collision tiles show equal diagonal bands for every selecting color, ordered by
+Collision tiles show one broad diagonal band per selecting color, ordered by
 player number. Tap any revealed tile for full names, numbered identities, color
 names and its score explanation.
 

@@ -4109,6 +4109,9 @@ main.app-shell {
   outline-offset: -4px;
 }
 .glow-own-color {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   font-size: 14px;
 }
@@ -4136,9 +4139,6 @@ main.app-shell {
 .glow-palette [aria-pressed="true"] {
   outline: 2px solid white;
   outline-offset: -3px;
-}
-.glow-palette small {
-  font-size: 11px;
 }
 .glow-swatch,
 .glow-symbol {
@@ -4259,7 +4259,7 @@ main.app-shell {
     flex-wrap: nowrap;
   }
   .glow-setup-roster .glow-name {
-    display: none;
+    display: block;
   }
   .glow-mini-scores .glow-roster {
     gap: 3px;
@@ -4358,8 +4358,13 @@ main.app-shell {
 .glow-rounds [aria-pressed="true"] {
   background: #50338c;
 }
-.glow-palette .glow-swatch {
-  box-shadow: 0 0 9px color-mix(in srgb, var(--swatch-neon) 50%, transparent);
+.glow-palette button {
+  border-color: var(--swatch-neon);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--swatch-neon) 24%, transparent);
+}
+.glow-palette .glow-swatch:not(:empty) {
+  background: #101326dd;
+  color: white;
 }
 @media (max-width: 650px) and (min-height: 760px) {
   .glow-workspace,

@@ -11,10 +11,10 @@ import type { Player } from "../network/protocol";
 import type { Session } from "../network/session";
 const coordinate = (cell: number) =>
   `${"ABCD"[cell % 4]}${Math.floor(cell / 4) + 1}`;
-// A complete stripe cycle fits across even a 44px cell, including eight colors.
+// One broad, equal-width band per player spans the entire tile at any size.
 export function glowStripes(colors: string[]) {
-  const band = 3;
-  return `repeating-linear-gradient(135deg, ${colors.flatMap((c, i) => [`${c} ${i * band}px`, `${c} ${(i + 1) * band}px`]).join(", ")})`;
+  const band = 100 / colors.length;
+  return `linear-gradient(135deg, ${colors.flatMap((c, i) => [`${c} ${i * band}%`, `${c} ${(i + 1) * band}%`]).join(", ")})`;
 }
 export function GlowGame({
   game,
@@ -108,6 +108,7 @@ export function GlowGame({
           <b
             className="glow-symbol"
             style={{ background: glowColors[s.color].hex }}
+            aria-label={`Player ${symbol(s.id)}, ${glowColors[s.color].name}`}
           >
             {symbol(s.id)}
           </b>
@@ -115,9 +116,7 @@ export function GlowGame({
             {name(s.id)}
             {s.id === session.me.id ? " · You" : ""}
           </span>
-          <strong>
-            {ready ? glowColors[s.color].name : `${glowTotal(s)} pts`}
-          </strong>
+          {!ready && <strong>{glowTotal(s)} pts</strong>}
           {full && (
             <p>
               {ready
@@ -232,6 +231,15 @@ export function GlowGame({
         ))}
     </div>
   );
+  const ownColor = me ? (
+    <span
+      className="glow-swatch"
+      style={{ background: glowColors[me.color].hex }}
+      aria-label={glowColors[me.color].name}
+    />
+  ) : (
+    "Watching"
+  );
   const setupOptions = (
     <div className="glow-options">
       <div className="glow-rounds" role="group" aria-label="Match rounds">
@@ -246,31 +254,25 @@ export function GlowGame({
           </button>
         ))}
       </div>
-      <p className="glow-own-color">
-        Your color:{" "}
-        <strong>{me ? glowColors[me.color].name : "Watching"}</strong>
-      </p>
+      <p className="glow-own-color">Your color {ownColor}</p>
       <div className="glow-palette" role="group" aria-label="Neon colors">
         {glowColors.map((c, i) => {
           const owner = game.seats.find((s) => s.color === i);
           return (
             <button
               key={c.name}
+              style={
+                { "--swatch-neon": c.hex, background: c.hex } as CSSProperties
+              }
               aria-label={`${c.name}${owner ? ` · ${name(owner.id)}` : " · Available"}`}
               aria-pressed={me?.color === i}
               disabled={!connected || !me || !!owner}
               onClick={() => session.claimGlowColor(i)}
               title={owner ? `Taken by ${name(owner.id)}` : "Available"}
             >
-              <span
-                className="glow-swatch"
-                style={
-                  { background: c.hex, "--swatch-neon": c.hex } as CSSProperties
-                }
-              >
+              <span className="glow-swatch">
                 {owner ? symbol(owner.id) : ""}
               </span>
-              <small>{c.name}</small>
             </button>
           );
         })}
@@ -377,8 +379,7 @@ export function GlowGame({
         <div className="glow-setup">
           {short ? (
             <p className="glow-own-color">
-              {game.rounds} rounds · Your color:{" "}
-              {me ? glowColors[me.color].name : "Watching"}
+              {game.rounds} rounds · Your color {ownColor}
             </p>
           ) : (
             setupOptions

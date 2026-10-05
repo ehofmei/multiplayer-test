@@ -138,6 +138,22 @@ test("three players choose colors, lock privately, reveal, finish, rematch and s
     await clients[1]
       .getByRole("button", { name: "Blue · Available", exact: true })
       .tap();
+    const setupText = await game(host).innerText();
+    for (const name of [
+      "Red",
+      "Orange",
+      "Amber",
+      "Yellow",
+      "Lime",
+      "Green",
+      "Teal",
+      "Cyan",
+      "Blue",
+      "Violet",
+      "Magenta",
+      "Pink",
+    ])
+      expect(setupText).not.toContain(name);
     await snapshot(host, "setup");
     await fit(host, "setup");
     await host.clock.install();
@@ -313,6 +329,10 @@ test("eight colors stripe together, ties fit and late spectators do not resize t
           .first()
           .evaluate((e) => (e as HTMLElement).style.background);
         expect(backgrounds.match(/rgb\(/g)).toHaveLength(16);
+        expect(backgrounds).toContain("linear-gradient");
+        expect(backgrounds).not.toContain("repeating");
+        expect(backgrounds).toContain("0%");
+        expect(backgrounds).toContain("100%");
         await host
           .getByRole("button", {
             name: "A1 · Collision, 8 players, 0 points",
