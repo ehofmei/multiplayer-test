@@ -333,8 +333,13 @@ phase overshoot and the 195-second budget, ties, paused phases, private views,
 stale/duplicate inputs, disposal, and complete maximal eight-player messages
 (including escaped names/IDs). Real WebRTC tests complete a seeded match, test
 rematch/switching, eight long names, spectators, disconnects and background pause.
-Ready/active/results regression snapshots use the bundled font fixture. Saved
-screen checks include taller metrics and pending-update notices.
+Ready/active/results regression snapshots use the bundled font fixture and
+separate reviewed Darwin/Linux baselines, following the Bakery convention. Text
+rasterization differs across these platforms even with identical font metrics;
+keep the 180-pixel budget and strict image dimensions on each platform. Regenerate
+all three states on the corresponding OS with the helper active, then review the
+images before accepting updates. Saved screen checks include taller metrics and
+pending-update notices; their fit and touch-target assertions remain strict.
 
 The live production preview paired two players, confirmed a secret shield lock,
 paused/resumed without losing it, revealed shared treasure, and Returned to bank
