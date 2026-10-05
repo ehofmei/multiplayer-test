@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Session } from "./session";
+import { glowColors } from "../games/glow";
 
 class Channel {
   label = "game";
@@ -1236,15 +1237,20 @@ describe("Glow room", () => {
     const original = client
       .snapshot()
       .room.glow!.seats.find((s) => s.id === "client")!.color;
-    host.claimGlowColor(10);
-    client.claimGlowColor(10);
+    const freeColor = glowColors.findIndex(
+      (_, color) =>
+        !host.snapshot().room.glow!.seats.some((s) => s.color === color),
+    );
+    expect(freeColor).toBeGreaterThanOrEqual(0);
+    host.claimGlowColor(freeColor);
+    client.claimGlowColor(freeColor);
     await vi.advanceTimersByTimeAsync(20);
     expect(
       host.snapshot().room.glow!.seats.find((s) => s.id === "client")!.color,
     ).toBe(original);
     expect(
       client.snapshot().room.glow!.seats.find((s) => s.id === "host")!.color,
-    ).toBe(10);
+    ).toBe(freeColor);
     client.setGlowRounds(5);
     expect(host.snapshot().room.glow?.rounds).toBe(8);
     host.setGlowRounds(5);
