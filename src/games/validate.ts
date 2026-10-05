@@ -1,3 +1,4 @@
+import { validGolf } from "./minigolf-validate";
 import { validTreasure } from "./treasure-validate";
 import { bakeryCards } from "./bakery";
 import { SUMO_COUNTDOWN, SUMO_LIMIT, SUMO_LEASE, SUMO_COOLDOWN } from "./sumo";
@@ -29,6 +30,17 @@ export function validRoom(v: unknown): v is Room {
     v.notice.length > 200
   )
     return false;
+  if (v.kind !== "minigolf" && v.minigolf !== undefined && v.minigolf !== null)
+    return false;
+  if (v.kind === "minigolf")
+    return (
+      v.pong === null &&
+      v.race === null &&
+      [v.treasure, v.bakery, v.sumo, v.cycle, v.ship].every(
+        (x) => x === undefined || x === null,
+      ) &&
+      validGolf(v.minigolf)
+    );
   if (v.kind !== "treasure" && v.treasure !== undefined && v.treasure !== null)
     return false;
   if (v.kind === "treasure")

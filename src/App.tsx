@@ -1,3 +1,4 @@
+import { MinigolfGame } from "./components/MinigolfGame";
 import { TreasureGame } from "./components/TreasureGame";
 import { BakeryGame } from "./components/BakeryGame";
 import { AppPanel } from "./components/AppLayout";
@@ -220,7 +221,7 @@ export function App() {
       )}
       {update.ready && (
         <aside className="banner">
-          {snapshot?.room.kind === "treasure"
+          {["treasure", "minigolf"].includes(snapshot?.room.kind ?? "")
             ? "Update ready in Menu."
             : "An update is ready in Menu when you’re done playing."}
         </aside>
@@ -363,6 +364,16 @@ export function App() {
                       connected={connected}
                     />
                   )}
+                  {snapshot?.room.kind === "minigolf" &&
+                    snapshot.room.minigolf && (
+                      <MinigolfGame
+                        key={snapshot.room.epoch}
+                        game={snapshot.room.minigolf}
+                        players={snapshot.players}
+                        session={session}
+                        connected={connected}
+                      />
+                    )}
                   {snapshot?.room.kind === "treasure" &&
                     snapshot.room.treasure && (
                       <TreasureGame

@@ -353,3 +353,56 @@ Safari and installed PWAs, check safe areas, readable risk/haul/shield feedback,
 touch selection/lock, background/resume, and updates across devices. Ask whether
 the shield creates an interesting decision and the short boat wait stays fun.
 Browser emulation cannot establish real iOS lifecycle or family balance.
+
+## Meteor Minigolf
+
+Inventory for 2–8 players on desktop, iPad, and narrow iPhones:
+
+- Find Golf through More games. Start requires two players. Update every device
+  first; an old build should give the existing unsupported-game/update message.
+- Preview each of the five greens with all walls, mushrooms, cup rings, and meteor
+  warnings visible. Check your numbered ball, total, phase timer, and wind direction.
+- Drag from the ball toward travel, release a short or long drag, then adjust it.
+  Cancel a drag or lose focus: the previous aim should return. The arrow previews
+  direction, not a complete trajectory. Angle/Power work with touch and arrow keys.
+  At short portrait heights use Adjust aim; close the dialog before Ready.
+- Tap Ready, see Shot locked after host confirmation, and try to change it. Others'
+  shots and actual gust/impact timing remain hidden until launch. Leave one player
+  without a shot: that hole earns 0, and the next hole reopens aiming normally.
+- Watch boundary/wall bounces, mushroom boosts, and the shared meteor. Balls never
+  collide with one another; the host awards cup or distance points. Results overlay
+  each hole's points; Standings shows all five scores and full names. Ties share wins.
+- Pause/Resume during aiming and rolling, open pairing, and background the host.
+  Preserve locks, remaining time, balls, and the current random conditions. Resume
+  adds a countdown. Backgrounding only a client must not stall everyone.
+- Join mid-match to watch. Losing a spectator preserves play; losing a participant
+  resets setup. Rematch includes the current roster and zeroes scores. Stop and
+  switch to Shared Lights without pairing again. Leaving the host ends the room.
+- Inspect 320×568, 320×700, 390×844, 844×390, 768×1024, and 1280×720 with long names,
+  eight golfers, taller font metrics, and reduced motion. Keep the full green,
+  essential controls and results on-screen, with 44px buttons and no overlapping
+  footer. Help, Standings and Adjust shot retain scrolling, Escape and focus return.
+
+Regression coverage lives in `src/games/minigolf.test.ts`, the Golf session tests,
+and `tests/minigolf.spec.ts`. It covers fixed-step scheduling, cup speed thresholds,
+bounce components and separation, cooldowns, shared/exact-center meteor effects,
+identical outcomes, missing shots, five-hole totals, privacy, bounded eight-player
+messages, permissions, stale/duplicate input, pause/resume, disconnects, and timer
+cleanup. Browser flows use real WebRTC pairing, drag/keyboard/touch controls,
+short-screen adjustments, a deterministic five-hole match, rematch and game switch,
+late spectators, host backgrounding, and retained ready/active/result screenshots.
+The complete verification command also checks manifest/icons, repository-subpath
+startup and caching, offline reload, identity/sound persistence and controlled updates.
+
+Live browser QA paired two current production-preview devices and exercised drag
+preview, slider/keyboard adjustment, authoritative Ready locks, pause/resume and
+manual app updates. Screenshot reviews complement the strict automated viewport
+and touch-target checks. A final development-preview pass at 320×568 exercised
+Adjust aim, keyboard edits, Escape dismissal, Ready lock and pause. These checks
+use desktop Chromium; they do not establish physical-device behavior.
+
+Physical iPhone/iPad follow-up: play all five holes on household Wi-Fi in Safari
+and installed PWAs. Check real touch dragging/cancellation, safe areas and rotation,
+Adjust aim with larger text, app background/resume, cached startup and updates.
+Family play should tune aiming time, drag sensitivity and course balance; the
+five-minute preference is a pacing goal, not an exact match-time requirement.

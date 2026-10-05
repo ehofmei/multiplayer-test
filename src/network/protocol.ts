@@ -1,3 +1,4 @@
+import { validShot } from "../games/minigolf";
 import { treasureChoices } from "../games/treasure";
 import { cycleDirections } from "../games/cycle";
 import { validColor, type PaddleColor } from "../games/colors";
@@ -52,6 +53,14 @@ export function parseMessage(raw: unknown): Message | null {
       record(m.input)
     ) {
       const i = m.input;
+      if (
+        i.kind === "golf-shot" &&
+        integer(i.hole) &&
+        i.hole >= 1 &&
+        i.hole <= 5 &&
+        validShot(i.angle, i.power)
+      )
+        return m as Message;
       if (
         i.kind === "dive-choice" &&
         integer(i.dive) &&

@@ -803,3 +803,114 @@ it("Treasure late arrivals spectate; spectator loss preserves play, participant 
   Peer.all[0].channel.onclose?.();
   expect(host.snapshot().room.treasure!.phase).toBe("ready");
 });
+
+it("Golf requires host/two players, hides locks and conditions until launch, preserves pause, rejects stale inputs, finishes and rematches", async () => {
+  const solo = new Session("host", { id: "solo", name: "Solo" }, () => {});
+  sessions.push(solo);
+  solo.selectGame("minigolf");
+  solo.startGolf();
+  expect(solo.snapshot().room.minigolf!.phase).toBe("ready");
+  const { host, client, hostChannel, clientChannel } = await pair();
+  const sent = vi.spyOn(hostChannel, "send");
+  host.selectGame("minigolf");
+  host.startGolf();
+  await vi.advanceTimersByTimeAsync(7020);
+  const view = () => host.snapshot().room.minigolf!;
+  const epoch = host.snapshot().room.epoch;
+  client.startGolf();
+  expect(client.snapshot().room.epoch).toBe(epoch);
+  client.shootGolf(1, 0, 0.6);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(view().balls[1].locked).toBe(true);
+  expect(view().balls[1].shot).toBeNull();
+  for (const [raw] of sent.mock.calls) {
+    const m = JSON.parse(raw);
+    if (m.type === "state") {
+      expect(m.room.minigolf.conditions).toBeNull();
+      expect(
+        m.room.minigolf.balls.every((b: { shot: unknown }) => b.shot === null),
+      ).toBe(true);
+    }
+  }
+  host.pauseGames();
+  const paused = structuredClone(view());
+  await vi.advanceTimersByTimeAsync(10000);
+  expect(view()).toEqual(paused);
+  client.resumeGolf();
+  expect(view().phase).toBe("paused");
+  host.resumeGolf();
+  await vi.advanceTimersByTimeAsync(3020);
+  expect(view().phase).toBe("aiming");
+  expect(view().balls[1].locked).toBe(true);
+  client.shootGolf(1, 90, 1);
+  host.shootGolf(1, 0, 0.6);
+  await vi.advanceTimersByTimeAsync(20020);
+  expect(view().phase).toBe("rolling");
+  expect(view().balls[1].shot).toEqual({ angle: 0, power: 0.6 });
+  await vi.advanceTimersByTimeAsync(14000);
+  expect(view().hole).toBe(2);
+  const inject = (e: number, sequence: number, hole: number) =>
+    clientChannel.send(
+      JSON.stringify({
+        v: 2,
+        type: "input",
+        epoch: e,
+        sequence,
+        input: { kind: "golf-shot", hole, angle: 0, power: 0.6 },
+      }),
+    );
+  inject(epoch - 1, 100, 2);
+  inject(epoch, 101, 1);
+  inject(epoch, 100, 2);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(view().balls[1].locked).toBe(false);
+  await vi.advanceTimersByTimeAsync(160000);
+  expect(client.snapshot().room.minigolf!.phase).toBe("finished");
+  host.startGolf();
+  expect(host.snapshot().room.epoch).toBe(epoch + 1);
+  expect(view().balls.every((b) => b.scores.every((n) => n === 0))).toBe(true);
+  host.selectGame("lights");
+  await vi.advanceTimersByTimeAsync(20000);
+  expect(client.snapshot().room.kind).toBe("lights");
+  host.dispose();
+  client.dispose();
+  await vi.advanceTimersByTimeAsync(20);
+  expect(vi.getTimerCount()).toBe(0);
+});
+
+it("Golf late arrivals watch, spectator disconnect preserves play, host stalls pause and participant loss resets", async () => {
+  const { host } = await pair();
+  host.selectGame("minigolf");
+  host.startGolf();
+  await vi.advanceTimersByTimeAsync(7020);
+  const spectator = new Session(
+    "client",
+    { id: "watch", name: "Watcher" },
+    () => {},
+  );
+  sessions.push(spectator);
+  const offer = await host.offer();
+  const answer = await spectator.answer(offer);
+  await host.accept(answer);
+  const a = Peer.all[2],
+    b = Peer.all[3];
+  a.channel.peer = b.channel;
+  b.channel.peer = a.channel;
+  b.ondatachannel!({ channel: b.channel });
+  a.channel.open();
+  b.channel.open();
+  await vi.advanceTimersByTimeAsync(20);
+  spectator.shootGolf(1, 0, 1);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(host.snapshot().room.minigolf!.balls).toHaveLength(2);
+  a.channel.onclose?.();
+  expect(host.snapshot().room.minigolf!.phase).toBe("aiming");
+  const clock = vi
+    .spyOn(performance, "now")
+    .mockReturnValue(performance.now() + 1000);
+  await vi.advanceTimersByTimeAsync(50);
+  expect(host.snapshot().room.minigolf!.phase).toBe("paused");
+  clock.mockRestore();
+  Peer.all[0].channel.onclose?.();
+  expect(host.snapshot().room.minigolf!.phase).toBe("ready");
+});

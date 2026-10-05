@@ -1,3 +1,4 @@
+import { newGolf, type GolfState } from "./minigolf";
 import {
   newTreasure,
   type TreasureState,
@@ -21,7 +22,8 @@ export type GameKind =
   | "cycle"
   | "sumo"
   | "bakery"
-  | "treasure";
+  | "treasure"
+  | "minigolf";
 export interface PongState {
   phase: "ready" | "serve" | "playing" | "paused" | "finished";
   seats: string[];
@@ -58,8 +60,10 @@ export interface Room {
   sumo?: SumoState | null;
   bakery?: BakeryState | null;
   treasure?: TreasureState | null;
+  minigolf?: GolfState | null;
 }
 export type GameInput =
+  | { kind: "golf-shot"; hole: number; angle: number; power: number }
   | { kind: "dive-choice"; dive: number; door: number; choice: TreasureChoice }
   | { kind: "bakery-pick"; round: number; pick: number; index: number }
   | { kind: "sumo-move"; x: number; y: number }
@@ -81,12 +85,14 @@ export const gameNames: Record<GameKind, string> = {
   sumo: "Sumo Bumpers",
   bakery: "Midnight Bakery",
   treasure: "Treasure Dive",
+  minigolf: "Meteor Minigolf",
 };
 export function newRoom(kind: GameKind, epoch: number): Room {
   return {
     epoch,
     kind,
     notice: "",
+    minigolf: kind === "minigolf" ? newGolf() : null,
     treasure: kind === "treasure" ? newTreasure() : null,
     bakery: kind === "bakery" ? newBakery() : null,
     cycle: kind === "cycle" ? newCycle() : null,

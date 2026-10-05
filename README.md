@@ -5,12 +5,14 @@ device has one direct WebRTC DataChannel to that host. There is no gameplay serv
 signaling service, STUN/TURN configuration, database, or account.
 
 Pair up to eight devices once using QR codes or copy/paste, then let the host choose
-Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, Sumo Bumpers, Reaction Race, Midnight Bakery, or Treasure Dive. Switching games keeps the same
+Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, Sumo Bumpers, Reaction Race, Midnight Bakery, Treasure Dive, or Meteor Minigolf. Switching games keeps the same
 connections. The app is installable and includes latency diagnostics.
 
 For possible future additions, [GAME_IDEAS.md](GAME_IDEAS.md) describes ten short
 family game proposals with rules, controls, scoring, timing, and implementation
-notes. Treasure Dive is now available; the remaining entries are design proposals.
+notes. Treasure Dive and Meteor Minigolf are now available; the remaining entries are
+design proposals. Ideally games finish within five minutes; proposed timers are
+playtest starting points, not hard limits.
 
 ## Run and verify
 
@@ -68,7 +70,7 @@ support is not a project requirement. Desktop browsers remain useful for testing
 The app uses a viewport-filling shell with safe-area padding. Home, the game
 library, pairing, setup, and play are focused views rather than a long page.
 Phones and short windows show four games per library page across three pages; larger iPad windows
-show all ten. During games, courts fit their remaining space without changing
+show six games per page across two pages. During games, courts fit their remaining space without changing
 the game geometry. Landscape layouts place courts beside controls; very short
 setup screens omit the court preview to keep assignments and Start reachable.
 
@@ -449,3 +451,43 @@ action in Menu to keep the play surface clear.
 Update the app on **every device** before selecting Treasure Dive, then pair again
 if versions differ. Identity and sound preferences retain their existing storage.
 No new services, dependencies, external media, or persistent progression are used.
+
+## Meteor Minigolf
+
+Two to eight players each take one simultaneous shot on five fixed cosmic greens:
+Open green, Bank shot, Mushrooms, Meteor, and Mixed course. Balls pass through one
+another. Drag from your numbered ball toward the desired direction; distance sets
+power. Release keeps the preview arrow. Angle and Power sliders offer touch and
+keyboard alternatives (0° right, 90° down); short phones open them with Adjust aim. Tap Ready to commit; the host confirms
+the lock, and shots stay private until launch. Missing Ready skips just that hole
+for 0 points. The next hole always gives everyone a fresh chance.
+
+A ball within 24 logical units of the cup at speed ≤170 earns 100 points. Otherwise,
+at the rolling deadline it earns `max(0, 70 - floor(distanceToCup / 8))`. Five hole
+scores add up; tied totals share the win. Standings shows each player's five-hole
+breakdown. Your total, ball number, timer, and result stay on your screen without
+squeezing in eight names.
+
+The host runs a 1,000 × 700 course at fixed 120 Hz steps. Power 0–1 maps to speed
+100–1,100; rolling resistance is `exp(-1.25 × dt)`. Walls and boundaries retain
+75% of normal bounce velocity; mushrooms add an outward 160-unit/s impulse with a
+0.4-second cooldown. Wind direction is visible before aiming, while a shared
+strength of 0, 12, or 24 units/s² is revealed at launch. Meteor holes show a radius-90
+warning; the shared impact occurs between 4–5.5 seconds and pushes balls outward
+by 120 units/s. Captured balls ignore later forces. The arrow previews direction,
+not an exact trajectory.
+
+Starting timers are a 3-second countdown followed by 4 seconds of course preview,
+20 seconds of aiming, 10 seconds of rolling, and 3 seconds of scores per hole.
+Holes advance automatically; these defaults can be tuned after family play.
+Pause/Resume preserves the exact phase, shots, scores, and environmental draw, with
+a short resume countdown. Pairing, host backgrounding, or a scheduling stall pauses
+play. Late arrivals spectate until the next match; losing a participating player
+returns to setup. Rematches reset scores and take the current roster. Stop and
+Choose Game keep other connected devices paired.
+
+Update the app on every device before playing Meteor Minigolf. It uses the existing
+version-2 bounded protocol and leaves saved identity and sound preferences intact.
+Courses, artwork, rules, and cached startup are local; no new service or dependency
+is required. Matches and scores are temporary. Physical iPhone/iPad touch, home-screen
+layout, Wi-Fi pairing, and background/resume checks remain in QA.md.

@@ -73,6 +73,12 @@ const choices: {
     mark: "♧",
   },
   {
+    kind: "minigolf",
+    title: "Meteor Minigolf",
+    detail: "2–8 golfers. One shot each. Five cosmic greens. Aim together.",
+    mark: "⚑",
+  },
+  {
     kind: "treasure",
     title: "Treasure Dive",
     detail: "2–8 divers. Bank your haul or brave one more sunken room.",
@@ -93,7 +99,8 @@ export function GamePicker({ session }: { session: Session }) {
     media.addEventListener("change", change);
     return () => media.removeEventListener("change", change);
   }, []);
-  const pages = compact ? Math.ceil(choices.length / 4) : 1;
+  const pageSize = compact ? 4 : 6;
+  const pages = Math.ceil(choices.length / pageSize);
   return (
     <section className="games-card game-library" aria-label="Game picker">
       <p className="eyebrow">WHAT SHALL WE PLAY?</p>
@@ -104,26 +111,21 @@ export function GamePicker({ session }: { session: Session }) {
       </h2>
       <p className="muted">Pair once. Play as many games as you like.</p>
       <div className="game-choices">
-        {choices
-          .slice(
-            compact ? page * 4 : 0,
-            compact ? page * 4 + 4 : choices.length,
-          )
-          .map((c) => (
-            <button
-              key={c.kind}
-              aria-label={c.title}
-              className="game-choice"
-              disabled={session.role !== "host"}
-              onClick={() => session.selectGame(c.kind)}
-            >
-              <span className="game-mark" aria-hidden="true">
-                {c.mark}
-              </span>
-              <strong>{c.title}</strong>
-              <small>{c.detail}</small>
-            </button>
-          ))}
+        {choices.slice(page * pageSize, (page + 1) * pageSize).map((c) => (
+          <button
+            key={c.kind}
+            aria-label={c.title}
+            className="game-choice"
+            disabled={session.role !== "host"}
+            onClick={() => session.selectGame(c.kind)}
+          >
+            <span className="game-mark" aria-hidden="true">
+              {c.mark}
+            </span>
+            <strong>{c.title}</strong>
+            <small>{c.detail}</small>
+          </button>
+        ))}
       </div>
       {pages > 1 && (
         <nav className="library-pages" aria-label="Game library pages">

@@ -1,7 +1,8 @@
 # Short family game ideas
 
-This is a proposal catalog for ten possible additions to P2P Game Lab. None of
-these games is implemented by this document. Each proposal defines a first
+This is a design catalog for ten additions to P2P Game Lab. Treasure Dive and
+Meteor Minigolf have been implemented; see README.md for their shipped behavior.
+The remaining entries are proposals. Each proposal defines a first
 playable version closely enough that a later Codex session can choose one and
 build it without inventing the core rules. Implement the game the user selects;
 the catalog is not an instruction to build all ten.
@@ -12,18 +13,18 @@ your chances, while a single mistake should not make the remaining match feel
 pointless. Numeric values below are proposed starting defaults, not proven
 balance. Preserve each concept's identity when tuning them after family play.
 
-| Idea                                               | Type                   | Maximum default active match | Main interaction                   |
-| -------------------------------------------------- | ---------------------- | ---------------------------- | ---------------------------------- |
-| [1. Treasure Dive](#1-treasure-dive)               | Push your luck         | 3:15                         | Return, explore, or spend a shield |
-| [2. Meteor Minigolf](#2-meteor-minigolf)           | Touch aiming / physics | 3:08                         | Aim and power a single shot        |
-| [3. Patchwork Picnic](#3-patchwork-picnic)         | Spatial puzzle         | 2:53                         | Select, rotate, and place shapes   |
-| [4. Secret Suitcases](#4-secret-suitcases)         | Bluffing / deduction   | 2:48                         | Claim, trust, or challenge         |
-| [5. Cloud Couriers](#5-cloud-couriers)             | Route-planning race    | 2:51                         | Choose a route and optional boost  |
-| [6. Monster Market](#6-monster-market)             | Auction / prediction   | 2:56                         | Bid on one item or pass            |
-| [7. Treasure Shuffle](#7-treasure-shuffle)         | Memory / observation   | 2:21                         | Follow chests and choose one       |
-| [8. Castle Critters](#8-castle-critters)           | Tactics / dice         | 3:08                         | Allocate three critters            |
-| [9. Doodle Dice](#9-doodle-dice)                   | Creative party game    | 3:33 at eight players        | Draw, guess, and award pictures    |
-| [10. Kitchen Catastrophe](#10-kitchen-catastrophe) | Cooperative planning   | 2:47                         | Prepare, serve, or clean together  |
+| Idea                                               | Type                   | Main interaction                   |
+| -------------------------------------------------- | ---------------------- | ---------------------------------- |
+| [1. Treasure Dive](#1-treasure-dive)               | Push your luck         | Return, explore, or spend a shield |
+| [2. Meteor Minigolf](#2-meteor-minigolf)           | Touch aiming / physics | Aim and power a single shot        |
+| [3. Patchwork Picnic](#3-patchwork-picnic)         | Spatial puzzle         | Select, rotate, and place shapes   |
+| [4. Secret Suitcases](#4-secret-suitcases)         | Bluffing / deduction   | Claim, trust, or challenge         |
+| [5. Cloud Couriers](#5-cloud-couriers)             | Route-planning race    | Choose a route and optional boost  |
+| [6. Monster Market](#6-monster-market)             | Auction / prediction   | Bid on one item or pass            |
+| [7. Treasure Shuffle](#7-treasure-shuffle)         | Memory / observation   | Follow chests and choose one       |
+| [8. Castle Critters](#8-castle-critters)           | Tactics / dice         | Allocate three critters            |
+| [9. Doodle Dice](#9-doodle-dice)                   | Creative party game    | Draw, guess, and award pictures    |
+| [10. Kitchen Catastrophe](#10-kitchen-catastrophe) | Cooperative planning   | Prepare, serve, or clean together  |
 
 ## Shared product and implementation requirements
 
@@ -36,15 +37,15 @@ balance. Preserve each concept's identity when tuning them after family play.
 - Use simultaneous decisions or parallel activity. Avoid a queue of eight
   sequential turns and avoid permanent elimination. Show what happened and why
   after a resolution, including a readable score breakdown.
-- Complete a default match in at most 240 seconds of active time, including the
-  initial countdown and mandatory phase transitions. This leaves clearance under
-  the requested five-minute limit. Pairing, instructions before Start,
-  deliberate pauses, and time spent reviewing final results are outside that
-  budget.
+- Aim for games that ideally finish in five minutes or less. This is a design
+  preference, not a hard time limit. The phase timers below are starting ideas
+  to tune through playtesting, not measured or guaranteed match durations.
+  Pairing, instructions before Start, deliberate pauses, and reviewing final
+  results are separate from playing the match.
 - Advance rounds automatically. Never require every player to tap Continue or
   the host to start the next round. Every input window has a timeout fallback;
-  distracted players cannot stall the whole room. Use the per-game phase budgets
-  below as maximums, even if all players commit early.
+  distracted players cannot stall the whole room. Tune the proposed phase timers
+  for comfortable family play rather than treating them as fixed budgets.
 - Competitive ties share the win. Do not add a potentially unbounded tiebreaker.
   Cooperative games give everyone the same team result.
 - Prefer pictures, small integers, plain labels, and one short example in Help.
@@ -118,7 +119,7 @@ Useful existing integration points are:
 - [src/games/bakery.ts](src/games/bakery.ts): a useful example of private hands,
   locked simultaneous choices, a pure reducer, injected randomness, and a
   recipient-specific view. Bakery is currently untimed; do not copy its timing
-  behavior into these bounded matches.
+  behavior without adding sensible timeout fallbacks.
 - [src/components](src/components) and [src/App.tsx](src/App.tsx): game screens,
   host controls, help, and the picker. Extend the paged picker rather than
   squeezing more cards onto a small phone.
@@ -145,9 +146,9 @@ another game. Opening pairing, host backgrounding, and a long scheduling stall
 pause active timers rather than fast-forwarding through decisions. Preserve
 committed choices, scores, boards, and already drawn randomness. On resume,
 restore the same phase and remaining time after a short reorientation countdown;
-do not reroll an unfavorable result. Paused time and resume countdowns do not
-count toward the original active-match budget. Clear held touch input when
-hiding or losing focus. A backgrounded client may miss decisions and receives
+do not reroll an unfavorable result. Pauses and resume countdowns may
+extend a match; preserving a comfortable pace matters more than an exact total.
+Clear held touch input when hiding or losing focus. A backgrounded client may miss decisions and receives
 the normal timeout fallback; its device must not freeze the host's match.
 
 A participant disconnect resets the match to setup while preserving remaining

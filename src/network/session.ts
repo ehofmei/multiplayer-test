@@ -1,4 +1,12 @@
 import {
+  newGolf,
+  commitGolf,
+  golfView,
+  pauseGolf,
+  resumeGolf,
+  stepGolf,
+} from "../games/minigolf";
+import {
   newTreasure,
   treasureView,
   chooseTreasure,
@@ -380,6 +388,8 @@ export class Session {
     } else this.fail("Ignored an unexpected host message.");
   }
   private roomView(viewer: string): Room {
+    if (this.room.minigolf)
+      return { ...this.room, minigolf: golfView(this.room.minigolf) };
     if (this.room.treasure)
       return { ...this.room, treasure: treasureView(this.room.treasure) };
     if (this.room.bakery)
@@ -464,6 +474,7 @@ export class Session {
           this.room.ship?.crew.includes(link.player.id) ||
           this.room.cycle?.riders.some((r) => r.id === link.player!.id) ||
           this.room.sumo?.bumpers.some((b) => b.id === link.player!.id) ||
+          this.room.minigolf?.balls.some((b) => b.id === link.player!.id) ||
           this.room.treasure?.divers.some((d) => d.id === link.player!.id) ||
           this.room.bakery?.bakers.some((b) => b.id === link.player!.id) ||
           this.room.race?.entries.some((e) => e.id === link.player!.id))
@@ -648,6 +659,15 @@ export class Session {
   }
   pauseGames() {
     if (this.role !== "host") return;
+    if (this.room.minigolf) {
+      const next = pauseGolf(this.room.minigolf);
+      if (next !== this.room.minigolf) {
+        this.stopGameTimers();
+        this.room.minigolf = next;
+        this.broadcast();
+      }
+      return;
+    }
     if (this.room.treasure) {
       const next = pauseTreasure(this.room.treasure);
       if (next !== this.room.treasure) {
@@ -720,6 +740,56 @@ export class Session {
     this.room.pong = { ...this.room.pong, phase: "serve", serveIn: 1 };
     this.runPong();
     this.broadcast();
+  }
+  startGolf() {
+    if (
+      this.role !== "host" ||
+      this.disposed ||
+      this.room.kind !== "minigolf" ||
+      this.players.length < 2 ||
+      !["ready", "finished"].includes(this.room.minigolf?.phase ?? "")
+    )
+      return;
+    this.stopGameTimers();
+    this.room.epoch++;
+    this.room.notice = "";
+    this.room.minigolf = newGolf(this.players.map((p) => p.id));
+    this.runGolf();
+    this.broadcast();
+  }
+  shootGolf(hole: number, angle: number, power: number) {
+    this.input({ kind: "golf-shot", hole, angle, power });
+  }
+  resumeGolf() {
+    if (this.role !== "host" || this.room.minigolf?.phase !== "paused") return;
+    this.room.minigolf = resumeGolf(this.room.minigolf);
+    this.runGolf();
+    this.broadcast();
+  }
+  private golfTickAt = 0;
+  private advanceGolf() {
+    if (
+      !this.room.minigolf ||
+      ["ready", "paused", "finished"].includes(this.room.minigolf.phase)
+    )
+      return;
+    const now = performance.now(),
+      elapsed = Math.floor(now - this.golfTickAt);
+    if (elapsed > 500) {
+      this.pauseGames();
+      return;
+    }
+    if (elapsed <= 0) return;
+    this.golfTickAt += elapsed;
+    this.room.minigolf = stepGolf(this.room.minigolf, elapsed);
+    if (this.room.minigolf.phase === "finished") this.stopGameTimers();
+  }
+  private runGolf() {
+    this.golfTickAt = performance.now();
+    this.gameTimer = setInterval(() => {
+      this.advanceGolf();
+      this.broadcast();
+    }, 50);
   }
   startTreasure() {
     if (
@@ -1058,6 +1128,20 @@ export class Session {
   }
   private applyInput(id: string, input: GameInput) {
     if (
+      input.kind === "golf-shot" &&
+      this.room.kind === "minigolf" &&
+      this.room.minigolf
+    ) {
+      this.advanceGolf();
+      this.room.minigolf = commitGolf(
+        this.room.minigolf,
+        id,
+        input.hole,
+        input.angle,
+        input.power,
+      );
+      this.broadcast();
+    } else if (
       input.kind === "dive-choice" &&
       this.room.kind === "treasure" &&
       this.room.treasure
