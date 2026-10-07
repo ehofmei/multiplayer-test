@@ -14,6 +14,27 @@ const bumper = (overrides: Partial<PongBumper> = {}): PongBumper => ({
 });
 const playing = (): PongState => ({ ...newPong(["a", "b"]), phase: "playing" });
 describe("regular Pong bumpers", () => {
+  it("directs a tilted glancing rebound away from the bumper, without a duplicate impact", () => {
+    const nx = -0.995;
+    const ny = Math.sqrt(1 - nx * nx);
+    const s = stepPong(
+      {
+        ...playing(),
+        rallySeconds: 30,
+        bumpers: [bumper()],
+        ball: {
+          x: 0.38 + nx * 0.0451,
+          y: 0.3 + (ny * 0.0451) / 0.65,
+          vx: 0.11,
+          vy: 0.92,
+        },
+      },
+      1 / 120,
+    );
+    expect(s.bumpers![0].hits).toBe(1);
+    expect(s.ball.vx).toBeLessThan(0);
+    expect(stepPong(s, 1 / 120).bumpers![0].hits).toBe(1);
+  });
   it("tilts near-vertical bumper rebounds toward a paddle without raising speed", () => {
     const s = stepPong(
       {

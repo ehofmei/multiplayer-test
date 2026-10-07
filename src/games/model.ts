@@ -177,9 +177,13 @@ export function stepPong(state: PongState, seconds: number): PongState {
     const speed = Math.hypot(vx, vy);
     const minimumX = speed * 0.25;
     // Avoid an almost vertical orbit between two aligned bumpers. Retain the
-    // outgoing direction and speed; the normal rally cap still applies below.
+    // outward direction and speed; the normal rally cap still applies below.
     if (Math.abs(vx) < minimumX) {
-      vx = (Math.sign(vx) || Math.sign(state.ball.vx) || 1) * minimumX;
+      vx =
+        (Math.sign(movement.hitNormalX) ||
+          Math.sign(vx) ||
+          Math.sign(state.ball.vx) ||
+          1) * minimumX;
       vy = Math.sign(vy) * Math.sqrt(speed * speed - vx * vx);
     }
   }

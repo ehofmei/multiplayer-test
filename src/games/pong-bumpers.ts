@@ -71,6 +71,7 @@ export function bounceBumpers(
   let { x, y, vx, vy } = ball;
   let remaining = dt;
   let hitBumper = false;
+  let hitNormalX = 0;
   // Swept circles catch glancing hits as well as head-on hits. The fixed host
   // step is much shorter than the distance between any two bumpers.
   for (let bounce = 0; bounce < 4 && remaining > 0; bounce++) {
@@ -107,6 +108,7 @@ export function bounceBumpers(
     const length = distance({ x, y }, b);
     const nx = length > 0 ? (x - b.x) / length : -1;
     const ny = length > 0 ? ((y - b.y) * PONG_ASPECT) / length : 0;
+    hitNormalX = nx;
     const dot = vx * nx + vy * PONG_ASPECT * ny;
     vx -= 2 * dot * nx;
     vy -= (2 * dot * ny) / PONG_ASPECT;
@@ -115,5 +117,5 @@ export function bounceBumpers(
     bumpers[hit] = { ...b, flash: 0.24, hits: Math.min(1_000_000, b.hits + 1) };
     remaining *= 1 - first;
   }
-  return { x, y, vx, vy, hitBumper };
+  return { x, y, vx, vy, hitBumper, hitNormalX };
 }
