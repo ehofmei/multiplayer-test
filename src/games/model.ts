@@ -14,6 +14,7 @@ import { newShip, type ShipState } from "./ship";
 import { rallyBall } from "./speed";
 import { newBreakout } from "./breakout";
 import { newArena } from "./arena";
+import { advanceBumpers, bounceBumpers, type PongBumper } from "./pong-bumpers";
 export type GameKind =
   | "lobby"
   | "lights"
@@ -39,6 +40,7 @@ export interface PongState {
   startingLives?: number;
   breakout?: { level: number; lives: number; bricks: number[] };
   rallySeconds?: number;
+  bumpers?: PongBumper[];
   ball: { x: number; y: number; vx: number; vy: number };
   serveIn: number;
 }
@@ -134,6 +136,7 @@ export function newPong(seats: string[]): PongState {
   return {
     phase: "ready",
     rallySeconds: 0,
+    bumpers: [],
     seats,
     paddles: [0.5, 0.5],
     score: [0, 0],
@@ -162,13 +165,13 @@ export function stepPong(state: PongState, seconds: number): PongState {
   }
   if (state.phase !== "playing") return state;
   const rallySeconds = (state.rallySeconds ?? 0) + seconds;
+  const bumpers = advanceBumpers(state, rallySeconds, seconds);
   const { x: oldX, y: oldY } = state.ball;
   let { vx, vy } = rallyBall(state.ball, rallySeconds, 0.95);
   let x = oldX,
     y = oldY;
   const previousX = x;
-  x += vx * seconds;
-  y += vy * seconds;
+  ({ x, y, vx, vy } = bounceBumpers({ x, y, vx, vy }, bumpers, seconds));
   if (y < 0.025) {
     y = 0.05 - y;
     vy = Math.abs(vy);
@@ -199,6 +202,7 @@ export function stepPong(state: PongState, seconds: number): PongState {
       phase: score[scorer] >= 7 ? "finished" : "serve",
       serveIn: 1,
       rallySeconds: 0,
+      bumpers: [],
       ball: {
         x: 0.5,
         y: 0.5,
@@ -210,6 +214,7 @@ export function stepPong(state: PongState, seconds: number): PongState {
   return {
     ...state,
     rallySeconds,
+    bumpers,
     ball: { x, y, ...rallyBall({ vx, vy }, rallySeconds, 0.95) },
   };
 }

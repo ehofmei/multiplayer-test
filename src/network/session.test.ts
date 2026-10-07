@@ -140,6 +140,41 @@ describe("session latency", () => {
 });
 
 describe("shared game room", () => {
+  it("shares Pong bumper warnings/impacts, freezes on pause, resumes without resetting, and clears on points/disconnect", async () => {
+    const { host, client, hostChannel } = await pair();
+    host.selectGame("pong");
+    host.startPong(["host", "client"]);
+    const initial = host.snapshot().room.pong!;
+    initial.phase = "playing";
+    initial.rallySeconds = 7.99;
+    initial.ball = { x: 0.5, y: 0.5, vx: 0, vy: 0.42 };
+    await vi.advanceTimersByTimeAsync(100);
+    expect(client.snapshot().room.pong!.bumpers).toHaveLength(1);
+    expect(client.snapshot().room.pong!.bumpers![0].warning).toBeGreaterThan(1);
+    host.pauseGames();
+    await vi.advanceTimersByTimeAsync(20);
+    const paused = structuredClone(client.snapshot().room.pong);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(client.snapshot().room.pong).toEqual(paused);
+    host.resumePong();
+    await vi.advanceTimersByTimeAsync(500);
+    expect(client.snapshot().room.pong!.bumpers).toEqual(paused!.bumpers);
+    await vi.advanceTimersByTimeAsync(2200);
+    expect(client.snapshot().room.pong!.bumpers![0].warning).toBe(0);
+    const live = host.snapshot().room.pong!;
+    live.ball = { x: 0.33, y: 0.3, vx: 0.9, vy: 0 };
+    await vi.advanceTimersByTimeAsync(80);
+    expect(client.snapshot().room.pong!.bumpers![0].hits).toBe(1);
+    expect(client.snapshot().room.pong!.bumpers![0].flash).toBeGreaterThan(0);
+    host.snapshot().room.pong!.ball = { x: -0.024, y: 0.5, vx: -0.5, vy: 0 };
+    await vi.advanceTimersByTimeAsync(80);
+    expect(client.snapshot().room.pong!.bumpers).toEqual([]);
+    expect(client.snapshot().room.pong!.score).toEqual([0, 1]);
+    hostChannel.onclose!();
+    expect(host.snapshot().room.pong!.phase).toBe("ready");
+    expect(host.snapshot().room.pong!.bumpers).toEqual([]);
+  });
+
   it("late arrivals spectate the race and losing a participant resets play without losing other peers", async () => {
     const { host, hostChannel } = await pair();
     const offer = await host.offer();

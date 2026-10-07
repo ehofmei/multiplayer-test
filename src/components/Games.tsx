@@ -1,6 +1,7 @@
 import { GameSurface, GameHelp } from "./AppLayout";
 import { PaddleColors } from "./ArenaGame";
 import { paddleHex } from "../games/colors";
+import { BUMPER_RADIUS } from "../games/pong-bumpers";
 import { useEffect, useRef, useState } from "react";
 import {
   clampPaddle,
@@ -253,7 +254,13 @@ export function PongGame({
         {[0, 1].map((i) => (
           <div key={i}>
             <span>{playerName(players, game.seats[i])}</span>
-            <strong data-testid={`pong-score-${i}`}>{game.score[i]}</strong>
+            <strong
+              key={game.score[i]}
+              className={game.score[i] > 0 ? "pong-point" : undefined}
+              data-testid={`pong-score-${i}`}
+            >
+              {game.score[i]}
+            </strong>
           </div>
         ))}
       </div>
@@ -265,6 +272,8 @@ export function PongGame({
           className="pong-court"
           role="group"
           aria-label="Pong court"
+          aria-description="Dashed bumpers are warnings. Filled bumpers bounce the ball."
+          style={{ touchAction: controllable ? "none" : "auto" }}
           tabIndex={controllable ? 0 : -1}
           onKeyDown={(e) => {
             if (e.key === "ArrowUp" || e.key === "ArrowDown") {
@@ -293,6 +302,27 @@ export function PongGame({
               strokeWidth="4"
               strokeDasharray="12 16"
             />
+            {game.bumpers?.map((bumper, i) => (
+              <g
+                key={i}
+                className={`pong-bumper ${bumper.warning > 0 ? "warning" : "solid"} ${bumper.flash > 0 ? "impact" : ""}`}
+                data-testid={`pong-bumper-${i}`}
+                data-warning={bumper.warning}
+                data-hits={bumper.hits}
+                data-flash={bumper.flash}
+                transform={`translate(${bumper.x * 1000} ${bumper.y * 650})`}
+              >
+                <circle className="bumper-halo" r="42" />
+                <circle className="bumper-body" r={BUMPER_RADIUS * 1000} />
+                {bumper.warning > 0 ? (
+                  <text textAnchor="middle" y="9" fontSize="28" fill="#ffd087">
+                    !
+                  </text>
+                ) : (
+                  <circle r="10" fill="#122c29" />
+                )}
+              </g>
+            ))}
             {[0, 1].map((i) => (
               <rect
                 key={i}
@@ -350,6 +380,10 @@ export function PongGame({
           players={players}
           fallback={seat === 1 ? "White" : "Lime"}
         />
+        <p className="muted">
+          Long rallies add up to four small bumpers. A dashed ring warns before
+          each fills in and bounces the ball. Bumpers reset after every point.
+        </p>
       </GameHelp>
       {session.role === "host" && configure && (
         <>

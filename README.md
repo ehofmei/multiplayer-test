@@ -162,6 +162,16 @@ in fixed 120 Hz steps, renders at about 60 Hz, and sends state at about 20 Hz.
 Clients smooth the ball between updates. Paddle hits increase speed and change
 angle according to the impact position. A one-second serve delay follows each
 point. The host can pause/resume and choose new players after a match.
+Paddle sizes stay fixed. Long rallies introduce a small central bumper after
+8 seconds, then another every 6 seconds, up to four. Each dashed ring warns for
+1.5 seconds before becoming solid; solidity waits if the ball is too close.
+Filled bumpers reflect the ball as circles, flash white on impact, and play an
+optional synthesized bumper tone. Their positions leave wide lanes beside both
+paddles. Every point clears the bumpers; pause and the resume countdown freeze
+their timers. Ball speed remains capped at 0.95 normalized units per second.
+Update **every device** before playing with bumpers: older builds may accept the
+snapshot but cannot display the obstacles. Older hosts without bumper fields
+remain readable; saved identity and sound preferences keep their versions.
 This is a simple reliable-channel prototype, with no rollback or collision
 prediction; real-device play determines whether its motion feels smooth enough.
 

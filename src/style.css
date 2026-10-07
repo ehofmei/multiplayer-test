@@ -668,6 +668,57 @@ dd {
   outline: 3px solid #5e8c28;
   outline-offset: 4px;
 }
+.pong-bumper .bumper-body {
+  fill: #ffc879;
+  stroke: #fff1d2;
+  stroke-width: 4;
+}
+.pong-bumper .bumper-halo {
+  fill: none;
+  stroke: #ffc879;
+  stroke-width: 3;
+  opacity: 0.3;
+}
+.pong-bumper.warning .bumper-body {
+  fill: #122c29;
+  stroke: #ffc879;
+  stroke-dasharray: 8 7;
+}
+.pong-bumper.warning .bumper-halo {
+  animation: pong-warning 0.7s ease-in-out infinite alternate;
+}
+.pong-bumper.impact .bumper-body {
+  fill: #fff;
+  stroke: #fff;
+}
+.pong-bumper.impact .bumper-halo {
+  stroke: #fff;
+  stroke-width: 8;
+  opacity: 1;
+}
+.pong-point {
+  animation: pong-point 0.35s ease-out;
+}
+.pong-game-card[data-phase="finished"] .game-score strong {
+  color: #416425;
+}
+@keyframes pong-warning {
+  to {
+    opacity: 0.85;
+  }
+}
+@keyframes pong-point {
+  from {
+    transform: scale(1.25);
+    color: #416425;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pong-bumper.warning .bumper-halo,
+  .pong-point {
+    animation: none;
+  }
+}
 input[type="range"] {
   accent-color: #44765b;
   min-height: 48px;

@@ -670,3 +670,47 @@ in commit `200a2dc` were visually reviewed. Existing image dimensions, bundled
 fonts, fit assertions and pixel budgets remain unchanged. The review workflow
 now uses read-only repository access and ordinary `npm run verify`, with
 snapshot updates disabled; require its success for the exact final commit.
+
+## Regular Pong escalating bumpers
+
+QA inventory: manual two-device pairing; keyboard, touch court and help slider;
+warning → solid → impact; four-bumper rally; pause/resume and background;
+point reset and participant disconnect; desktop/phone/tablet/landscape fit,
+taller fonts, visible focus, reduced motion and muted-by-default sound.
+
+Automated coverage:
+
+- Fixed 120 Hz rule tests cover gradual warnings at 8/14/20/26 seconds, ball
+  clearance before placement/solidity, circular head-on/vertical/grazing hits,
+  non-colliding passes, separating contacts, capped speeds, frozen timers and
+  point/victory resets. A full-minute simulated rally reaches four bumpers and
+  repeated impacts while every snapshot stays valid.
+- Session tests pair host/client, share warnings and flashes, preserve timers
+  through pause and resume countdown, and clear bumpers on points/disconnects.
+  Wire parsing rejects malformed, overlapping, oversized and out-of-range bumper
+  state; optional fields allow reading an older host.
+- `tests/pong.spec.ts` uses genuine text pairing and ordinary pointer/keyboard/touch
+  controls to sustain a rally. It covers warning, solidity, shared impacts, four
+  bumpers, pause/resume, real scoring resets, host background and participant loss.
+  Layout checks exercise 320×568, 320×700, 390×844, 844×390, 768×1024 and 1280×720
+  with system/taller serif fonts. New warning, impact and four-bumper phone/desktop
+  baselines must be reviewed on both Darwin and Linux.
+- The production `/multiplayer-test/` build and existing PWA/update/offline tests
+  run in complete verification. The review workflow has no deployment job.
+
+Physical iPhone/iPad checks still required:
+
+- Update every device, install/start the PWA on household Wi-Fi, and try each
+  device as host. Check thumb comfort, paddle response, readability of dashed
+  warning rings and solid bumpers, safe areas, rotation and large text.
+- Sustain a rally past 30 seconds. Check that up to four bumpers add enjoyable
+  chaos, retain reaction space, never become solid on the ball and flash on hits.
+  Tune the initial 8-second delay, 6-second spacing and central placement after
+  another family play session.
+- Pause while a bumper warns or flashes; background/foreground the host and a
+  client. Resume should preserve the rally and bumper timers after the short
+  countdown. Score several points and rematch; bumpers should always reset.
+- Start muted, enable sound by a tap, compare bumper/paddle/wall/point/result cues,
+  mute again and enable Reduce Motion. Check visual feedback without sound.
+- Confirm offline startup after an online visit, saved names/colors/sound after
+  reload, and user-controlled service-worker updates between games.

@@ -13,6 +13,9 @@ import type { GridState } from "../game/grid";
 // and shared lives are validated as part of every room snapshot by validRoom.
 // Decision phases use remaining=0; validRoom checks their timing and Golf
 // tickRemainder. Update all devices before playing the revised rules.
+// Optional regular-Pong bumpers carry bounded positions, warning/flash timers and
+// impact counts, checked by validRoom for every state. No new client action.
+// Older hosts can omit bumpers; update every device to see the same obstacles.
 export const VERSION = 2;
 export const MAX_MESSAGE = 16_384;
 export interface Player {

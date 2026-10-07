@@ -60,6 +60,27 @@ describe("game sound transitions", () => {
       ),
     ).toEqual(["finish"]);
   });
+  it("uses bumper impact counters even when velocity signs do not change, without replay on pause or reset", () => {
+    const s = snapshot();
+    s.room = newRoom("pong", 1);
+    s.room.pong = {
+      ...newPong(["a", "b"]),
+      phase: "playing",
+      bumpers: [{ x: 0.38, y: 0.3, warning: 0, flash: 0, hits: 0 }],
+    };
+    const before = frame(s);
+    s.room.pong.bumpers![0].hits = 2;
+    expect(soundEvents(before, frame(s))).toEqual(["bumper"]);
+    expect(soundEvents(frame(s), frame(s))).toEqual([]);
+    const impact = frame(s);
+    s.room.pong.phase = "paused";
+    expect(soundEvents(impact, frame(s))).toEqual([]);
+    const paused = frame(s);
+    s.room.pong.phase = "serve";
+    s.room.pong.bumpers = [];
+    s.room.pong.score[0]++;
+    expect(soundEvents(paused, frame(s))).toEqual(["point"]);
+  });
   it("plays shared brick, miss and team victory cues without repeats", () => {
     const s = snapshot();
     s.room = newRoom("breakout", 1);

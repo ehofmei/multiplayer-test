@@ -6,6 +6,7 @@ export type Cue =
   | "on"
   | "off"
   | "paddle"
+  | "bumper"
   | "wall"
   | "point"
   | "serve"
@@ -36,6 +37,10 @@ const notes: Record<Cue, Note[]> = {
   on: [[700, 0.06]],
   off: [[420, 0.06]],
   paddle: [[620, 0.045]],
+  bumper: [
+    [940, 0.07],
+    [470, 0.09, 0.035],
+  ],
   wall: [[330, 0.035]],
   point: [
     [440, 0.09],

@@ -74,6 +74,7 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
     pong: pong
       ? {
           phase: pong.phase,
+          bumperHits: pong.bumpers?.reduce((sum, b) => sum + b.hits, 0) ?? 0,
           vx: pong.ball.vx,
           vy: pong.ball.vy,
           score: pong.score.reduce((a, b) => a + b, 0),
@@ -190,6 +191,7 @@ export function soundEvents(
     if (a.score > b.score) return ["point"];
     if (a.phase === "playing" && b.phase === "serve") return ["serve"];
     if (a.phase === "playing" && b.phase === "playing") {
+      if (a.bumperHits > b.bumperHits) return ["bumper"];
       if (a.vx * b.vx < 0) return ["paddle"];
       if (a.vy * b.vy < 0) return ["wall"];
     }

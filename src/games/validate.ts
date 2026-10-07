@@ -410,6 +410,26 @@ export function validRoom(v: unknown): v is Room {
       (p.startingLives === undefined ||
         (arena && integer(p.startingLives, 1, 7))) &&
       (p.rallySeconds === undefined || number(p.rallySeconds, 0, 86400)) &&
+      (p.bumpers === undefined ||
+        (!arena &&
+          Array.isArray(p.bumpers) &&
+          p.bumpers.length <= 4 &&
+          p.bumpers.every(
+            (b) =>
+              record(b) &&
+              number(b.x, 0.3, 0.7) &&
+              number(b.y, 0.2, 0.8) &&
+              number(b.warning, 0, 1.5) &&
+              number(b.flash, 0, 0.24) &&
+              integer(b.hits, 0, 1_000_000),
+          ) &&
+          p.bumpers.every((a, i, all) =>
+            all
+              .slice(i + 1)
+              .every((b) => Math.hypot(a.x - b.x, (a.y - b.y) * 0.65) >= 0.084),
+          ) &&
+          (!["ready", "finished"].includes(String(p.phase)) ||
+            p.bumpers.length === 0))) &&
       number(p.serveIn, 0, 1) &&
       record(p.ball) &&
       number(p.ball.x, -0.04, 1.04) &&
