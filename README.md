@@ -446,7 +446,8 @@ The host can Pause, Resume (with a three-second reorientation countdown), Stop t
 setup, rematch, or switch games without re-pairing. Pauses preserve the phase,
 remaining time, deck, and locked choices. Inviting a player, host backgrounding,
 or a scheduling stall pauses play. A backgrounded client keeps their choice;
-everyone waits until they return and lock, or the host stops the match. Late arrivals watch until the rematch. A participant disconnect resets
+everyone waits until they return and lock, or the host stops the match. Late
+arrivals watch until the rematch. A participant disconnect resets
 to setup; spectator departures preserve play. Games and scores are temporary.
 
 During a dive, Help and Standings stay beside the host controls. Pending updates
@@ -616,7 +617,7 @@ follows the group's pace because choosing is deliberately untimed.
 
 Minigolf, Treasure Dive, and Patchwork Picnic wait for every participating
 player's explicit confirmation. There are no automatic missed choices or time
-penalties. Bakery Draft, Glow Clash, and Light Seek already use untimed decisions.
+penalties. Midnight Bakery, Glow Clash, and Light Seek already use untimed decisions.
 Short starts, reveals, reaction measurement, and action-game clocks remain;
 Spaceship Panic intentionally retains timed commands and missions. Stop and
 participant-disconnect reset provide an exit if someone cannot finish choosing.

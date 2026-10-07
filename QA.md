@@ -362,8 +362,8 @@ QA inventory:
   offline startup, persistence and user-controlled updates with the existing PWA suite.
 
 Automated coverage includes scoring/odds, Return-before-hazard, protected and
-unprotected outcomes, shields spent on treasure, sixth-door banking, timeouts,
-phase overshoot and the 195-second budget, ties, paused phases, private views,
+unprotected outcomes, shields spent on treasure, sixth-door banking, untimed
+waiting and animation overshoot, ties, paused phases, private views,
 stale/duplicate inputs, disposal, and complete maximal eight-player messages
 (including escaped names/IDs). Real WebRTC tests complete a seeded match, test
 rematch/switching, eight long names, spectators, disconnects and background pause.
@@ -395,7 +395,7 @@ Inventory for 2–8 players on desktop, iPad, and narrow iPhones:
 - Find Golf through More games. Start requires two players. Update every device
   first; an old build should give the existing unsupported-game/update message.
 - Preview each of the five greens with all walls, mushrooms, cup rings, and meteor
-  warnings visible. Check your numbered ball, total, phase timer, and wind direction.
+  warnings visible. Check your numbered ball, total, phase feedback, and wind direction.
 - Drag from the ball toward travel, release a short or long drag, then adjust it.
   Cancel a drag or lose focus: the previous aim should return. The arrow previews
   direction, not a complete trajectory. Angle/Power work with touch and arrow keys.
@@ -421,7 +421,7 @@ Inventory for 2–8 players on desktop, iPad, and narrow iPhones:
 Regression coverage lives in `src/games/minigolf.test.ts`, the Golf session tests,
 and `tests/minigolf.spec.ts`. It covers fixed-step scheduling, cup speed thresholds,
 bounce components and separation, cooldowns, shared/exact-center meteor effects,
-identical outcomes, missing shots, five-hole totals, privacy, bounded eight-player
+identical outcomes, long untimed waits, natural settling, five-hole totals, privacy, bounded eight-player
 messages, permissions, stale/duplicate input, pause/resume, disconnects, and timer
 cleanup. Browser flows use real WebRTC pairing, drag/keyboard/touch controls,
 short-screen adjustments, a deterministic five-hole match, rematch and game switch,
@@ -459,7 +459,7 @@ QA inventory:
   bonus outlines, invalid outlines and focus. Short screens use Arrange piece;
   its native dialog scrolls, contains focus, closes with Escape and restores focus.
 - Check 320×568, 320×700, 390×844, 844×390, 768×1024 and 1280×720. Include taller
-  serif metrics, reduced motion, eight long names, missed input and results. Primary
+  serif metrics, reduced motion, eight long names, waiting and results. Primary
   content must fit; placement squares and essential buttons remain at least 44px.
 - Pause/Resume preserves offers, boards, locks and remaining active time, including
   repeated reorientation pauses. Pairing/background/stalls pause; clients retain unconfirmed choices.
@@ -472,7 +472,7 @@ QA inventory:
 
 Rules tests cover every rotation, bounds/overlap, one-time edge/row/bonus scoring,
 shuffled bags, forced singles, seeded ten-piece play, crowded rotated fits and Skip,
-timeout/overshoot, frozen pauses, ties and maximal eight-player wire messages.
+untimed waiting/overshoot, frozen pauses, ties and maximal eight-player wire messages.
 Session tests cover host permissions, privacy, epochs/sequences, duplicate locks,
 pause/resume, late arrivals, departures, stalls, rematches and timer disposal.
 The production-browser suite pairs real WebRTC contexts and retains ready, active
@@ -480,7 +480,7 @@ and result screenshots with the bundled font fixture and strict 180-pixel budget
 `npm run verify` passed locally: formatting, 130 unit/session tests, the production
 build and 39 Playwright tests. The live production-preview pass paired two devices,
 checked invalid previews, rotation, keyboard anchoring/confirmation, private locks,
-pause/resume, simultaneous reveal, timeout, standings/Escape, app updates and
+pause/resume, simultaneous reveal, untimed waiting, standings/Escape, app updates and
 phone/tablet layouts. The 320×568 Arrange panel and full-size squares were visually
 reviewed. Saved desktop/mobile/tablet images and all three Darwin regression
 baselines were reviewed.
@@ -653,3 +653,20 @@ Wi-Fi in Safari and installed PWAs. Leave a device choosing for several minutes,
 background it, resume it, and disconnect it while others are locked. Check touch
 accuracy, safe areas, rotation, larger text, VoiceOver and sound unlock/volume.
 These physical-device checks and family tuning remain manual.
+
+The decision revision's complete local `npm run verify` covers 159 Vitest tests,
+four script tests, the production build, all 43 Playwright tests and paired
+snapshot presence. Real WebRTC browser flows wait a simulated minute with
+unconfirmed choices, complete explicit matches, and retain strict viewport,
+font, touch-target, cache and lifecycle checks. Live production-preview QA pairs
+two independent players and checks named waiting, keyboard confirmation, private
+locks, pause/resume, Golf launch/cup scoring, Treasure shields/Return, Picnic
+invalid previews/rotation/Reset/Place/Skip, standings/Escape and game switching.
+Saved desktop, phone and tablet renders complement the live desktop pass.
+
+Four changed Darwin baselines and the four genuine Ubuntu counterparts returned
+by [the decision review run](https://github.com/ehofmei/multiplayer-test/actions/runs/37633921310)
+in commit `200a2dc` were visually reviewed. Existing image dimensions, bundled
+fonts, fit assertions and pixel budgets remain unchanged. The review workflow
+now uses read-only repository access and ordinary `npm run verify`, with
+snapshot updates disabled; require its success for the exact final commit.
