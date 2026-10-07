@@ -7,7 +7,7 @@ concurrency:
   group: pong-bumpers-review-${{ github.ref }}
   cancel-in-progress: true
 permissions:
-  contents: write
+  contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -20,24 +20,6 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - name: Refresh Linux renders for synchronized paddle input once
-        run: |
-          # The first returned render predates the fixed clock and awaited RTC
-          # inputs. Its ball/paddle positions were visually reviewed; refresh
-          # only Pong, once, for the intended deterministic states.
-          baseline=tests/pong.spec.ts-snapshots/pong-four-linux.png
-          if [ ! -f "$baseline" ] || [ "$(sha256sum "$baseline" | cut -d' ' -f1)" = 0189555add3631878a68d41a3105cdd00f5cc44970cdd314041c7bf7923ab48d ]; then
-            npx playwright test tests/pong.spec.ts --update-snapshots=all
-          fi
-      - name: Return Linux renders to the review branch
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tests/pong.spec.ts-snapshots/*-linux.png
-          if ! git diff --cached --quiet; then
-            git commit -m 'Generated Linux Pong bumper baselines'
-            git push origin HEAD:codex/pong-bumpers
-          fi
       - run: npm run verify
       - name: Save browser evidence
         if: always()

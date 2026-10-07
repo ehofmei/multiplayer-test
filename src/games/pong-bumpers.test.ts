@@ -63,6 +63,10 @@ describe("regular Pong bumpers", () => {
     const pending = advanceBumpers(s, 9, 1 / 120);
     expect(pending[0].warning).toBeGreaterThan(0);
     expect(bounceBumpers(s.ball, pending, 1 / 120).vx).toBe(0.4);
+    expect(
+      advanceBumpers({ ...s, ball: { ...s.ball, x: 0.47 } }, 9, 1 / 120)[0]
+        .warning,
+    ).toBeGreaterThan(0);
     const clear = advanceBumpers(
       { ...s, ball: { ...s.ball, x: 0.5 } },
       9,

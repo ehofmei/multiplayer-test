@@ -27,11 +27,12 @@ const distance = (a: { x: number; y: number }, b: { x: number; y: number }) =>
 export function advanceBumpers(state: PongState, elapsed: number, dt: number) {
   const bumpers = (state.bumpers ?? []).map((b) => {
     let warning = Math.max(0, b.warning - dt);
-    // Keep warning until there is clearance for the ball's entire next step.
+    // Leave room for the fixed host step and the client's 50 ms ball smoothing,
+    // so solidity does not appear around a slightly delayed rendered ball.
     if (
       b.warning > 0 &&
       warning === 0 &&
-      distance(b, state.ball) <= contactRadius + 0.02
+      distance(b, state.ball) <= contactRadius + 0.06
     )
       warning = Math.min(b.warning, dt);
     return { ...b, warning, flash: Math.max(0, b.flash - dt) };
