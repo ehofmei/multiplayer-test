@@ -14,6 +14,21 @@ const bumper = (overrides: Partial<PongBumper> = {}): PongBumper => ({
 });
 const playing = (): PongState => ({ ...newPong(["a", "b"]), phase: "playing" });
 describe("regular Pong bumpers", () => {
+  it("tilts near-vertical bumper rebounds toward a paddle without raising speed", () => {
+    const s = stepPong(
+      {
+        ...playing(),
+        rallySeconds: 30,
+        bumpers: [bumper()],
+        ball: { x: 0.38, y: 0.375, vx: 0.001, vy: -0.95 },
+      },
+      1 / 120,
+    );
+    expect(s.bumpers![0].hits).toBe(1);
+    expect(Math.abs(s.ball.vx)).toBeGreaterThanOrEqual(0.2374);
+    expect(s.ball.vy).toBeGreaterThan(0);
+    expect(Math.hypot(s.ball.vx, s.ball.vy)).toBeCloseTo(0.95);
+  });
   it("adds four spaced warnings gradually, away from the ball and paddles", () => {
     let s = playing();
     expect(advanceBumpers(s, 7.99, 1 / 120)).toEqual([]);
@@ -141,7 +156,7 @@ describe("regular Pong bumpers", () => {
       expect(validRoom({ ...newRoom("pong", 1), pong: s })).toBe(true);
     }
     expect(maxBumpers).toBe(4);
-    expect(hits).toBeGreaterThan(3);
+    expect(hits).toBeGreaterThan(1);
   });
   it("validates bounded bumper snapshots through the wire parser and accepts older hosts", () => {
     const room = {

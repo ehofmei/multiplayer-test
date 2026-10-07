@@ -344,7 +344,16 @@ export function PongGame({
                 }
               />
             ))}
-            <circle ref={ball} cx="500" cy="325" r="17" fill="#f5f4ee" />
+            <circle
+              ref={ball}
+              data-testid="pong-ball"
+              data-x={game.ball.x}
+              data-y={game.ball.y}
+              cx="500"
+              cy="325"
+              r="17"
+              fill="#f5f4ee"
+            />
           </svg>
         </div>
       </GameSurface>

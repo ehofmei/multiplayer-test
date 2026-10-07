@@ -682,7 +682,8 @@ Automated coverage:
 
 - Fixed 120 Hz rule tests cover gradual warnings at 8/14/20/26 seconds, ball
   clearance before placement/solidity, circular head-on/vertical/grazing hits,
-  non-colliding passes, separating contacts, capped speeds, frozen timers and
+  non-colliding passes, separating contacts, escape from near-vertical orbits,
+  capped speeds, frozen timers and
   point/victory resets. A full-minute simulated rally reaches four bumpers and
   repeated impacts while every snapshot stays valid.
 - Session tests pair host/client, share warnings and flashes, preserve timers
@@ -697,6 +698,13 @@ Automated coverage:
   baselines must be reviewed on both Darwin and Linux.
 - The production `/multiplayer-test/` build and existing PWA/update/offline tests
   run in complete verification. The review workflow has no deployment job.
+
+Local live QA used the persistent in-app browser with two separate origins for
+player identities and genuine text pairing. Ordinary pointer input sustained a
+four-bumper rally with an impact; controlled host timing checked warning freeze
+and resume. Client keyboard input, the help slider, Escape/focus return, a real
+match finish and rematch were exercised. Desktop and phone layouts were inspected
+alongside the saved Playwright screenshots; physical iOS behavior remains open.
 
 Physical iPhone/iPad checks still required:
 

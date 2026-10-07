@@ -167,7 +167,8 @@ Paddle sizes stay fixed. Long rallies introduce a small central bumper after
 1.5 seconds before becoming solid; solidity waits if the ball is too close.
 Filled bumpers reflect the ball as circles, flash white on impact, and play an
 optional synthesized bumper tone. Their positions leave wide lanes beside both
-paddles. Every point clears the bumpers; pause and the resume countdown freeze
+paddles. Nearly vertical rebounds get a gentle sideways tilt to escape bumper
+orbits. Every point clears the bumpers; pause and the resume countdown freeze
 their timers. Ball speed remains capped at 0.95 normalized units per second.
 Update **every device** before playing with bumpers: older builds may accept the
 snapshot but cannot display the obstacles. Older hosts without bumper fields

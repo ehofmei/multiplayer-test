@@ -62,8 +62,8 @@ test("Pong pairs, warns, adds four bumpers, flashes impacts, pauses, resets each
     await join(host, client, "Emma");
     await chooseGame(host, "Pong");
     await host.setViewportSize(sizes[2]);
-    await host.clock.install();
-    await host.clock.pauseAt(new Date(Date.now() + 1000));
+    await host.clock.install({ time: new Date("2026-10-07T12:00:00Z") });
+    await host.clock.pauseAt(new Date("2026-10-07T12:00:01Z"));
     await host.getByRole("button", { name: "Start Pong", exact: true }).click();
     await host.clock.runFor(1100);
     await expect(card(client)).toHaveAttribute("data-phase", "playing");
@@ -97,10 +97,9 @@ test("Pong pairs, warns, adds four bumpers, flashes impacts, pauses, resets each
     let capturedImpact = false;
     const follow = async (milliseconds: number) => {
       for (let elapsed = 0; elapsed < milliseconds; elapsed += 50) {
-        const y =
-          Number(
-            await host.locator(".pong-court svg > circle").getAttribute("cy"),
-          ) / 650;
+        const y = Number(
+          await host.getByTestId("pong-ball").getAttribute("data-y"),
+        );
         for (const page of [host, client]) {
           const box = (await page.locator(".pong-court").boundingBox())!;
           await page.mouse.click(
@@ -111,11 +110,23 @@ test("Pong pairs, warns, adds four bumpers, flashes impacts, pauses, resets each
                   0.12,
                   Math.min(
                     0.88,
-                    y + (capturedImpact ? 0 : page === host ? -0.06 : 0.06),
+                    y +
+                      (capturedImpact
+                        ? 0
+                        : Math.max(-0.08, Math.min(0.08, (y - 0.3) * 0.6))),
                   ),
                 ),
           );
         }
+        // Wait for the real client input to reach the host before advancing its
+        // simulation clock. Coalescing and RTC delivery use the client's clock.
+        await expect
+          .poll(
+            async () =>
+              (await host.getByTestId("paddle-1").getAttribute("y")) ===
+              (await client.getByTestId("paddle-1").getAttribute("y")),
+          )
+          .toBe(true);
         await host.clock.runFor(50);
       }
     };
@@ -209,6 +220,8 @@ test("Pong pairs, warns, adds four bumpers, flashes impacts, pauses, resets each
     }
     for (let i = 0; i < 150 && (await bumpers(host).count()); i++)
       await host.clock.runFor(100);
+    // A point can land between the host's 20 Hz snapshot sends.
+    await host.clock.runFor(100);
     await expect(bumpers(client)).toHaveCount(0);
     expect(
       Number(await host.getByTestId("pong-score-0").textContent()) +
