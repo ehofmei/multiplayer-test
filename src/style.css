@@ -4886,3 +4886,11 @@ main.app-shell {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+@media (max-height: 550px) and (min-width: 500px) {
+  .ship-control-hint {
+    top: auto;
+    bottom: -16px;
+    background: #fff;
+    line-height: 13px;
+  }
+}

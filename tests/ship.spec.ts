@@ -48,6 +48,17 @@ async function fit(page: Page, state: string) {
         expect(r.height).toBeGreaterThanOrEqual(44);
         expect(r.y + r.height).toBeLessThanOrEqual(size.height - 8);
       }
+      for (const panel of await page
+        .locator('.ship-panel[data-wrong="true"]')
+        .all()) {
+        const hint = (await panel.locator(".ship-control-hint").boundingBox())!;
+        const legend = (await panel.locator("legend").boundingBox())!;
+        expect(
+          hint.x >= legend.x + legend.width ||
+            hint.y >= legend.y + legend.height ||
+            hint.y + hint.height <= legend.y,
+        ).toBe(true);
+      }
       await page.screenshot({
         path: `test-results/ship-${state}-${size.width}x${size.height}-${font}.png`,
       });
@@ -113,6 +124,7 @@ test("Spaceship pairs, matches pictures, scores, pauses, and handles spectators 
     await expect(
       client.getByText("Try another setting", { exact: true }),
     ).toBeVisible();
+    await fit(client, "wrong-setting");
     await client.getByRole("button", { name: "Engine 1", exact: true }).tap();
     await expect(host.locator(".ship-command")).toHaveText(
       "Order complete! +100 points",
