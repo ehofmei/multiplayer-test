@@ -20,10 +20,14 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - name: Obtain genuine Linux bumper baselines once
+      - name: Refresh Linux renders for synchronized paddle input once
         run: |
-          if [ ! -f tests/pong.spec.ts-snapshots/pong-four-linux.png ]; then
-            npx playwright test tests/pong.spec.ts --update-snapshots
+          # The first returned render predates the fixed clock and awaited RTC
+          # inputs. Its ball/paddle positions were visually reviewed; refresh
+          # only Pong, once, for the intended deterministic states.
+          baseline=tests/pong.spec.ts-snapshots/pong-four-linux.png
+          if [ ! -f "$baseline" ] || [ "$(sha256sum "$baseline" | cut -d' ' -f1)" = 0189555add3631878a68d41a3105cdd00f5cc44970cdd314041c7bf7923ab48d ]; then
+            npx playwright test tests/pong.spec.ts --update-snapshots=all
           fi
       - name: Return Linux renders to the review branch
         run: |
