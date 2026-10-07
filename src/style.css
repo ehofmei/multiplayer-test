@@ -4517,3 +4517,372 @@ main.app-shell {
     transform: translateY(0);
   }
 }
+
+/* Spaceship panels share the same local illustrations as their callouts. */
+.ship-art {
+  width: 42px;
+  height: 42px;
+  flex: none;
+}
+.ship-callout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ship-command-pictures {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+.ship-command-pictures .ship-art {
+  width: 52px;
+  height: 52px;
+}
+.ship-command-pictures > span {
+  color: #b6e2cb;
+  font-size: 22px;
+}
+.app-shell .ship-game-card .ship-order {
+  min-height: 100px;
+}
+.ship-order.done {
+  background: #275543;
+}
+.ship-order.missed {
+  background: #65453b;
+}
+.ship-order.done .ship-command {
+  animation: ship-success 0.4s ease-out;
+}
+@keyframes ship-success {
+  from {
+    transform: scale(0.96);
+    opacity: 0.65;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.app-shell .ship-game-card .ship-panels {
+  gap: 10px;
+  align-content: center;
+}
+.ship-panel {
+  position: relative;
+  background: #f6f5ec;
+  border: 1px solid #b8c9c2;
+  box-shadow: 0 2px 0 #d6dfd7;
+}
+.ship-panel legend {
+  padding: 0 5px;
+}
+.ship-panel legend .ship-art {
+  width: 34px;
+  height: 34px;
+  vertical-align: middle;
+  margin-right: 7px;
+}
+.ship-panel legend > span {
+  vertical-align: middle;
+}
+.ship-panel .ship-settings {
+  gap: 8px;
+}
+.ship-panel[data-kind="switch"] .ship-settings {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.ship-panel .ship-settings button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 3px;
+  min-height: 68px;
+  border: 2px solid #c9d5cc;
+  border-radius: 12px;
+  background: #fffdf5;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+.ship-panel .ship-settings button[aria-pressed="true"] {
+  border-color: #183e48;
+  background: #dceee2;
+  color: #183e48;
+  box-shadow: 0 2px 0 #183e48;
+}
+.ship-settings button .ship-art {
+  width: 35px;
+  height: 35px;
+}
+.ship-selected {
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  font-size: 12px;
+}
+.ship-panel[data-wrong="true"] {
+  border-color: #a74936;
+}
+.ship-control-hint {
+  position: absolute;
+  right: 8px;
+  top: -17px;
+  font-size: 10px;
+  color: #8e3526;
+  background: #f6f5ec;
+  padding: 0 3px;
+}
+.ship-config {
+  display: grid;
+  gap: 14px;
+  margin: auto 0;
+}
+.ship-difficulty {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.ship-difficulty legend {
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.ship-difficulty > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.ship-difficulty button {
+  min-height: 48px;
+  background: #edf1e7;
+  color: #122c29;
+  border-color: #c3cdc3;
+}
+.ship-difficulty button[aria-pressed="true"] {
+  background: #122c29;
+  color: #f5f4ee;
+}
+.ship-duration button small {
+  display: block;
+  font-size: 10px;
+  line-height: 1.2;
+}
+.ship-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin: auto 0;
+  text-align: center;
+}
+.ship-results > span {
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+.ship-results > strong {
+  font-size: clamp(38px, 8vh, 64px);
+  line-height: 1;
+  color: #275543;
+}
+.ship-results > div {
+  display: flex;
+  gap: 22px;
+}
+.ship-results p {
+  font-size: 12px;
+  margin: 5px 0;
+}
+.ship-results b {
+  display: block;
+  font-size: 24px;
+}
+.ship-results small {
+  color: #52665b;
+}
+@media (max-width: 400px), (max-height: 650px) {
+  .app-shell .ship-game-card .ship-order {
+    min-height: 90px;
+    padding: 8px;
+  }
+  .ship-callout {
+    gap: 8px;
+  }
+  .ship-command-pictures .ship-art {
+    width: 40px;
+    height: 40px;
+  }
+  .ship-command-pictures > span {
+    font-size: 16px;
+  }
+  .app-shell .ship-game-card .ship-command {
+    font-size: 17px;
+    line-height: 1.2;
+  }
+  .app-shell .ship-game-card .ship-panels {
+    gap: 6px;
+  }
+  .ship-panel legend .ship-art {
+    width: 26px;
+    height: 26px;
+  }
+  .ship-panel .ship-settings button {
+    min-height: 54px;
+  }
+  .ship-settings button .ship-art {
+    width: 28px;
+    height: 28px;
+  }
+  .ship-config {
+    gap: 8px;
+  }
+  .ship-results > div {
+    gap: 14px;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .ship-game-card[data-phase="ready"],
+  .app-shell .ship-game-card[data-phase="finished"] {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 8px 16px;
+  }
+  .app-shell .ship-game-card > .ship-order {
+    grid-column: 1;
+  }
+  .app-shell .ship-game-card > .ship-config {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    align-self: center;
+  }
+  .app-shell .ship-game-card > .ship-results {
+    grid-column: 1;
+  }
+  .app-shell .ship-game-card .ship-panels {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .ship-panel .ship-settings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ship-panel[data-kind="switch"] .ship-settings {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ship-panel .ship-settings button {
+    min-height: 48px;
+    flex-direction: row;
+    font-size: 11px;
+  }
+  .ship-settings button .ship-art {
+    width: 26px;
+    height: 26px;
+  }
+  .app-shell .ship-game-card .ship-order {
+    min-height: 78px;
+  }
+  .ship-results > strong {
+    font-size: 36px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ship-order.done .ship-command {
+    animation: none;
+  }
+}
+.app-shell .ship-game-card[data-phase="ready"] .ship-order,
+.app-shell .ship-game-card[data-phase="finished"] .ship-order {
+  min-height: 0;
+}
+@media (max-height: 650px) {
+  .ship-panel {
+    padding: 0 6px 4px;
+  }
+  .ship-panel legend {
+    font-size: 13px;
+    line-height: 20px;
+  }
+  .ship-panel legend .ship-art {
+    width: 20px;
+    height: 20px;
+  }
+  .ship-panel .ship-settings button {
+    min-height: 44px;
+    padding: 2px;
+    font-size: 10px;
+    gap: 0;
+  }
+  .ship-settings button .ship-art {
+    width: 22px;
+    height: 22px;
+  }
+  .ship-results > strong {
+    font-size: 36px;
+  }
+  .ship-results b {
+    font-size: 20px;
+  }
+  .ship-results p {
+    margin: 2px 0;
+  }
+}
+@media (max-height: 650px) {
+  .app-shell .ship-game-card[data-phase="ready"],
+  .app-shell .ship-game-card[data-phase="finished"] {
+    gap: 6px;
+  }
+  .ship-results {
+    gap: 3px;
+  }
+  .ship-results > span {
+    line-height: 1.2;
+  }
+  .ship-results p {
+    font-size: 11px;
+    line-height: 1.25;
+  }
+  .ship-results small {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+  .ship-config legend {
+    line-height: 1.25;
+  }
+  .ship-config button {
+    line-height: 1.2;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .games-card.ship-game-card[data-phase="playing"],
+  .app-shell .games-card.ship-game-card[data-phase="paused"] {
+    display: grid;
+    grid-template-columns: minmax(190px, 0.8fr) minmax(0, 1.6fr);
+    grid-template-rows: auto 1fr;
+    gap: 8px 14px;
+  }
+  .app-shell .ship-game-card > .ship-stats {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .app-shell .ship-game-card > .ship-order {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+  }
+  .app-shell .ship-game-card > .ship-panels {
+    grid-column: 2;
+    grid-row: 1 / 3;
+  }
+  .app-shell .ship-game-card[data-phase="ready"] > .ship-order,
+  .app-shell .ship-game-card[data-phase="finished"] > .ship-order {
+    grid-row: 1;
+  }
+}
+@media (min-width: 760px) {
+  .app-shell .ship-game-card .ship-panels {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

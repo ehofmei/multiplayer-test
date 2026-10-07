@@ -1,3 +1,4 @@
+import { validShipSetting } from "../games/ship-controls";
 import { glowInt, validGlowPicks } from "../games/glow";
 import { validSeekLayout, seekInteger } from "../games/seek";
 import { validPlacement } from "../games/picnic";
@@ -16,6 +17,8 @@ import type { GridState } from "../game/grid";
 // Optional regular-Pong bumpers carry bounded positions, warning/flash timers and
 // impact counts, checked by validRoom for every state. No new client action.
 // Older hosts can omit bumpers; update every device to see the same obstacles.
+// Ship rules 2 require all devices to update: typed settings and team scores
+// are validated by validRoom; old hull snapshots are rejected.
 export const VERSION = 2;
 export const MAX_MESSAGE = 16_384;
 export interface Player {
@@ -144,6 +147,7 @@ export function parseMessage(raw: unknown): Message | null {
         return m as Message;
       if (
         i.kind === "ship-control" &&
+        validShipSetting(i.control as number, i.value as number) &&
         integer(i.control) &&
         i.control < 24 &&
         integer(i.value) &&

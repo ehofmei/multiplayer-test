@@ -104,8 +104,7 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
     ship: room.ship
       ? {
           phase: room.ship.phase,
-          hull: room.ship.hull,
-          repairs: room.ship.repairs,
+          completed: room.ship.completed,
           mistakes: room.ship.mistakes,
         }
       : null,
@@ -167,8 +166,8 @@ export function soundEvents(
     previousShip = before.ship;
   if (ship && previousShip) {
     if (ship.phase === "finished" && previousShip.phase !== "finished")
-      return [ship.hull > 0 ? "win" : "finish"];
-    if (ship.repairs > previousShip.repairs) return ["success"];
+      return ["win"];
+    if (ship.completed > previousShip.completed) return ["success"];
     if (ship.mistakes > previousShip.mistakes) return ["wrong"];
   }
   const a = after.pong,

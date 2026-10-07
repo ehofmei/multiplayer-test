@@ -109,31 +109,33 @@ unlock, device volume/mute behavior, and foreground recovery need physical testi
 
 ## Spaceship Panic
 
-- Inventory: host launch/rematch, 2–8 crew plus solo practice, three controls per
-  device, orders sent to another panel, setting selection, shared hull/repairs,
-  order deadlines, host-selected 1/2/3-minute missions (default 3), victory/loss,
-  pause/resume, spectators,
-  switching, disconnect and host background/stall handling.
-- Rule tests cover ownership, conflict-free assignments, revision rejection,
-  wrong-setting damage, unrelated controls, completed/expired orders, deadline
-  ramp proportional to each selected duration, terminal states, frozen timers and an entire eight-player successful
-  mission. Network tests cover malformed inputs/state, epochs, real session
-  synchronization, late spectators, disconnect cleanup and timer disposal.
-- Production Chromium tests pair crew through WebRTC, complete each other's
-  orders with keyboard/touch input, exercise damage/repair and pause/resume,
-  join/leave a spectator, disconnect crew and switch games. Controlled-clock
-  tests cover an unattended loss, rematch, background pause and complete wins,
-  including one-minute completion, correct flown time and duration changes on rematch.
-- Keep the deterministic control-panel screenshot and review desktop,
-  320×700/390×844/768×1024 screenshots with normal and taller Arial metrics.
-  Check that all three panels fit with viewport clearance, selected numbers
-  remain distinct, controls are at least 44px, focus is visible, and surrounding
-  content scrolls normally. Review active orders as well as paused/results views.
-- Live browser QA covers solo launch, an actual requested repair, pause/resume,
-  keyboard controls, responsive screenshots and switching. On physical iPhone/
-  iPad devices, play a full co-op mission with everyone talking; check whether
-  the 18-to-10-second deadlines feel fair, quiet sound feedback, background pause
-  and readability of all 24 system names. Update every device before pairing.
+- Inventory: host-selected 1/2/3-minute missions (2 recommended/default),
+  Standard/Gentle pace, score/completed/current/best streak, all six setting
+  families and 24 illustrated panels, command/panel picture matching, direct
+  touch and keyboard selection, wrong-setting recovery, pause/resume, rematch,
+  spectators, crew departure and host background/stall behavior.
+- Rules tests exercise 1–8 crew with seeded randomized recipients, concurrent
+  conflict-free renewals, no multiplayer self-assignments, all setting domains,
+  capped streak bonuses, misses and wrong settings without score loss, stale
+  revisions/ownership, both difficulty ramps across every duration, terminal
+  states, and rejection of malformed/old ship snapshots and switch actions.
+- Real WebRTC browser tests pair crew, synchronize scores, recover from wrong
+  requests, pause and disconnect. Eight connected players exercise every setting
+  in all 24 panels with normal taps; controlled clocks finish all durations and
+  unattended missions. Rematches reset scores. Review saved screenshots of ready,
+  active, success, paused, results and each panel set. Platform baselines use the
+  bundled font and strict dimensions; obtain genuine Linux images through the
+  non-deploying `codex/ship-controls` review workflow before final verification.
+- Layout inventory: 320×568, 320×700, 390×844, 844×390, 768×1024 and 1280×720,
+  including taller serif metrics. Check actual content bounds, order/panel
+  separation, 44px minimum targets, all settings above the fold, visible focus,
+  selected outlines/checks, pattern recognition and muted/reduced-motion feedback.
+- Physical iPhone/iPad checks remain required: installed PWA safe areas and
+  orientation, matching SVG recognition with a seven-year-old, comfortable thumb
+  targets, color-pattern distinction, calling/listening clarity for Door versus
+  Airlock and other similar panels, LAN pairing, background/pause recovery,
+  offline startup after an online visit and the user-controlled update flow.
+  Update every device together; use family play to tune timing and streak bonuses.
 
 ## Light-cycle Arena
 

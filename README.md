@@ -243,32 +243,44 @@ announce start, dash, your ring-out and the result; sound remains muted by defau
 Update **every device** before selecting Sumo Bumpers: older builds cannot validate
 its state or inputs. Pairing, offline support and saved preferences are unchanged.
 
-**Spaceship Panic** is a cooperative mission for two to eight
-players, with solo practice available. The host chooses 1, 2, or 3 minutes before
-launch or a rematch; the default is 3 minutes. Everyone present at launch joins
-the crew.
-Each device owns three uniquely named controls with settings 0–3, and sees one
-instruction for the next crew member's panel. Read your order aloud, listen for
-orders naming your controls, and set the requested number. Solo orders address
-your own panel. Controls are host-authoritative; selected settings update after
-confirmation. Per-control revisions reject stale/repeated settings.
+**Spaceship Panic** is a timed cooperative score chase for two to eight players,
+with solo practice available. The host chooses 1, 2, or 3 minutes (2 recommended
+and selected by default), plus Standard or Gentle command pace. Everyone present
+at launch joins the crew. The clock completes the mission for everyone; mistakes
+never eliminate anyone or end it early. Results stay visible with team score,
+completed commands and highest team streak until the host launches again.
 
-The ship starts with 100 hull. Completed orders restore 3 hull (capped at 100);
-a missed deadline costs 15, and a wrong setting on a currently requested control
-costs 5. Changing an unrelated control does not damage the ship. Orders reset
-after two seconds of feedback, and deadlines shorten from 18 to 10 seconds as
-the mission progresses. Orders never conflict on a control. Keep hull above zero
-until the mission timer ends to win together; zero hull ends the mission early.
-The host can pause/resume with timers frozen, or launch again after either result.
-Pairing/backgrounding the host pauses the mission; a long scheduling stall pauses
-instead of fast-forwarding. Late arrivals watch until the next launch. Losing a
-crew member resets the mission, while a spectator leaving preserves it. Existing
-connections, offline support and muted local sound preferences remain in use.
-Update every device before selecting Spaceship Panic; older builds do not
-understand its new room state and control action. Update all devices to use the
-mission-length options; snapshots without a duration retain the three-minute
-default. Saved identities/sound settings
-and pairing formats are unchanged.
+Every phone owns three uniquely named, illustrated panels: a color/number panel,
+a shape/direction/picture panel, and a two-state switch. Eight panel sets cover
+Lights/Shield/Door, Engine/Radar/Fan, Beacon/Cargo/Radio, Gravity/Dock/Window,
+Cabin/Map/Airlock, Fuel/Antenna/Pump, Robot/Badge/Magnet and Speed/Pet Screen/Alarm.
+Numbers use 0–3 with matching dots; colors use red/blue/yellow/green with labels
+and distinct patterns; shapes use circle/square/triangle/star; arrows use
+up/right/down/left. Cargo pictures are apple/banana/carrot/fish, Map pictures are
+sun/moon/star/Earth, and Pet Screen pictures are cat/dog/fish/bird. Switches use
+explicit off/on or closed/open choices. Every setting takes one tap. Local SVGs
+match between commands and panels; selected settings have an outline and check.
+No external assets or additional dependencies are required.
+
+Call out your panel name and setting, listen for yours, and match the pictures.
+The host randomly chooses another player's available panel (your own in solo;
+the other player's in two-player missions), reserving controls to prevent
+conflicts. Each success earns 100 points plus 20 per extra consecutive team
+success, capped at 300 points per command. Wrong settings on requested controls
+and missed deadlines reset the shared streak without reducing earned score.
+Wrong settings can be corrected before expiry; unrelated panels are harmless.
+Standard deadlines shorten from 18 to 8 seconds and feedback from 2 to 1 second;
+Gentle uses 26 to 14 seconds and 3 to 2 seconds. Both ramps follow the fraction
+of the chosen mission already played. Controls remain host-authoritative with
+revision checks; rapid/stale duplicate inputs cannot score twice.
+
+Pause/resume freezes timers and preserves settings. Host backgrounding, pairing
+and long scheduling stalls pause the mission. Late arrivals watch until the next
+launch. A crew departure resets the mission; spectators leaving preserve it.
+Sound stays optional and muted by default, and success motion respects reduced
+motion. **Update every device together** for ship rules 2: hull-based snapshots
+are rejected, and switches no longer accept settings 2 or 3. Identity/sound
+storage, pairing formats and other games' protocol behavior are unchanged.
 
 **Light-cycle Arena** is a competitive grid game for two to eight players. Everyone
 present when the host starts rides; late arrivals watch until the next round.

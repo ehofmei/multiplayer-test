@@ -4,8 +4,11 @@ import {
   newShip,
   setShipControl,
   stepShip,
-  MISSION_MS,
+  shipDeadline,
+  shipFeedback,
+  type ShipState,
 } from "./ship";
+import { shipPanels, validShipSetting } from "./ship-controls";
 import { newRoom } from "./model";
 import { validRoom } from "./validate";
 import { parseMessage } from "../network/protocol";
@@ -14,97 +17,172 @@ const room = (ship = launchShip(["a", "b"], random)) => ({
   ...newRoom("ship", 1),
   ship,
 });
-describe("Spaceship Panic", () => {
-  it("splits three named controls per device and sends conflict-free orders to teammates", () => {
-    for (const count of [1, 2, 8]) {
+function complete(state: ShipState, index = 0) {
+  const order = state.orders[index],
+    panel = state.controls[order.control];
+  return setShipControl(
+    state,
+    panel.owner,
+    order.control,
+    order.value,
+    panel.revision,
+  );
+}
+function seeded(seed = 29) {
+  return () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 2 ** 32;
+  };
+}
+describe("Spaceship Panic score chase", () => {
+  it("defaults to two minutes and gives every crew member a mixed, uniquely named set", () => {
+    expect(newShip().duration).toBe(120_000);
+    expect(new Set(shipPanels.map((p) => p.name)).size).toBe(24);
+    for (let i = 0; i < 24; i += 3) {
+      expect(["color", "number"]).toContain(shipPanels[i].kind);
+      expect(["shape", "direction", "picture"]).toContain(
+        shipPanels[i + 1].kind,
+      );
+      expect(shipPanels[i + 2].kind).toBe("switch");
+    }
+    expect(newShip([], 4).duration).toBe(120_000);
+  });
+  it("randomizes recipients with no self assignment or conflicts, including concurrent renewals", () => {
+    for (let count = 1; count <= 8; count++) {
+      const rng = seeded();
       const crew = Array.from({ length: count }, (_, i) => `p${i}`);
-      const s = launchShip(crew, random);
-      expect(s.controls).toHaveLength(count * 3);
-      expect(s.orders).toHaveLength(count);
-      for (const [i, o] of s.orders.entries()) {
-        expect(s.controls[o.control].owner).toBe(crew[(i + 1) % count]);
-        expect(o.value).not.toBe(s.controls[o.control].value);
+      let state = launchShip(crew, rng, 3);
+      const seen = new Set<string>();
+      for (let round = 0; round < 40; round++) {
+        expect(state.orders).toHaveLength(count);
+        expect(new Set(state.orders.map((o) => o.control)).size).toBe(count);
+        for (const order of state.orders) {
+          const panel = state.controls[order.control];
+          if (count > 1) expect(panel.owner).not.toBe(order.caller);
+          else expect(panel.owner).toBe(order.caller);
+          expect(order.value).not.toBe(panel.value);
+          if (order.caller === "p0") seen.add(panel.owner);
+        }
+        expect(validRoom(room(state))).toBe(true);
+        for (let i = 0; i < count; i++) state = complete(state, i);
+        state = stepShip(state, 3000, rng);
       }
-      expect(new Set(s.orders.map((o) => o.control)).size).toBe(count);
-      expect(validRoom(room(s))).toBe(true);
+      expect(seen.size).toBe(count === 1 ? 1 : count - 1);
     }
   });
-  it("allows only owners to change controls, ignores repeated/stale revisions and rewards a repair once", () => {
-    const s = launchShip(["a", "b"], random);
-    const order = s.orders[0];
-    expect(setShipControl(s, "a", order.control, order.value, 0)).toBe(s);
-    const done = setShipControl(
-      { ...s, hull: 80 },
-      "b",
-      order.control,
-      order.value,
-      0,
+  it("validates every setting family and requests only a different valid setting", () => {
+    const rng = seeded();
+    let state = launchShip(
+      Array.from({ length: 8 }, (_, i) => `p${i}`),
+      rng,
+      3,
     );
-    expect(done.hull).toBe(83);
-    expect(done.repairs).toBe(1);
-    expect(done.orders[0].status).toBe("done");
-    expect(setShipControl(done, "b", order.control, 2, 0)).toBe(done);
-    expect(setShipControl(done, "b", order.control, order.value, 1)).toBe(done);
-    const next = stepShip(done, 2000, random);
-    expect(next.orders[0].status).toBe("pending");
-    expect(next.orders[0].value).not.toBe(
-      next.controls[next.orders[0].control].value,
-    );
-    expect(done.orders[0].status).toBe("done");
+    for (let i = 0; i < 24; i++) {
+      for (const invalid of [-1, shipPanels[i].settings.length, 1.5, NaN])
+        expect(
+          setShipControl(state, state.controls[i].owner, i, invalid, 0),
+        ).toBe(state);
+      for (let value = 1; value < shipPanels[i].settings.length; value++) {
+        const panel = state.controls[i];
+        state = setShipControl(state, panel.owner, i, value, panel.revision);
+        expect(state.controls[i].value).toBe(value);
+        expect(validRoom(room(state))).toBe(true);
+      }
+    }
+    expect(validShipSetting(2, 2)).toBe(false);
+    expect(validShipSetting(0, 3)).toBe(true);
   });
-  it("charges wrong requested settings, permits unrelated controls, and keeps hull bounded", () => {
-    const s = launchShip(["a", "b"], random);
-    const wrong = setShipControl(s, "b", 3, 2, 0);
-    expect(wrong.hull).toBe(95);
+  it("scores once, preserves ownership/revision guards, and caps the consecutive-success bonus", () => {
+    let state = launchShip(["a", "b"], random, 3);
+    const order = state.orders[0];
+    expect(setShipControl(state, "a", order.control, order.value, 0)).toBe(
+      state,
+    );
+    state = complete(state);
+    expect(state.score).toBe(100);
+    expect(state.completed).toBe(1);
+    expect(state.orders[0].award).toBe(100);
+    expect(setShipControl(state, "b", order.control, 2, 0)).toBe(state);
+    expect(setShipControl(state, "b", order.control, order.value, 1)).toBe(
+      state,
+    );
+    state = complete(state, 1);
+    expect(state.score).toBe(220);
+    for (let i = 2; i < 15; i++) {
+      state = stepShip(state, 3000, random);
+      state = complete(state);
+      if (i + 1 < 15) {
+        state = complete(state, 1);
+        i++;
+      }
+    }
+    expect(state.streak).toBe(15);
+    expect(state.bestStreak).toBe(15);
+    expect(state.orders[0].award).toBe(300);
+    expect(validRoom(room(state))).toBe(true);
+  });
+  it("wrong requests reset the streak without losing score; unrelated panels are harmless", () => {
+    let state = complete(launchShip(["a", "b"], random));
+    const unrelated = setShipControl(state, "b", 4, 1, 0);
+    expect(unrelated.score).toBe(100);
+    expect(unrelated.streak).toBe(1);
+    expect(unrelated.mistakes).toBe(0);
+    const wrong = setShipControl(state, "a", 0, 2, 0);
+    expect(wrong.score).toBe(100);
+    expect(wrong.streak).toBe(0);
+    expect(wrong.bestStreak).toBe(1);
     expect(wrong.mistakes).toBe(1);
-    expect(wrong.orders[0].status).toBe("pending");
-    expect(setShipControl(s, "b", 4, 2, 0).hull).toBe(100);
-    expect(setShipControl(wrong, "b", 3, 1, 1).hull).toBe(98);
-    const loss = setShipControl({ ...s, hull: 5 }, "b", 3, 2, 0);
-    expect(loss.hull).toBe(0);
-    expect(loss.phase).toBe("finished");
-    for (const value of [-1, 4, NaN])
-      expect(setShipControl(s, "b", 3, value, 0)).toBe(s);
-    expect(setShipControl(s, "b", 24, 1, 0)).toBe(s);
+    expect(wrong.controls[0].wrong).toBe(true);
+    expect(wrong.orders[1].status).toBe("pending");
+    state = complete(wrong, 1);
+    expect(state.score).toBe(200);
+    expect(state.controls[0].wrong).toBe(false);
   });
-  it("times out orders once, ramps urgency, pauses and finishes with win or loss", () => {
-    const s = launchShip(["a", "b"], random);
-    const expired = stepShip(s, 18000, random);
-    expect(expired.hull).toBe(70);
-    expect(expired.mistakes).toBe(2);
-    expect(expired.orders.every((o) => o.status === "missed")).toBe(true);
-    const again = stepShip(expired, 2000, random);
-    expect(again.hull).toBe(70);
-    expect(again.orders[0].remaining).toBeLessThan(18000);
-    const paused = { ...s, phase: "paused" as const };
+  it("misses count once, freeze when paused, and never end a mission early", () => {
+    const initial = launchShip(["a", "b"], random);
+    let state = stepShip(initial, 18_000, random);
+    expect(state.mistakes).toBe(2);
+    expect(state.orders.every((o) => o.status === "missed")).toBe(true);
+    state = stepShip(state, 2000, random);
+    expect(state.mistakes).toBe(2);
+    const paused = { ...state, phase: "paused" as const };
     expect(stepShip(paused, 5000)).toBe(paused);
     expect(setShipControl(paused, "b", 3, 1, 0)).toBe(paused);
-    const win = stepShip({ ...s, remaining: 250 }, 250, random);
-    expect(win.phase).toBe("finished");
-    expect(win.hull).toBe(100);
-    expect(validRoom(room(win))).toBe(true);
-    expect(stepShip(win, 1000)).toBe(win);
-    const loss = stepShip({ ...s, hull: 10 }, 18000, random);
-    expect(loss.phase).toBe("finished");
-    expect(loss.hull).toBe(0);
+    while (state.remaining > 0) state = stepShip(state, 1000, random);
+    expect(state.phase).toBe("finished");
+    expect(state.score).toBe(0);
+    expect(state.remaining).toBe(0);
+    expect(validRoom(room(state))).toBe(true);
+    expect(stepShip(state, 1000)).toBe(state);
   });
-  it("survives a full mission with cooperating owners and keeps all snapshots valid", () => {
-    let s = launchShip(["a", "b", "c", "d", "e", "f", "g", "h"], () => 0.9);
-    for (let elapsed = 0; elapsed < MISSION_MS; elapsed += 250) {
-      for (const o of s.orders) {
-        if (o.status !== "pending") continue;
-        const c = s.controls[o.control];
-        s = setShipControl(s, c.owner, o.control, o.value, c.revision);
+  it("ramps deadline and command turnover relative to every duration in both difficulties", () => {
+    for (const difficulty of ["gentle", "standard"] as const)
+      for (const minutes of [1, 2, 3]) {
+        const start = launchShip(["a"], random, minutes, difficulty);
+        const halfway = { ...start, remaining: start.duration / 2 };
+        const end = { ...start, remaining: 0 };
+        expect(shipDeadline(start)).toBe(
+          difficulty === "gentle" ? 26000 : 18000,
+        );
+        expect(shipDeadline(halfway)).toBe(
+          difficulty === "gentle" ? 20000 : 13000,
+        );
+        expect(shipDeadline(end)).toBe(difficulty === "gentle" ? 14000 : 8000);
+        expect(shipFeedback(start)).toBe(difficulty === "gentle" ? 3000 : 2000);
+        expect(shipFeedback(end)).toBe(difficulty === "gentle" ? 2000 : 1000);
+        let state = start;
+        for (let elapsed = 0; elapsed < start.duration; elapsed += 250) {
+          if (state.orders[0].status === "pending") state = complete(state);
+          state = stepShip(state, 250, random);
+          expect(validRoom(room(state))).toBe(true);
+        }
+        expect(state.phase).toBe("finished");
+        expect(state.completed).toBeGreaterThan(15);
+        expect(state.bestStreak).toBe(state.completed);
       }
-      s = stepShip(s, 250, () => 0.9);
-      expect(validRoom(room(s))).toBe(true);
-    }
-    expect(s.phase).toBe("finished");
-    expect(s.hull).toBe(100);
-    expect(s.repairs).toBeGreaterThan(100);
   });
-  it("validates bounded inputs and rejects malformed controls, callers, timers and terminal states", () => {
-    const s = launchShip(["a", "b"], random);
+  it("rejects malformed and legacy snapshots and impossible two-state network actions", () => {
+    const state = launchShip(["a", "b"], random);
     expect(validRoom(room(newShip()))).toBe(true);
     const input = {
       v: 2,
@@ -116,6 +194,7 @@ describe("Spaceship Panic", () => {
     expect(parseMessage(JSON.stringify(input))).not.toBeNull();
     for (const patch of [
       { control: 24 },
+      { control: 2, value: 2 },
       { value: 4 },
       { revision: -1 },
       { value: 1.5 },
@@ -126,80 +205,52 @@ describe("Spaceship Panic", () => {
           JSON.stringify({ ...input, input: { ...input.input, ...patch } }),
         ),
       ).toBeNull();
+    for (const patch of [
+      { rules: undefined },
+      { duration: 90000 },
+      { remaining: 120001 },
+      { remaining: -1 },
+      { score: -1 },
+      { score: 100 },
+      { streak: 1 },
+      { difficulty: "hard" },
+      { crew: ["a", "a"] },
+      { controls: [] },
+      { phase: "finished" },
+      { orders: [...state.orders, state.orders[0]] },
+    ])
+      expect(validRoom(room({ ...state, ...patch } as ShipState))).toBe(false);
+    expect(
+      validRoom(
+        room({
+          ...state,
+          controls: state.controls.map((c) => ({ ...c, owner: "intruder" })),
+        }),
+      ),
+    ).toBe(false);
+    const invalidOrder = (control: number, value: number) => ({
+      ...state,
+      orders: state.orders.map((o, i) =>
+        i === 0 ? { ...o, control, value } : o,
+      ),
+    });
+    expect(validRoom(room(invalidOrder(0, 1)))).toBe(false); // Self assignment.
+    expect(validRoom(room(invalidOrder(5, 2)))).toBe(false); // Impossible switch value.
     const message = {
       v: 2,
       type: "state",
-      room: room(s),
+      room: room(state),
       grid: { revision: 0, cells: Array(16).fill(false) },
       players: [],
     };
     expect(parseMessage(JSON.stringify(message))).not.toBeNull();
-    for (const patch of [
-      { hull: 101 },
-      { remaining: -1 },
-      { remaining: Infinity },
-      { crew: ["a", "a"] },
-      { controls: [] },
-      { phase: "finished" as const },
-      { orders: [...s.orders, s.orders[0]] },
-    ])
-      expect(validRoom(room({ ...s, ...patch }))).toBe(false);
     expect(
-      validRoom(
-        room({ ...s, orders: s.orders.map((o) => ({ ...o, control: 0 })) }),
-      ),
-    ).toBe(false);
-    expect(
-      validRoom(
-        room({
-          ...s,
-          controls: s.controls.map((c) => ({ ...c, owner: "intruder" })),
+      parseMessage(
+        JSON.stringify({
+          ...message,
+          room: room({ ...state, rules: undefined } as unknown as ShipState),
         }),
       ),
-    ).toBe(false);
+    ).toBeNull();
   });
-});
-
-it("runs each selected duration with the same relative difficulty ramp and valid snapshots", () => {
-  for (const minutes of [1, 2, 3]) {
-    let s = launchShip(["a"], random, minutes);
-    expect(s.duration).toBe(minutes * 60_000);
-    expect(s.remaining).toBe(s.duration);
-    expect(s.orders[0].remaining).toBe(18_000);
-    // At halfway, a new order has the same deadline for each mission length.
-    const halfway = {
-      ...s,
-      remaining: s.remaining / 2,
-      orders: s.orders.map((o) => ({
-        ...o,
-        status: "done" as const,
-        remaining: 1,
-      })),
-    };
-    expect(stepShip(halfway, 1, random).orders[0].remaining).toBeCloseTo(
-      14_000,
-      -1,
-    );
-    for (let elapsed = 0; elapsed < minutes * 60_000; elapsed += 250) {
-      for (const o of s.orders)
-        if (o.status === "pending") {
-          const c = s.controls[o.control];
-          s = setShipControl(s, c.owner, o.control, o.value, c.revision);
-        }
-      s = stepShip(s, 250, random);
-      expect(validRoom(room(s))).toBe(true);
-    }
-    expect(s.phase).toBe("finished");
-    expect(s.hull).toBe(100);
-    expect(s.remaining).toBe(0);
-  }
-});
-it("rejects unsupported duration fields and remaining times beyond the selected length, while accepting legacy states", () => {
-  const state = launchShip(["a"], random, 1);
-  for (const duration of [0, 90_000, 240_000, "60000", null, Infinity])
-    expect(validRoom(room({ ...state, duration } as typeof state))).toBe(false);
-  expect(validRoom(room({ ...state, remaining: 60_001 }))).toBe(false);
-  const legacy = launchShip(["a"], random);
-  delete legacy.duration;
-  expect(validRoom(room(legacy))).toBe(true);
 });

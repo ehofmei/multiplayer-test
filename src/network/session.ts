@@ -78,6 +78,8 @@ import {
   stepShip,
   setShipControl,
   validMissionMinutes,
+  validShipDifficulty,
+  type ShipDifficulty,
 } from "../games/ship";
 import { newBreakout, stepBreakout } from "../games/breakout";
 import { newArena, moveArena, stepArena } from "../games/arena";
@@ -1273,12 +1275,13 @@ export class Session {
       if (changed) this.broadcast();
     }, 25);
   }
-  startShip(minutes = 3) {
+  startShip(minutes = 2, difficulty: ShipDifficulty = "standard") {
     if (
       this.role !== "host" ||
       this.disposed ||
       this.room.kind !== "ship" ||
-      !validMissionMinutes(minutes)
+      !validMissionMinutes(minutes) ||
+      !validShipDifficulty(difficulty)
     )
       return;
     this.stopGameTimers();
@@ -1288,6 +1291,7 @@ export class Session {
       this.players.map((p) => p.id),
       Math.random,
       minutes,
+      difficulty,
     );
     this.runShip();
     this.broadcast();

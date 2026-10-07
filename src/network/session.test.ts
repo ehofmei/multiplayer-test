@@ -209,7 +209,7 @@ describe("shared game room", () => {
     await vi.advanceTimersByTimeAsync(10_000);
     expect(host.snapshot().room.race?.phase).toBe("ready");
   });
-  it("synchronizes ship repairs and rejects stale/foreign control inputs", async () => {
+  it("synchronizes ship scoring and rejects stale/foreign control inputs", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
     const { host, client, hostChannel } = await pair();
     client.selectGame("ship");
@@ -221,14 +221,15 @@ describe("shared game room", () => {
     await vi.advanceTimersByTimeAsync(20);
     client.setShipControl(0, 1, 0);
     await vi.advanceTimersByTimeAsync(20);
-    expect(host.snapshot().room.ship?.repairs).toBe(0);
+    expect(host.snapshot().room.ship?.completed).toBe(0);
     client.setShipControl(3, 2, 0);
     await vi.advanceTimersByTimeAsync(20);
-    expect(host.snapshot().room.ship?.hull).toBe(95);
+    expect(host.snapshot().room.ship?.score).toBe(0);
+    expect(host.snapshot().room.ship?.mistakes).toBe(1);
     client.setShipControl(3, 1, 1);
     await vi.advanceTimersByTimeAsync(20);
-    expect(client.snapshot().room.ship?.repairs).toBe(1);
-    expect(client.snapshot().room.ship?.hull).toBe(98);
+    expect(client.snapshot().room.ship?.completed).toBe(1);
+    expect(client.snapshot().room.ship?.score).toBe(100);
     client.setShipControl(3, 3, 1);
     await vi.advanceTimersByTimeAsync(20);
     expect(host.snapshot().room.ship?.controls[3].value).toBe(1);
@@ -252,7 +253,7 @@ describe("shared game room", () => {
         input: { kind: "ship-control", control: 3, value: 1, revision: 0 },
       }),
     });
-    expect(host.snapshot().room.ship?.repairs).toBe(0);
+    expect(host.snapshot().room.ship?.completed).toBe(0);
     hostChannel.onclose!();
     expect(host.snapshot().room.ship?.phase).toBe("ready");
     expect(host.snapshot().room.notice).toContain("A player left");
@@ -283,7 +284,7 @@ describe("shared game room", () => {
     expect(late.snapshot().room.ship?.crew).toEqual(["host", "client"]);
     late.setShipControl(0, 1, 0);
     await vi.advanceTimersByTimeAsync(20);
-    expect(host.snapshot().room.ship?.repairs).toBe(0);
+    expect(host.snapshot().room.ship?.completed).toBe(0);
     a.channel.onclose!();
     expect(host.snapshot().room.ship?.phase).toBe("playing");
     expect(host.snapshot().players).toHaveLength(2);

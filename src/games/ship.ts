@@ -1,37 +1,18 @@
-export const MISSION_MS = 180_000;
+import { shipPanels, validShipSetting } from "./ship-controls";
+export { shipPanels } from "./ship-controls";
+export const MISSION_MS = 120_000;
 export const validMissionMinutes = (minutes: number) =>
   [1, 2, 3].includes(minutes);
-export const shipDuration = (state: ShipState) => state.duration ?? MISSION_MS;
-export const shipSystems = [
-  "Shields",
-  "Thrusters",
-  "Coolant",
-  "Reactor",
-  "Oxygen",
-  "Radar",
-  "Gravity",
-  "Airlock",
-  "Fuel pump",
-  "Navigation",
-  "Comms",
-  "Deflector",
-  "Warp drive",
-  "Stabilizer",
-  "Solar array",
-  "Ion engine",
-  "Life support",
-  "Tractor beam",
-  "Heat vent",
-  "Docking gear",
-  "Power relay",
-  "Gyroscope",
-  "Beacon",
-  "Escape pod",
-];
+export type ShipDifficulty = "gentle" | "standard";
+export const validShipDifficulty = (value: unknown): value is ShipDifficulty =>
+  value === "gentle" || value === "standard";
+export const shipDuration = (state: ShipState) => state.duration;
+export const shipSystems = shipPanels.map((panel) => panel.name);
 export interface ShipControl {
   owner: string;
   value: number;
   revision: number;
+  wrong: boolean;
 }
 export interface ShipOrder {
   caller: string;
@@ -39,64 +20,109 @@ export interface ShipOrder {
   value: number;
   remaining: number;
   status: "pending" | "done" | "missed";
+  award: number;
 }
 export interface ShipState {
+  rules: 2;
   phase: "ready" | "playing" | "paused" | "finished";
   crew: string[];
   remaining: number;
-  duration?: number;
-  hull: number;
-  repairs: number;
+  duration: number;
+  difficulty: ShipDifficulty;
+  score: number;
+  completed: number;
+  streak: number;
+  bestStreak: number;
   mistakes: number;
   controls: ShipControl[];
   orders: ShipOrder[];
 }
-export function newShip(crew: string[] = [], minutes = 3): ShipState {
+export function newShip(
+  crew: string[] = [],
+  minutes = 2,
+  difficulty: ShipDifficulty = "standard",
+): ShipState {
+  const duration = (validMissionMinutes(minutes) ? minutes : 2) * 60_000;
   return {
+    rules: 2,
     phase: "ready",
     crew,
-    duration: (validMissionMinutes(minutes) ? minutes : 3) * 60_000,
-    remaining: (validMissionMinutes(minutes) ? minutes : 3) * 60_000,
-    hull: 100,
-    repairs: 0,
+    duration,
+    remaining: duration,
+    difficulty: validShipDifficulty(difficulty) ? difficulty : "standard",
+    score: 0,
+    completed: 0,
+    streak: 0,
+    bestStreak: 0,
     mistakes: 0,
     controls: crew.flatMap((owner) =>
-      Array.from({ length: 3 }, () => ({ owner, value: 0, revision: 0 })),
+      Array.from({ length: 3 }, () => ({
+        owner,
+        value: 0,
+        revision: 0,
+        wrong: false,
+      })),
     ),
     orders: [],
   };
 }
+const progress = (state: ShipState) => 1 - state.remaining / state.duration;
+export const shipDeadline = (state: ShipState) =>
+  Math.round(
+    state.difficulty === "gentle"
+      ? 26_000 - 12_000 * progress(state)
+      : 18_000 - 10_000 * progress(state),
+  );
+export const shipFeedback = (state: ShipState) =>
+  Math.round(
+    state.difficulty === "gentle"
+      ? 3_000 - 1_000 * progress(state)
+      : 2_000 - 1_000 * progress(state),
+  );
 function nextOrder(
   state: ShipState,
   caller: string,
+  reserved: ShipOrder[],
   random: () => number,
 ): ShipOrder {
-  // Every caller addresses the next crew member. This bijection guarantees that
-  // concurrent instructions never demand incompatible settings on one control.
-  const owner = (state.crew.indexOf(caller) + 1) % state.crew.length;
-  const control = owner * 3 + Math.floor(random() * 3);
+  const available = state.controls.flatMap((panel, i) =>
+    (state.crew.length === 1 || panel.owner !== caller) &&
+    !reserved.some((order) => order.control === i)
+      ? [i]
+      : [],
+  );
+  // Pick recipients uniformly, then a free panel. Reserve each new order before
+  // generating another so simultaneous renewals cannot conflict.
+  const owners = [...new Set(available.map((i) => state.controls[i].owner))];
+  const owner = owners[Math.floor(random() * owners.length)];
+  const panels = available.filter((i) => state.controls[i].owner === owner);
+  const control = panels[Math.floor(random() * panels.length)];
+  const count = shipPanels[control].settings.length;
   const value =
-    (state.controls[control].value + 1 + Math.floor(random() * 3)) % 4;
+    (state.controls[control].value + 1 + Math.floor(random() * (count - 1))) %
+    count;
   return {
     caller,
     control,
     value,
     status: "pending",
-    remaining: Math.round(
-      10_000 + (8_000 * state.remaining) / shipDuration(state),
-    ),
+    remaining: shipDeadline(state),
+    award: 0,
   };
 }
 export function launchShip(
   crew: string[],
   random = Math.random,
-  minutes = 3,
+  minutes = 2,
+  difficulty: ShipDifficulty = "standard",
 ): ShipState {
-  const state = { ...newShip(crew, minutes), phase: "playing" as const };
-  return {
-    ...state,
-    orders: crew.map((caller) => nextOrder(state, caller, random)),
+  const state = {
+    ...newShip(crew, minutes, difficulty),
+    phase: "playing" as const,
   };
+  for (const caller of crew)
+    state.orders.push(nextOrder(state, caller, state.orders, random));
+  return state;
 }
 export function stepShip(
   state: ShipState,
@@ -111,24 +137,41 @@ export function stepShip(
     return state;
   const remaining = Math.max(0, state.remaining - milliseconds);
   if (!remaining) return { ...state, remaining, phase: "finished" };
-  let hull = state.hull,
-    mistakes = state.mistakes;
+  let mistakes = state.mistakes;
+  const next = { ...state, remaining };
   const orders = state.orders.map((order) => {
     const left = Math.max(0, order.remaining - milliseconds);
     if (left > 0) return { ...order, remaining: left };
-    if (order.status !== "pending")
-      return nextOrder({ ...state, remaining }, order.caller, random);
-    hull = Math.max(0, hull - 15);
+    if (order.status !== "pending") return null;
     mistakes++;
-    return { ...order, remaining: 2_000, status: "missed" as const };
+    return {
+      ...order,
+      remaining: shipFeedback(next),
+      status: "missed" as const,
+    };
+  });
+  const reserved = orders.filter((o): o is ShipOrder => o !== null);
+  const renewed = orders.map((order, i) => {
+    if (order) return order;
+    const replacement = nextOrder(
+      next,
+      state.orders[i].caller,
+      reserved,
+      random,
+    );
+    reserved.push(replacement);
+    return replacement;
   });
   return {
-    ...state,
-    remaining,
-    hull,
+    ...next,
     mistakes,
-    orders,
-    phase: hull === 0 ? "finished" : "playing",
+    streak: mistakes > state.mistakes ? 0 : state.streak,
+    orders: renewed,
+    controls: state.controls.map((c, i) =>
+      c.wrong && !orders.some((o) => o?.control === i && o.status === "pending")
+        ? { ...c, wrong: false }
+        : c,
+    ),
   };
 }
 export function setShipControl(
@@ -144,9 +187,7 @@ export function setShipControl(
     !panel ||
     panel.owner !== owner ||
     panel.revision !== revision ||
-    !Number.isInteger(value) ||
-    value < 0 ||
-    value > 3 ||
+    !validShipSetting(control, value) ||
     value === panel.value ||
     panel.revision >= 100_000
   )
@@ -155,22 +196,23 @@ export function setShipControl(
     (o) => o.control === control && o.status === "pending",
   );
   const correct = order?.value === value;
-  const hull = correct
-    ? Math.min(100, state.hull + 3)
-    : order
-      ? Math.max(0, state.hull - 5)
-      : state.hull;
+  const wrong = Boolean(order && !correct);
+  const streak = correct ? state.streak + 1 : wrong ? 0 : state.streak;
+  const award = correct ? 100 + 20 * Math.min(streak - 1, 10) : 0;
   return {
     ...state,
-    hull,
-    phase: hull === 0 ? "finished" : "playing",
-    repairs: state.repairs + (correct ? 1 : 0),
-    mistakes: state.mistakes + (order && !correct ? 1 : 0),
+    score: state.score + award,
+    completed: state.completed + (correct ? 1 : 0),
+    streak,
+    bestStreak: Math.max(state.bestStreak, streak),
+    mistakes: state.mistakes + (wrong ? 1 : 0),
     controls: state.controls.map((c, i) =>
-      i === control ? { ...c, value, revision: c.revision + 1 } : c,
+      i === control ? { ...c, value, revision: c.revision + 1, wrong } : c,
     ),
     orders: state.orders.map((o) =>
-      o === order && correct ? { ...o, status: "done", remaining: 2_000 } : o,
+      o === order && correct
+        ? { ...o, status: "done", remaining: shipFeedback(state), award }
+        : o,
     ),
   };
 }

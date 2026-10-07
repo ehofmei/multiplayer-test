@@ -87,10 +87,19 @@ export async function expectScreenFits(page: Page) {
   if (await ship.count()) {
     const order = (await page.locator(".ship-order").boundingBox())!;
     const legend = (await ship.locator("legend").first().boundingBox())!;
-    expect(
-      legend.y,
-      "ship controls must not overlap the order",
-    ).toBeGreaterThanOrEqual(order.y + order.height);
+    const viewport = page.viewportSize()!;
+    if (viewport.width >= 500 && viewport.height <= 550) {
+      const panels = (await ship.boundingBox())!;
+      expect(
+        panels.x,
+        "landscape ship panels must clear the order horizontally",
+      ).toBeGreaterThanOrEqual(order.x + order.width);
+    } else {
+      expect(
+        legend.y,
+        "ship controls must not overlap the order",
+      ).toBeGreaterThanOrEqual(order.y + order.height);
+    }
   }
   const metrics = await page.evaluate(() => {
     const selectors = [

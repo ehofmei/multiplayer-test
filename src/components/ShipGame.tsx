@@ -1,6 +1,12 @@
 import { GameHelp } from "./AppLayout";
 import { useState } from "react";
-import { shipDuration, shipSystems, type ShipState } from "../games/ship";
+import {
+  shipDuration,
+  shipPanels,
+  type ShipState,
+  type ShipDifficulty,
+} from "../games/ship";
+import { ShipPanelPicture, ShipSettingPicture } from "./ShipArtwork";
 import type { Player } from "../network/protocol";
 import type { Session } from "../network/session";
 const clock = (ms: number) => {
@@ -19,54 +25,50 @@ export function ShipGame({
   connected: boolean;
 }) {
   const [minutes, setMinutes] = useState(shipDuration(game) / 60_000);
+  const [difficulty, setDifficulty] = useState<ShipDifficulty>(game.difficulty);
   const host = session.role === "host";
   const configure = game.phase === "ready" || game.phase === "finished";
   const crew = game.crew.includes(session.me.id);
   const active = connected && crew && game.phase === "playing";
   const order = game.orders.find((o) => o.caller === session.me.id);
+  const pending = active && order?.status === "pending";
+  const panel = order ? shipPanels[order.control] : null;
   const status = !connected
     ? "Host disconnected"
     : game.phase === "ready"
-      ? "Gather your crew."
+      ? "Call it out. Listen. Tap the picture!"
       : game.phase === "paused"
         ? "Mission paused · take a breath."
         : game.phase === "finished"
-          ? game.hull > 0
-            ? "Mission complete! Everyone made it."
-            : "Hull lost. Try again together!"
+          ? "Mission complete!"
           : !crew
             ? "You’re watching. Join the next mission."
             : order?.status === "done"
-              ? "Order complete! +3 hull"
+              ? `Order complete! +${order.award} points`
               : order?.status === "missed"
-                ? "Order missed! −15 hull"
-                : `Set ${shipSystems[order?.control ?? 0]} to ${order?.value}.`;
+                ? "Order missed · new start!"
+                : `${panel?.name}: ${panel?.settings[order?.value ?? 0]}!`;
   return (
     <section
       className="games-card ship-game-card"
       data-phase={game.phase}
+      data-difficulty={game.difficulty}
       aria-label="Spaceship Panic game"
     >
       <div className="board-heading">
         <h2>Spaceship Panic</h2>
         <span>{game.crew.length || players.length} crew</span>
       </div>
-      <div className="ship-stats" aria-label="Ship status">
-        <strong data-testid="ship-hull">Hull {game.hull}%</strong>
-        <span data-testid="ship-clock">
-          {clock(
-            game.phase === "ready" && host ? minutes * 60_000 : game.remaining,
-          )}
-        </span>
-        <span data-testid="ship-repairs">{game.repairs} repairs</span>
-      </div>
-      <progress
-        className="ship-hull"
-        aria-label="Hull health"
-        value={game.hull}
-        max="100"
-      />
-      <div className={`ship-order ${order?.status ?? ""}`}>
+      {!configure && (
+        <div className="ship-stats" aria-label="Team status">
+          <strong data-testid="ship-score">
+            {game.score.toLocaleString()} points
+          </strong>
+          <strong data-testid="ship-clock">{clock(game.remaining)}</strong>
+          <span data-testid="ship-streak">Streak {game.streak}</span>
+        </div>
+      )}
+      <div className={`ship-order ${active ? (order?.status ?? "") : ""}`}>
         {active && (
           <span className="ship-order-heading">
             {game.crew.length === 1
@@ -74,27 +76,45 @@ export function ShipGame({
               : "CALL THIS OUT TO YOUR CREW"}
           </span>
         )}
-        <p className="ship-command" aria-live="polite">
-          {status}
-        </p>
-        {active && order?.status === "pending" && (
+        <div className="ship-callout">
+          {pending && order && (
+            <div className="ship-command-pictures" aria-hidden="true">
+              <ShipPanelPicture control={order.control} value={order.value} />
+              <span>→</span>
+              <ShipSettingPicture control={order.control} value={order.value} />
+            </div>
+          )}
+          <p className="ship-command" aria-live="polite">
+            {status}
+          </p>
+        </div>
+        {pending && order && (
           <span className="ship-deadline" aria-label="Order time remaining">
             {Math.ceil(order.remaining / 1000)}s left
           </span>
         )}
       </div>
-      {crew && (
+      {crew && !configure && (
         <div className="ship-panels" aria-label="Your ship controls">
           {game.controls.map((control, i) =>
             control.owner !== session.me.id ? null : (
-              <fieldset key={i} className="ship-panel" disabled={!active}>
-                <legend>{shipSystems[i]}</legend>
-                <div>
-                  {[0, 1, 2, 3].map((value) => (
+              <fieldset
+                key={i}
+                className="ship-panel"
+                disabled={!active}
+                data-kind={shipPanels[i].kind}
+                data-wrong={control.wrong}
+              >
+                <legend>
+                  <ShipPanelPicture control={i} value={control.value} />
+                  <span>{shipPanels[i].name}</span>
+                </legend>
+                <div className="ship-settings">
+                  {shipPanels[i].settings.map((label, value) => (
                     <button
                       key={value}
                       type="button"
-                      aria-label={`${shipSystems[i]} ${value}`}
+                      aria-label={`${shipPanels[i].name} ${label}`}
                       aria-pressed={control.value === value}
                       disabled={!active || control.value === value}
                       data-testid={`ship-control-${i}-${value}`}
@@ -102,53 +122,98 @@ export function ShipGame({
                         session.setShipControl(i, value, control.revision)
                       }
                     >
-                      {value}
+                      <ShipSettingPicture control={i} value={value} />
+                      <span>{label}</span>
+                      <span className="ship-selected" aria-hidden="true">
+                        {control.value === value ? "✓" : ""}
+                      </span>
                     </button>
                   ))}
                 </div>
+                {control.wrong && (
+                  <span className="ship-control-hint" role="status">
+                    Try another setting
+                  </span>
+                )}
               </fieldset>
             ),
           )}
         </div>
       )}
+      {game.phase === "finished" && (
+        <div className="ship-results" aria-label="Mission results">
+          <span>TEAM SCORE</span>
+          <strong data-testid="ship-score">
+            {game.score.toLocaleString()}
+          </strong>
+          <div>
+            <p>
+              <b data-testid="ship-completed">{game.completed}</b> commands
+              completed
+            </p>
+            <p>
+              <b data-testid="ship-best-streak">{game.bestStreak}</b> highest
+              streak
+            </p>
+          </div>
+          <small>
+            {game.difficulty === "gentle" ? "Gentle" : "Standard"} ·{" "}
+            {clock(game.duration)} mission
+          </small>
+        </div>
+      )}
       <GameHelp>
         <p className="muted ship-help">
-          {game.phase === "ready"
-            ? "Choose a 1, 2, or 3-minute mission. Each phone has three controls; your orders usually belong to someone else. Read them aloud, listen for yours, and set the requested number."
-            : "Read orders aloud. Only your three controls appear here. Missed orders cost 15 hull; wrong settings on a requested control cost 5. Repairs restore 3."}
+          Call out the panel name and setting. Match the pictures and tap once.
+          Each phone has three panels. Correct commands earn 100 points, plus 20
+          for each extra success in the team streak, up to 300 points per
+          command. Wrong requested settings and missed orders reset the streak;
+          your score stays. Unrelated panels are safe to explore. Pressure
+          builds until the clock ends. Gentle gives more time. Everyone should
+          update before playing these rules.
         </p>
       </GameHelp>
-      {configure && game.phase === "finished" && (
-        <p className="ship-summary">
-          {game.repairs} repairs · {game.mistakes} mistakes ·{" "}
-          {clock(shipDuration(game) - game.remaining)} flown
-        </p>
-      )}
       {host && configure && (
         <>
-          <fieldset className="ship-duration">
-            <legend>Mission length</legend>
-            <div>
-              {[1, 2, 3].map((value) => (
-                <button
-                  type="button"
-                  key={value}
-                  aria-label={`${value} minute${value === 1 ? "" : "s"}`}
-                  aria-pressed={minutes === value}
-                  onClick={() => setMinutes(value)}
-                >
-                  {value} min
-                </button>
-              ))}
-            </div>
-          </fieldset>
-          <button onClick={() => session.startShip(minutes)}>
+          <div className="ship-config">
+            <fieldset className="ship-duration">
+              <legend>Mission length</legend>
+              <div>
+                {[1, 2, 3].map((value) => (
+                  <button
+                    type="button"
+                    key={value}
+                    aria-label={`${value} minute${value === 1 ? "" : "s"}`}
+                    aria-pressed={minutes === value}
+                    onClick={() => setMinutes(value)}
+                  >
+                    {value} min{value === 2 && <small>Recommended</small>}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset className="ship-difficulty">
+              <legend>Command pace</legend>
+              <div>
+                {(["gentle", "standard"] as const).map((value) => (
+                  <button
+                    type="button"
+                    key={value}
+                    aria-pressed={difficulty === value}
+                    onClick={() => setDifficulty(value)}
+                  >
+                    {value === "gentle" ? "Gentle" : "Standard"}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+          <button onClick={() => session.startShip(minutes, difficulty)}>
             {game.phase === "finished" ? "Launch Again" : "Launch Mission"}
           </button>
-          {players.length === 1 && (
+          {players.length === 1 && game.phase === "ready" && (
             <p className="muted">
-              Solo practice: orders use your own controls. Add another player
-              for co-op.
+              Solo practice uses your own panels. Add a player for teamwork.
             </p>
           )}
         </>

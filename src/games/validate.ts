@@ -11,7 +11,8 @@ import {
   CYCLE_LIMIT,
   cycleDirections,
 } from "./cycle";
-import { MISSION_MS } from "./ship";
+import { validShipDifficulty } from "./ship";
+import { validShipSetting } from "./ship-controls";
 import type { Room } from "./model";
 const record = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
@@ -299,15 +300,18 @@ export function validRoom(v: unknown): v is Room {
       v.pong !== null ||
       v.race !== null ||
       !["ready", "playing", "paused", "finished"].includes(String(s.phase)) ||
-      (s.duration !== undefined &&
-        ![60_000, 120_000, MISSION_MS].includes(s.duration as number)) ||
+      s.rules !== 2 ||
+      !validShipDifficulty(s.difficulty) ||
+      ![60_000, 120_000, 180_000].includes(s.duration as number) ||
+      !integer(s.remaining, 0, s.duration as number) ||
+      !integer(s.completed, 0, 100_000) ||
       !integer(
-        s.remaining,
-        0,
-        (s.duration as number | undefined) ?? MISSION_MS,
+        s.score,
+        (s.completed as number) * 100,
+        (s.completed as number) * 300,
       ) ||
-      !integer(s.hull, 0, 100) ||
-      !integer(s.repairs, 0, 100_000) ||
+      !integer(s.bestStreak, 0, s.completed as number) ||
+      !integer(s.streak, 0, s.bestStreak as number) ||
       !integer(s.mistakes, 0, 100_000) ||
       !Array.isArray(s.crew) ||
       s.crew.length > 8 ||
@@ -319,15 +323,14 @@ export function validRoom(v: unknown): v is Room {
         (c, i) =>
           record(c) &&
           c.owner === (s.crew as string[])[Math.floor(i / 3)] &&
-          integer(c.value, 0, 3) &&
+          validShipSetting(i, c.value as number) &&
+          typeof c.wrong === "boolean" &&
           integer(c.revision, 0, 100_000),
       ) ||
       !Array.isArray(s.orders) ||
       s.orders.length !== (s.phase === "ready" ? 0 : s.crew.length) ||
       (s.phase !== "ready" && s.crew.length < 1) ||
-      (s.phase === "finished"
-        ? s.hull !== 0 && s.remaining !== 0
-        : s.hull === 0 || s.remaining === 0)
+      (s.phase === "finished" ? s.remaining !== 0 : s.remaining === 0)
     )
       return false;
     return (
@@ -336,10 +339,18 @@ export function validRoom(v: unknown): v is Room {
           record(o) &&
           o.caller === (s.crew as string[])[i] &&
           integer(o.control, 0, (s.controls as unknown[]).length - 1) &&
-          Math.floor(o.control / 3) === (i + 1) % (s.crew as string[]).length &&
-          integer(o.value, 0, 3) &&
-          integer(o.remaining, 0, 18_000) &&
-          ["pending", "done", "missed"].includes(String(o.status)),
+          ((s.crew as string[]).length === 1 ||
+            Math.floor((o.control as number) / 3) !== i) &&
+          validShipSetting(o.control as number, o.value as number) &&
+          integer(
+            o.remaining,
+            0,
+            s.difficulty === "gentle" ? 26_000 : 18_000,
+          ) &&
+          ["pending", "done", "missed"].includes(String(o.status)) &&
+          (o.status === "done"
+            ? integer(o.award, 100, 300) && (o.award as number) % 20 === 0
+            : o.award === 0),
       ) && new Set(s.orders.map((o) => o.control)).size === s.orders.length
     );
   }

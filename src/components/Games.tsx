@@ -33,8 +33,7 @@ const choices: {
   {
     kind: "ship",
     title: "Spaceship Panic",
-    detail:
-      "Call out orders. Work your controls. Keep the ship alive together.",
+    detail: "Call out pictures. Work your panels. Chase a team high score.",
     mark: "✧",
   },
   {
