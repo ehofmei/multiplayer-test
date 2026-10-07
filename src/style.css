@@ -2222,6 +2222,10 @@ main.app-shell {
   font-size: 14px;
 }
 @media (max-height: 550px) and (min-width: 500px) {
+  /* Menu keeps its update badge/action; reserve short play windows for the court. */
+  .app-shell:has(.pong-game-card) > aside.banner {
+    display: none;
+  }
   .app-shell .games-card.pong-game-card:not(.game-library) {
     padding-bottom: 8px;
     grid-template-columns: minmax(0, 1fr) minmax(200px, 1fr);

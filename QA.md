@@ -739,10 +739,11 @@ its input area, so taps and drags never include a dark letterboxed region.
 Portrait tests check the long play axis remains over 200px, the same minimum
 previously used for the horizontal court, with the original 650:1000 geometry.
 
-The non-deploying `portrait-pong-review.yml` workflow obtains genuine Linux renders
-for the affected Pong screenshots and the added status-clearance view. Review
-both platforms, then remove the one-time generation steps and require ordinary
-verification for the exact final commit.
+The non-deploying `portrait-pong-review.yml` workflow runs ordinary verification
+with read-only repository access and snapshot updates disabled. The affected
+Pong screenshots and status-clearance view have separate genuine Darwin/Linux
+renders. Short landscape Pong views keep pending updates in Menu to preserve
+court space; the update badge and action remain available.
 
 Physical iPhone/iPad checks: update all devices; compare the supplied screenshot
 with Home, library, pairing and Pong in Safari and the installed PWA. Confirm the

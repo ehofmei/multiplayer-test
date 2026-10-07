@@ -1,4 +1,4 @@
-import { openMenu, closePanels } from "./ui";
+import { openMenu, closePanels, chooseGame, expectScreenFits } from "./ui";
 import { test, expect } from "@playwright/test";
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
@@ -115,6 +115,24 @@ test("a cached new build waits for consent, cancel preserves play, updating relo
     await expect(
       page.getByRole("button", { name: "Update app", exact: true }),
     ).toBeVisible();
+    await closePanels(page);
+    await chooseGame(page, "Pong");
+    await page.setViewportSize({ width: 844, height: 390 });
+    await expect(page.locator("aside.banner")).toBeHidden();
+    await expect(page.getByRole("button", { name: /^Menu/ })).toContainText(
+      "•",
+    );
+    await expectScreenFits(page);
+    await openMenu(page);
+    await expect(
+      page.getByRole("button", { name: "Update app", exact: true }),
+    ).toBeVisible();
+    await closePanels(page);
+    await page
+      .getByRole("button", { name: "Choose Game", exact: true })
+      .click();
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await openMenu(page);
     await expect(
       page.getByRole("region", { name: "Game picker" }),
     ).toBeVisible();
