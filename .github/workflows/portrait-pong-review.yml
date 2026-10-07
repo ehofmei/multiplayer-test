@@ -1,0 +1,47 @@
+name: Portrait Pong review
+on:
+  push:
+    branches: [codex/portrait-pong]
+  workflow_dispatch:
+concurrency:
+  group: portrait-pong-review-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Obtain the intended portrait Linux renders once
+        run: |
+          if [ ! -f tests/pong.spec.ts-snapshots/pong-bottom-client-linux.png ]; then
+            npx playwright test tests/pong.spec.ts --update-snapshots=all
+            npx playwright test tests/game.spec.ts --grep 'host picks games' --update-snapshots=all
+            npx playwright test tests/app-layout.spec.ts --grep 'safe area' --update-snapshots
+          fi
+      - name: Return genuine Linux renders
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/pong.spec.ts-snapshots/*-linux.png tests/game.spec.ts-snapshots/pong-court-linux.png tests/app-layout.spec.ts-snapshots/*-linux.png
+          if ! git diff --cached --quiet; then
+            git commit -m 'Generated portrait Pong Linux baselines'
+            git push origin HEAD:codex/portrait-pong
+          fi
+      - run: npm run verify
+      - name: Save browser evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-failure-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7

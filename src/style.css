@@ -1,4 +1,6 @@
 :root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   font-family:
     ui-sans-serif,
     system-ui,
@@ -1478,12 +1480,17 @@ main.app-shell {
   width: 100%;
   max-width: none;
   height: 100dvh;
-  padding: max(12px, env(safe-area-inset-top))
-    max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom))
+  /* Leave clearance below the iOS status edge, in addition to its inset. */
+  padding: calc(var(--status-clearance, 12px) + var(--safe-area-top))
+    max(12px, env(safe-area-inset-right)) calc(12px + var(--safe-area-bottom))
     max(12px, env(safe-area-inset-left));
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.app-shell.is-standalone {
+  /* iOS can report zero top inset when its default status bar is outside the viewport. */
+  --status-clearance: 24px;
 }
 .app-shell > header {
   flex-shrink: 0;
@@ -2065,7 +2072,13 @@ main.app-shell {
   height: var(--app-height, 100dvh);
 }
 .app-panel {
-  max-height: calc(var(--app-height, 100dvh) - 24px);
+  max-height: calc(
+    var(--app-height, 100dvh) - 24px - var(--safe-area-top) -
+      var(--safe-area-bottom)
+  );
+  margin-block: auto;
+  top: var(--safe-area-top);
+  bottom: var(--safe-area-bottom);
 }
 .app-shell.in-room .app-title .brand-icon {
   display: none;
@@ -2188,6 +2201,36 @@ main.app-shell {
 .app-shell .surface-fit {
   width: min(100cqw, calc(100cqh * var(--surface-ratio)));
   aspect-ratio: var(--surface-ratio);
+}
+
+/* The visible portrait court is also the input area; no dark letterboxing. */
+.app-shell .pong-game-card > .game-surface {
+  background: transparent;
+  align-items: flex-start;
+}
+.pong-game-card .pong-court svg {
+  aspect-ratio: 650 / 1000;
+}
+.app-shell .games-card.pong-game-card:not(.game-library) {
+  padding: 8px 12px 56px;
+  gap: 6px;
+}
+.app-shell .pong-game-card .game-score strong {
+  font-size: 24px;
+}
+.app-shell .pong-game-card .game-status {
+  font-size: 14px;
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .games-card.pong-game-card:not(.game-library) {
+    padding-bottom: 8px;
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 1fr);
+  }
+  .app-shell .pong-game-card > button {
+    position: static;
+    max-width: none;
+    align-self: end;
+  }
 }
 @media (min-width: 651px) and (min-height: 551px) {
   .app-shell .pairing-body.has-code {

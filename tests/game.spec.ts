@@ -546,19 +546,27 @@ test("host picks games, assigns two Pong players, spectators watch, and switchin
     ).toBeDisabled();
     await chooseGame(host, "Pong");
     await expect(emma.getByRole("region", { name: "Pong game" })).toBeVisible();
-    await expectStableScreenshot(host, ".pong-court", "pong-court.png");
+    await expectStableScreenshot(
+      host,
+      ".pong-court",
+      `pong-court-${process.platform}.png`,
+    );
     // Text above the court must not change the shared baseline's geometry.
     const alternateFont = await host.addStyleTag({
       content: ":root { font-family: serif; line-height: 1.6; }",
     });
-    await expectStableScreenshot(host, ".pong-court", "pong-court.png");
+    await expectStableScreenshot(
+      host,
+      ".pong-court",
+      `pong-court-${process.platform}.png`,
+    );
     await alternateFont.evaluate((element) => element.remove());
-    await host.getByLabel("Left player").selectOption({ label: "Emma" });
-    await host.getByLabel("Right player").selectOption({ label: "Emma" });
+    await host.getByLabel("Player 1").selectOption({ label: "Emma" });
+    await host.getByLabel("Player 2").selectOption({ label: "Emma" });
     await expect(
       host.getByRole("button", { name: "Start Pong", exact: true }),
     ).toBeDisabled();
-    await host.getByLabel("Right player").selectOption({ label: "Sam" });
+    await host.getByLabel("Player 2").selectOption({ label: "Sam" });
     await host.getByRole("button", { name: "Start Pong", exact: true }).click();
     await showHelp(host);
     await expect(
@@ -581,7 +589,7 @@ test("host picks games, assigns two Pong players, spectators watch, and switchin
         ),
       )
       .toBe(494);
-    await sam.getByRole("group", { name: "Pong court" }).press("ArrowUp");
+    await sam.getByRole("group", { name: "Pong court" }).press("ArrowRight");
     await expect
       .poll(async () =>
         Number(await host.getByTestId("paddle-1").getAttribute("y")),

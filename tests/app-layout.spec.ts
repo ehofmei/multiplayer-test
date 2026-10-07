@@ -264,3 +264,60 @@ async function pageResultScreenshot(
     path: `test-results/app-results-${name.replaceAll(" ", "-")}-${width}.png`,
   });
 }
+
+test("safe area leaves status clearance across home, library, pairing, setup and dialogs", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    Object.defineProperty(navigator, "standalone", { value: true }),
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./");
+  await page.addStyleTag({
+    content:
+      ":root { --safe-area-top: 59px; --safe-area-bottom: 34px; font-family: serif; line-height: 1.6; }",
+  });
+  const clearance = async () => {
+    await expectScreenFits(page);
+    const header = (await page.locator("main > header").boundingBox())!;
+    expect(header.y).toBe(83);
+    const content = (await page.locator(".app-content").boundingBox())!;
+    expect(content.y + content.height).toBeLessThanOrEqual(844 - 46);
+  };
+  await clearance();
+  await page.getByLabel("Your name").fill("Alex");
+  await page.getByRole("button", { name: "Create Game", exact: true }).click();
+  await clearance();
+  await page.getByRole("button", { name: "Add Player", exact: true }).click();
+  await clearance();
+  await page
+    .getByRole("button", { name: "Cancel Invite", exact: true })
+    .click();
+  await chooseGame(page, "Pong");
+  await clearance();
+  await expectStableScreenshot(
+    page,
+    "main",
+    `pong-safe-area-${process.platform}.png`,
+    { maxDiffPixels: 250 },
+  );
+  await showHelp(page);
+  const panel = (await page
+    .getByRole("dialog", { name: "Controls & help", exact: true })
+    .boundingBox())!;
+  expect(panel.y).toBeGreaterThanOrEqual(71);
+  expect(panel.y + panel.height).toBeLessThanOrEqual(844 - 46);
+  await page
+    .getByRole("button", { name: "Close", exact: true })
+    .press("Escape");
+  await expect(
+    page.getByRole("button", { name: "Controls & help", exact: true }),
+  ).toBeFocused();
+  // Default iOS status-bar mode can exclude the status bar from the viewport,
+  // leaving env(safe-area-inset-top) at zero; retain explicit clearance there.
+  await page.addStyleTag({
+    content: ":root { --safe-area-top: 0px; --safe-area-bottom: 0px; }",
+  });
+  expect((await page.locator("main > header").boundingBox())!.y).toBe(24);
+  await expectScreenFits(page);
+});

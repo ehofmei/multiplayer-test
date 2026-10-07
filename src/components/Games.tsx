@@ -193,6 +193,12 @@ export function PongGame({
   ]);
   const [local, setLocal] = useState(0.5);
   const seat = game.seats.indexOf(session.me.id);
+  // Keep the host's original court coordinates; only each device's view rotates.
+  const reversed = seat === 1;
+  const viewLocal = reversed ? 1 - local : local;
+  const rotation = reversed
+    ? "translate(650 0) rotate(90)"
+    : "translate(0 1000) rotate(-90)";
   const controllable =
     connected && seat >= 0 && ["playing", "serve"].includes(game.phase);
   const ball = useRef<SVGCircleElement>(null);
@@ -224,7 +230,7 @@ export function PongGame({
   }, [game.ball, game.phase, session]);
   const move = (position: number) => {
     if (!controllable) return;
-    const next = clampPaddle(position);
+    const next = clampPaddle(reversed ? 1 - position : position);
     setLocal(next);
     session.move(next);
   };
@@ -267,93 +273,101 @@ export function PongGame({
       <p className="game-status" aria-live="polite">
         {status}
       </p>
-      <GameSurface ratio={1000 / 650}>
+      <GameSurface ratio={650 / 1000}>
         <div
           className="pong-court"
           role="group"
           aria-label="Pong court"
-          aria-description="Dashed bumpers are warnings. Filled bumpers bounce the ball."
+          aria-description={`${seat >= 0 ? "Your paddle is at the bottom. Drag left or right." : "Player 1 is at the bottom."} Dashed bumpers are warnings. Filled bumpers bounce the ball.`}
           style={{ touchAction: controllable ? "none" : "auto" }}
           tabIndex={controllable ? 0 : -1}
           onKeyDown={(e) => {
-            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+            if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
               e.preventDefault();
-              move(local + (e.key === "ArrowUp" ? -0.06 : 0.06));
+              move(viewLocal + (e.key === "ArrowLeft" ? -0.06 : 0.06));
             }
           }}
           onPointerDown={(e) => {
-            if (controllable) {
+            if (controllable && e.isPrimary && e.button === 0) {
               e.currentTarget.setPointerCapture(e.pointerId);
               const bounds = e.currentTarget.getBoundingClientRect();
-              move((e.clientY - bounds.top) / bounds.height);
+              move((e.clientX - bounds.left) / bounds.width);
             }
           }}
           onPointerMove={(e) => {
             if (e.currentTarget.hasPointerCapture(e.pointerId)) {
               const bounds = e.currentTarget.getBoundingClientRect();
-              move((e.clientY - bounds.top) / bounds.height);
+              move((e.clientX - bounds.left) / bounds.width);
             }
           }}
         >
-          <svg viewBox="0 0 1000 650" aria-hidden="true">
-            <path
-              d="M500 0V650"
-              stroke="#63837a"
-              strokeWidth="4"
-              strokeDasharray="12 16"
-            />
-            {game.bumpers?.map((bumper, i) => (
-              <g
-                key={i}
-                className={`pong-bumper ${bumper.warning > 0 ? "warning" : "solid"} ${bumper.flash > 0 ? "impact" : ""}`}
-                data-testid={`pong-bumper-${i}`}
-                data-warning={bumper.warning}
-                data-hits={bumper.hits}
-                data-flash={bumper.flash}
-                transform={`translate(${bumper.x * 1000} ${bumper.y * 650})`}
-              >
-                <circle className="bumper-halo" r="42" />
-                <circle className="bumper-body" r={BUMPER_RADIUS * 1000} />
-                {bumper.warning > 0 ? (
-                  <text textAnchor="middle" y="9" fontSize="28" fill="#ffd087">
-                    !
-                  </text>
-                ) : (
-                  <circle r="10" fill="#122c29" />
-                )}
-              </g>
-            ))}
-            {[0, 1].map((i) => (
-              <rect
-                key={i}
-                data-testid={`paddle-${i}`}
-                x={i === 0 ? 35 : 945}
-                y={((i === seat ? local : game.paddles[i]) - 0.12) * 650}
-                width="20"
-                height="156"
-                rx="8"
-                fill={
-                  players.find((p) => p.id === game.seats[i])?.color
-                    ? paddleHex(
-                        players.find((p) => p.id === game.seats[i])?.color,
-                        i,
-                      )
-                    : i === seat
-                      ? "#d9f29d"
-                      : "#f5f4ee"
-                }
+          <svg viewBox="0 0 650 1000" aria-hidden="true">
+            <g transform={rotation}>
+              <path
+                d="M500 0V650"
+                stroke="#63837a"
+                strokeWidth="4"
+                strokeDasharray="12 16"
               />
-            ))}
-            <circle
-              ref={ball}
-              data-testid="pong-ball"
-              data-x={game.ball.x}
-              data-y={game.ball.y}
-              cx="500"
-              cy="325"
-              r="17"
-              fill="#f5f4ee"
-            />
+              {game.bumpers?.map((bumper, i) => (
+                <g
+                  key={i}
+                  className={`pong-bumper ${bumper.warning > 0 ? "warning" : "solid"} ${bumper.flash > 0 ? "impact" : ""}`}
+                  data-testid={`pong-bumper-${i}`}
+                  data-warning={bumper.warning}
+                  data-hits={bumper.hits}
+                  data-flash={bumper.flash}
+                  transform={`translate(${bumper.x * 1000} ${bumper.y * 650})`}
+                >
+                  <circle className="bumper-halo" r="42" />
+                  <circle className="bumper-body" r={BUMPER_RADIUS * 1000} />
+                  {bumper.warning > 0 ? (
+                    <text
+                      textAnchor="middle"
+                      y="9"
+                      fontSize="28"
+                      fill="#ffd087"
+                      transform={reversed ? "rotate(-90)" : "rotate(90)"}
+                    >
+                      !
+                    </text>
+                  ) : (
+                    <circle r="10" fill="#122c29" />
+                  )}
+                </g>
+              ))}
+              {[0, 1].map((i) => (
+                <rect
+                  key={i}
+                  data-testid={`paddle-${i}`}
+                  x={i === 0 ? 35 : 945}
+                  y={((i === seat ? local : game.paddles[i]) - 0.12) * 650}
+                  width="20"
+                  height="156"
+                  rx="8"
+                  fill={
+                    players.find((p) => p.id === game.seats[i])?.color
+                      ? paddleHex(
+                          players.find((p) => p.id === game.seats[i])?.color,
+                          i,
+                        )
+                      : i === seat
+                        ? "#d9f29d"
+                        : "#f5f4ee"
+                  }
+                />
+              ))}
+              <circle
+                ref={ball}
+                data-testid="pong-ball"
+                data-x={game.ball.x}
+                data-y={game.ball.y}
+                cx="500"
+                cy="325"
+                r="17"
+                fill="#f5f4ee"
+              />
+            </g>
           </svg>
         </div>
       </GameSurface>
@@ -365,9 +379,8 @@ export function PongGame({
       <GameHelp>
         {game.seats.length === 2 && seat >= 0 && (
           <p className="muted">
-            {seat >= 0
-              ? `You play ${seat === 0 ? "left" : "right"}. Drag up/down on the court, use the slider, or press ↑ / ↓.`
-              : "You’re watching this match. The host can choose you for the next one."}
+            Your paddle is always at the bottom. Drag left/right anywhere on the
+            court, use the slider, or press ← / →.
           </p>
         )}
         {seat >= 0 && (
@@ -378,7 +391,7 @@ export function PongGame({
               type="range"
               min="12"
               max="88"
-              value={Math.round(local * 100)}
+              value={Math.round(viewLocal * 100)}
               disabled={!controllable}
               onChange={(e) => move(Number(e.target.value) / 100)}
             />
@@ -399,9 +412,9 @@ export function PongGame({
           <div className="seat-picker">
             {[0, 1].map((i) => (
               <label key={i}>
-                {i === 0 ? "Left player" : "Right player"}
+                {i === 0 ? "Player 1" : "Player 2"}
                 <select
-                  aria-label={i === 0 ? "Left player" : "Right player"}
+                  aria-label={i === 0 ? "Player 1" : "Player 2"}
                   value={seats[i]}
                   onChange={(e) =>
                     setSeats((old) =>

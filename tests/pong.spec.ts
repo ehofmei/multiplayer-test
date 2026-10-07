@@ -19,6 +19,107 @@ const sizes = [
 ];
 const card = (page: Page) => page.locator(".pong-game-card");
 const bumpers = (page: Page) => page.locator(".pong-bumper");
+
+test("both Pong players control a bottom paddle horizontally, including captured drags and mirrored sliders", async ({
+  page: host,
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: sizes[2],
+    hasTouch: true,
+  });
+  try {
+    const client = await context.newPage();
+    await host.setViewportSize(sizes[2]);
+    await host.goto("./");
+    await host.getByLabel("Your name").fill("Alex");
+    await host
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await join(host, client, "Emma");
+    await chooseGame(host, "Pong");
+    await host.clock.install({ time: new Date("2026-10-07T12:00:00Z") });
+    await host.clock.pauseAt(new Date("2026-10-07T12:00:01Z"));
+    await host.getByRole("button", { name: "Start Pong", exact: true }).click();
+    await host.clock.runFor(1100);
+    await expect(card(client)).toHaveAttribute("data-phase", "playing");
+    for (const [seat, page] of [host, client].entries()) {
+      const court = (await page.locator(".pong-court").boundingBox())!;
+      const own = (await page.getByTestId(`paddle-${seat}`).boundingBox())!;
+      const other = (await page
+        .getByTestId(`paddle-${1 - seat}`)
+        .boundingBox())!;
+      expect(own.y).toBeGreaterThan(court.y + court.height * 0.9);
+      expect(other.y + other.height).toBeLessThan(court.y + court.height * 0.1);
+      expect(own.width / court.width).toBeCloseTo(0.24, 2);
+      await page.mouse.move(
+        court.x + court.width * 0.5,
+        court.y + court.height * 0.85,
+      );
+      await page.mouse.down();
+      await page.mouse.move(
+        court.x + court.width + 10,
+        court.y + court.height + 10,
+        { steps: 8 },
+      );
+      await page.mouse.up();
+      await expect
+        .poll(
+          async () =>
+            (await page.getByTestId(`paddle-${seat}`).boundingBox())!.x -
+            court.x,
+        )
+        .toBeCloseTo(court.width * 0.76, 1);
+      // Released capture must allow a fresh drag from the other end.
+      await page
+        .getByRole("group", { name: "Pong court", exact: true })
+        .press("ArrowLeft");
+      await expect
+        .poll(
+          async () =>
+            (await page.getByTestId(`paddle-${seat}`).boundingBox())!.x -
+            court.x,
+        )
+        .toBeCloseTo(court.width * 0.7, 1);
+      await showHelp(page);
+      await page.getByLabel("Your paddle").press("Home");
+      await closePanels(page);
+      await expect
+        .poll(
+          async () =>
+            (await page.getByTestId(`paddle-${seat}`).boundingBox())!.x,
+        )
+        .toBeCloseTo(court.x, 1);
+    }
+    await host.clock.runFor(100);
+    await expect
+      .poll(() => host.getByTestId("paddle-1").getAttribute("y"))
+      .toBe("494");
+    // A client tap near its right edge immediately moves right while sending
+    // the opposite canonical coordinate to the host.
+    const court = (await client.locator(".pong-court").boundingBox())!;
+    await client
+      .getByRole("group", { name: "Pong court", exact: true })
+      .tap({ position: { x: court.width - 10, y: court.height * 0.8 } });
+    await host.clock.runFor(100);
+    await expect
+      .poll(() => host.getByTestId("paddle-1").getAttribute("y"))
+      .toBe("0");
+    await expectStableScreenshot(
+      client,
+      ".pong-game-card",
+      `pong-bottom-client-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
+    await host.getByRole("button", { name: "Pause Pong", exact: true }).click();
+    await expect(card(client)).toHaveAttribute("data-phase", "paused");
+    const paused = await client.getByTestId("paddle-1").getAttribute("y");
+    await client.mouse.click(court.x + 10, court.y + court.height * 0.8);
+    expect(await client.getByTestId("paddle-1").getAttribute("y")).toBe(paused);
+  } finally {
+    await context.close();
+  }
+});
 async function fit(page: Page) {
   for (const size of sizes) {
     await page.setViewportSize(size);
@@ -31,7 +132,10 @@ async function fit(page: Page) {
           : null;
       await expectScreenFits(page);
       const court = (await page.locator(".pong-court").boundingBox())!;
-      expect(court.width).toBeGreaterThan(200);
+      expect(court.height).toBeGreaterThan(200);
+      expect(court.height / court.width).toBeCloseTo(1000 / 650, 2);
+      const stage = (await page.locator(".game-surface").boundingBox())!;
+      expect(court.y - stage.y).toBeLessThan(1);
       const box = (await card(page).boundingBox())!;
       expect(court.y + court.height).toBeLessThan(box.y + box.height);
       await page.screenshot({
@@ -70,7 +174,7 @@ test("Pong pairs, warns, adds four bumpers, flashes impacts, pauses, resets each
     await expect(host.getByTestId("paddle-0")).toHaveAttribute("height", "156");
     await host
       .getByRole("group", { name: "Pong court", exact: true })
-      .press("ArrowUp");
+      .press("ArrowLeft");
     await expect(host.getByTestId("paddle-0")).toHaveAttribute("y", "208");
     await client
       .getByRole("group", { name: "Pong court", exact: true })
@@ -78,7 +182,7 @@ test("Pong pairs, warns, adds four bumpers, flashes impacts, pauses, resets each
     await host.clock.runFor(100);
     await expect
       .poll(() => host.getByTestId("paddle-1").getAttribute("y"))
-      .toBe("0");
+      .toBe("494");
     await showHelp(client);
     await expect(
       client.getByText("Long rallies add up to four small bumpers.", {
@@ -90,7 +194,7 @@ test("Pong pairs, warns, adds four bumpers, flashes impacts, pauses, resets each
     await host.clock.runFor(100);
     await expect
       .poll(() => host.getByTestId("paddle-1").getAttribute("y"))
-      .toBe("494");
+      .toBe("0");
 
     // Keep a rally going through ordinary pointer input on both actual paired
     // courts; no state injection or special gameplay hooks.
@@ -103,9 +207,8 @@ test("Pong pairs, warns, adds four bumpers, flashes impacts, pauses, resets each
         for (const page of [host, client]) {
           const box = (await page.locator(".pong-court").boundingBox())!;
           await page.mouse.click(
-            box.x + box.width / 2,
-            box.y +
-              box.height *
+            box.x +
+              box.width *
                 Math.max(
                   0.12,
                   Math.min(
@@ -115,7 +218,10 @@ test("Pong pairs, warns, adds four bumpers, flashes impacts, pauses, resets each
                         ? 0
                         : Math.max(-0.08, Math.min(0.08, (y - 0.3) * 0.6))),
                   ),
-                ),
+                ) *
+                (page === host ? 1 : -1) +
+              (page === host ? 0 : box.width),
+            box.y + box.height * 0.85,
           );
         }
         // Wait for the real client input to reach the host before advancing its
@@ -181,6 +287,30 @@ test("Pong pairs, warns, adds four bumpers, flashes impacts, pauses, resets each
     const frozen = await bumpers(client).evaluateAll((es) =>
       es.map((e) => e.outerHTML),
     );
+    // Opposite views must rotate every object together, including the smoothed
+    // ball and circular bumper bodies, without stretching the court geometry.
+    for (const selector of ["[data-testid=pong-ball]", ".bumper-body"]) {
+      const positions = [];
+      for (const page of [host, client]) {
+        const court = (await page.locator(".pong-court").boundingBox())!;
+        const objects = await page.locator(selector).all();
+        positions.push(
+          await Promise.all(
+            objects.map(async (object) => {
+              const box = (await object.boundingBox())!;
+              return {
+                x: (box.x + box.width / 2 - court.x) / court.width,
+                y: (box.y + box.height / 2 - court.y) / court.height,
+              };
+            }),
+          ),
+        );
+      }
+      for (let i = 0; i < positions[0].length; i++) {
+        expect(positions[0][i].x + positions[1][i].x).toBeCloseTo(1, 2);
+        expect(positions[0][i].y + positions[1][i].y).toBeCloseTo(1, 2);
+      }
+    }
     await host.clock.runFor(5000);
     expect(
       await bumpers(client).evaluateAll((es) => es.map((e) => e.outerHTML)),

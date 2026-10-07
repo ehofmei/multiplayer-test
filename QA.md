@@ -722,3 +722,34 @@ Physical iPhone/iPad checks still required:
   mute again and enable Reduce Motion. Check visual feedback without sound.
 - Confirm offline startup after an online visit, saved names/colors/sound after
   reload, and user-controlled service-worker updates between games.
+
+## Portrait Pong and iPhone status clearance
+
+QA inventory: Player 1/2 assignments and host spectators; each player's paddle at
+the bottom; horizontal touch, captured drags outside the court, keyboard and help
+slider; mirrored opponent, ball and bumper positions; warning/impact/four-bumper
+views; pause/resume, scoring, disconnects; portrait/landscape phones, tablet and
+desktop, taller fonts, focus, reduced motion and simulated iPhone insets.
+
+The shell adds 24px beyond the status inset in the installed app (12px in the
+browser), including when iOS reports a zero inset, plus 12px beyond the home-indicator inset. Test Home,
+library, pairing, setup, active play and scrollable dialogs with 59px top / 34px
+bottom insets. Keep actual SVG bounds aligned with the visible portrait court and
+its input area, so taps and drags never include a dark letterboxed region.
+Portrait tests check the long play axis remains over 200px, the same minimum
+previously used for the horizontal court, with the original 650:1000 geometry.
+
+The non-deploying `portrait-pong-review.yml` workflow obtains genuine Linux renders
+for the affected Pong screenshots and the added status-clearance view. Review
+both platforms, then remove the one-time generation steps and require ordinary
+verification for the exact final commit.
+
+Physical iPhone/iPad checks: update all devices; compare the supplied screenshot
+with Home, library, pairing and Pong in Safari and the installed PWA. Confirm the
+header clears iOS's blur, including after rotation, keyboard dismissal and
+background/resume. Browser inset emulation cannot reproduce that native effect.
+Pair two devices, swap player assignments, drag near the bottom with a thumb,
+leave/re-enter the court while dragging and confirm comfortable mirrored control.
+Check long rallies, bumps, pause/resume, point resets, offline relaunch and
+user-controlled updates. No protocol/storage migration is needed; all devices
+should update for matching controls.

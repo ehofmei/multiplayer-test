@@ -187,7 +187,7 @@ export function App() {
 
   return (
     <main
-      className={`app-shell ${session ? "in-room" : "at-home"} ${showPairing ? "is-pairing" : ""}`}
+      className={`app-shell ${standalone ? "is-standalone" : ""} ${session ? "in-room" : "at-home"} ${showPairing ? "is-pairing" : ""}`}
     >
       <header>
         <div className="app-title">

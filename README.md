@@ -72,7 +72,8 @@ This is a household game lab for experimenting with Codex, designed primarily
 for iPhones and iPads installed from Safari using Add to Home Screen. Android
 support is not a project requirement. Desktop browsers remain useful for testing.
 
-The app uses a viewport-filling shell with safe-area padding. Home, the game
+The app uses a viewport-filling shell with safe-area padding plus clearance below the iOS status edge
+(24px in the installed app, 12px in the browser). Home, the game
 library, pairing, setup, and play are focused views rather than a long page.
 Phones and short windows show four games per library page across four pages; larger iPad windows
 show six games per page across three pages. During games, courts fit their remaining space without changing
@@ -155,8 +156,11 @@ actions and shares state. Selecting it starts a fresh board. It remains a
 cooperative experiment rather than a scored game.
 
 **Pong** plays to seven points. The host chooses any two connected players (they
-can be two clients); other players watch. Drag vertically anywhere on the court,
-use the paddle slider, or focus the court and press ↑/↓. Your own paddle draws
+can be two clients); other players watch. The court is vertical and each player
+sees their own paddle at the bottom. Drag horizontally anywhere on the visible
+court, use the paddle slider, or focus the court and press ←/→. Spectators see
+Player 1 at the bottom. Rotation changes only the view and input mapping; host
+physics, paddle sizes and the wire coordinates stay the same. Your own paddle draws
 immediately, and inputs are coalesced at about 30 Hz. The host simulates the ball
 in fixed 120 Hz steps, renders at about 60 Hz, and sends state at about 20 Hz.
 Clients smooth the ball between updates. Paddle hits increase speed and change
