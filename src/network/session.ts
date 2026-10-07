@@ -1442,6 +1442,7 @@ export class Session {
       this.room.minigolf
     ) {
       this.advanceGolf();
+      const previous = this.room.minigolf;
       this.room.minigolf = commitGolf(
         this.room.minigolf,
         id,
@@ -1449,6 +1450,8 @@ export class Session {
         input.angle,
         input.power,
       );
+      if (this.room.minigolf.phase !== previous.phase)
+        this.golfTickAt = performance.now();
       this.broadcast();
     } else if (
       input.kind === "dive-choice" &&

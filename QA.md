@@ -345,7 +345,7 @@ QA inventory:
 - Select through the paged picker; Start requires 2–8 players. Three dives, six
   numbered doors, secret preview/lock/confirmation, full shared treasure,
   Return before hazards, shield consumption on both card types, caught/boat
-  waiting, timeout banking, sixth-door auto-bank, automatic summaries and ties.
+  waiting, untimed locked waiting, sixth-door auto-bank, automatic summaries and ties.
 - Pause/Resume in countdown, choices, reveal and summary preserves state and
   remaining time. Reorientation pauses can repeat without losing the saved phase.
   Stop returns to setup; rematch resets scores/epoch/deck; switching retains pairing.
@@ -354,7 +354,7 @@ QA inventory:
 - Ready, choosing, lock, reveal, boat, summary, and results at 320×700, 390×844,
   844×390, 768×1024, and 1280×720. Eight long names, taller serif metrics, reduced
   motion, 44px targets, region bounds, readable contrast and no primary overflow.
-- Host background/stall pauses; client misses default to Return; stale/duplicate
+- Host background/stall pauses; clients retain unconfirmed choices; stale/duplicate
   epoch/dive/door actions are rejected. Late arrivals spectate and join the next
   match; spectator departures preserve play, participant loss resets, host loss
   disables input. Timer disposal and game switching stop all game timers.
@@ -402,7 +402,8 @@ Inventory for 2–8 players on desktop, iPad, and narrow iPhones:
   At short portrait heights use Adjust aim; close the dialog before Ready.
 - Tap Ready, see Shot locked after host confirmation, and try to change it. Others'
   shots and actual gust/impact timing remain hidden until launch. Leave one player
-  without a shot: that hole earns 0, and the next hole reopens aiming normally.
+  without a shot for at least a minute: everyone stays in aiming with no score
+  loss. Confirm that last shot and verify immediate shared launch.
 - Watch boundary/wall bounces, mushroom boosts, and the shared meteor. Balls never
   collide with one another; the host awards cup or distance points. Results overlay
   each hole's points; Standings shows all five scores and full names. Ties share wins.
@@ -441,7 +442,7 @@ use desktop Chromium; they do not establish physical-device behavior.
 Physical iPhone/iPad follow-up: play all five holes on household Wi-Fi in Safari
 and installed PWAs. Check real touch dragging/cancellation, safe areas and rotation,
 Adjust aim with larger text, app background/resume, cached startup and updates.
-Family play should tune aiming time, drag sensitivity and course balance; the
+Family play should tune drag sensitivity and course balance; the
 five-minute preference is a pacing goal, not an exact match-time requirement.
 
 ## Patchwork Picnic
@@ -451,7 +452,7 @@ QA inventory:
 - Find the game on the paged picker; Start requires two players. Select one of the
   shared shapes, preview an anchor, Rotate, Reset, Place and Skip. Try blocked,
   off-board and crowded previews. Confirm exactly one lock and a simultaneous reveal.
-- Play ten rounds with automatic timeouts, late single squares, completed rows,
+- Play ten rounds with explicit Place/Skip, late single squares, completed rows,
   food-edge scoring and a separately added shared bonus. Standings shows every
   blanket and a readable cells/edges/rows/bonus breakdown. Ties share the win.
 - Check keyboard Tab/Enter, arrows and R, touch targets, colored food symbols,
@@ -461,13 +462,13 @@ QA inventory:
   serif metrics, reduced motion, eight long names, missed input and results. Primary
   content must fit; placement squares and essential buttons remain at least 44px.
 - Pause/Resume preserves offers, boards, locks and remaining active time, including
-  repeated reorientation pauses. Pairing/background/stalls pause; clients may timeout.
+  repeated reorientation pauses. Pairing/background/stalls pause; clients retain unconfirmed choices.
   Late arrivals spectate, spectator loss preserves play, participant loss resets,
   host loss disables controls. Rematch and game switching retain normal lifecycle cleanup.
 - Run the existing production-subpath manifest/icons/offline/update/storage checks.
   On real iPhones/iPads, check installation, safe areas, touch accuracy, rotation,
   larger text, foreground recovery and household-Wi-Fi pairing. Ask the family whether
-  15 seconds feels comfortable and whether matching edges and the shared bonus are clear.
+  waiting feedback is clear and whether matching edges and the shared bonus are clear.
 
 Rules tests cover every rotation, bounds/overlap, one-time edge/row/bonus scoring,
 shuffled bags, forced singles, seeded ten-piece play, crowded rotated fits and Skip,
@@ -622,3 +623,33 @@ numbered identity, readable eight-color stripes, comfortable untimed choosing,
 zero-point frustration, touch accuracy, 44px selection, safe areas, larger text,
 rotation, VoiceOver, background/resume, installation, cached startup and updates.
 Browser checks cannot establish real iOS lifecycle or family enjoyment/balance.
+
+## Untimed decision regression inventory
+
+- Minigolf: leave one Ready pending past the former 20-second limit, inspect
+  private shots and named readiness in Standings, pause/resume twice, then Ready
+  to launch immediately. Watch natural settling in all five courses and winds,
+  including a shot still moving after ten seconds and a pending meteor near a
+  resting ball. Scores appear only after every ball finishes.
+- Treasure: leave Explore/Return/Shield pending past eight seconds; no banking,
+  hazard draw, score change or shield use occurs. Locked players see waiting.
+  Pause/resume preserves the deck and locks; all explorers confirm to reveal.
+  Boat/caught players do not block the next door. Complete three explicit dives.
+- Picnic: retain a local preview and a different player's lock past fifteen
+  seconds. No automatic Skip or board/score change occurs. Rotate, Reset, Place,
+  explicit Skip, compact Arrange panel, keyboard confirmation and crowded boards
+  remain usable. Complete ten rounds with explicit actions.
+- For all three: check named Choosing/Locked feedback in Standings, muted visuals,
+  optional confirmation/scoring/result sound without replay on repeated snapshots
+  or resume, reduced motion, Stop/rematch/switch, stale inputs, spectators,
+  host background/stalls, host loss and participant-disconnect reset.
+- Review ready/active/results at 320×568 or 320×700, 390×844, 844×390,
+  768×1024 and 1280×720, with taller fonts, eight long names, keyboard focus,
+  44px controls, readable contrast and primary viewport clearance. Retain the
+  existing production-subpath offline/cache/update/persistence checks.
+
+Update every physical iPhone/iPad first, then play all three games on household
+Wi-Fi in Safari and installed PWAs. Leave a device choosing for several minutes,
+background it, resume it, and disconnect it while others are locked. Check touch
+accuracy, safe areas, rotation, larger text, VoiceOver and sound unlock/volume.
+These physical-device checks and family tuning remain manual.

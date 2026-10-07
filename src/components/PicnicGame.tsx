@@ -215,11 +215,9 @@ export function PicnicGame({
               : game.phase === "reveal"
                 ? me.outcome === "placed"
                   ? `+${me.gain} points${me.rows.length ? ` · ${me.rows.length} row${me.rows.length > 1 ? "s" : ""} completed!` : " · nicely packed!"}`
-                  : me.outcome === "timeout"
-                    ? "Time ran out · skipped this round."
-                    : "Skipped · a fresh offer is coming."
+                  : "Skipped · a fresh offer is coming."
                 : me.locked
-                  ? `Placement confirmed · ${locked}/${game.picnickers.length} locked`
+                  ? `Placement confirmed · waiting · ${locked}/${game.picnickers.length} locked`
                   : option === null
                     ? "Choose a piece, then tap its top-left anchor."
                     : anchor === null
@@ -365,6 +363,11 @@ export function PicnicGame({
             </h3>
             <MiniBlanket board={p.board} />
             <p>
+              {game.phase === "placing"
+                ? p.locked
+                  ? "Locked · "
+                  : "Choosing · "
+                : ""}
               {s.cells} cells + {s.edges} matching edges + {s.rows * 6} rows
               {finished
                 ? ` + ${s.bonus} bonus = ${s.total}`
@@ -392,7 +395,7 @@ export function PicnicGame({
             ? "2–8 players"
             : finished
               ? `${score.total} points`
-              : `${score.base} pts · bonus ${score.bonus} · ${game.phase === "paused" ? "Paused" : `${Math.ceil(game.remaining / 1000)}s`}`}
+              : `${score.base} pts · bonus ${score.bonus} · ${game.phase === "paused" ? "Paused" : game.phase === "placing" ? `${locked}/${game.picnickers.length} locked` : `${Math.ceil(game.remaining / 1000)}s`}`}
         </span>
       </div>
       <div className="picnic-bonus">
@@ -462,10 +465,10 @@ export function PicnicGame({
             Highest total wins; ties share victory.
           </p>
           <p>
-            Ten rounds, with up to 15 seconds to place and a short reveal.
-            Missing a choice skips that round. Later offers always include a
-            single square. Nobody takes your piece, and speed earns no extra
-            points.
+            Ten rounds, with no placement deadline and a short reveal. Everyone
+            must Place or explicitly Skip to continue. Later offers always
+            include a single square. Nobody takes your piece, and speed earns no
+            extra points.
           </p>
           <p>
             Keyboard: Tab to choose a piece or the board, arrows to move the

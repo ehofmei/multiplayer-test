@@ -126,28 +126,31 @@ describe("Patchwork Picnic", () => {
     for (let round = 1; round <= 10; round++) {
       expect(new Set(s.offer.map((p) => p.food)).size).toBe(3);
       if (round === 1 || round >= 7) expect(s.offer[0].shape).toBe("single");
-      s = stepPicnic(s, 18000, () => 0);
+      for (const p of s.picnickers) s = commitPicnic(s, p.id, s.round, null);
+      s = stepPicnic(s, 3000, () => 0);
     }
     expect(s.phase).toBe("finished");
   });
-  it("skips timeouts, handles phase overshoot and freezes paused/finished timers", () => {
+  it("waits untimed, preserves locks through repeated pauses and carries reveal overshoot", () => {
     let s = newPicnic(["a", "b"], () => 0);
-    s = stepPicnic(s, 18000, () => 0);
-    expect(s.phase).toBe("reveal");
-    expect(s.picnickers.every((p) => p.outcome === "timeout")).toBe(true);
+    s = stepPicnic(s, 1e6, () => 0);
+    expect(s.phase).toBe("placing");
+    expect(
+      s.picnickers.every((p) => !p.locked && p.outcome === "waiting"),
+    ).toBe(true);
+    for (const p of s.picnickers) s = commitPicnic(s, p.id, 1, null);
     s = stepPicnic(s, 3500, () => 0);
     expect(s.round).toBe(2);
-    expect(s.remaining).toBe(14500);
+    expect(s.remaining).toBe(0);
     const paused = pausePicnic(commitPicnic(s, "a", 2, null));
     expect(stepPicnic(paused, 1e6)).toBe(paused);
     const interrupted = pausePicnic(stepPicnic(resumePicnic(paused), 1000));
-    expect(interrupted.resumeRemaining).toBe(14500);
+    expect(interrupted.resumeRemaining).toBe(0);
     expect(interrupted.picnickers[0].locked).toBe(true);
     s = stepPicnic(resumePicnic(interrupted), 3000);
     expect(s.phase).toBe("placing");
-    expect(s.remaining).toBe(14500);
-    s = stepPicnic(s, 1e6, () => 0);
-    expect(s.phase).toBe("finished");
+    expect(s.remaining).toBe(0);
+    expect(stepPicnic(s, 1e6, () => 0)).toBe(s);
     expect(stepPicnic(s, 1e6)).toBe(s);
     expect(stepPicnic(newPicnic(), 1000).phase).toBe("ready");
   });
@@ -210,7 +213,8 @@ describe("Patchwork Picnic", () => {
     for (let r = 1; r <= 10; r++) {
       expect(message(s).length).toBeLessThan(MAX_MESSAGE);
       expect(parseMessage(message(s))).not.toBeNull();
-      s = stepPicnic(s, 18000, () => 0);
+      for (const p of s.picnickers) s = commitPicnic(s, p.id, s.round, null);
+      s = stepPicnic(s, 3000, () => 0);
     }
     expect(parseMessage(message(s))).not.toBeNull();
     const wire = (placement: unknown, round = 1) =>
@@ -241,6 +245,7 @@ describe("Patchwork Picnic", () => {
       { round: 11 },
       { offer: [] },
       { remaining: 15001 },
+      { remaining: 1 },
       {
         picnickers: [
           { ...room.picnic.picnickers[0], board: "9".repeat(36) },

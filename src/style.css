@@ -4400,3 +4400,22 @@ main.app-shell {
     display: block;
   }
 }
+
+/* Scoring feedback works silently; respect the device's motion preference. */
+@media (prefers-reduced-motion: no-preference) {
+  .golf-game-card[data-phase="results"] .golf-status,
+  .dive-game-card[data-phase="reveal"] .dive-card,
+  .picnic-game-card[data-phase="reveal"] .picnic-status {
+    animation: decision-reveal 350ms ease-out;
+  }
+}
+@keyframes decision-reveal {
+  from {
+    opacity: 0.5;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -16,7 +16,8 @@ export function validGolf(v: unknown): boolean {
     !integer(v.remaining, 0, 20000) ||
     !integer(v.resumeRemaining, 0, 20000) ||
     !integer(v.wind, 0, 3) ||
-    !integer(v.ticks, 0, 1200) ||
+    !integer(v.ticks, 0, Number.MAX_SAFE_INTEGER) ||
+    !integer(v.tickRemainder, 0, 999) ||
     typeof v.impacted !== "boolean" ||
     !Array.isArray(v.balls) ||
     v.balls.length > 8
@@ -38,6 +39,7 @@ export function validGolf(v: unknown): boolean {
       v.balls.length === 0 &&
       v.conditions === null &&
       v.ticks === 0 &&
+      v.tickRemainder === 0 &&
       !v.impacted &&
       v.wind === 0
     );
@@ -62,10 +64,13 @@ export function validGolf(v: unknown): boolean {
         (c.meteor
           ? !number(v.conditions.impact, 4, 5.5)
           : v.conditions.impact !== null)
-      : v.conditions !== null || v.ticks !== 0 || v.impacted
+      : v.conditions !== null ||
+        v.ticks !== 0 ||
+        v.tickRemainder !== 0 ||
+        v.impacted
   )
     return false;
-  if (["results", "finished"].includes(String(phase)) && v.ticks !== 1200)
+  if (["results", "finished"].includes(String(phase)) && v.ticks === 0)
     return false;
   if (
     v.impacted &&
@@ -93,7 +98,7 @@ export function validGolf(v: unknown): boolean {
         ) &&
         typeof b.locked === "boolean" &&
         typeof b.captured === "boolean" &&
-        typeof b.skipped === "boolean" &&
+        b.skipped === false &&
         (b.shot === null ||
           (revealed &&
             b.locked &&
@@ -117,7 +122,7 @@ export function validGolf(v: unknown): boolean {
             b.y === c.tee[1])) &&
         Array.isArray(b.cooldowns) &&
         b.cooldowns.length === c.mushrooms.length &&
-        b.cooldowns.every((n) => integer(n, 0, 1248)),
+        b.cooldowns.every((n) => integer(n, 0, (v.ticks as number) + 48)),
     ) && new Set(v.balls.map((b) => b.id)).size === v.balls.length
   );
 }

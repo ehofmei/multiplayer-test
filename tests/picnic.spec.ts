@@ -77,7 +77,7 @@ async function single(page: Page, round: number) {
     .click();
   await page.getByRole("button", { name: "Place", exact: true }).click();
 }
-test("Picnic pairs, previews, rotates, locks privately, pauses, times out, scores, rematches and switches", async ({
+test("Picnic pairs, previews, rotates, locks privately, pauses, waits untimed, scores, rematches and switches", async ({
   page: host,
   browser,
 }) => {
@@ -181,6 +181,9 @@ test("Picnic pairs, previews, rotates, locks privately, pauses, times out, score
     await expect(client.locator(".picnic-status")).toContainText(
       "Choose a piece",
     );
+    await host.clock.runFor(60000);
+    await expect(game(client)).toHaveAttribute("data-phase", "placing");
+    await expect(host.locator(".picnic-status")).toContainText("waiting");
     await host.getByRole("button", { name: "Pause", exact: true }).click();
     await host.clock.runFor(10000);
     await expect(game(client)).toHaveAttribute("data-phase", "paused");
@@ -194,10 +197,11 @@ test("Picnic pairs, previews, rotates, locks privately, pauses, times out, score
     await expect(game(host)).toHaveAttribute("data-phase", "reveal");
     await expect(host.locator(".picnic-status")).toContainText("+1 points");
     await host.clock.runFor(3000);
-    await host.clock.runFor(15000);
-    await expect(client.locator(".picnic-status")).toContainText(
-      "Time ran out",
-    );
+    await host.clock.runFor(60000);
+    await expect(game(client)).toHaveAttribute("data-phase", "placing");
+    await host.getByRole("button", { name: "Skip", exact: true }).click();
+    await client.getByRole("button", { name: "Skip", exact: true }).tap();
+    await expect(game(host)).toHaveAttribute("data-phase", "reveal");
     for (let round = 3; round <= 10; round++) {
       await host.clock.runFor(3000);
       await expect(game(host)).toHaveAttribute("data-phase", "placing");
@@ -227,7 +231,9 @@ test("Picnic pairs, previews, rotates, locks privately, pauses, times out, score
       host.getByRole("button", { name: "Standings", exact: true }),
     ).toBeFocused();
     await showHelp(host);
-    await expect(host.getByRole("dialog")).toContainText("15 seconds");
+    await expect(host.getByRole("dialog")).toContainText(
+      "no placement deadline",
+    );
     await closePanels(host);
     await host
       .getByRole("button", { name: "Picnic Again", exact: true })
@@ -303,7 +309,14 @@ test("eight long names fit, late arrivals watch, background pauses, and disconne
       .click();
     await host.clock.runFor(3000);
     await fit(host, "eight");
-    await host.clock.runFor(180000);
+    for (let round = 1; round <= 10; round++) {
+      for (const p of [host, ...clients]) {
+        await p.setViewportSize(sizes[2]);
+        await p.getByRole("button", { name: "Skip", exact: true }).click();
+      }
+      await expect(game(host)).toHaveAttribute("data-phase", "reveal");
+      await host.clock.runFor(3000);
+    }
     await expect(game(host)).toHaveAttribute("data-phase", "finished");
     await expect(host.locator(".picnic-status")).toContainText(
       "8 picnickers share the win",
@@ -316,6 +329,7 @@ test("eight long names fit, late arrivals watch, background pauses, and disconne
     await host
       .getByRole("button", { name: "Start Picnic", exact: true })
       .click();
+    await clients[6].setViewportSize(sizes[0]);
     await join(host, clients[6], "Late watcher");
     await expect(game(host)).toHaveAttribute("data-phase", "paused");
     await host.getByRole("button", { name: "Resume", exact: true }).click();

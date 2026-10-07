@@ -197,3 +197,94 @@ it("plays one Light Seek cue per event, uses found instead of hit, and never rep
   s.room.epoch++;
   expect(soundEvents(before, frame(s))).toEqual([]);
 });
+
+it("announces decision locks, launches, scores and results once without replaying on resume", async () => {
+  const { newGolf, stepGolf, commitGolf, pauseGolf, resumeGolf } =
+    await import("../games/minigolf");
+  const {
+    newTreasure,
+    stepTreasure,
+    chooseTreasure,
+    pauseTreasure,
+    resumeTreasure,
+  } = await import("../games/treasure");
+  const { newPicnic, stepPicnic, commitPicnic, pausePicnic, resumePicnic } =
+    await import("../games/picnic");
+  for (const kind of ["minigolf", "treasure", "picnic"] as const) {
+    const s = snapshot();
+    s.room = newRoom(kind, 1);
+    if (kind === "minigolf")
+      s.room.minigolf = stepGolf(
+        newGolf(["a", "b"], () => 0),
+        7000,
+      );
+    if (kind === "treasure")
+      s.room.treasure = stepTreasure(
+        newTreasure(["a", "b"], () => 0),
+        3000,
+      );
+    if (kind === "picnic")
+      s.room.picnic = stepPicnic(
+        newPicnic(["a", "b"], () => 0),
+        3000,
+      );
+    const choose = (id: string) => {
+      if (s.room.minigolf)
+        s.room.minigolf = commitGolf(s.room.minigolf, id, 1, 0, 0.6);
+      if (s.room.treasure)
+        s.room.treasure = chooseTreasure(s.room.treasure, id, 1, 1, "return");
+      if (s.room.picnic)
+        s.room.picnic = commitPicnic(s.room.picnic, id, 1, {
+          option: 0,
+          x: 0,
+          y: 0,
+          rotation: 0,
+        });
+    };
+    let before = frame(s);
+    choose("a");
+    expect(soundEvents(before, frame(s))).toEqual(["success"]);
+    before = frame(s);
+    choose("b");
+    expect(soundEvents(before, frame(s))).toEqual([
+      kind === "minigolf" ? "go" : kind === "picnic" ? "point" : "success",
+    ]);
+    if (s.room.minigolf) {
+      before = frame(s);
+      s.room.minigolf = stepGolf(s.room.minigolf, 3000);
+      expect(soundEvents(before, frame(s))).toEqual(["point"]);
+    }
+    before = frame(s);
+    if (s.room.minigolf)
+      s.room.minigolf = resumeGolf(pauseGolf(s.room.minigolf));
+    if (s.room.treasure)
+      s.room.treasure = resumeTreasure(pauseTreasure(s.room.treasure));
+    if (s.room.picnic) s.room.picnic = resumePicnic(pausePicnic(s.room.picnic));
+    expect(soundEvents(before, frame(s))).toEqual([]);
+    before = frame(s);
+    if (s.room.minigolf)
+      s.room.minigolf = {
+        ...s.room.minigolf,
+        phase: "finished",
+        resumePhase: null,
+      };
+    if (s.room.treasure)
+      s.room.treasure = {
+        ...s.room.treasure,
+        phase: "finished",
+        resumePhase: null,
+      };
+    if (s.room.picnic)
+      s.room.picnic = {
+        ...s.room.picnic,
+        phase: "finished",
+        resumePhase: null,
+      };
+    const after = frame(s);
+    expect(soundEvents(before, after)).toEqual(["win"]);
+    expect(soundEvents(after, after)).toEqual([]);
+    expect(soundEvents(null, after)).toEqual([]);
+    s.room.epoch++;
+    expect(soundEvents(after, frame(s))).toEqual([]);
+  }
+});

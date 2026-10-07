@@ -77,7 +77,7 @@ export function validPicnic(v: unknown): boolean {
         (!resolved || p.locked) &&
         p.placement === null &&
         (resolved
-          ? ["placed", "skipped", "timeout"].includes(String(p.outcome))
+          ? ["placed", "skipped"].includes(String(p.outcome))
           : p.outcome === "waiting") &&
         int(p.gain, 0, 52) &&
         (p.outcome === "placed" || p.gain === 0) &&

@@ -57,6 +57,7 @@ export function validTreasure(v: unknown): boolean {
     v.divers.length < 2 ||
     (v.phase === "finished" && (v.dive !== 3 || v.remaining !== 0)) ||
     (v.phase === "reorient" && v.remaining > 3000) ||
+    (v.phase === "paused" && v.remaining !== v.resumeRemaining) ||
     (phase === "countdown" && (v.dive !== 1 || v.door !== 1)) ||
     (!resuming &&
       phase !== "finished" &&
@@ -92,7 +93,6 @@ export function validTreasure(v: unknown): boolean {
         [
           "waiting",
           "returned",
-          "timeout",
           "treasure",
           "protected",
           "caught",

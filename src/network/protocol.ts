@@ -11,6 +11,8 @@ import type { GridState } from "../game/grid";
 
 // Breakout uses the existing bounded paddle input; its level, brick hit points,
 // and shared lives are validated as part of every room snapshot by validRoom.
+// Decision phases use remaining=0; validRoom checks their timing and Golf
+// tickRemainder. Update all devices before playing the revised rules.
 export const VERSION = 2;
 export const MAX_MESSAGE = 16_384;
 export interface Player {

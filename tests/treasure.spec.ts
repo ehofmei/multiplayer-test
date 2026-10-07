@@ -50,7 +50,7 @@ async function fit(page: Page, label: string) {
     await style.evaluate((e) => e.remove());
   }
 }
-test("Treasure pairs, secretly locks, banks, times out, pauses, finishes and switches without re-pairing", async ({
+test("Treasure pairs, secretly locks, banks, waits untimed, pauses, finishes and switches without re-pairing", async ({
   page: host,
   browser,
 }) => {
@@ -108,6 +108,9 @@ test("Treasure pairs, secretly locks, banks, times out, pauses, finishes and swi
     await expect(host.locator(".dive-card")).toHaveText(
       "Choices stay secret until the reveal",
     );
+    await host.clock.runFor(60000);
+    await expect(game(client)).toHaveAttribute("data-phase", "choosing");
+    await expect(client.locator(".dive-status")).toContainText("waiting");
     await host.getByRole("button", { name: "Pause Dive", exact: true }).click();
     await host.clock.runFor(10000);
     await expect(game(client)).toHaveAttribute("data-phase", "paused");
@@ -149,7 +152,7 @@ test("Treasure pairs, secretly locks, banks, times out, pauses, finishes and swi
     );
     await showHelp(client);
     await expect(client.getByRole("dialog")).toContainText(
-      "Missing a choice defaults to Return",
+      "Choices have no deadline",
     );
     await closePanels(client);
     await client
@@ -178,7 +181,11 @@ test("Treasure pairs, secretly locks, banks, times out, pauses, finishes and swi
         await choose(p, "Return");
     await host.clock.runFor(6000);
     await expect(game(host)).toHaveAttribute("data-phase", "choosing");
-    await host.clock.runFor(28000);
+    for (let dive = 2; dive <= 3; dive++) {
+      for (const p of [client, host]) await choose(p, "Return");
+      await expect(game(host)).toHaveAttribute("data-phase", "reveal");
+      await host.clock.runFor(6000);
+    }
     await expect(game(host)).toHaveAttribute("data-phase", "finished");
     await expect(host.locator(".dive-status")).toContainText("win");
     await fit(host, "results");
@@ -238,7 +245,11 @@ test("eight Treasure divers and long names fit, late arrivals watch, departures 
     await host.getByRole("button", { name: "Start Dive", exact: true }).click();
     await host.clock.runFor(3000);
     await fit(host, "eight-play");
-    await host.clock.runFor(42000);
+    for (let dive = 1; dive <= 3; dive++) {
+      for (const p of [host, ...clients]) await choose(p, "Return");
+      await expect(game(host)).toHaveAttribute("data-phase", "reveal");
+      await host.clock.runFor(6000);
+    }
     await expect(game(host)).toHaveAttribute("data-phase", "finished");
     await fit(host, "eight-results");
     await fit(clients[0], "eight-results-client");

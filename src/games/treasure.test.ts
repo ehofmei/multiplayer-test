@@ -46,9 +46,10 @@ function lockAll(
   );
 }
 describe("Treasure Dive rules", () => {
-  it("carries timer overshoot through phase boundaries without extending the budget", () => {
-    expect(stepTreasure(choosing(), 8025).remaining).toBe(1975);
-    expect(stepTreasure(newTreasure(ids), 45000).phase).toBe("finished");
+  it("stops animation overshoot at untimed choices", () => {
+    const s = choosing();
+    expect(stepTreasure(s, 1e6)).toBe(s);
+    expect(stepTreasure(newTreasure(ids), 45000).phase).toBe("choosing");
   });
   it("returns before a shared hazard; shields preserve haul; unprotected explorers lose only haul", () => {
     const s = lockAll(choosing());
@@ -90,13 +91,15 @@ describe("Treasure Dive rules", () => {
     expect(sixth.divers.map(treasureTotal)).toEqual([7, 0, 7]);
     expect(sixth.divers[2].outcome).toBe("auto-bank");
   });
-  it("defaults missing choices to Return, skips empty expeditions, and draws no hazard", () => {
+  it("waits for missing choices and explicit Returns draw no hazard", () => {
     const before = choosing();
-    const s = stepTreasure(before, 8000);
+    const waiting = chooseTreasure(before, "a", 1, 1, "return");
+    expect(stepTreasure(waiting, 1e6)).toBe(waiting);
+    const s = lockAll(before, ["return", "return", "return"]);
     expect(s.card).toBeNull();
     expect(s.deck).toEqual(before.deck);
     expect(
-      s.divers.every((d) => treasureTotal(d) === 7 && d.outcome === "timeout"),
+      s.divers.every((d) => treasureTotal(d) === 7 && d.outcome === "returned"),
     ).toBe(true);
     const summary = stepTreasure(s, 2000);
     expect(summary.phase).toBe("summary");
@@ -163,7 +166,7 @@ describe("Treasure Dive rules", () => {
         active,
       );
   });
-  it("completes all three dives within the 195-second budget and shares equal wins", () => {
+  it("completes all three dives through explicit choices and shares equal wins", () => {
     // Deliberately wait for each complete choice window with six treasure cards first.
     let s = newTreasure(ids, () => 0.5);
     let elapsed = 0;
@@ -177,20 +180,13 @@ describe("Treasure Dive rules", () => {
           ],
           hazardsLeft: s.deck!.filter((c) => c === 0).length,
         };
-        s = {
-          ...s,
-          divers: s.divers.map((d) => ({
-            ...d,
-            locked: true,
-            choice: "explore",
-          })),
-        };
+        s = lockAll(s, ["explore", "explore", "explore"]);
       }
       const time = s.remaining;
       elapsed += time;
       s = stepTreasure(s, time, () => 0.5);
     }
-    expect(elapsed).toBe(195000);
+    expect(elapsed).toBe(51000);
     expect(s.dive).toBe(3);
     expect(s.door).toBe(6);
     expect(new Set(s.divers.map(treasureTotal)).size).toBe(1);
@@ -238,6 +234,9 @@ describe("Treasure Dive wire boundaries", () => {
       expect(validRoom(wire(pauseTreasure(s)))).toBe(true);
       if (!["ready", "finished"].includes(s.phase))
         expect(validRoom(wire(resumeTreasure(pauseTreasure(s))))).toBe(true);
+      if (s.phase === "choosing")
+        for (const p of players)
+          s = chooseTreasure(s, p.id, s.dive, s.door, "return");
       s = stepTreasure(s, s.remaining, () => 0.5);
     }
     expect(s.phase).toBe("finished");
@@ -284,6 +283,7 @@ describe("Treasure Dive wire boundaries", () => {
       { cardsLeft: 5 },
       { hazardsLeft: 5 },
       { remaining: 8001 },
+      { remaining: 1 },
       { dive: 4 },
       { door: 7 },
       { deck: [0] },

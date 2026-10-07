@@ -1,13 +1,12 @@
 export const GOLF_TIMES = {
   countdown: 3000,
   preview: 4000,
-  aiming: 20000,
-  rolling: 10000,
+  aiming: 0,
+  rolling: 0,
   results: 3000,
   reorient: 3000,
 };
 export const GOLF_STEP = 1 / 120;
-export const GOLF_MATCH_MS = 188000;
 export const courses = [
   {
     name: "Open green",
@@ -82,6 +81,8 @@ export interface GolfState {
   // Only revealed at launch; the host keeps the same schedule through pauses.
   conditions: { strength: number; impact: number | null } | null;
   ticks: number;
+  // Fractional fixed-step time in thousandths of a tick.
+  tickRemainder: number;
   impacted: boolean;
   balls: GolfBall[];
 }
@@ -132,6 +133,7 @@ export function newGolf(ids: string[] = [], random = Math.random): GolfState {
     resumeRemaining: 0,
     ...(ids.length ? environment(1, random) : { wind: 0, conditions: null }),
     ticks: 0,
+    tickRemainder: 0,
     impacted: false,
     balls: resetBalls(
       ids.map((id) => ({ id, scores: [0, 0, 0, 0, 0] })),
@@ -155,12 +157,13 @@ export function commitGolf(
     !validShot(angle, power)
   )
     return state;
-  return {
+  const next = {
     ...state,
     balls: state.balls.map((b) =>
       b.id === id ? { ...b, locked: true, shot: { angle, power } } : b,
     ),
   };
+  return next.balls.every((b) => b.locked) ? advance(next, Math.random) : next;
 }
 // Bounce only the inward normal component; tangential velocity stays unchanged.
 export function bounce(ball: GolfBall, nx: number, ny: number): void {
@@ -171,8 +174,7 @@ export function bounce(ball: GolfBall, nx: number, ny: number): void {
   }
 }
 export function physicsGolf(state: GolfState): GolfState {
-  if (state.phase !== "rolling" || !state.conditions || state.ticks >= 1200)
-    return state;
+  if (state.phase !== "rolling" || !state.conditions) return state;
   const course = courses[state.hole - 1];
   const ticks = state.ticks + 1;
   const impact =
@@ -194,8 +196,10 @@ export function physicsGolf(state: GolfState): GolfState {
       }
     }
     const friction = Math.exp(-1.25 * GOLF_STEP);
-    b.vx = (b.vx + windX * GOLF_STEP) * friction;
-    b.vy = (b.vy + windY * GOLF_STEP) * friction;
+    // Wind nudges a moving ball but cannot keep a resting ball drifting forever.
+    const windScale = Math.min(1, Math.hypot(b.vx, b.vy) / 100);
+    b.vx = (b.vx + windX * windScale * GOLF_STEP) * friction;
+    b.vy = (b.vy + windY * windScale * GOLF_STEP) * friction;
     b.x += b.vx * GOLF_STEP;
     b.y += b.vy * GOLF_STEP;
     if (b.x < 10) {
@@ -259,6 +263,10 @@ export function physicsGolf(state: GolfState): GolfState {
       b.vy = 0;
       b.captured = true;
     }
+    if (Math.hypot(b.vx, b.vy) < 3) {
+      b.vx = 0;
+      b.vy = 0;
+    }
     return b;
   });
   return { ...state, ticks, impacted: state.impacted || impact, balls };
@@ -317,6 +325,7 @@ function advance(state: GolfState, random: () => number): GolfState {
             hole: state.hole + 1,
             ...environment(state.hole + 1, random),
             ticks: 0,
+            tickRemainder: 0,
             impacted: false,
             balls: resetBalls(state.balls, state.hole + 1),
           };
@@ -346,15 +355,33 @@ export function stepGolf(
   let left = Math.floor(elapsed),
     next = state;
   while (left > 0) {
+    if (next.phase === "aiming") break;
+    if (next.phase === "rolling") {
+      const used = Math.min(left, Math.ceil((1000 - next.tickRemainder) / 120));
+      next = { ...next, tickRemainder: next.tickRemainder + used * 120 };
+      left -= used;
+      if (next.tickRemainder < 1000) continue;
+      next = physicsGolf({ ...next, tickRemainder: next.tickRemainder - 1000 });
+      const meteorPending =
+        !next.impacted &&
+        courses[next.hole - 1].meteor &&
+        next.balls.some(
+          (b) =>
+            !b.captured &&
+            Math.hypot(
+              b.x - courses[next.hole - 1].meteor![0],
+              b.y - courses[next.hole - 1].meteor![1],
+            ) <= 90,
+        );
+      if (
+        !meteorPending &&
+        next.balls.every((b) => b.captured || (b.vx === 0 && b.vy === 0))
+      )
+        next = advance(next, random);
+      continue;
+    }
     const used = Math.min(left, next.remaining);
     next = { ...next, remaining: next.remaining - used };
-    if (next.phase === "rolling") {
-      const target = Math.min(
-        1200,
-        Math.floor(((GOLF_TIMES.rolling - next.remaining) * 120) / 1000),
-      );
-      while (next.ticks < target) next = physicsGolf(next);
-    }
     left -= used;
     if (next.remaining === 0) next = advance(next, random);
     if (next.phase === "finished") break;

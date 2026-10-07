@@ -4,7 +4,7 @@ export type DoorCard = 0 | 2 | 3 | 4 | 6 | 10;
 export const TREASURE_DECK: DoorCard[] = [0, 0, 0, 0, 2, 2, 3, 3, 4, 4, 6, 10];
 export const TREASURE_TIMES = {
   countdown: 3000,
-  choosing: 8000,
+  choosing: 0,
   reveal: 2000,
   summary: 4000,
   reorient: 3000,
@@ -12,13 +12,7 @@ export const TREASURE_TIMES = {
 type MatchPhase = "countdown" | "choosing" | "reveal" | "summary";
 type ActivePhase = MatchPhase | "reorient";
 export type DiveOutcome =
-  | "waiting"
-  | "returned"
-  | "timeout"
-  | "treasure"
-  | "protected"
-  | "caught"
-  | "auto-bank";
+  "waiting" | "returned" | "treasure" | "protected" | "caught" | "auto-bank";
 export interface Diver {
   id: string;
   scores: number[];
@@ -91,14 +85,19 @@ function bank(diver: Diver, dive: number): Diver {
   return { ...diver, scores, change: diver.haul, haul: 0, status: "boat" };
 }
 export function resolveTreasure(state: TreasureState): TreasureState {
-  if (state.phase !== "choosing" || !state.deck) return state;
+  if (
+    state.phase !== "choosing" ||
+    !state.deck ||
+    state.divers.some((d) => d.status === "exploring" && !d.locked)
+  )
+    return state;
   let divers = state.divers.map((d) => {
     if (d.status !== "exploring") return { ...d, change: 0 };
-    if (!d.choice || d.choice === "return")
+    if (d.choice === "return")
       return {
         ...bank(d, state.dive),
         locked: true,
-        outcome: d.choice ? ("returned" as const) : ("timeout" as const),
+        outcome: "returned" as const,
         choice: null,
       };
     return {
@@ -240,17 +239,18 @@ export function stepTreasure(
     elapsed <= 0
   )
     return state;
-  // Carry scheduling overshoot forward so phase boundaries do not extend the
-  // active match budget. Session stalls pause before calling this reducer.
+  // Carry animation overshoot only as far as the next untimed decision.
   let left = Math.floor(elapsed);
   let next = state;
-  while (left >= next.remaining) {
+  while (next.phase !== "choosing" && left >= next.remaining) {
     left -= next.remaining;
     const advanced = advance(next, random);
     if (advanced === next || advanced.phase === "finished") return advanced;
     next = advanced;
   }
-  return { ...next, remaining: next.remaining - left };
+  return next.phase === "choosing"
+    ? next
+    : { ...next, remaining: next.remaining - left };
 }
 export function pauseTreasure(state: TreasureState): TreasureState {
   if (["ready", "paused", "finished"].includes(state.phase)) return state;

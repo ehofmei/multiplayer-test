@@ -2,7 +2,7 @@ export const PICNIC_SIZE = 6;
 export const PICNIC_ROUNDS = 10;
 export const PICNIC_TIMES = {
   countdown: 3000,
-  placing: 15000,
+  placing: 0,
   reveal: 3000,
   reorient: 3000,
 };
@@ -35,7 +35,7 @@ export interface Picnicker {
   board: string;
   locked: boolean;
   placement: Placement | null;
-  outcome: "waiting" | "placed" | "skipped" | "timeout";
+  outcome: "waiting" | "placed" | "skipped";
   gain: number;
   rows: number[];
 }
@@ -206,7 +206,8 @@ export function newPicnic(
   return ids.length ? offerRound(state, random) : state;
 }
 export function resolvePicnic(state: PicnicState): PicnicState {
-  if (state.phase !== "placing") return state;
+  if (state.phase !== "placing" || state.picnickers.some((p) => !p.locked))
+    return state;
   return {
     ...state,
     phase: "reveal",
@@ -216,7 +217,7 @@ export function resolvePicnic(state: PicnicState): PicnicState {
         return {
           ...p,
           locked: true,
-          outcome: p.locked ? "skipped" : "timeout",
+          outcome: "skipped",
           gain: 0,
           rows: [],
         };
@@ -273,7 +274,7 @@ export function commitPicnic(
 function advance(state: PicnicState, random: () => number): PicnicState {
   switch (state.phase) {
     case "countdown":
-      return { ...state, phase: "placing", remaining: 15000 };
+      return { ...state, phase: "placing", remaining: 0 };
     case "reorient":
       return {
         ...state,
@@ -291,7 +292,7 @@ function advance(state: PicnicState, random: () => number): PicnicState {
             {
               ...state,
               phase: "placing",
-              remaining: 15000,
+              remaining: 0,
               round: state.round + 1,
               picnickers: state.picnickers.map((p) => ({
                 ...p,
@@ -321,13 +322,15 @@ export function stepPicnic(
     return state;
   let next = state,
     left = Math.floor(elapsed);
-  while (left >= next.remaining) {
+  while (next.phase !== "placing" && left >= next.remaining) {
     left -= next.remaining;
     const changed = advance(next, random);
     if (changed === next || changed.phase === "finished") return changed;
     next = changed;
   }
-  return { ...next, remaining: next.remaining - left };
+  return next.phase === "placing"
+    ? next
+    : { ...next, remaining: next.remaining - left };
 }
 export function pausePicnic(state: PicnicState): PicnicState {
   if (["ready", "paused", "finished"].includes(state.phase)) return state;

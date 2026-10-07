@@ -164,7 +164,11 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
     await expect(
       host.getByRole("button", { name: "Shot locked", exact: true }),
     ).toBeDisabled();
-    await ready(client, true);
+    await host.clock.runFor(60000);
+    await expect(game(host)).toHaveAttribute("data-phase", "aiming");
+    await expect(host.locator(".golf-status")).toContainText(
+      "waiting for players",
+    );
     await fit(host, "aiming");
     await fit(client, "aiming-client");
     await client.setViewportSize(sizes[2]);
@@ -176,13 +180,14 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
     );
     await showHelp(client);
     await expect(client.getByRole("dialog")).toContainText(
-      "no Ready at the deadline means 0 points",
+      "everyone launches when all shots are Ready",
     );
     await closePanels(client);
-    await host.clock.runFor(20000);
+    await ready(client, true);
     await expect(game(client)).toHaveAttribute("data-phase", "rolling");
     await expect(client.locator(".golf-weather")).toContainText("0 units/s²");
-    await host.clock.runFor(10000);
+    while ((await game(host).getAttribute("data-phase")) === "rolling")
+      await host.clock.runFor(100);
     await expect(game(client)).toHaveAttribute("data-phase", "results");
     await expect(host.locator(".golf-status")).toHaveText(
       "In the cup! +100 points.",
@@ -191,13 +196,13 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
       await host.clock.runFor(7000);
       await expect(game(host)).toHaveAttribute("data-phase", "aiming");
       await ready(host);
-      if (hole !== 2) await ready(client, true);
-      await host.clock.runFor(30000);
+      await host.clock.runFor(60000);
+      await expect(game(host)).toHaveAttribute("data-phase", "aiming");
+      await ready(client, true);
+      await expect(game(host)).toHaveAttribute("data-phase", "rolling");
+      while ((await game(host).getAttribute("data-phase")) === "rolling")
+        await host.clock.runFor(100);
       await expect(game(host)).toHaveAttribute("data-phase", "results");
-      if (hole === 2)
-        await expect(client.locator(".golf-status")).toContainText(
-          "No shot · 0 points",
-        );
     }
     await host.clock.runFor(3000);
     await expect(game(client)).toHaveAttribute("data-phase", "finished");
@@ -268,7 +273,14 @@ test("eight golfers fit; late arrivals watch, background pauses, and participant
     await host.getByRole("button", { name: "Start Golf", exact: true }).click();
     await host.clock.runFor(7000);
     await fit(host, "eight-aiming");
-    await host.clock.runFor(181000);
+    for (let hole = 1; hole <= 5; hole++) {
+      for (const p of [host, ...clients]) {
+        await p.setViewportSize(sizes[2]);
+        await ready(p);
+      }
+      await expect(game(host)).toHaveAttribute("data-phase", "rolling");
+      await host.clock.runFor(30000);
+    }
     await expect(game(host)).toHaveAttribute("data-phase", "finished");
     await expect(host.locator(".golf-status")).toContainText(
       "8 golfers share the win",
@@ -279,6 +291,7 @@ test("eight golfers fit; late arrivals watch, background pauses, and participant
     await closePanels(host);
     await returnHome(clients[6]);
     await host.getByRole("button", { name: "Start Golf", exact: true }).click();
+    await clients[6].setViewportSize(sizes[0]);
     await join(host, clients[6], "Late watcher");
     await expect(game(host)).toHaveAttribute("data-phase", "paused");
     await host.getByRole("button", { name: "Resume", exact: true }).click();

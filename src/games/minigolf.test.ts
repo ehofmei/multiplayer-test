@@ -3,7 +3,6 @@ import {
   bounce,
   commitGolf,
   courses,
-  GOLF_MATCH_MS,
   golfTotal,
   golfView,
   newGolf,
@@ -23,7 +22,6 @@ function rolling(hole = 1): GolfState {
   let s = aiming();
   s = commitGolf(s, "a", 1, 0, 0.6);
   s = commitGolf(s, "b", 1, 0, 0.6);
-  s = stepGolf(s, 20000, zero);
   return {
     ...s,
     hole,
@@ -52,8 +50,8 @@ describe("Meteor Minigolf rules", () => {
     expect(golfView(a).balls[0].shot).toBeNull();
     expect(golfView(a).balls[0].locked).toBe(true);
     const both = commitGolf(a, "b", 1, 0, 0.6);
-    expect(both.phase).toBe("aiming");
-    expect(golfView(stepGolf(both, 20000, zero)).balls[0].shot).toEqual({
+    expect(both.phase).toBe("rolling");
+    expect(golfView(both).balls[0].shot).toEqual({
       angle: 0,
       power: 0.6,
     });
@@ -124,29 +122,32 @@ describe("Meteor Minigolf rules", () => {
     const after = physicsGolf(hit);
     expect(after.balls[0].vy).toBeGreaterThan(hit.balls[0].vy);
   });
-  it("applies distance scoring, skips missing shots, stops at deadline and shares identical outcomes/totals", () => {
+  it("waits for every shot, scores naturally settled balls and shares identical totals", () => {
     const b = rolling().balls[0];
     expect(scoreGolf({ ...b, x: 670, y: 350 }, 1)).toBe(60);
     expect(scoreGolf({ ...b, x: 10, y: 10 }, 1)).toBe(0);
     expect(scoreGolf({ ...b, skipped: true, captured: true }, 1)).toBe(0);
-    const s = stepGolf(rolling(), 10000, zero);
+    const s = stepGolf(rolling(), 3000, zero);
     expect(s.phase).toBe("results");
-    expect(s.ticks).toBe(1200);
+    expect(s.ticks).toBeLessThan(1200);
     expect(s.balls[0].captured).toBe(true);
     expect(s.balls[0].scores[0]).toBe(100);
     expect(s.balls[0]).toEqual({ ...s.balls[1], id: "a" });
     expect(s.balls[0].vx).toBe(0);
-    const missing = stepGolf(aiming(), 30000, zero);
-    expect(missing.balls.every((b) => b.skipped && b.scores[0] === 0)).toBe(
+    const waiting = commitGolf(aiming(), "a", 1, 0, 0.6);
+    expect(stepGolf(waiting, 1e6, zero)).toBe(waiting);
+    const missing = stepGolf(aiming(), 1e6, zero);
+    expect(missing.balls.every((b) => !b.skipped && b.scores[0] === 0)).toBe(
       true,
     );
-    const final = stepGolf(newGolf(["a", "b"], zero), GOLF_MATCH_MS, zero);
+    let final = aiming();
+    for (let hole = 1; hole <= 5; hole++) {
+      for (const id of ["a", "b"]) final = commitGolf(final, id, hole, 0, 0.6);
+      final = stepGolf(final, 20000, zero);
+    }
     expect(final.phase).toBe("finished");
     expect(final.hole).toBe(5);
-    expect(final.balls.map(golfTotal)).toEqual([0, 0]);
-    expect(
-      stepGolf(newGolf(["a", "b"], zero), GOLF_MATCH_MS - 1, zero).phase,
-    ).toBe("results");
+    expect(final.balls.map(golfTotal)[0]).toBeGreaterThan(0);
     expect(stepGolf(final, 1000)).toBe(final);
   });
   it("fixed steps are independent of scheduling chunks, pauses preserve the phase and same random conditions", () => {
@@ -155,6 +156,10 @@ describe("Meteor Minigolf rules", () => {
     let chunked = s;
     for (let i = 0; i < 1000; i++) chunked = stepGolf(chunked, 10, zero);
     expect(chunked).toEqual(stepGolf(s, 10000, zero));
+    let irregular = s;
+    for (const ms of [1, 7, 32, 333, 600, 727])
+      irregular = stepGolf(irregular, ms, zero);
+    expect(irregular).toEqual(stepGolf(s, 1700, zero));
     const partial = stepGolf(s, 1700, zero),
       paused = pauseGolf(partial);
     expect(stepGolf(paused, 100000)).toBe(paused);
@@ -164,6 +169,42 @@ describe("Meteor Minigolf rules", () => {
     expect(
       resumeGolf(pauseGolf(stepGolf(resume, 500, zero))).resumeRemaining,
     ).toBe(partial.remaining);
+  });
+  it("continues beyond the former rolling cutoff and settles in every wind on all courses", () => {
+    const long = {
+      ...rolling(),
+      ticks: 1200,
+      balls: rolling().balls.map((b) => ({ ...b, vx: 500 })),
+    };
+    const continued = stepGolf(long, 10, zero);
+    expect(continued.phase).toBe("rolling");
+    expect(continued.ticks).toBeGreaterThan(1200);
+    for (let hole = 1; hole <= 5; hole++)
+      for (let wind = 0; wind < 4; wind++) {
+        const s = {
+          ...rolling(hole),
+          wind,
+          conditions: {
+            strength: 24,
+            impact: courses[hole - 1].meteor ? 5.5 : null,
+          },
+        };
+        const settled = stepGolf(s, 30000, zero);
+        expect(settled.phase, `hole ${hole} wind ${wind}`).toBe(
+          hole === 5 ? "finished" : "aiming",
+        );
+      }
+    const pending = rolling(4);
+    pending.conditions = { strength: 0, impact: 5.5 };
+    pending.balls = pending.balls.map((b) => ({
+      ...b,
+      x: 500,
+      y: 320,
+      vx: 0,
+      vy: 0,
+    }));
+    expect(stepGolf(pending, 5000).phase).toBe("rolling");
+    expect(stepGolf(pending, 5500).impacted).toBe(true);
   });
 });
 describe("Golf bounded snapshots and protocol", () => {
@@ -192,7 +233,7 @@ describe("Golf bounded snapshots and protocol", () => {
       expect(raw.length).toBeLessThan(MAX_MESSAGE);
       expect(parseMessage(raw)?.type).toBe("state");
     };
-    for (let i = 0; i <= GOLF_MATCH_MS / 100; i++) {
+    for (let i = 0; i <= 2000; i++) {
       if (s.phase === "aiming")
         for (const p of players) s = commitGolf(s, p.id, s.hole, 315, 1);
       check();
@@ -210,7 +251,10 @@ describe("Golf bounded snapshots and protocol", () => {
       { hole: 6 },
       { wind: 4 },
       { conditions: { strength: 0, impact: null } },
-      { ticks: 1201 },
+      { ticks: -1 },
+      { tickRemainder: 1000 },
+      { tickRemainder: undefined },
+      { remaining: 1 },
       { remaining: 20001 },
       { resumePhase: "rolling" },
       { balls: [bad.balls[0], bad.balls[0]] },

@@ -116,7 +116,7 @@ export function MinigolfGame({
                   : game.phase === "rolling"
                     ? "Shots away! Watch the shared gust."
                     : me.locked
-                      ? "Shot confirmed · waiting for launch."
+                      ? "Shot confirmed · waiting for players."
                       : "Drag from your ball, or adjust below. Then Ready.";
   const point = (event: PointerEvent<SVGSVGElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -198,6 +198,11 @@ export function MinigolfGame({
               </b>
               <small>
                 Holes: {b.scores.join(" + ")}
+                {game.phase === "aiming"
+                  ? b.locked
+                    ? " · Ready"
+                    : " · Choosing"
+                  : ""}
                 {b.skipped
                   ? " · Missed shot"
                   : b.captured
@@ -225,7 +230,11 @@ export function MinigolfGame({
             ? ""
             : game.phase === "paused"
               ? "Paused"
-              : `${Math.ceil(game.remaining / 1000)}s`}
+              : game.phase === "aiming"
+                ? "Choose"
+                : game.phase === "rolling"
+                  ? "Rolling"
+                  : `${Math.ceil(game.remaining / 1000)}s`}
         </span>
       </div>
       <div className="golf-workspace">
@@ -581,8 +590,8 @@ export function MinigolfGame({
           </p>
           <p>
             Example: on the open green, aim right with about 60% power. Wind may
-            carry your ball a little farther. Each hole gives one shot; no Ready
-            at the deadline means 0 points for that hole.
+            carry your ball a little farther. Each hole gives one shot. Take
+            your time; everyone launches when all shots are Ready.
           </p>
           <p>
             A slow ball within 24 units of the cup earns 100. Otherwise earn
@@ -598,10 +607,11 @@ export function MinigolfGame({
             launch.
           </p>
           <p>
-            The starting pace is 4 seconds to preview, 20 to aim, 10 to roll and
-            3 for scores. Holes advance automatically. Pause saves shots and
-            conditions; Resume gives a short countdown. Late arrivals watch
-            until a rematch. A participant leaving resets the match.
+            Each hole has 4 seconds to preview and 3 for scores. Aiming has no
+            deadline; shots finish when all balls settle or reach the cup. Pause
+            saves shots and conditions; Resume gives a short countdown. Late
+            arrivals watch until a rematch. A participant leaving resets the
+            match.
           </p>
           <p>Update the app on every device before playing Meteor Minigolf.</p>
         </GameHelp>

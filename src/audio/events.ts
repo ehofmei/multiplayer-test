@@ -1,3 +1,6 @@
+import { golfTotal } from "../games/minigolf";
+import { treasureTotal } from "../games/treasure";
+import { picnicScore } from "../games/picnic";
 import { arenaWinner } from "../games/arena";
 import type { Snapshot } from "../network/session";
 import type { Cue } from "./sounds";
@@ -8,7 +11,59 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
   const race = room.race;
   const entry = race?.entries.find((e) => e.id === me);
   const high = race ? Math.max(...race.entries.map((e) => e.points)) : 0;
+  const decision = room.minigolf ?? room.treasure ?? room.picnic;
+  let turn = 0,
+    locked = false,
+    result = "",
+    gain = 0,
+    winner = false;
+  if (room.minigolf) {
+    const g = room.minigolf,
+      b = g.balls.find((b) => b.id === me);
+    turn = g.hole;
+    locked = b?.locked ?? false;
+    result =
+      b && ["results", "finished"].includes(g.resumePhase ?? g.phase)
+        ? `${turn}/scored`
+        : "";
+    gain = b?.scores[turn - 1] ?? 0;
+    winner = !!b && g.balls.every((other) => golfTotal(other) <= golfTotal(b));
+  } else if (room.treasure) {
+    const g = room.treasure,
+      d = g.divers.find((d) => d.id === me);
+    turn = g.dive * 10 + g.door;
+    locked = d?.locked ?? false;
+    result = d && d.outcome !== "waiting" ? `${turn}/${d.outcome}` : "";
+    gain = d?.change ?? 0;
+    winner =
+      !!d &&
+      g.divers.every((other) => treasureTotal(other) <= treasureTotal(d));
+  } else if (room.picnic) {
+    const g = room.picnic,
+      p = g.picnickers.find((p) => p.id === me);
+    turn = g.round;
+    locked = p?.locked ?? false;
+    result = p && p.outcome !== "waiting" ? `${turn}/${p.outcome}` : "";
+    gain = p?.gain ?? 0;
+    winner =
+      !!p &&
+      g.picnickers.every(
+        (other) =>
+          picnicScore(other.board, g.bonus).total <=
+          picnicScore(p.board, g.bonus).total,
+      );
+  }
   return {
+    decision: decision
+      ? {
+          phase: decision.resumePhase ?? decision.phase,
+          turn,
+          locked,
+          result,
+          gain,
+          winner,
+        }
+      : null,
     key: `${session}/${room.epoch}/${room.kind}`,
     kind: room.kind,
     seek: room.seek?.last
@@ -70,6 +125,17 @@ export function soundEvents(
   after: SoundFrame,
 ): Cue[] {
   if (!before || before.key !== after.key) return [];
+  const d = after.decision,
+    oldDecision = before.decision;
+  if (d && oldDecision) {
+    if (d.phase === "finished" && oldDecision.phase !== "finished")
+      return [d.winner ? "win" : "finish"];
+    if (d.result && d.result !== oldDecision.result)
+      return [d.gain > 0 ? "point" : d.gain < 0 ? "miss" : "success"];
+    if (d.phase === "rolling" && oldDecision.phase === "aiming") return ["go"];
+    if (d.turn === oldDecision.turn && d.locked && !oldDecision.locked)
+      return ["success"];
+  }
   if (after.seek && after.seek.event !== before.seek?.event)
     return [
       after.seek.result === "found"

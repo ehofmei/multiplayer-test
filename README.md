@@ -425,8 +425,8 @@ when it drains; the existing overall buffer limit still bounds slow connections.
 A 2–8 player push-your-luck expedition through a sunken ship. Everyone connected
 at Start joins three dives of up to six shared doors. Select Return, Explore, or
 Explore with shield, then Lock choice. The host confirms the lock; other choices
-stay secret until the shared reveal. Each door allows at most eight seconds to
-choose; a missing choice Returns safely. All locks can reveal early.
+stay secret until the shared reveal. Choosing has no deadline: every exploring
+diver must lock before the card is drawn. Return remains an explicit choice.
 
 Return banks your entire haul before a card is drawn. Each dive starts with a
 fresh host-shuffled deck: four hazards and treasures 2, 2, 3, 3, 4, 4, 6, 10.
@@ -437,7 +437,7 @@ Remaining hazard odds are visible; future cards and locked actions stay only on
 the host. Survivors bank automatically at door six. Banked points never decrease.
 
 A three-second countdown, two-second reveals, and four-second automatic summaries
-keep the match within 3:15 of active time. Empty expeditions skip the remaining
+pace the action between untimed choices. Empty expeditions skip the remaining
 doors. Everyone rejoins each new dive with a fresh shield. Highest banked total
 wins, with shared wins for ties. Standings shows full names, per-dive scores,
 status, and revealed outcomes; the main screen emphasizes your own haul and choices.
@@ -445,8 +445,8 @@ status, and revealed outcomes; the main screen emphasizes your own haul and choi
 The host can Pause, Resume (with a three-second reorientation countdown), Stop to
 setup, rematch, or switch games without re-pairing. Pauses preserve the phase,
 remaining time, deck, and locked choices. Inviting a player, host backgrounding,
-or a scheduling stall pauses play; a backgrounded client gets the normal timeout
-fallback. Late arrivals watch until the rematch. A participant disconnect resets
+or a scheduling stall pauses play. A backgrounded client keeps their choice;
+everyone waits until they return and lock, or the host stops the match. Late arrivals watch until the rematch. A participant disconnect resets
 to setup; spectator departures preserve play. Games and scores are temporary.
 
 During a dive, Help and Standings stay beside the host controls. Pending updates
@@ -464,27 +464,32 @@ Open green, Bank shot, Mushrooms, Meteor, and Mixed course. Balls pass through o
 another. Drag from your numbered ball toward the desired direction; distance sets
 power. Release keeps the preview arrow. Angle and Power sliders offer touch and
 keyboard alternatives (0° right, 90° down); short phones open them with Adjust aim. Tap Ready to commit; the host confirms
-the lock, and shots stay private until launch. Missing Ready skips just that hole
-for 0 points. The next hole always gives everyone a fresh chance.
+the lock, and shots stay private until launch. Aiming has no deadline. The last
+Ready launches everyone together; no shot is skipped automatically. Readiness
+counts stay visible, and Standings identifies who is still choosing.
 
 A ball within 24 logical units of the cup at speed ≤170 earns 100 points. Otherwise,
-at the rolling deadline it earns `max(0, 70 - floor(distanceToCup / 8))`. Five hole
+once all balls settle it earns `max(0, 70 - floor(distanceToCup / 8))`. Five hole
 scores add up; tied totals share the win. Standings shows each player's five-hole
-breakdown. Your total, ball number, timer, and result stay on your screen without
+breakdown. Your total, ball number, readiness, and result stay on your screen without
 squeezing in eight names.
 
 The host runs a 1,000 × 700 course at fixed 120 Hz steps. Power 0–1 maps to speed
 100–1,100; rolling resistance is `exp(-1.25 × dt)`. Walls and boundaries retain
 75% of normal bounce velocity; mushrooms add an outward 160-unit/s impulse with a
 0.4-second cooldown. Wind direction is visible before aiming, while a shared
-strength of 0, 12, or 24 units/s² is revealed at launch. Meteor holes show a radius-90
+strength of 0, 12, or 24 units/s² is revealed at launch. Wind influence fades
+with ball speed below 100 units/s; balls below 3 units/s settle, so wind cannot
+keep a resting ball drifting indefinitely. Meteor holes show a radius-90
 warning; the shared impact occurs between 4–5.5 seconds and pushes balls outward
 by 120 units/s. Captured balls ignore later forces. The arrow previews direction,
 not an exact trajectory.
 
-Starting timers are a 3-second countdown followed by 4 seconds of course preview,
-20 seconds of aiming, 10 seconds of rolling, and 3 seconds of scores per hole.
-Holes advance automatically; these defaults can be tuned after family play.
+A 3-second countdown starts the match; each hole has 4 seconds of preview and
+3 seconds of scores. Aiming waits for every Ready. Rolling has no cutoff: balls
+finish naturally, including a pending meteor that could move a resting ball.
+The host preserves fractional 120 Hz step time through pause/resume. Holes then
+advance automatically.
 Pause/Resume preserves the exact phase, shots, scores, and environmental draw, with
 a short resume countdown. Pairing, host backgrounding, or a scheduling stall pauses
 play. Late arrivals spectate until the next match; losing a participating player
@@ -507,9 +512,10 @@ On short screens, Arrange piece opens a scrollable panel with full-size tap squa
 Keyboard players can Tab to a piece or the board, move with arrows, rotate with R,
 and Place with Enter on the board.
 
-Ten rounds follow a short countdown. Each placement window lasts up to 15 seconds;
-when everyone locks it ends early. Placements appear together in a three-second
-reveal, and the next round starts automatically. Missing input skips that round.
+Ten rounds follow a short countdown. Placement has no deadline: everyone must
+Place or explicitly Skip. Placements appear together in a three-second reveal,
+and the next round starts automatically. Waiting players see readiness counts;
+Standings identifies who is still choosing.
 No one takes another player's piece, and speed gives no extra points. Previews stay
 local; the host retains committed choices until reveal and owns all offers.
 
@@ -605,3 +611,19 @@ and releases their color while retaining everyone else's assignments. All device
 must update before playing Glow Clash; older apps cannot recognize the new game.
 Saved identity and sound settings keep their existing versions. Match length
 follows the group's pace because choosing is deliberately untimed.
+
+## Decision timing
+
+Minigolf, Treasure Dive, and Patchwork Picnic wait for every participating
+player's explicit confirmation. There are no automatic missed choices or time
+penalties. Bakery Draft, Glow Clash, and Light Seek already use untimed decisions.
+Short starts, reveals, reaction measurement, and action-game clocks remain;
+Spaceship Panic intentionally retains timed commands and missions. Stop and
+participant-disconnect reset provide an exit if someone cannot finish choosing.
+Optional synthesized confirmation, score and result sounds follow the existing
+saved mute setting, and brief scoring animation respects reduced motion.
+
+Update **every device** before playing these revised rules. The version-2 wire
+format remains bounded, but timing validation and Golf's fractional-step field
+changed; mixed builds can show the existing unsupported-message update prompt.
+Identity and sound storage are unchanged.

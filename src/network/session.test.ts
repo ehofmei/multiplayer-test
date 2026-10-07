@@ -746,11 +746,18 @@ it("Treasure requires two players and host authority, hides future cards/choices
   expect(host.snapshot().room.kind).toBe("lights");
 });
 
-it("Treasure timeouts automatically finish, rematch resets scores/epoch, and disposal clears all timers", async () => {
+it("Treasure waits untimed then explicit Returns finish, rematch resets scores/epoch, and disposal clears all timers", async () => {
   const { host, client } = await pair();
   host.selectGame("treasure");
   host.startTreasure();
   await vi.advanceTimersByTimeAsync(46000);
+  expect(client.snapshot().room.treasure!.phase).toBe("choosing");
+  for (let dive = 1; dive <= 3; dive++) {
+    client.chooseTreasure("return", dive, 1);
+    await vi.advanceTimersByTimeAsync(20);
+    host.chooseTreasure("return", dive, 1);
+    await vi.advanceTimersByTimeAsync(6020);
+  }
   expect(client.snapshot().room.treasure!.phase).toBe("finished");
   expect(
     client
@@ -833,6 +840,8 @@ it("Golf requires host/two players, hides locks and conditions until launch, pre
       ).toBe(true);
     }
   }
+  await vi.advanceTimersByTimeAsync(60000);
+  expect(view().phase).toBe("aiming");
   host.pauseGames();
   const paused = structuredClone(view());
   await vi.advanceTimersByTimeAsync(10000);
@@ -845,7 +854,7 @@ it("Golf requires host/two players, hides locks and conditions until launch, pre
   expect(view().balls[1].locked).toBe(true);
   client.shootGolf(1, 90, 1);
   host.shootGolf(1, 0, 0.6);
-  await vi.advanceTimersByTimeAsync(20020);
+  await vi.advanceTimersByTimeAsync(20);
   expect(view().phase).toBe("rolling");
   expect(view().balls[1].shot).toEqual({ angle: 0, power: 0.6 });
   await vi.advanceTimersByTimeAsync(14000);
@@ -866,6 +875,13 @@ it("Golf requires host/two players, hides locks and conditions until launch, pre
   await vi.advanceTimersByTimeAsync(20);
   expect(view().balls[1].locked).toBe(false);
   await vi.advanceTimersByTimeAsync(160000);
+  expect(view().phase).toBe("aiming");
+  for (let hole = 2; hole <= 5; hole++) {
+    inject(epoch, 102 + hole, hole);
+    await vi.advanceTimersByTimeAsync(20);
+    host.shootGolf(hole, 0, 0.6);
+    await vi.advanceTimersByTimeAsync(30000);
+  }
   expect(client.snapshot().room.minigolf!.phase).toBe("finished");
   host.startGolf();
   expect(host.snapshot().room.epoch).toBe(epoch + 1);
@@ -949,6 +965,8 @@ it("Picnic requires host/two players, keeps placements private, preserves pause,
   }
   client.placePicnic(1, null);
   await vi.advanceTimersByTimeAsync(20);
+  await vi.advanceTimersByTimeAsync(60000);
+  expect(view().phase).toBe("placing");
   host.pauseGames();
   const paused = structuredClone(view());
   await vi.advanceTimersByTimeAsync(15000);
@@ -986,6 +1004,21 @@ it("Picnic requires host/two players, keeps placements private, preserves pause,
   await vi.advanceTimersByTimeAsync(20);
   expect(view().picnickers.every((p) => !p.locked)).toBe(true);
   await vi.advanceTimersByTimeAsync(165000);
+  expect(view().phase).toBe("placing");
+  for (let round = 2; round <= 10; round++) {
+    clientChannel.send(
+      JSON.stringify({
+        v: 2,
+        type: "input",
+        epoch,
+        sequence: 102 + round,
+        input: { kind: "picnic-place", round, placement: null },
+      }),
+    );
+    await vi.advanceTimersByTimeAsync(20);
+    host.placePicnic(round, null);
+    await vi.advanceTimersByTimeAsync(3100);
+  }
   expect(view().phase).toBe("finished");
   host.startPicnic();
   expect(host.snapshot().room.epoch).toBe(epoch + 1);

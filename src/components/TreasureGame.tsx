@@ -17,8 +17,6 @@ export function diveReason(d: Diver): string {
   switch (d.outcome) {
     case "returned":
       return `Returned · banked ${d.change} points.`;
-    case "timeout":
-      return `No choice · banked ${d.change} points.`;
     case "caught":
       return `Caught · lost ${-d.change} haul. Banked points are safe.`;
     case "protected":
@@ -132,7 +130,7 @@ export function TreasureGame({
                   : me.status !== "exploring"
                     ? diveReason(me)
                     : me.locked
-                      ? `Choice confirmed · ${explorers.filter((d) => d.locked).length}/${explorers.length} locked`
+                      ? `Choice confirmed · waiting · ${explorers.filter((d) => d.locked).length}/${explorers.length} locked`
                       : "Bank your haul, or risk one more room?";
   const standings = (detailed: boolean) => (
     <ol className="dive-scores">
@@ -147,7 +145,7 @@ export function TreasureGame({
                 <small>
                   Dives: {d.scores.join(" + ")} ·{" "}
                   {d.status === "exploring"
-                    ? `${d.haul} haul`
+                    ? `${d.haul} haul${game.phase === "choosing" ? (d.locked ? " · Locked" : " · Choosing") : ""}`
                     : d.status === "caught"
                       ? "Caught"
                       : "On the boat"}
@@ -172,9 +170,10 @@ export function TreasureGame({
         and Lock choice. Use Tab and Enter on a keyboard.
       </p>
       <p>
-        Return banks your entire haul before the next card. Missing a choice
-        defaults to Return. Explore risks your haul. Explore with shield
-        protects against one hazard and spends your shield even on treasure.
+        Return banks your entire haul before the next card. Choices have no
+        deadline; everyone exploring must Lock choice. Explore risks your haul.
+        Explore with shield protects against one hazard and spends your shield
+        even on treasure.
       </p>
       <p>
         Each dive starts with 12 shuffled cards: 4 hazards and treasures 2, 2,
@@ -188,11 +187,10 @@ export function TreasureGame({
         exposed.
       </p>
       <p>
-        Each choice lasts at most 8 seconds, reveals 2 seconds, and dive
-        summaries 4 seconds. The match takes at most 3:15. Equal totals share
-        the win. Pause preserves the deck and locked choices; Resume gives a
-        short countdown. Late arrivals watch until a rematch. A participant
-        leaving resets to setup.
+        Take your time choosing. Reveals last 2 seconds and dive summaries 4
+        seconds. Equal totals share the win. Pause preserves the deck and locked
+        choices; Resume gives a short countdown. Late arrivals watch until a
+        rematch. A participant leaving resets to setup.
       </p>
       <p>Update the app on every device before playing Treasure Dive.</p>
     </GameHelp>
@@ -218,7 +216,9 @@ export function TreasureGame({
               <span>
                 {game.phase === "paused"
                   ? "Paused"
-                  : `${Math.ceil(game.remaining / 1000)}s`}
+                  : game.phase === "choosing"
+                    ? "Choose"
+                    : `${Math.ceil(game.remaining / 1000)}s`}
               </span>
             )}
           </div>
