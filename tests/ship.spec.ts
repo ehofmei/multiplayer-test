@@ -21,7 +21,9 @@ const sizes = [
 async function freeze(page: Page) {
   const start = new Date("2026-10-07T12:00:00Z");
   await page.clock.install({ time: start });
-  await page.clock.pauseAt(start);
+  // The installed clock can advance while the next browser command is sent.
+  // Freeze before launching, with the same small margin as other game fixtures.
+  await page.clock.pauseAt(new Date(start.getTime() + 1000));
 }
 async function create(page: Page) {
   await page.addInitScript(() => {
