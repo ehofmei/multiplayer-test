@@ -635,6 +635,33 @@ zero-point frustration, touch accuracy, 44px selection, safe areas, larger text,
 rotation, VoiceOver, background/resume, installation, cached startup and updates.
 Browser checks cannot establish real iOS lifecycle or family enjoyment/balance.
 
+Glow rewards coverage adds the 1.5-second private settling beat, +0/+2 gains,
+own-pick collision outlines, main-screen single/shared winners and ranked totals,
+board inspection, setup exit and rematch. Automated layout checks include all
+eight long names at the existing desktop, phone and tablet sizes with taller font
+metrics; the ranking rows and all totals fit without scrolling. Full names remain
+in accessible text and Players & scores when narrow rows use ellipses.
+
+The genuine Linux settling, mixed reveal, eight-color collision, single-winner
+and eight-way shared-winner renders came from the [Glow rewards review run](https://github.com/ehofmei/multiplayer-test/actions/runs/37786469451)
+and returned in commit `12d53f2`. Every new/changed Darwin and Linux baseline was
+visually reviewed; the bundled font fixture, dimensions and 180-pixel budget were
+preserved. `glow-rewards-review.yml` now runs ordinary full verification on
+`codex/glow-rewards`, with read-only access, no generation flags and no deployment.
+
+Live production-preview QA paired three independent current-build players through
+text invites. It exercised keyboard selection, fourth-pick rejection, private
+locks, host-last and client-last settling feedback, mixed/zero scoring, retained
+collision outlines, tile details, Escape, standings, pause/resume, automatic
+round advancement and a five-round shared win. Desktop screenshots and live
+390px layout measurements complement the saved phone/tablet screenshots; they
+cannot establish real iOS touch or installed-PWA behavior.
+
+Physical follow-up for rewards: installed-PWA safe areas, thumb selection,
+VoiceOver score announcements, optional sound/volume, backgrounding during the
+settling beat, rotation, offline startup and updating every paired device together.
+Tune the 1.5-second beat with the next family play session.
+
 ## Untimed decision regression inventory
 
 - Minigolf: leave one Ready pending past the former 20-second limit, inspect
@@ -765,12 +792,3 @@ leave/re-enter the court while dragging and confirm comfortable mirrored control
 Check long rallies, bumps, pause/resume, point resets, offline relaunch and
 user-controlled updates. No protocol/storage migration is needed; all devices
 should update for matching controls.
-
-Glow rewards QA inventory adds the 1.5-second private settling beat, +0/+2 gains,
-own-pick collision outlines, final single/shared winners and ranked totals, board
-inspection, setup exit and rematch. Test the same phone/tablet/desktop sizes with
-taller text metrics and independent real WebRTC players. Physical iPhone/iPad
-checks remain: installed-PWA safe areas, thumb selection, VoiceOver announcements,
-optional sound/volume, backgrounding during settling, rotation, offline startup,
-and updating every paired device together. Tune the 1.5-second beat with the next
-family play session.

@@ -6,7 +6,7 @@ concurrency:
   group: glow-rewards-review-${{ github.ref }}
   cancel-in-progress: true
 permissions:
-  contents: write
+  contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -19,20 +19,6 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - name: Obtain genuine Linux Glow rewards baselines once
-        run: |
-          if [ ! -f tests/glow.spec.ts-snapshots/glow-settling-linux.png ]; then
-            npx playwright test tests/glow.spec.ts --update-snapshots=all
-          fi
-      - name: Return Linux renders to the review branch
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tests/glow.spec.ts-snapshots/*-linux.png
-          if ! git diff --cached --quiet; then
-            git commit -m 'Generated Linux Glow rewards baselines'
-            git push origin HEAD:codex/glow-rewards
-          fi
       - run: npm run verify
       - name: Save browser evidence
         if: always()

@@ -83,7 +83,7 @@ export function GlowGame({
               ? "Everyone’s locked in · revealing…"
               : revealed
                 ? me
-                  ? `+${me.scores.at(-1)} points`
+                  ? `+${me.scores.at(-1)} ${me.scores.at(-1) === 1 ? "point" : "points"}`
                   : "Round revealed · tap a tile"
                 : !me
                   ? "Watching · join the next match."

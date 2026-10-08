@@ -249,7 +249,12 @@ describe("Glow Clash", () => {
           expect(parseMessage(wire(viewer))).not.toBeNull();
         }
       }
-      s = stepGlow(s, 7500);
+      s = stepGlow(s, 1500);
+      for (const viewer of [players[0].id, players[7].id, "spectator"]) {
+        expect(wire(viewer).length).toBeLessThan(MAX_MESSAGE);
+        expect(parseMessage(wire(viewer))).not.toBeNull();
+      }
+      s = stepGlow(s, 6000);
     }
   });
 });

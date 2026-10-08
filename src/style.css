@@ -5052,14 +5052,6 @@ main.app-shell {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .glow-round-gain,
-  .glow-game-card[data-phase="settling"] .glow-status,
-  .glow-game-card[data-phase="finished"] > .glow-status {
-    animation: none;
-  }
-}
-
 @media (max-height: 450px) and (min-width: 651px) {
   .glow-mini-scores .glow-roster {
     gap: 1px;
@@ -5067,13 +5059,17 @@ main.app-shell {
   .glow-mini-scores .glow-roster strong {
     line-height: 1;
   }
-}
-
-@media (max-height: 450px) and (min-width: 651px) {
   .glow-game-card .glow-board {
     grid-template-rows: repeat(var(--glow-rows), 20px);
   }
   .glow-game-card .glow-cell {
     min-height: 20px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glow-round-gain,
+  .glow-game-card[data-phase="settling"] .glow-status,
+  .glow-game-card[data-phase="finished"] > .glow-status {
+    animation: none;
   }
 }

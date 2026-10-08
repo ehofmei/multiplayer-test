@@ -215,6 +215,12 @@ test("three players choose colors, lock privately, reveal, finish, rematch and s
     await host.clock.runFor(100);
     await expect(game(clients[1])).toHaveAttribute("data-phase", "reveal");
     await expect(host.locator(".glow-round-gain")).toHaveText("+2 points");
+    await expect(clients[0].locator(".glow-round-gain")).toHaveText("+1 point");
+    expect(
+      await clients[0]
+        .locator(".glow-round-gain")
+        .evaluate((e) => getComputedStyle(e).animationName),
+    ).toBe("none");
     await expect(host.locator(".glow-round-total")).toHaveText(
       "This round · 2 total",
     );
@@ -269,6 +275,11 @@ test("three players choose colors, lock privately, reveal, finish, rematch and s
     ]);
     await host.clock.runFor(60000);
     await expect(game(host)).toHaveAttribute("data-phase", "finished");
+    expect(
+      await clients[0]
+        .locator(".glow-status")
+        .evaluate((e) => getComputedStyle(e).animationName),
+    ).toBe("none");
     await snapshot(host, "results");
     await fit(host, "results");
     await fit(clients[0], "results-client");
