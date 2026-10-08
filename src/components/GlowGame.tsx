@@ -58,6 +58,7 @@ export function GlowGame({
     finished = game.phase === "finished";
   const phase = game.resumePhase ?? game.phase;
   const revealed = phase === "reveal" || finished;
+  const settling = phase === "settling";
   const active = connected && game.phase === "choosing" && !!me && !me.locked;
   const name = (id: string) =>
     players.find((p) => p.id === id)?.name ?? "Player";
@@ -78,15 +79,17 @@ export function GlowGame({
             ? winners.length > 1
               ? `${winners.length} players share the win!`
               : `${name(winners[0].id)} wins!`
-            : revealed
-              ? me
-                ? `+${me.scores.at(-1)} this round · ${glowTotal(me)} total`
-                : "Round revealed · tap a tile"
-              : !me
-                ? "Watching · join the next match."
-                : me.locked
-                  ? `Picks confirmed · waiting for players · ${locked}/${game.seats.length} locked`
-                  : `${draft.length} of 3 selected · ${locked}/${game.seats.length} locked`;
+            : settling
+              ? "Everyone’s locked in · revealing…"
+              : revealed
+                ? me
+                  ? `+${me.scores.at(-1)} points`
+                  : "Round revealed · tap a tile"
+                : !me
+                  ? "Watching · join the next match."
+                  : me.locked
+                    ? `Picks confirmed · waiting for players · ${locked}/${game.seats.length} locked`
+                    : `${draft.length} of 3 selected · ${locked}/${game.seats.length} locked`;
   const toggle = (cell: number) => {
     if (short && !boardOpen) {
       setBoardOpen(true);
@@ -135,7 +138,7 @@ export function GlowGame({
       {short && ready && (
         <button onClick={() => setSetupOpen(true)}>Colors & rounds</button>
       )}
-      {short && !ready && (
+      {(finished || (short && !ready)) && (
         <button onClick={() => setBoardOpen(true)}>
           {revealed ? "Inspect board" : "Pick tiles"}
         </button>
@@ -160,7 +163,9 @@ export function GlowGame({
           </button>
         </>
       )}
-      {revealed && <div className="glow-mini-scores">{roster(false)}</div>}
+      {revealed && !finished && (
+        <div className="glow-mini-scores">{roster(false)}</div>
+      )}
       <GameHelp label="Help">
         <p>
           3–8 players, four columns and one row per starting player. Pick
@@ -168,10 +173,10 @@ export function GlowGame({
           your local draft. Lock picks is final after host confirmation.
         </p>
         <p>
-          Choices are secret until everyone locks. Selection has no timer or
-          automatic picks. Ask the group who is still choosing in Players &
-          scores. A unique tile earns its owner 1 point; a collision earns
-          everyone 0. Each tile scores independently.
+          Choices stay secret for a short beat after everyone locks. Selection
+          has no timer or automatic picks. Ask the group who is still choosing
+          in Players & scores. A unique tile earns its owner 1 point; a
+          collision earns everyone 0. Each tile scores independently.
         </p>
         <p>
           Example: you pick A1, B3 and D4. Only B3 collides, so you earn 2
@@ -181,7 +186,9 @@ export function GlowGame({
         <p>
           The host chooses 5, 8 or 12 rounds. Reveals last six seconds; the next
           round starts automatically. Highest total wins; ties share victory.
-          The final board stays available.
+          Final rankings stay until the host chooses Clash Again or Back to
+          setup. Inspect board keeps the final tiles available. Your picks
+          retain an outline.
         </p>
         <p>
           Choose any unused neon color before Start. A taken color keeps its
@@ -203,12 +210,22 @@ export function GlowGame({
       </button>
       {session.role === "host" &&
         (ready || finished ? (
-          <button
-            disabled={players.length < 3 || players.length > 8}
-            onClick={() => session.startGlow()}
-          >
-            {finished ? "Clash Again" : "Start Clash"}
-          </button>
+          <>
+            <button
+              disabled={players.length < 3 || players.length > 8}
+              onClick={() => session.startGlow()}
+            >
+              {finished ? "Clash Again" : "Start Clash"}
+            </button>
+            {finished && (
+              <button
+                className="secondary"
+                onClick={() => session.selectGame("glow")}
+              >
+                Back to setup
+              </button>
+            )}
+          </>
         ) : (
           <>
             <button
@@ -331,9 +348,10 @@ export function GlowGame({
                       : "#b186ff",
               } as CSSProperties
             }
+            data-own-pick={revealed && picked}
             data-lit={!!background}
             data-collision={owners.length > 1}
-            aria-label={`${coordinate(cell)}${revealed ? (owners.length > 1 ? ` · Collision, ${owners.length} players, 0 points` : owners.length ? ` · Player ${symbol(owners[0].id)}, 1 point` : " · Empty") : picked ? " · Selected" : ""}`}
+            aria-label={`${coordinate(cell)}${revealed ? (owners.length > 1 ? ` · Collision, ${owners.length} players, 0 points` : owners.length ? ` · Player ${symbol(owners[0].id)}, 1 point` : " · Empty") : picked ? " · Selected" : ""}${revealed && picked ? " · Your pick" : ""}`}
             aria-pressed={!revealed && picked}
             aria-disabled={!active && !revealed}
             tabIndex={!short || boardOpen ? (cell === focus ? 0 : -1) : -1}
@@ -373,7 +391,18 @@ export function GlowGame({
         </span>
       </div>
       <p className="glow-status" aria-live="polite">
-        {status}
+        {game.phase === "reveal" && me ? (
+          <>
+            <strong className="glow-round-gain" key={game.round}>
+              {status}
+            </strong>
+            <span className="glow-round-total">
+              This round · {glowTotal(me)} total
+            </span>
+          </>
+        ) : (
+          status
+        )}
       </p>
       {ready ? (
         <div className="glow-setup">
@@ -384,6 +413,52 @@ export function GlowGame({
           ) : (
             setupOptions
           )}
+          {controls}
+        </div>
+      ) : finished ? (
+        <div className="glow-results">
+          <ol
+            className="glow-final-ranking"
+            aria-label="Final rankings"
+            tabIndex={0}
+          >
+            {sorted.map((s) => {
+              const rank =
+                sorted.findIndex((other) => glowTotal(other) === glowTotal(s)) +
+                1;
+              return (
+                <li
+                  key={s.id}
+                  data-winner={rank === 1}
+                  data-you={s.id === session.me.id}
+                >
+                  <span
+                    className="glow-rank"
+                    aria-label={`Rank ${rank}${rank === 1 ? (winners.length > 1 ? ", shared winner" : ", winner") : ""}`}
+                  >
+                    {rank}
+                  </span>
+                  <b
+                    className="glow-symbol"
+                    style={{ background: glowColors[s.color].hex }}
+                    aria-label={`Player ${symbol(s.id)}, ${glowColors[s.color].name}`}
+                  >
+                    {symbol(s.id)}
+                  </b>
+                  <span className="glow-final-name">
+                    <span className="glow-final-player" title={name(s.id)}>
+                      {name(s.id)}
+                    </span>
+                    {s.id === session.me.id && <small> · You</small>}
+                  </span>
+                  <strong>
+                    {glowTotal(s)}
+                    <small> pts</small>
+                  </strong>
+                </li>
+              );
+            })}
+          </ol>
           {controls}
         </div>
       ) : (
@@ -406,24 +481,26 @@ export function GlowGame({
       >
         <p>{status}</p>
         {board}
-        <div className="glow-panel-actions">
-          <button
-            className="secondary"
-            disabled={!active || !draft.length}
-            onClick={() => setDraft([])}
-          >
-            Clear
-          </button>
-          <button
-            disabled={!active || draft.length !== 3}
-            onClick={() => {
-              session.lockGlowPicks(game.round, draft);
-              setBoardOpen(false);
-            }}
-          >
-            Lock picks
-          </button>
-        </div>
+        {!revealed && (
+          <div className="glow-panel-actions">
+            <button
+              className="secondary"
+              disabled={!active || !draft.length}
+              onClick={() => setDraft([])}
+            >
+              Clear
+            </button>
+            <button
+              disabled={!active || draft.length !== 3}
+              onClick={() => {
+                session.lockGlowPicks(game.round, draft);
+                setBoardOpen(false);
+              }}
+            >
+              Lock picks
+            </button>
+          </div>
+        )}
       </AppPanel>
       <AppPanel
         title="Glow players & scores"

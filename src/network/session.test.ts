@@ -1345,6 +1345,23 @@ describe("Glow room", () => {
     expect(host.snapshot().room.glow?.phase).toBe("choosing");
     third.lockGlowPicks(1, [0, 4, 5]);
     await vi.advanceTimersByTimeAsync(20);
+    expect(host.snapshot().room.glow?.phase).toBe("settling");
+    expect(client.snapshot().room.glow?.phase).toBe("settling");
+    expect(
+      third
+        .snapshot()
+        .room.glow?.seats.filter((s) => s.id !== "third")
+        .every((s) => s.picks === null),
+    ).toBe(true);
+    expect(
+      host.snapshot().room.glow?.seats.every((s) => s.scores.length === 0),
+    ).toBe(true);
+    host.pauseGames();
+    await vi.advanceTimersByTimeAsync(5000);
+    host.resumeGlow();
+    await vi.advanceTimersByTimeAsync(3020);
+    expect(host.snapshot().room.glow?.phase).toBe("settling");
+    await vi.advanceTimersByTimeAsync(1500);
     expect(host.snapshot().room.glow?.seats.map((s) => s.scores)).toEqual([
       [2],
       [1],
@@ -1390,6 +1407,8 @@ describe("Glow room", () => {
       );
       third.lockGlowPicks(r, [0, 4, 5]);
       await vi.advanceTimersByTimeAsync(20);
+      expect(host.snapshot().room.glow?.phase).toBe("settling");
+      await vi.advanceTimersByTimeAsync(1500);
       expect(host.snapshot().room.glow?.phase).toBe("reveal");
       await vi.advanceTimersByTimeAsync(6000);
     }

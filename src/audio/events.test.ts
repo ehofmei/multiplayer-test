@@ -307,3 +307,50 @@ it("announces decision locks, launches, scores and results once without replayin
     expect(soundEvents(after, frame(s))).toEqual([]);
   }
 });
+
+it("plays Glow locks, gains, zero gains and shared victory once, without replay on resume", async () => {
+  const {
+    glowRoster,
+    newGlow,
+    startGlow,
+    stepGlow,
+    commitGlow,
+    pauseGlow,
+    resumeGlow,
+  } = await import("../games/glow");
+  const s = snapshot();
+  s.room = newRoom("glow", 1);
+  s.room.glow = stepGlow(
+    startGlow(glowRoster(newGlow(5), ["a", "b", "c"])),
+    3000,
+  );
+  let before = frame(s);
+  s.room.glow = commitGlow(s.room.glow, "a", 1, [0, 1, 2]);
+  expect(soundEvents(before, frame(s))).toEqual(["success"]);
+  before = frame(s);
+  for (const id of ["b", "c"])
+    s.room.glow = commitGlow(s.room.glow, id, 1, [0, 3, 4]);
+  expect(soundEvents(before, frame(s))).toEqual([]);
+  before = frame(s);
+  const beforeZero = soundFrame(s, "b", "session");
+  s.room.glow = stepGlow(s.room.glow, 1500);
+  expect(soundEvents(before, frame(s))).toEqual(["point"]);
+  expect(soundEvents(beforeZero, soundFrame(s, "b", "session"))).toEqual([
+    "success",
+  ]);
+  before = frame(s);
+  s.room.glow = stepGlow(resumeGlow(pauseGlow(s.room.glow)), 3000);
+  expect(soundEvents(before, frame(s))).toEqual([]);
+  before = frame(s);
+  s.room.glow = {
+    ...s.room.glow,
+    phase: "finished",
+    seats: s.room.glow.seats.map((p) => ({ ...p, scores: [2] })),
+  };
+  expect(soundEvents(before, frame(s))).toEqual(["win"]);
+  expect(soundEvents(frame(s), frame(s))).toEqual([]);
+  expect(soundEvents(null, frame(s))).toEqual([]);
+  expect(soundEvents(frame(s), soundFrame(s, "spectator", "session"))).toEqual(
+    [],
+  );
+});

@@ -19,6 +19,8 @@ import type { GridState } from "../game/grid";
 // Older hosts can omit bumpers; update every device to see the same obstacles.
 // Ship rules 2 require all devices to update: typed settings and team scores
 // are validated by validRoom; old hull snapshots are rejected.
+// Glow settling is a bounded, private 1500ms phase validated by validRoom.
+// All Glow devices must update together; older apps reject this new phase.
 export const VERSION = 2;
 export const MAX_MESSAGE = 16_384;
 export interface Player {

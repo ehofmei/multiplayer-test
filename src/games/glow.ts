@@ -16,7 +16,7 @@ export type GlowRounds = 5 | 8 | 12;
 export type GlowAction =
   | { kind: "glow-color"; color: number }
   | { kind: "glow-picks"; round: number; picks: number[] };
-type ActivePhase = "countdown" | "choosing" | "reveal";
+type ActivePhase = "countdown" | "choosing" | "settling" | "reveal";
 export interface GlowSeat {
   id: string;
   color: number;
@@ -154,24 +154,26 @@ export function commitGlow(
       : s,
   );
   if (!seats.every((s) => s.locked)) return { ...state, seats };
+  return { ...state, phase: "settling", remaining: 1500, seats };
+}
+// Resolve only after the shared settling period; scores cannot leak early.
+function revealGlow(state: GlowState): GlowState {
   return {
     ...state,
     phase: "reveal",
     remaining: 6000,
-    seats: seats.map((s) => ({
+    seats: state.seats.map((s) => ({
       ...s,
       scores: [
         ...s.scores,
-        s.picks!.filter(
-          (c) => seats.filter((p) => p.picks!.includes(c)).length === 1,
-        ).length,
+        s.picks!.filter((c) => glowOwners(state, c).length === 1).length,
       ],
     })),
   };
 }
 export function stepGlow(state: GlowState, ms: number): GlowState {
   if (
-    !["countdown", "reorient", "reveal"].includes(state.phase) ||
+    !["countdown", "reorient", "settling", "reveal"].includes(state.phase) ||
     !Number.isFinite(ms) ||
     ms <= 0
   )
@@ -191,6 +193,8 @@ export function stepGlow(state: GlowState, ms: number): GlowState {
     );
   if (state.phase === "countdown")
     return { ...state, phase: "choosing", remaining: 0 };
+  if (state.phase === "settling")
+    return stepGlow(revealGlow(state), Math.max(0, ms - state.remaining));
   if (state.round === state.rounds)
     return { ...state, phase: "finished", remaining: 0 };
   return {

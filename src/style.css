@@ -4894,3 +4894,186 @@ main.app-shell {
     line-height: 13px;
   }
 }
+
+/* Rewards use the status space; the board stays central during round reveals. */
+.glow-round-gain {
+  display: inline-block;
+  color: #f6efff;
+  font-size: 26px;
+  line-height: 1.15;
+  margin-right: 12px;
+  animation: glow-score-arrive 240ms ease-out;
+}
+.glow-round-total {
+  display: inline-block;
+  font-size: 14px;
+  color: #ddd5ed;
+}
+.glow-cell[data-own-pick="true"] {
+  outline: 2px solid white;
+  outline-offset: -5px;
+}
+.glow-cell:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 2px;
+}
+.glow-game-card[data-phase="settling"] .glow-status {
+  color: #f6efff;
+  animation: glow-score-arrive 240ms ease-out;
+}
+.glow-game-card[data-phase="finished"] > .glow-status {
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #f6efff;
+  animation: glow-victory 900ms ease-out;
+}
+.glow-results {
+  width: 100%;
+  max-width: 760px;
+  justify-self: center;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 12px;
+}
+.glow-final-ranking {
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.glow-final-ranking li {
+  display: grid;
+  grid-template-columns: 20px 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #413268;
+  border-radius: 8px;
+  background: #17132b;
+  color: #eee9ff;
+}
+.glow-final-ranking li[data-winner="true"] {
+  background: #30204a;
+  border-color: #a88cdd;
+}
+.glow-final-ranking li[data-you="true"] {
+  box-shadow: inset 3px 0 0 var(--glow-accent);
+}
+.glow-final-name {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  font-size: 16px;
+}
+.glow-final-player {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.glow-final-name small {
+  flex-shrink: 0;
+}
+.glow-final-ranking:focus-visible {
+  outline: 2px solid white;
+  outline-offset: -2px;
+}
+
+.glow-final-ranking strong {
+  line-height: 1.15;
+  font-size: 22px;
+  white-space: nowrap;
+}
+.glow-final-ranking small {
+  font-size: 13px;
+  font-weight: 400;
+  color: #d4cce8;
+}
+.glow-rank {
+  font-size: 14px;
+  color: #d4cce8;
+}
+.glow-results .glow-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.glow-roster strong {
+  font-size: 14px;
+}
+@keyframes glow-score-arrive {
+  from {
+    opacity: 0.65;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes glow-victory {
+  35% {
+    text-shadow: 0 0 18px #bf85ff;
+  }
+  to {
+    text-shadow: 0 0 0 transparent;
+  }
+}
+@media (max-height: 750px) {
+  .glow-final-ranking {
+    gap: 3px;
+    align-content: start;
+  }
+  .glow-final-ranking li {
+    padding: 2px 8px;
+    gap: 6px;
+  }
+  .glow-final-name {
+    font-size: 14px;
+  }
+  .glow-final-ranking strong {
+    font-size: 18px;
+  }
+}
+@media (max-height: 450px) and (min-width: 651px) {
+  .glow-results {
+    grid-template-columns: minmax(0, 1fr) 260px;
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .glow-final-ranking {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .glow-results .glow-controls {
+    align-content: center;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glow-round-gain,
+  .glow-game-card[data-phase="settling"] .glow-status,
+  .glow-game-card[data-phase="finished"] > .glow-status {
+    animation: none;
+  }
+}
+
+@media (max-height: 450px) and (min-width: 651px) {
+  .glow-mini-scores .glow-roster {
+    gap: 1px;
+  }
+  .glow-mini-scores .glow-roster strong {
+    line-height: 1;
+  }
+}
+
+@media (max-height: 450px) and (min-width: 651px) {
+  .glow-game-card .glow-board {
+    grid-template-rows: repeat(var(--glow-rows), 20px);
+  }
+  .glow-game-card .glow-cell {
+    min-height: 20px;
+  }
+}

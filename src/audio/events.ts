@@ -1,3 +1,4 @@
+import { glowTotal } from "../games/glow";
 import { golfTotal } from "../games/minigolf";
 import { treasureTotal } from "../games/treasure";
 import { picnicScore } from "../games/picnic";
@@ -11,13 +12,21 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
   const race = room.race;
   const entry = race?.entries.find((e) => e.id === me);
   const high = race ? Math.max(...race.entries.map((e) => e.points)) : 0;
-  const decision = room.minigolf ?? room.treasure ?? room.picnic;
+  const decision = room.minigolf ?? room.treasure ?? room.picnic ?? room.glow;
   let turn = 0,
     locked = false,
     result = "",
     gain = 0,
     winner = false;
-  if (room.minigolf) {
+  if (room.glow) {
+    const g = room.glow,
+      p = g.seats.find((p) => p.id === me);
+    turn = g.round;
+    locked = p?.locked ?? false;
+    result = p && p.scores.length === turn && turn > 0 ? `${turn}/scored` : "";
+    gain = p?.scores[turn - 1] ?? 0;
+    winner = !!p && g.seats.every((other) => glowTotal(other) <= glowTotal(p));
+  } else if (room.minigolf) {
     const g = room.minigolf,
       b = g.balls.find((b) => b.id === me);
     turn = g.hole;

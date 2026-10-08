@@ -893,7 +893,9 @@ export class Session {
     this.glowTickAt = performance.now();
     if (
       !this.room.glow ||
-      !["countdown", "reorient", "reveal"].includes(this.room.glow.phase)
+      !["countdown", "reorient", "settling", "reveal"].includes(
+        this.room.glow.phase,
+      )
     )
       return;
     this.gameTimer = setInterval(() => {
@@ -905,7 +907,11 @@ export class Session {
       }
       this.glowTickAt += elapsed;
       this.room.glow = stepGlow(this.room.glow, elapsed);
-      if (!["countdown", "reorient", "reveal"].includes(this.room.glow.phase))
+      if (
+        !["countdown", "reorient", "settling", "reveal"].includes(
+          this.room.glow.phase,
+        )
+      )
         this.stopGameTimers();
       this.broadcast();
     }, 100);

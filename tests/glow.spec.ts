@@ -33,6 +33,8 @@ async function fit(p: Page, label: string) {
       ".glow-workspace",
       ".glow-setup",
       ".glow-controls",
+      ".glow-results",
+      ".glow-final-ranking",
     ]) {
       for (const m of await p.locator(selector).evaluateAll((es) =>
         es.map((e) => ({
@@ -197,13 +199,36 @@ test("three players choose colors, lock privately, reveal, finish, rematch and s
     await expect(game(host)).toHaveAttribute("data-phase", "choosing");
     await picks(clients[0], [0, 3, 4]);
     await picks(clients[1], [0, 4, 5]);
-    await expect(game(host)).toHaveAttribute("data-phase", "reveal");
-    await expect(host.locator(".glow-status")).toContainText("+2 this round");
+    await expect(game(host)).toHaveAttribute("data-phase", "settling");
+    await expect(game(clients[1])).toHaveAttribute("data-phase", "settling");
+    await expect(clients[1].locator(".glow-status")).toContainText(
+      "Everyone’s locked in",
+    );
+    await expect(
+      host.getByRole("button", { name: "A1 · Selected", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(clients[1].locator(".glow-top")).toContainText("0 pts");
+    await snapshot(host, "settling");
+    await fit(host, "settling");
+    await host.clock.runFor(1400);
+    await expect(game(host)).toHaveAttribute("data-phase", "settling");
+    await host.clock.runFor(100);
+    await expect(game(clients[1])).toHaveAttribute("data-phase", "reveal");
+    await expect(host.locator(".glow-round-gain")).toHaveText("+2 points");
+    await expect(host.locator(".glow-round-total")).toHaveText(
+      "This round · 2 total",
+    );
+    await expect(
+      game(host).locator('.glow-cell[data-own-pick="true"]'),
+    ).toHaveCount(3);
+    await expect(
+      game(clients[1]).locator('.glow-cell[data-own-pick="true"]'),
+    ).toHaveCount(3);
     await snapshot(host, "mixed");
     await fit(host, "mixed");
     await host
       .getByRole("button", {
-        name: "A1 · Collision, 3 players, 0 points",
+        name: "A1 · Collision, 3 players, 0 points · Your pick",
         exact: true,
       })
       .click();
@@ -215,7 +240,7 @@ test("three players choose colors, lock privately, reveal, finish, rematch and s
       .press("Escape");
     await expect(
       host.getByRole("button", {
-        name: "A1 · Collision, 3 players, 0 points",
+        name: "A1 · Collision, 3 players, 0 points · Your pick",
         exact: true,
       }),
     ).toBeFocused();
@@ -225,12 +250,42 @@ test("three players choose colors, lock privately, reveal, finish, rematch and s
       await picks(host, [0, 1, 2]);
       await picks(clients[0], [0, 3, 4]);
       await picks(clients[1], [0, 4, 5]);
+      await expect(game(host)).toHaveAttribute("data-phase", "settling");
+      await host.clock.runFor(1500);
       await expect(game(host)).toHaveAttribute("data-phase", "reveal");
     }
     await host.clock.runFor(6000);
     await expect(game(clients[0])).toHaveAttribute("data-phase", "finished");
+    await expect(host.locator(".glow-final-ranking li").first()).toContainText(
+      "Alex",
+    );
+    await expect(
+      host.locator('.glow-final-ranking li[data-winner="true"]'),
+    ).toHaveCount(1);
+    await expect(host.locator(".glow-final-ranking li strong")).toHaveText([
+      "10 pts",
+      "5 pts",
+      "5 pts",
+    ]);
+    await host.clock.runFor(60000);
+    await expect(game(host)).toHaveAttribute("data-phase", "finished");
     await snapshot(host, "results");
     await fit(host, "results");
+    await fit(clients[0], "results-client");
+    await host
+      .getByRole("button", { name: "Inspect board", exact: true })
+      .click();
+    await expect(
+      host
+        .getByRole("dialog", { name: "Clash board", exact: true })
+        .locator('.glow-cell[data-own-pick="true"]'),
+    ).toHaveCount(3);
+    await expect(
+      host
+        .getByRole("dialog")
+        .getByRole("button", { name: "Lock picks", exact: true }),
+    ).toHaveCount(0);
+    await closePanels(host);
     await host
       .getByRole("button", { name: "Players & scores", exact: true })
       .click();
@@ -240,7 +295,11 @@ test("three players choose colors, lock privately, reveal, finish, rematch and s
     await expect(host.getByRole("dialog")).toContainText("no timer");
     await closePanels(host);
     await host
-      .getByRole("button", { name: "Clash Again", exact: true })
+      .getByRole("button", { name: "Back to setup", exact: true })
+      .click();
+    await expect(game(clients[0])).toHaveAttribute("data-phase", "ready");
+    await host
+      .getByRole("button", { name: "Start Clash", exact: true })
       .click();
     await host.clock.runFor(3000);
     await host.setViewportSize(sizes[3]);
@@ -317,11 +376,14 @@ test("eight colors stripe together, ties fit and late spectators do not resize t
     await fit(host, "eight-secret");
     for (let r = 1; r <= 5; r++) {
       for (const p of [host, ...clients]) await picks(p, [0, 1, 2]);
+      await expect(game(host)).toHaveAttribute("data-phase", "settling");
+      await host.clock.runFor(1500);
       await expect(game(host)).toHaveAttribute("data-phase", "reveal");
       if (r === 1) {
         await expect(host.locator(".glow-game-card .glow-cell")).toHaveText(
           Array(32).fill(""),
         );
+        await expect(host.locator(".glow-round-gain")).toHaveText("+0 points");
         await snapshot(host, "eight-stripes");
         await fit(host, "eight-stripes");
         const backgrounds = await host
@@ -335,7 +397,7 @@ test("eight colors stripe together, ties fit and late spectators do not resize t
         expect(backgrounds).toContain("100%");
         await host
           .getByRole("button", {
-            name: "A1 · Collision, 8 players, 0 points",
+            name: "A1 · Collision, 8 players, 0 points · Your pick",
             exact: true,
           })
           .click();
@@ -348,6 +410,13 @@ test("eight colors stripe together, ties fit and late spectators do not resize t
     await expect(host.locator(".glow-status")).toContainText(
       "8 players share the win",
     );
+    await expect(
+      host.locator('.glow-final-ranking li[data-winner="true"]'),
+    ).toHaveCount(8);
+    await expect(host.locator(".glow-final-ranking li strong")).toHaveText(
+      Array(8).fill("0 pts"),
+    );
+    await snapshot(host, "eight-results");
     await fit(host, "eight-results");
     await host
       .getByRole("button", { name: "Players & scores", exact: true })

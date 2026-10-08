@@ -71,6 +71,23 @@ describe("Glow Clash", () => {
     s = commitGlow(s, ids[1], 1, [0, 3, 4]);
     expect(s.phase).toBe("choosing");
     s = commitGlow(s, ids[2], 1, [0, 4, 5]);
+    expect(s.phase).toBe("settling");
+    expect(s.seats.map(glowTotal)).toEqual([0, 0, 0]);
+    expect(validGlow(s)).toBe(true);
+    for (const viewer of [...ids.slice(0, 3), "watcher"]) {
+      const view = glowView(s, viewer);
+      expect(validGlow(view)).toBe(true);
+      expect(
+        view.seats
+          .filter((p) => p.id !== viewer)
+          .every((p) => p.picks === null),
+      ).toBe(true);
+      expect(view.seats.every((p) => p.scores.length === 0)).toBe(true);
+    }
+    const before = stepGlow(s, 1499);
+    expect(before.phase).toBe("settling");
+    expect(commitGlow(before, ids[2], 1, [6, 7, 8])).toBe(before);
+    s = stepGlow(before, 1);
     expect(s.phase).toBe("reveal");
     expect(s.seats.map(glowTotal)).toEqual([2, 1, 1]);
     expect(glowOwners(s, 0)).toHaveLength(3);
@@ -89,8 +106,8 @@ describe("Glow Clash", () => {
   it("eight-way collisions award zero to everyone, independent of arrival order", () => {
     const play = (order: string[]) =>
       order.reduce((s, id) => commitGlow(s, id, 1, [0, 1, 2]), match(8));
-    const s = play(ids);
-    expect(s).toEqual(play([...ids].reverse()));
+    const s = stepGlow(play(ids), 1500);
+    expect(s).toEqual(stepGlow(play([...ids].reverse()), 1500));
     expect(glowOwners(s, 0)).toHaveLength(8);
     expect(s.seats.map(glowTotal)).toEqual(Array(8).fill(0));
   });
@@ -99,6 +116,8 @@ describe("Glow Clash", () => {
       let s = match(3, rounds);
       for (let r = 1; r <= rounds; r++) {
         for (const id of ids.slice(0, 3)) s = commitGlow(s, id, r, [0, 1, 2]);
+        expect(s.seats.every((p) => p.scores.length === r - 1)).toBe(true);
+        s = stepGlow(s, 1500);
         expect(s.seats.every((p) => p.scores.length === r)).toBe(true);
         s = stepGlow(s, 999999);
       }
@@ -121,6 +140,12 @@ describe("Glow Clash", () => {
       ids
         .slice(0, 3)
         .reduce((s, id) => commitGlow(s, id, 1, [0, 1, 2]), match()),
+      stepGlow(
+        ids
+          .slice(0, 3)
+          .reduce((s, id) => commitGlow(s, id, 1, [0, 1, 2]), match()),
+        1800,
+      ),
     ]) {
       const p = pauseGlow(original);
       expect(stepGlow(p, 99999)).toBe(p);
@@ -129,6 +154,23 @@ describe("Glow Clash", () => {
       expect(stepGlow(resumeGlow(again), 3000)).toEqual(original);
       expect(validGlow(glowView(again, "watcher"))).toBe(true);
     }
+  });
+  it("validates settling locks, timing, private views and rejects early scores", () => {
+    const s = ids
+      .slice(0, 3)
+      .reduce((s, id) => commitGlow(s, id, 1, [0, 1, 2]), match());
+    for (const patch of [
+      { remaining: 1501 },
+      { seats: s.seats.map((p, i) => (i === 0 ? { ...p, locked: false } : p)) },
+      { seats: s.seats.map((p) => ({ ...p, scores: [0] })) },
+    ])
+      expect(validGlow({ ...s, ...patch })).toBe(false);
+    const partial = stepGlow(s, 400);
+    const restored = stepGlow(resumeGlow(pauseGlow(partial)), 3000);
+    expect(restored).toEqual(partial);
+    expect(stepGlow(restored, 1099).phase).toBe("settling");
+    expect(stepGlow(restored, 1100).phase).toBe("reveal");
+    expect(stepGlow(restored, 7100).round).toBe(2);
   });
   it("bounds inputs and rejects impossible/publicly malformed states", () => {
     for (const picks of [
@@ -207,7 +249,7 @@ describe("Glow Clash", () => {
           expect(parseMessage(wire(viewer))).not.toBeNull();
         }
       }
-      s = stepGlow(s, 6000);
+      s = stepGlow(s, 7500);
     }
   });
 });

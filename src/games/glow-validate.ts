@@ -13,6 +13,7 @@ export function validGlow(v: unknown): v is GlowState {
       "ready",
       "countdown",
       "choosing",
+      "settling",
       "reveal",
       "paused",
       "reorient",
@@ -29,10 +30,19 @@ export function validGlow(v: unknown): v is GlowState {
   const seats = v.seats;
   const resuming = v.phase === "paused" || v.phase === "reorient";
   const phase = resuming ? v.resumePhase : v.phase;
-  const limit = phase === "reveal" ? 6000 : phase === "countdown" ? 3000 : 0;
+  const limit =
+    phase === "reveal"
+      ? 6000
+      : phase === "countdown"
+        ? 3000
+        : phase === "settling"
+          ? 1500
+          : 0;
   if (
     resuming
-      ? !["countdown", "choosing", "reveal"].includes(String(phase)) ||
+      ? !["countdown", "choosing", "settling", "reveal"].includes(
+          String(phase),
+        ) ||
         v.resumeRemaining > limit ||
         (v.phase === "paused"
           ? v.remaining !== v.resumeRemaining
@@ -60,7 +70,7 @@ export function validGlow(v: unknown): v is GlowState {
         s.id.length <= 80 &&
         glowInt(s.color, 0, 11) &&
         typeof s.locked === "boolean" &&
-        (!resolved || s.locked) &&
+        (!(resolved || phase === "settling") || s.locked) &&
         ((phase !== "ready" && phase !== "countdown") || !s.locked) &&
         (s.picks === null
           ? !resolved

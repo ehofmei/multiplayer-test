@@ -612,17 +612,24 @@ Tap exactly three different cells, then **Lock picks**. **Clear** resets the loc
 draft; a host-confirmed lock is final. Only readiness and your own confirmed
 picks are visible before the last player locks. Selection is untimed: there are
 no automatic picks, missing submissions or speed bonuses. **Players & scores**
-shows who is still choosing. The last lock reveals every tile and scores the
-round once. A unique claim earns 1 point; a collision earns nobody points.
+shows who is still choosing. After the last lock, everyone sees **Everyone’s
+locked in · revealing…** for 1.5 seconds. Picks and new scores stay private during
+that beat, then every tile reveals and the round scores once. A unique claim earns 1 point; a collision earns nobody points.
 Collision tiles show one broad diagonal band per selecting color, ordered by
 player number. Tap any revealed tile for full names, numbered identities, color
 names and its score explanation.
 
-Reveals last six seconds, then a fresh board opens automatically. After the last
-reveal, winners and totals remain visible with the last board. Tied leaders
-share the win; **Players & scores** includes every per-round gain and full name.
+Reveals show a clear **+0–3 points** gain and your cumulative total above the
+board. Your three picks retain an inset outline, including collisions; keyboard
+focus has an outer outline. Reveals last six seconds after the settling beat,
+then a fresh board opens automatically. After the last reveal, the main screen
+shows ranked totals, an explicit winner or shared winners, and your **You** row.
+A brief celebratory glow respects reduced motion. Final rankings wait for the host;
+**Inspect board** retains the last board and **Players & scores** includes every
+per-round gain and full name.
 **Clash Again** starts fresh scores with the current roster and retained colors.
-Stop returns to setup, where colors and round count can be adjusted again.
+Stop during play or **Back to setup** at match end returns to setup, where colors
+and round count can be adjusted again.
 
 Keyboard: Tab to the grid, arrows to move focus, Space/Enter to toggle. Narrow
 portrait phones keep all four columns and at least 44px tiles. Short landscape
@@ -633,10 +640,12 @@ bands show collisions. Numbered identities, coordinates and score explanations
 remain available in accessible labels, the legend and tile details. No sound is needed.
 
 Pause, pairing, host backgrounding and long timer stalls preserve locks, scores,
-colors and remaining reveal time. Resume adds a three-second countdown. Late
+colors and remaining settling/reveal time. Resume adds a three-second countdown. Late
 arrivals spectate without resizing the board; a participant leaving resets setup
 and releases their color while retaining everyone else's assignments. All devices
-must update before playing Glow Clash; older apps cannot recognize the new game.
+must update before playing the revised Glow Clash; older apps reject the new
+settling phase. Locally synthesized lock, scoring and result cues use the existing
+muted-by-default sound setting and do not replay on resume.
 Saved identity and sound settings keep their existing versions. Match length
 follows the group's pace because choosing is deliberately untimed.
 

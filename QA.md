@@ -567,10 +567,19 @@ QA inventory:
 - Toggle three distinct tiles, reject a fourth until deselection, Clear, Lock
   picks, authoritative confirmation, untimed waiting and Players & scores
   readiness. Before reveal, other devices and spectators see no picks or counts.
+- After the last lock (including on that player’s device), show Everyone’s locked
+  in for 1.5 seconds; keep all other picks and current-round scores private.
+  Pause/background/pairing during this beat and resume the exact remaining time.
 - Reveal mixed unique/colliding cells together, independently score 0–3 points,
   inspect every selecting player, check one broad diagonal band per color (all eight),
-  six-second automatic advancement, cumulative scores, ties and retained final
-  board. Per-round breakdowns remain in the scores panel; rematch resets scores.
+  six-second automatic advancement after the beat, clear +0–3 gains, cumulative
+  scores, and outlines on your three picks (including collisions).
+- Final ranking is the main screen: explicit winner/shared winners, tied ranks,
+  readable totals and You row. Inspect board preserves final picks without lock
+  controls; standings retain per-round breakdowns. Clash Again resets scores; Back
+  to setup retains colors. Results persist until the host chooses either action.
+  Check one brief celebratory glow, reduced motion, optional lock/point/result
+  sounds and no sound replay on resume or reopening panels.
 - Tab/arrows/Space/Enter, focus visibility, Help/score/tile dialogs, Escape and
   restored focus. Check 320×568, 320×700, 390×844, 844×390, 768×1024 and 1280×720,
   including eight long names, taller serif metrics and reduced motion. Portrait
@@ -756,3 +765,12 @@ leave/re-enter the court while dragging and confirm comfortable mirrored control
 Check long rallies, bumps, pause/resume, point resets, offline relaunch and
 user-controlled updates. No protocol/storage migration is needed; all devices
 should update for matching controls.
+
+Glow rewards QA inventory adds the 1.5-second private settling beat, +0/+2 gains,
+own-pick collision outlines, final single/shared winners and ranked totals, board
+inspection, setup exit and rematch. Test the same phone/tablet/desktop sizes with
+taller text metrics and independent real WebRTC players. Physical iPhone/iPad
+checks remain: installed-PWA safe areas, thumb selection, VoiceOver announcements,
+optional sound/volume, backgrounding during settling, rotation, offline startup,
+and updating every paired device together. Tune the 1.5-second beat with the next
+family play session.
