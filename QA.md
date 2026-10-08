@@ -652,6 +652,15 @@ visually reviewed; the bundled font fixture, dimensions and 180-pixel budget wer
 preserved. `glow-rewards-review.yml` now runs ordinary full verification on
 `codex/glow-rewards`, with read-only access, no generation flags and no deployment.
 
+The compact score strip has a 12px column gap and small unnumbered color swatches.
+Its refreshed mixed-reveal and eight-color baselines were visually reviewed on
+Darwin and genuine Ubuntu, returned in commit `f0fe200` by the [score-strip review run](https://github.com/ehofmei/multiplayer-test/actions/runs/37793703020).
+The live three-player production-preview pass checked mixed 2/1/1 totals,
+phone and desktop layouts, retained numbered identities in Players & scores,
+and Escape/focus restoration. Existing six-size layout checks retain strict fit
+assertions, eight long names and taller font metrics. Physical iOS/VoiceOver
+checks remain part of the device follow-up above.
+
 Live production-preview QA paired three independent current-build players through
 text invites. It exercised keyboard selection, fourth-pick rejection, private
 locks, host-last and client-last settling feedback, mixed/zero scoring, retained
