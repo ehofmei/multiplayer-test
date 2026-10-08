@@ -574,6 +574,9 @@ QA inventory:
   inspect every selecting player, check one broad diagonal band per color (all eight),
   six-second automatic advancement after the beat, clear +0–3 gains, cumulative
   scores, and outlines on your three picks (including collisions).
+  Round-score strips use unnumbered color swatches and separated columns; names
+  and scores stay readable with eight players, including long names. Setup and
+  detailed views retain player numbers; final rankings retain placement numbers.
 - Final ranking is the main screen: explicit winner/shared winners, tied ranks,
   readable totals and You row. Inspect board preserves final picks without lock
   controls; standings retain per-round breakdowns. Clash Again resets scores; Back

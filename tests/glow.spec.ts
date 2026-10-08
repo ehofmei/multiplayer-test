@@ -33,6 +33,7 @@ async function fit(p: Page, label: string) {
       ".glow-workspace",
       ".glow-setup",
       ".glow-controls",
+      ".glow-mini-scores",
       ".glow-results",
       ".glow-final-ranking",
     ]) {
@@ -224,6 +225,14 @@ test("three players choose colors, lock privately, reveal, finish, rematch and s
     await expect(host.locator(".glow-round-total")).toHaveText(
       "This round · 2 total",
     );
+    await expect(host.locator(".glow-mini-scores .glow-symbol")).toHaveText([
+      "",
+      "",
+      "",
+    ]);
+    await expect(
+      host.locator(".glow-mini-scores .glow-symbol").first(),
+    ).toHaveAttribute("aria-label", "Alex, Red");
     await expect(
       game(host).locator('.glow-cell[data-own-pick="true"]'),
     ).toHaveCount(3);

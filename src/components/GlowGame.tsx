@@ -104,16 +104,20 @@ export function GlowGame({
           : p,
     );
   };
-  const roster = (full: boolean) => (
+  const roster = (full: boolean, compact = false) => (
     <ol className={full ? "glow-standings" : "glow-roster"}>
       {(full ? sorted : game.seats).map((s) => (
         <li key={s.id}>
           <b
             className="glow-symbol"
             style={{ background: glowColors[s.color].hex }}
-            aria-label={`Player ${symbol(s.id)}, ${glowColors[s.color].name}`}
+            aria-label={
+              compact
+                ? `${name(s.id)}, ${glowColors[s.color].name}`
+                : `Player ${symbol(s.id)}, ${glowColors[s.color].name}`
+            }
           >
-            {symbol(s.id)}
+            {compact ? null : symbol(s.id)}
           </b>
           <span className="glow-name" title={name(s.id)}>
             {name(s.id)}
@@ -164,7 +168,7 @@ export function GlowGame({
         </>
       )}
       {revealed && !finished && (
-        <div className="glow-mini-scores">{roster(false)}</div>
+        <div className="glow-mini-scores">{roster(false, true)}</div>
       )}
       <GameHelp label="Help">
         <p>

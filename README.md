@@ -622,7 +622,10 @@ names and its score explanation.
 Reveals show a clear **+0–3 points** gain and your cumulative total above the
 board. Your three picks retain an inset outline, including collisions; keyboard
 focus has an outer outline. Reveals last six seconds after the settling beat,
-then a fresh board opens automatically. After the last reveal, the main screen
+then a fresh board opens automatically. The compact round-score strip uses small
+color swatches beside names and totals, with space between its two columns.
+Numbered player identities remain in setup and detailed views.
+After the last reveal, the main screen
 shows ranked totals, an explicit winner or shared winners, and your **You** row.
 A brief celebratory glow respects reduced motion. Final rankings wait for the host;
 **Inspect board** retains the last board and **Players & scores** includes every
