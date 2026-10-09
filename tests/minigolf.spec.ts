@@ -489,6 +489,30 @@ test("eight golfers fit; late arrivals watch, background pauses, and participant
         await ready(p);
       }
       await expect(game(host)).toHaveAttribute("data-phase", "rolling");
+      if (hole === 1) {
+        await expect(host.locator("[data-golf-ball]")).toHaveCount(8);
+        await expect(host.locator("[data-golf-ball] > text")).toHaveText([
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+        ]);
+        for (
+          let i = 0;
+          i < 80 &&
+          (await host.locator('[data-golf-captured="true"]').count()) < 8;
+          i++
+        )
+          await host.clock.runFor(50);
+        await expect(host.locator('[data-golf-captured="true"]')).toHaveCount(
+          8,
+        );
+        await expect(host.locator('[data-golf-effect="cup"]')).toHaveCount(1);
+      }
       await host.clock.runFor(30000);
     }
     await expect(game(host)).toHaveAttribute("data-phase", "finished");

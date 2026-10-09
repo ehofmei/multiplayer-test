@@ -3,7 +3,7 @@ on:
   push:
     branches: [codex/minigolf-layout]
 permissions:
-  contents: write
+  contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -16,21 +16,6 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - name: Obtain genuine Linux cup and results baselines once
-        run: |
-          if [ ! -f tests/minigolf-results.spec.ts-snapshots/golf-winner-phone-linux.png ]; then
-            npx playwright test tests/minigolf-results.spec.ts --update-snapshots
-            npx playwright test tests/minigolf.spec.ts --update-snapshots=all
-          fi
-      - name: Return Linux cup and results renders to the review branch
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tests/minigolf-results.spec.ts-snapshots/*-linux.png tests/minigolf.spec.ts-snapshots/*-linux.png
-          if ! git diff --cached --quiet; then
-            git commit -m 'Generated Linux cup and results baselines'
-            git push origin HEAD:codex/minigolf-layout
-          fi
       - run: npm run verify
       - name: Save browser evidence
         if: always()

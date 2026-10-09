@@ -531,6 +531,14 @@ and touch-target checks. A final development-preview pass at 320×568 exercised
 Adjust aim, keyboard edits, Escape dismissal, Ready lock and pause. These checks
 use desktop Chromium; they do not establish physical-device behavior.
 
+The cup/results production-preview pass paired independent players, played all
+five greens with actual dragging and Ready controls, paused/resumed a meteor shot,
+and reviewed matching final totals/breakdowns on phone and tablet layouts. It also
+checked a short-phone results screen, Standings/Help with Escape, mute/unmute,
+and rematch restoring the course on both devices. Physical iPhone/iPad dragging,
+visibility under thumbs, speaker audibility and background/resume still require
+a family device playtest.
+
 The adaptive layout was also exercised in a persistent paired browser room: an
 upward portrait drag, a saved draft after switching to a short phone, keyboard
 power edits, Ready locking, pause/resume, shared launch, Standings and Help.
