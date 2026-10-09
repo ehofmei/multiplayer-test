@@ -54,9 +54,11 @@ export function GolfBallArtwork({
 export function GolfCourseArtwork({
   hole,
   impacted,
+  portrait,
 }: {
   hole: number;
   impacted: boolean;
+  portrait: boolean;
 }) {
   const course = courses[Math.max(0, hole - 1)];
   const prefix = `golf-${useId().replace(/:/g, "")}`;
@@ -249,7 +251,14 @@ export function GolfCourseArtwork({
           strokeWidth="3"
           opacity=".6"
         />
-        <text x="34" y="52" fill="#f5f1c7" fontSize="24" fontWeight="bold">
+        <text
+          transform={portrait ? "rotate(90)" : undefined}
+          x="34"
+          y="52"
+          fill="#f5f1c7"
+          fontSize="24"
+          fontWeight="bold"
+        >
           100
         </text>
       </g>
@@ -384,6 +393,7 @@ export function GolfCourseArtwork({
             </>
           )}
           <text
+            transform={portrait ? "rotate(90)" : undefined}
             y="60"
             textAnchor="middle"
             fontSize="22"

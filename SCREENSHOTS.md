@@ -103,9 +103,13 @@ Mixed course · desktop playing surface.
 ![Meteor Minigolf mixed course](tests/minigolf.spec.ts-snapshots/golf-mixed-desktop-linux.png)
 
 <details>
-<summary>Phone controls, courses and results</summary>
+<summary>Phone and tablet controls, courses and results</summary>
 
 ![Meteor Minigolf phone aiming screen](tests/minigolf.spec.ts-snapshots/golf-active-linux.png)
+
+![Meteor Minigolf compact phone controls](tests/minigolf.spec.ts-snapshots/golf-short-phone-linux.png)
+
+![Meteor Minigolf portrait tablet controls](tests/minigolf.spec.ts-snapshots/golf-tablet-linux.png)
 
 ![Minigolf Bank shot](tests/minigolf.spec.ts-snapshots/golf-hole-2-linux.png)
 

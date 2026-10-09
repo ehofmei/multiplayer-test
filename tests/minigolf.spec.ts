@@ -24,6 +24,12 @@ async function fit(page: Page, label: string) {
       content: ":root{font-family:serif;line-height:1.6}",
     });
     await expectScreenFits(page);
+    // ResizeObserver may turn the course on the next rendering frame.
+    await expect
+      .poll(
+        async () => (await page.locator(".golf-course").boundingBox())!.width,
+      )
+      .toBeGreaterThan(200);
     const metrics = await page
       .locator(".golf-game-card, .golf-workspace, .golf-controls")
       .evaluateAll((es) =>
@@ -59,7 +65,12 @@ async function fit(page: Page, label: string) {
   }
 }
 async function ready(page: Page, touch = false) {
-  await page.getByRole("slider", { name: "Shot angle" }).press("Home");
+  const portrait =
+    (await page.locator(".golf-course").getAttribute("data-layout")) ===
+    "portrait";
+  await page
+    .getByRole("slider", { name: "Shot angle" })
+    .fill(portrait ? "270" : "0");
   await page.getByRole("slider", { name: "Shot power" }).press("ArrowRight");
   const lock = page.getByRole("button", { name: "Ready", exact: true });
   if (touch) await lock.tap();
@@ -117,13 +128,19 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
     ).toBeEnabled();
     await host.screenshot({ path: "test-results/golf-drag-before.png" });
     const court = (await host.locator(".golf-course").boundingBox())!;
+    await expect(host.locator(".golf-course")).toHaveAttribute(
+      "data-layout",
+      "portrait",
+    );
+    expect(court.height).toBeGreaterThan(390);
+    await expect(host.locator(".golf-weather")).toContainText("↑ North");
     const tee = {
-      x: court.x + court.width * 0.2,
-      y: court.y + court.height * 0.5,
+      x: court.x + court.width * 0.5,
+      y: court.y + court.height * 0.8,
     };
     await host.mouse.move(tee.x, tee.y);
     await host.mouse.down();
-    await host.mouse.move(tee.x + 6, tee.y, { steps: 3 });
+    await host.mouse.move(tee.x, tee.y - 6, { steps: 3 });
     await host.mouse.up();
     await expect(
       host.getByRole("slider", { name: "Shot power" }),
@@ -133,28 +150,80 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
       .inputValue();
     await host.mouse.move(tee.x, tee.y);
     await host.mouse.down();
-    await host.mouse.move(tee.x + 50, tee.y, { steps: 3 });
+    await host.mouse.move(tee.x, tee.y - 50, { steps: 3 });
     // Pointer cancellation is the browser event on interruption; normal dragging is above.
     await host.locator(".golf-course").dispatchEvent("pointercancel");
     await host.mouse.up();
     await expect(host.getByRole("slider", { name: "Shot power" })).toHaveValue(
       before,
     );
+    await expect(host.getByRole("slider", { name: "Shot angle" })).toHaveValue(
+      "270",
+    );
+    await host.mouse.move(tee.x, tee.y);
+    await host.mouse.down();
+    await host.mouse.move(tee.x, tee.y - 50, { steps: 3 });
     await host.setViewportSize(sizes[0]);
+    await expect(host.locator(".golf-course")).toHaveAttribute(
+      "data-layout",
+      "landscape",
+    );
+    await host.mouse.up();
+    await expect(host.locator(".golf-weather")).toContainText("→ East");
+    await expectStableScreenshot(
+      host,
+      ".golf-game-card",
+      `golf-short-phone-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
     await host.getByRole("button", { name: "Adjust aim", exact: true }).click();
     await expect(
       host.getByRole("dialog", { name: "Adjust shot" }),
     ).toBeVisible();
+    await expect(host.getByRole("slider", { name: "Shot angle" })).toHaveValue(
+      "0",
+    );
+    await expect(host.getByRole("slider", { name: "Shot power" })).toHaveValue(
+      before,
+    );
     await host.getByRole("slider", { name: "Shot power" }).fill("60");
     await closePanels(host);
     await host.setViewportSize(sizes[2]);
+    await expect(host.getByRole("slider", { name: "Shot angle" })).toHaveValue(
+      "270",
+    );
+    const matrices = await host.locator(".golf-course text").evaluateAll((es) =>
+      es.map((e) => {
+        const m = (e as SVGGraphicsElement).getScreenCTM()!;
+        return { a: m.a, b: m.b, c: m.c, d: m.d };
+      }),
+    );
+    for (const m of matrices) {
+      expect(m.a).toBeGreaterThan(0);
+      expect(m.d).toBeGreaterThan(0);
+      expect(Math.abs(m.b)).toBeLessThan(0.0001);
+      expect(Math.abs(m.c)).toBeLessThan(0.0001);
+    }
     await host
       .getByRole("button", { name: "Ready", exact: true })
       .press("Enter");
     await expect(
       host.getByRole("button", { name: "Shot locked", exact: true }),
     ).toBeDisabled();
-    await expect(client.locator(".golf-weather")).toContainText("0, 12 or 24");
+    await host.setViewportSize(sizes[3]);
+    await expect(host.getByRole("slider", { name: "Shot angle" })).toHaveValue(
+      "0",
+    );
+    await expect(
+      host.getByRole("button", { name: "Shot locked", exact: true }),
+    ).toBeDisabled();
+    await host.setViewportSize(sizes[2]);
+    await expect(host.getByRole("slider", { name: "Shot angle" })).toHaveValue(
+      "270",
+    );
+    await expect(client.locator(".golf-weather")).toContainText(
+      "Gust revealed at launch",
+    );
     await expect(game(client)).toHaveAttribute("data-phase", "aiming");
     await host.getByRole("button", { name: "Pause", exact: true }).click();
     await host.clock.runFor(10000);
@@ -171,6 +240,18 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
     );
     await fit(host, "aiming");
     await fit(client, "aiming-client");
+    await host.setViewportSize(sizes[4]);
+    await expect(host.locator(".golf-course")).toHaveAttribute(
+      "data-layout",
+      "portrait",
+    );
+    await expectStableScreenshot(
+      host,
+      ".golf-game-card",
+      `golf-tablet-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
+    await host.setViewportSize(sizes[2]);
     await client.setViewportSize(sizes[2]);
     await expectStableScreenshot(
       client,
@@ -185,7 +266,7 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
     await closePanels(client);
     await ready(client, true);
     await expect(game(client)).toHaveAttribute("data-phase", "rolling");
-    await expect(client.locator(".golf-weather")).toContainText("0 units/s²");
+    await expect(client.locator(".golf-weather")).toContainText("Still air");
     while ((await game(host).getAttribute("data-phase")) === "rolling")
       await host.clock.runFor(100);
     await expect(game(client)).toHaveAttribute("data-phase", "results");
@@ -305,6 +386,10 @@ test("eight golfers fit; late arrivals watch, background pauses, and participant
     for (let hole = 1; hole <= 5; hole++) {
       for (const p of [host, ...clients]) {
         await p.setViewportSize(sizes[2]);
+        await expect(p.locator(".golf-course")).toHaveAttribute(
+          "data-layout",
+          "portrait",
+        );
         await ready(p);
       }
       await expect(game(host)).toHaveAttribute("data-phase", "rolling");

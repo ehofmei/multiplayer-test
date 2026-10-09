@@ -429,6 +429,12 @@ Inventory for 2–8 players on desktop, iPad, and narrow iPhones:
   Cancel a drag or lose focus: the previous aim should return. The arrow previews
   direction, not a complete trajectory. Angle/Power work with touch and arrow keys.
   At short portrait heights use Adjust aim; close the dialog before Ready.
+- Turn between a tall phone, short phone, landscape and tablet. The course should
+  turn upright only when it becomes larger and stays readable. Tee numbers, cup
+  points, meteor labels and result points stay upright. Angle and wind directions
+  follow the screen; a saved draft or locked shot must retain its world direction
+  and power. Resize during a drag: restore the previous draft instead of committing
+  an accidental shot. Check the complete green against its frame and controls.
 - Tap Ready, see Shot locked after host confirmation, and try to change it. Others'
   shots and actual gust/impact timing remain hidden until launch. Leave one player
   without a shot for at least a minute: everyone stays in aiming with no score
@@ -459,6 +465,9 @@ Golf's ready, active and results snapshots use separate reviewed Darwin/Linux
 baselines, the bundled font fixture, strict dimensions and a 180-pixel budget.
 Course snapshots also cover Bank shot, Mushrooms, Meteor and Mixed course on
 portrait phones, Mixed course on desktop, and the post-impact meteor crater.
+Short-phone and portrait-tablet snapshots retain the complete course/control frame.
+Browser assertions cover orientation changes, screen-relative wind and angles,
+preserved drafts, upright text and enlarged phone course bounds.
 Follow the screenshot portability workflow above when adding or updating them.
 The complete verification command also checks manifest/icons, repository-subpath
 startup and caching, offline reload, identity/sound persistence and controlled updates.
@@ -469,6 +478,13 @@ manual app updates. Screenshot reviews complement the strict automated viewport
 and touch-target checks. A final development-preview pass at 320×568 exercised
 Adjust aim, keyboard edits, Escape dismissal, Ready lock and pause. These checks
 use desktop Chromium; they do not establish physical-device behavior.
+
+The adaptive layout was also exercised in a persistent paired browser room: an
+upward portrait drag, a saved draft after switching to a short phone, keyboard
+power edits, Ready locking, pause/resume, shared launch, Standings and Help.
+Phone, short-landscape and tablet views were inspected. Automated current-version
+pairing complements a live updated-host/older-client pass; the layout adds no
+network fields. Physical iOS rotation and pointer-capture behavior remain open.
 
 Physical iPhone/iPad follow-up: play all five holes on household Wi-Fi in Safari
 and installed PWAs. Check real touch dragging/cancellation, safe areas and rotation,

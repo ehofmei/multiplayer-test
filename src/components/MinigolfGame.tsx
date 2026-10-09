@@ -43,6 +43,21 @@ export function MinigolfGame({
     power: 0.6,
     drafted: false,
   });
+  const board = useRef<HTMLDivElement>(null);
+  const courseLayer = useRef<SVGGElement>(null);
+  const [portrait, setPortrait] = useState(false);
+  useEffect(() => {
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      const wideScale = Math.min(width / 1000, height / 700);
+      const tallScale = Math.min(width / 700, height / 1000);
+      // Rotate only for a meaningful scale gain and a readable narrow dimension.
+      setPortrait(tallScale * 700 >= 216 && tallScale > wideScale * 1.08);
+    });
+    observer.observe(board.current!);
+    return () => observer.disconnect();
+  }, []);
+  const screenAngle = (aim.angle + (portrait ? 270 : 0)) % 360;
   const [scoresOpen, setScoresOpen] = useState(false);
   const [aimOpen, setAimOpen] = useState(false);
   const [compactAim, setCompactAim] = useState(
@@ -77,8 +92,8 @@ export function MinigolfGame({
     drag.current = null;
   }, [game.hole]);
   useEffect(() => {
-    if (!active) cancelDrag();
-  }, [active]);
+    cancelDrag();
+  }, [active, portrait]);
   useEffect(() => {
     const clear = () => cancelDrag();
     window.addEventListener("blur", clear);
@@ -118,14 +133,11 @@ export function MinigolfGame({
                     ? "Shots away! Watch the shared gust."
                     : me.locked
                       ? "Shot confirmed · waiting for players."
-                      : "Drag from your ball, or adjust below. Then Ready.";
-  const point = (event: PointerEvent<SVGSVGElement>) => {
-    const bounds = event.currentTarget.getBoundingClientRect();
-    return {
-      x: ((event.clientX - bounds.left) * 1000) / bounds.width,
-      y: ((event.clientY - bounds.top) * 700) / bounds.height,
-    };
-  };
+                      : "Aim from your ball, then tap Ready.";
+  const point = (event: PointerEvent<SVGSVGElement>) =>
+    new DOMPoint(event.clientX, event.clientY).matrixTransform(
+      courseLayer.current!.getScreenCTM()!.inverse(),
+    );
   const move = (event: PointerEvent<SVGSVGElement>) => {
     if (!active || drag.current?.pointer !== event.pointerId) return;
     const p = point(event),
@@ -147,19 +159,19 @@ export function MinigolfGame({
     <>
       {" "}
       <label>
-        Angle <span>{Math.round(aim.angle)}°</span>
+        Angle <span>{Math.round(screenAngle)}°</span>
         <input
           type="range"
           aria-label="Shot angle"
           min="0"
           max="359"
           step="1"
-          value={aim.angle}
+          value={screenAngle}
           disabled={!active}
           onChange={(e) =>
             setAim({
               ...aim,
-              angle: Number(e.target.value),
+              angle: (Number(e.target.value) + (portrait ? 90 : 0)) % 360,
               drafted: true,
             })
           }
@@ -239,23 +251,23 @@ export function MinigolfGame({
         </span>
       </div>
       <div className="golf-workspace">
-        <div className="golf-board">
-          <GameSurface ratio={1000 / 700}>
+        <div className="golf-board" ref={board}>
+          <GameSurface ratio={portrait ? 700 / 1000 : 1000 / 700}>
             <svg
               className="golf-course"
-              viewBox="0 0 1000 700"
+              viewBox={portrait ? "0 0 700 1000" : "0 0 1000 700"}
               role="img"
-              aria-label={`${course.name} course. Drag from the tee toward your shot. Angle and power controls are below.`}
+              aria-label={`${course.name} course. Drag from the tee toward your shot, or use the Angle and Power controls.`}
               data-aiming={active}
+              data-layout={portrait ? "portrait" : "landscape"}
               onPointerDown={(event) => {
                 if (!active || event.button !== 0) return;
                 const p = point(event),
                   bounds = event.currentTarget.getBoundingClientRect();
                 if (
-                  Math.hypot(
-                    ((p.x - course.tee[0]) * bounds.width) / 1000,
-                    ((p.y - course.tee[1]) * bounds.height) / 700,
-                  ) > 32
+                  Math.hypot(p.x - course.tee[0], p.y - course.tee[1]) *
+                    (bounds.width / (portrait ? 700 : 1000)) >
+                  32
                 )
                   return;
                 drag.current = { pointer: event.pointerId, previous: aim };
@@ -284,90 +296,113 @@ export function MinigolfGame({
                   <path d="M0 0L10 5L0 10Z" fill="#ffffff" />
                 </marker>
               </defs>
-              <GolfCourseArtwork hole={game.hole} impacted={game.impacted} />
-              {!revealed && (
-                <>
-                  <GolfBallArtwork
-                    x={course.tee[0]}
-                    y={course.tee[1]}
-                    radius={26}
-                    color={colors[Math.max(0, myIndex)]}
-                  />
-                  <text
-                    x={course.tee[0]}
-                    y={course.tee[1] + 7}
-                    fill="#092922"
-                    fontSize="21"
-                    textAnchor="middle"
-                    fontWeight="bold"
-                  >
-                    {myIndex < 0 ? "T" : myIndex + 1}
-                  </text>
-                  {aim.drafted && me && (
-                    <line
-                      x1={course.tee[0]}
-                      y1={course.tee[1]}
-                      x2={course.tee[0] + Math.cos(radians) * arrowLength}
-                      y2={course.tee[1] + Math.sin(radians) * arrowLength}
-                      stroke="#fff"
-                      strokeWidth="5"
-                      markerEnd="url(#golf-arrow)"
+              <g
+                ref={courseLayer}
+                transform={
+                  portrait ? "translate(0 1000) rotate(-90)" : undefined
+                }
+              >
+                <GolfCourseArtwork
+                  hole={game.hole}
+                  impacted={game.impacted}
+                  portrait={portrait}
+                />
+                {!revealed && (
+                  <>
+                    <GolfBallArtwork
+                      x={course.tee[0]}
+                      y={course.tee[1]}
+                      radius={26}
+                      color={colors[Math.max(0, myIndex)]}
                     />
-                  )}
-                </>
-              )}
-              {revealed &&
-                game.balls.map((b, i) => {
-                  const nearby = game.balls.filter(
-                    (other) => Math.hypot(other.x - b.x, other.y - b.y) < 40,
-                  );
-                  const slot = nearby.findIndex((other) => other.id === b.id);
-                  const labelX =
-                    nearby.length > 1
-                      ? Math.min(
-                          960 - (nearby.length - 1) * 48,
-                          Math.max(40, b.x - (nearby.length - 1) * 24),
-                        ) +
-                        slot * 48
-                      : Math.max(24, Math.min(976, b.x));
-                  return (
-                    <g key={b.id} opacity={b.skipped ? 0.4 : 1}>
-                      <GolfBallArtwork
-                        x={b.x}
-                        y={b.y}
-                        radius={b.id === session.me.id ? 15 : 10}
-                        color={colors[i]}
+                    <text
+                      transform={
+                        portrait
+                          ? `rotate(90 ${course.tee[0]} ${course.tee[1]})`
+                          : undefined
+                      }
+                      x={course.tee[0]}
+                      y={course.tee[1] + 7}
+                      fill="#092922"
+                      fontSize="21"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                    >
+                      {myIndex < 0 ? "T" : myIndex + 1}
+                    </text>
+                    {aim.drafted && me && (
+                      <line
+                        x1={course.tee[0]}
+                        y1={course.tee[1]}
+                        x2={course.tee[0] + Math.cos(radians) * arrowLength}
+                        y2={course.tee[1] + Math.sin(radians) * arrowLength}
+                        stroke="#fff"
+                        strokeWidth="5"
+                        markerEnd="url(#golf-arrow)"
                       />
-                      <text
-                        x={labelX}
-                        y={Math.max(32, b.y - 28)}
-                        textAnchor="middle"
-                        fill={colors[i]}
-                        fontSize="32"
-                        fontWeight="bold"
-                      >
-                        {i + 1}
-                      </text>
-                      {results && b.id === session.me.id && (
-                        <text
+                    )}
+                  </>
+                )}
+                {revealed &&
+                  game.balls.map((b, i) => {
+                    const nearby = game.balls.filter(
+                      (other) => Math.hypot(other.x - b.x, other.y - b.y) < 40,
+                    );
+                    const slot = nearby.findIndex((other) => other.id === b.id);
+                    const labelX =
+                      nearby.length > 1
+                        ? Math.min(
+                            960 - (nearby.length - 1) * 48,
+                            Math.max(40, b.x - (nearby.length - 1) * 24),
+                          ) +
+                          slot * 48
+                        : Math.max(24, Math.min(976, b.x));
+                    return (
+                      <g key={b.id} opacity={b.skipped ? 0.4 : 1}>
+                        <GolfBallArtwork
                           x={b.x}
-                          y={b.y > 620 ? b.y - 70 : b.y + 60}
+                          y={b.y}
+                          radius={b.id === session.me.id ? 15 : 10}
+                          color={colors[i]}
+                        />
+                        <text
+                          transform={
+                            portrait
+                              ? `rotate(90 ${labelX} ${Math.max(32, b.y - 28)})`
+                              : undefined
+                          }
+                          x={labelX}
+                          y={Math.max(32, b.y - 28)}
                           textAnchor="middle"
                           fill={colors[i]}
-                          fontSize="34"
+                          fontSize="32"
                           fontWeight="bold"
                         >
-                          +{b.scores[game.hole - 1]}
+                          {i + 1}
                         </text>
-                      )}
-                    </g>
-                  );
-                })}
+                        {results && b.id === session.me.id && (
+                          <text
+                            transform={
+                              portrait
+                                ? `rotate(90 ${b.x} ${b.y > 620 ? b.y - 70 : b.y + 60})`
+                                : undefined
+                            }
+                            x={b.x}
+                            y={b.y > 620 ? b.y - 70 : b.y + 60}
+                            textAnchor="middle"
+                            fill={colors[i]}
+                            fontSize="34"
+                            fontWeight="bold"
+                          >
+                            +{b.scores[game.hole - 1]}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+              </g>
             </svg>
           </GameSurface>
-          <p className="golf-legend">
-            ◎ Cup · ▰ Wall · ● Mushroom + boost · ☄ Meteor
-          </p>
         </div>
         <div className="golf-controls">
           <div className="golf-stats">
@@ -391,19 +426,15 @@ export function MinigolfGame({
             {status}
           </p>
           <p className="golf-weather">
-            Wind {windNames[game.wind]} ·{" "}
+            Wind {windNames[(game.wind + (portrait ? 3 : 0)) % 4]} ·{" "}
             {game.conditions
-              ? `${game.conditions.strength} units/s²`
-              : "0, 12 or 24 units/s²"}
-            {course.meteor ? (
-              <small>
-                Meteor{" "}
-                {game.conditions?.impact != null
-                  ? `at ${game.conditions.impact.toFixed(1)}s`
-                  : "between 4–5.5s"}{" "}
-                · radius 90
-              </small>
-            ) : null}
+              ? ["Still air", "Light gust", "Strong gust"][
+                  game.conditions.strength / 12
+                ]
+              : "Gust revealed at launch"}
+            {course.meteor && (
+              <small>Meteor {game.impacted ? "landed" : "incoming"}</small>
+            )}
           </p>
           {finished ? (
             <div className="golf-final">
@@ -481,13 +512,15 @@ export function MinigolfGame({
           <p>
             Drag from your ball toward the travel direction. Longer drags mean
             more power. Release to preview; tap Ready to lock. Or use Angle and
-            Power (arrow keys work). 0° goes right; 90° goes down. Shots stay
+            Power (arrow keys work). Angles and wind follow your screen: 0° goes
+            right; 90° goes down. The course turns upright when that makes it
+            larger, with the same positions and shot on every device. Shots stay
             secret until everyone launches together.
           </p>
           <p>
-            Example: on the open green, aim right with about 60% power. Wind may
-            carry your ball a little farther. Each hole gives one shot. Take
-            your time; everyone launches when all shots are Ready.
+            Example: on the open green, aim toward the cup with about 60% power.
+            Wind may carry your ball a little farther. Each hole gives one shot.
+            Take your time; everyone launches when all shots are Ready.
           </p>
           <p>
             A slow ball within 24 units of the cup earns 100. Otherwise earn
