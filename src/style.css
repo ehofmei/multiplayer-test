@@ -5210,3 +5210,221 @@ input.golf-power-input {
     animation: none;
   }
 }
+
+/* Hole rewards are prominent; final rankings replace the playing workspace. */
+.golf-workspace[hidden] {
+  display: none;
+}
+.app-shell .golf-game-card > .golf-results {
+  flex: 1 1 0;
+  min-height: 0;
+}
+.golf-hole-reward {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 10px;
+  background: #345546;
+  border: 1px solid #b1ca8a;
+  border-radius: 12px;
+}
+.golf-hole-reward > span {
+  font-size: 20px;
+  font-weight: 700;
+}
+.golf-hole-reward > strong {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 36px;
+  color: #f0ffb8;
+}
+.golf-hole-reward small {
+  font-size: 12px;
+}
+.golf-hole-reward > small {
+  grid-column: 1 / -1;
+}
+.golf-results {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 850px;
+  align-self: center;
+}
+.golf-victory {
+  flex-shrink: 0;
+  position: relative;
+  text-align: center;
+  padding: 8px 10px;
+  background: #365849;
+  border: 1px solid #aec78a;
+  border-radius: 14px;
+}
+.golf-victory > small {
+  color: #d2e5c8;
+}
+.golf-victory h2 {
+  margin: 4px 0 0;
+  font-size: clamp(20px, 3vw, 30px);
+  color: #f0ffb8;
+}
+.golf-victory-stars {
+  position: absolute;
+  right: 8px;
+  top: 4px;
+  width: 70px;
+  height: 30px;
+  fill: #f7eaa4;
+  opacity: 0.45;
+  pointer-events: none;
+}
+.golf-ranking-scroll {
+  overflow-anchor: none;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+  border-radius: 12px;
+}
+.golf-ranking-scroll:focus-visible {
+  outline: 3px solid #f8da90;
+  outline-offset: -3px;
+}
+.golf-ranking {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+.golf-ranking li {
+  display: flex;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #203f35;
+  border: 1px solid #57755e;
+  border-radius: 12px;
+}
+.golf-ranking li[data-winner="true"] {
+  background: #375440;
+  border-color: #d5e4a4;
+}
+.golf-rank {
+  align-self: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #eaf3b1;
+  width: 28px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.golf-rank-detail {
+  flex: 1;
+  min-width: 0;
+}
+.golf-rank-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.golf-rank-name > b {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.golf-rank-name > strong {
+  flex-shrink: 0;
+  font-size: 24px;
+  color: #f0ffb8;
+}
+.golf-rank-name > strong small {
+  margin-left: 4px;
+  font-size: 11px;
+  font-weight: 400;
+}
+.golf-hole-scores {
+  display: flex;
+  gap: 14px;
+}
+.golf-hole-scores span {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.golf-hole-scores small {
+  font-size: 10px;
+  color: #cce1bb;
+}
+.golf-hole-scores b {
+  font-size: 13px;
+}
+.golf-winner-label {
+  display: block;
+  margin-top: 2px;
+  color: #eff9b9;
+  font-size: 11px;
+}
+.golf-results-note {
+  flex-shrink: 0;
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #cce1bb;
+}
+@media (max-width: 650px) {
+  .golf-rank-name > b {
+    font-size: 14px;
+  }
+  .golf-ranking li {
+    gap: 6px;
+    padding: 7px 9px;
+  }
+  .golf-hole-scores {
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .golf-rank-name > strong small {
+    display: none;
+  }
+}
+@media (max-height: 650px) {
+  .golf-results {
+    gap: 6px;
+  }
+  .golf-victory {
+    padding: 5px 8px;
+  }
+  .golf-results-note {
+    font-size: 11px;
+  }
+  .golf-hole-reward {
+    padding: 6px 8px;
+  }
+  .golf-hole-reward > span {
+    font-size: 16px;
+  }
+  .golf-hole-reward > strong {
+    font-size: 28px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .golf-victory-stars {
+    animation: golf-victory 650ms ease-out;
+  }
+}
+@keyframes golf-victory {
+  from {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  to {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+}

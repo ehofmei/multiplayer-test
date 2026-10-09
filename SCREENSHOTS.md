@@ -148,7 +148,24 @@ Mixed course · desktop playing surface.
 
 </details>
 
-[All courses and states](tests/minigolf.spec.ts-snapshots/) · [All movement and impact states](tests/minigolf-motion.spec.ts-snapshots/)
+<details>
+<summary>Cup celebrations and final rankings</summary>
+
+![Minigolf ball dropping into the cup](tests/minigolf-results.spec.ts-snapshots/golf-cup-linux.png)
+
+![Minigolf reduced-motion cup highlight](tests/minigolf-results.spec.ts-snapshots/golf-cup-reduced-linux.png)
+
+![Minigolf near-cup points](tests/minigolf-results.spec.ts-snapshots/golf-near-points-linux.png)
+
+![Minigolf winner on phone](tests/minigolf-results.spec.ts-snapshots/golf-winner-phone-linux.png)
+
+![Minigolf winner on desktop](tests/minigolf-results.spec.ts-snapshots/golf-winner-desktop-linux.png)
+
+![Minigolf eight shared winners](tests/minigolf.spec.ts-snapshots/golf-eight-results-linux.png)
+
+</details>
+
+[All courses and states](tests/minigolf.spec.ts-snapshots/) · [All movement and impact states](tests/minigolf-motion.spec.ts-snapshots/) · [All cup and result states](tests/minigolf-results.spec.ts-snapshots/)
 
 ## Treasure Dive
 

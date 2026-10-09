@@ -1,4 +1,5 @@
 export type Cue =
+  | "golf-cup"
   | "golf-tap"
   | "golf-knock"
   | "golf-spring"
@@ -23,6 +24,11 @@ export type Cue =
   | "finish";
 type Note = [frequency: number, duration: number, delay?: number];
 const notes: Record<Cue, Note[]> = {
+  "golf-cup": [
+    [280, 0.08],
+    [660, 0.1, 0.1],
+    [880, 0.15, 0.2],
+  ],
   "golf-tap": [[460, 0.035]],
   "golf-knock": [[230, 0.055]],
   "golf-spring": [

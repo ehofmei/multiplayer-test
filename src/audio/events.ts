@@ -147,6 +147,7 @@ export function soundEvents(
                   wall: "golf-knock",
                   mushroom: "golf-spring",
                   meteor: "golf-meteor",
+                  cup: "golf-cup",
                 }) as const
               )[c.kind],
           ),
@@ -161,7 +162,15 @@ export function soundEvents(
     if (d.result && d.result !== oldDecision.result)
       return [
         ...golfCues,
-        d.gain > 0 ? "point" : d.gain < 0 ? "miss" : "success",
+        ...(golfCues.includes("golf-cup")
+          ? []
+          : [
+              d.gain > 0
+                ? ("point" as const)
+                : d.gain < 0
+                  ? ("miss" as const)
+                  : ("success" as const),
+            ]),
       ];
     if (d.phase === "rolling" && oldDecision.phase === "aiming")
       return golfCues.length ? golfCues : ["go"];

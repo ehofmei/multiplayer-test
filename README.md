@@ -559,9 +559,23 @@ impact produces a bounded burst and low thump. The visible warning retains its
 full force radius and does not reveal impact timing. These cosmetic cues use
 confirmed velocity changes, existing mushroom cooldowns and the impact flag;
 contacts missed during a longer network gap are omitted instead of replayed.
-Effects last at most 450ms, share a pulse for simultaneous hits at the same spot,
+Impact effects last at most 450ms, share a pulse for simultaneous hits at the same spot,
 and are capped at 16. Sounds use the existing local synthesizer, voice limit,
 gesture unlock and saved mute preference. Sound stays off by default.
+
+On a newly confirmed capture, the ball shrinks into the recessed cup over 350ms,
+with a small sparkle lasting up to 650ms and an optional plop/chime. Ball numbers
+remain readable; simultaneous captures share one sparkle and sound. Pauses,
+backgrounding, reconnects and late arrival never replay a drop. Reduced motion
+hides the captured ball immediately and uses a 150ms static highlight. Cup and
+near-cup points appear in a large card beside the green, retaining the short
+three-second between-hole sequence.
+
+Final rankings replace the playing workspace and remain until the host starts
+another match. Every golfer's full name, total and five-hole breakdown is on the
+screen; tied totals share a rank and all highest totals are marked as winners.
+Long lists scroll inside a keyboard-focusable ranking area on short screens or
+with larger text, while the host's Play Again action stays available.
 
 A 3-second countdown starts the match; each hole has 4 seconds of preview and
 3 seconds of scores. Aiming waits for every Ready. Rolling has no cutoff: balls

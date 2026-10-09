@@ -32,6 +32,8 @@ export function GolfMotion({
   const root = useRef<SVGGElement>(null);
   const bodies = useRef(new Map<string, SVGGElement>());
   const rolls = useRef(new Map<string, SVGPathElement>());
+  const drops = useRef(new Map<string, SVGGElement>());
+  const capturedAt = useRef(new Map<string, number>());
   const pulses = useRef(new Map<number, SVGGElement>());
   const drawn = useRef(new Map<string, GolfPoint & { spin: number }>());
   const previous = useRef<GolfMotionFrame | null>(null);
@@ -69,6 +71,9 @@ export function GolfMotion({
     const live =
       visible && connected && ["rolling", "results"].includes(game.phase);
     const contacts = live ? golfContacts(before, next) : [];
+    if (!live || before?.hole !== next.hole) capturedAt.current.clear();
+    for (const c of contacts)
+      if (c.kind === "cup" && c.ball) capturedAt.current.set(c.ball, now);
     const flashes = contacts.filter(
       (c, i) =>
         !contacts
@@ -91,11 +96,13 @@ export function GolfMotion({
         started: now,
         duration: reduced
           ? 150
-          : c.kind === "meteor"
-            ? 450
-            : c.kind === "mushroom"
-              ? 320
-              : 260,
+          : c.kind === "cup"
+            ? 650
+            : c.kind === "meteor"
+              ? 450
+              : c.kind === "mushroom"
+                ? 320
+                : 260,
       })),
     ].slice(-16);
     if (flashes.length || retained.length !== shownEffects.length || !live)
@@ -151,6 +158,15 @@ export function GolfMotion({
         rolls.current
           .get(path.target.id)
           ?.setAttribute("transform", `rotate(${spin})`);
+        const captured = capturedAt.current.get(path.target.id);
+        const drop = path.target.captured
+          ? reduced || captured === undefined
+            ? 1
+            : Math.min(1, (performance.now() - captured) / 350)
+          : 0;
+        const visual = drops.current.get(path.target.id);
+        visual?.setAttribute("transform", `scale(${1 - drop * 0.85})`);
+        visual?.setAttribute("opacity", String(1 - drop));
       });
       mushrooms.forEach((m) => m.removeAttribute("transform"));
       for (const effect of effects.current) {
@@ -243,7 +259,13 @@ export function GolfMotion({
               }
               fill={e.kind === "wall" ? "#fff5c5" : "none"}
               fillOpacity=".35"
-              stroke={e.kind === "mushroom" ? "#ffd1d2" : "#ffdf9b"}
+              stroke={
+                e.kind === "mushroom"
+                  ? "#ffd1d2"
+                  : e.kind === "cup"
+                    ? "#ecffba"
+                    : "#ffdf9b"
+              }
               strokeWidth={e.kind === "meteor" ? 5 : 3}
             />
             {e.kind === "meteor" &&
@@ -265,6 +287,15 @@ export function GolfMotion({
                 strokeLinecap="round"
               />
             )}
+            {e.kind === "cup" &&
+              [0, 60, 120, 180, 240, 300].map((angle) => (
+                <path
+                  key={angle}
+                  transform={`rotate(${angle})`}
+                  d="M0-42l3 7 7 3-7 3-3 7-3-7-7-3 7-3Z"
+                  fill="#f7f4b4"
+                />
+              ))}
           </g>
         ))}
       </g>
@@ -292,21 +323,31 @@ export function GolfMotion({
                 else bodies.current.delete(b.id);
               }}
               data-golf-ball={b.id}
+              data-golf-captured={b.captured}
               data-target-x={b.x}
               data-target-y={b.y}
               transform={`translate(${b.x} ${b.y})`}
               opacity={b.skipped ? 0.4 : 1}
             >
-              <GolfBallArtwork
-                x={0}
-                y={0}
-                radius={b.id === me ? 15 : 10}
-                color={colors[i]}
-                rollingRef={(node) => {
-                  if (node) rolls.current.set(b.id, node);
-                  else rolls.current.delete(b.id);
+              <g
+                data-golf-ball-visual={b.id}
+                ref={(node) => {
+                  if (node) drops.current.set(b.id, node);
+                  else drops.current.delete(b.id);
                 }}
-              />
+                opacity={b.captured ? 0 : 1}
+              >
+                <GolfBallArtwork
+                  x={0}
+                  y={0}
+                  radius={b.id === me ? 15 : 10}
+                  color={colors[i]}
+                  rollingRef={(node) => {
+                    if (node) rolls.current.set(b.id, node);
+                    else rolls.current.delete(b.id);
+                  }}
+                />
+              </g>
               <text
                 transform={
                   portrait ? `rotate(90 ${labelX} ${labelY})` : undefined

@@ -25,7 +25,7 @@ export function golfMotionFrame(game: GolfState) {
 export type GolfMotionFrame = ReturnType<typeof golfMotionFrame>;
 type Ball = GolfMotionFrame["balls"][number];
 export interface GolfContact extends GolfPoint {
-  kind: "launch" | "wall" | "mushroom" | "meteor";
+  kind: "launch" | "wall" | "mushroom" | "meteor" | "cup";
   ball?: string;
   mushroom?: number;
   corner?: GolfPoint;
@@ -63,6 +63,15 @@ export function golfContacts(
   for (const b of after.balls) {
     const old = before.balls.find((p) => p.id === b.id);
     if (!old || old.captured || b.skipped) continue;
+    if (b.captured) {
+      contacts.push({
+        kind: "cup",
+        x: course.cup[0],
+        y: course.cup[1],
+        ball: b.id,
+      });
+      continue;
+    }
     let boosted = false;
     b.cooldowns.forEach((tick, i) => {
       if (tick <= (old.cooldowns[i] ?? 0)) return;

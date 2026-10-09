@@ -469,6 +469,17 @@ Inventory for 2–8 players on desktop, iPad, and narrow iPhones:
 - Watch boundary/wall bounces, mushroom boosts, and the shared meteor. Balls never
   collide with one another; the host awards cup or distance points. Results overlay
   each hole's points; Standings shows all five scores and full names. Ties share wins.
+- Confirm slow cup entry shrinks the ball into the rim once, with a brief sparkle
+  and optional plop/chime. Fast pass-through must stay visible and earn distance
+  points. Read the large +100 or near-cup reward while the three-second hole
+  sequence continues. Pause during a drop; resume, background, late arrival and
+  duplicate states must not replay it. Reduced motion uses an immediate drop and
+  static highlight. Eight simultaneous captures share one sparkle and sound.
+- At match end, final rankings replace the green. Check a single winner, tied
+  leaders, tied lower ranks, a spectator and eight long names. Every full name,
+  total and H1–H5 score stays available without opening Standings. Scroll the
+  ranking region with touch or keyboard on short screens/large text; Play Again
+  stays visible. Results persist until a rematch, which restores the course.
 - Pause/Resume during aiming and rolling, open pairing, and background the host.
   Preserve locks, remaining time, balls, and the current random conditions. Resume
   adds a countdown. Backgrounding only a client must not stall everyone.
@@ -503,6 +514,12 @@ deduplicated contact cues and the shared mute/voice limit. `tests/minigolf-motio
 pairs actual devices for normal and reduced motion, verifies interpolation and exact
 paused/final positions, exercises all contact types, and retains ten paired impact
 and rolling snapshots. These captures freeze known moments in actual shots.
+`tests/minigolf-results.spec.ts` pairs a perfect five-hole scorer with a lower
+scorer in normal/reduced motion and verifies capture, near-cup points, pause
+suppression, persistent rankings and rematch. Five additional paired baselines
+show the cup drop, static cup highlight, near-cup card and phone/desktop winner.
+The existing eight-player flow adds a shared-winners baseline with long names;
+`src/components/GolfResults.test.ts` covers totals and competition ranks.
 Follow the screenshot portability workflow above when adding or updating them.
 The complete verification command also checks manifest/icons, repository-subpath
 startup and caching, offline reload, identity/sound persistence and controlled updates.

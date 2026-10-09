@@ -7,6 +7,7 @@ import {
 } from "react";
 import { AppPanel, GameHelp, GameSurface } from "./AppLayout";
 import { GolfMotion } from "./GolfMotion";
+import { GolfResults } from "./GolfResults";
 import { GolfBallArtwork, GolfCourseArtwork } from "./GolfCourseArtwork";
 import { courses, golfTotal, type GolfState } from "../games/minigolf";
 import type { Player } from "../network/protocol";
@@ -282,7 +283,11 @@ export function MinigolfGame({
     >
       <div className="golf-heading">
         <strong>
-          {ready ? "Open green" : `Hole ${game.hole}/5 · ${course.name}`}
+          {finished
+            ? "Final standings"
+            : ready
+              ? "Open green"
+              : `Hole ${game.hole}/5 · ${course.name}`}
         </strong>
         <span>
           {ready || finished
@@ -296,7 +301,15 @@ export function MinigolfGame({
                   : `${Math.ceil(game.remaining / 1000)}s`}
         </span>
       </div>
-      <div className="golf-workspace">
+      {finished && (
+        <GolfResults
+          balls={game.balls}
+          players={players}
+          me={session.me.id}
+          status={status}
+        />
+      )}
+      <div className="golf-workspace" hidden={finished}>
         <div className="golf-board" ref={board}>
           <GameSurface ratio={portrait ? 700 / 1000 : 1000 / 700}>
             <svg
@@ -448,7 +461,10 @@ export function MinigolfGame({
               </strong>
             </span>
           </div>
-          <p className="golf-status" aria-live="polite">
+          <p
+            className={finished ? "golf-workspace-status" : "golf-status"}
+            aria-live={finished ? "off" : "polite"}
+          >
             {status}
           </p>
           <p className="golf-weather">
@@ -462,11 +478,28 @@ export function MinigolfGame({
               <small>Meteor {game.impacted ? "landed" : "incoming"}</small>
             )}
           </p>
-          {finished ? (
-            <div className="golf-final">
-              <strong>Your holes</strong>
-              <p>{me?.scores.join(" + ") ?? "Watched this match"}</p>
-              <span>Open Standings for every golfer’s score.</span>
+          {results || (effective === "rolling" && me?.captured) ? (
+            <div className="golf-hole-reward" aria-live="polite">
+              <span>
+                {me
+                  ? me.skipped
+                    ? "No shot"
+                    : me.captured
+                      ? "In the cup!"
+                      : "Near the cup"
+                  : "Hole complete"}
+              </span>
+              {me && (
+                <strong>
+                  +{me.captured ? 100 : me.scores[game.hole - 1]}
+                  <small>points</small>
+                </strong>
+              )}
+              <small>
+                {game.phase === "rolling"
+                  ? "Watching the remaining shots"
+                  : "Next green coming up"}
+              </small>
             </div>
           ) : (
             <div className="golf-aim">
@@ -577,6 +610,13 @@ export function MinigolfGame({
             impacts. Optional sound adds a putter tap, knock, spring and thump.
             Sound starts muted. Reduced motion keeps exact ball positions and
             static highlights.
+          </p>
+          <p>
+            A captured ball drops into the cup with a small sparkle and optional
+            chime. Hole points are shown beside the course; final rankings show
+            every golfer’s total and five-hole scores. Ties share the win.
+            Results stay until the host starts another match. Reduced motion
+            uses a static cup highlight.
           </p>
           <p>Update the app on every device before playing Meteor Minigolf.</p>
         </GameHelp>

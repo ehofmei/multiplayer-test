@@ -101,6 +101,27 @@ describe("Minigolf confirmed motion and contacts", () => {
         ...b,
         balls: b.balls.map((p) => ({ ...p, captured: true })),
       }),
+    ).toEqual([
+      { kind: "cup", x: 750, y: 350, ball: "a" },
+      { kind: "cup", x: 750, y: 350, ball: "b" },
+    ]);
+  });
+  it("recognizes actual cup entry once, while a fast pass-through produces no cup effect", () => {
+    const s = rolling(1, 0, 0.6);
+    s.balls = s.balls.map((b) => ({ ...b, x: 750, y: 350, vx: 160, vy: 0 }));
+    const before = golfMotionFrame(s),
+      after = golfMotionFrame(physicsGolf(s));
+    expect(
+      golfContacts(before, after).filter((c) => c.kind === "cup"),
+    ).toHaveLength(2);
+    expect(golfContacts(after, { ...after, ticks: after.ticks + 6 })).toEqual(
+      [],
+    );
+    expect(golfContacts(null, after)).toEqual([]);
+    expect(golfContacts({ ...before, phase: "paused" }, after)).toEqual([]);
+    const fast = { ...s, balls: s.balls.map((b) => ({ ...b, vx: 180 })) };
+    expect(
+      golfContacts(golfMotionFrame(fast), golfMotionFrame(physicsGolf(fast))),
     ).toEqual([]);
   });
   it("interpolates through a rebound without extrapolation or crossing the collision face", () => {

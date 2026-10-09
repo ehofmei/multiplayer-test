@@ -24,6 +24,37 @@ async function fit(page: Page, label: string) {
       content: ":root{font-family:serif;line-height:1.6}",
     });
     await expectScreenFits(page);
+    if ((await game(page).getAttribute("data-phase")) === "finished") {
+      await expect(page.locator(".golf-results")).toBeVisible();
+      await expect(page.locator(".golf-workspace")).toBeHidden();
+      const boxes = await page
+        .locator(".golf-results, .golf-footer")
+        .evaluateAll((es) => es.map((e) => e.getBoundingClientRect().toJSON()));
+      expect(boxes[0].y + boxes[0].height).toBeLessThanOrEqual(boxes[1].y);
+      const horizontal = await page
+        .locator(".golf-results, .golf-ranking-scroll")
+        .evaluateAll((es) =>
+          es.map((e) => ({ width: e.clientWidth, scroll: e.scrollWidth })),
+        );
+      for (const m of horizontal)
+        expect(m.scroll).toBeLessThanOrEqual(m.width + 1);
+      await expect(page.locator(".golf-hole-scores")).toHaveCount(
+        label.startsWith("eight") ? 8 : 2,
+      );
+      for (const button of await game(page).getByRole("button").all()) {
+        const b = (await button.boundingBox())!;
+        expect(b.height).toBeGreaterThanOrEqual(44);
+        expect(b.width).toBeGreaterThanOrEqual(44);
+      }
+      await page.locator(".golf-ranking-scroll").focus();
+      await page.keyboard.press("End");
+      await expect(page.locator(".golf-ranking > li").last()).toBeInViewport();
+      await page.screenshot({
+        path: `test-results/golf-${label}-${size.width}x${size.height}.png`,
+      });
+      await style.evaluate((e) => e.remove());
+      continue;
+    }
     // ResizeObserver may turn the course on the next rendering frame.
     await expect
       .poll(
@@ -421,6 +452,9 @@ test("eight golfers fit; late arrivals watch, background pauses, and participant
   browser,
 }) => {
   test.setTimeout(180000);
+  await host.addInitScript(() => {
+    Math.random = () => 0;
+  });
   const contexts = await Promise.all(
     Array.from({ length: 7 }, () =>
       browser.newContext({
@@ -462,6 +496,27 @@ test("eight golfers fit; late arrivals watch, background pauses, and participant
       "8 golfers share the win",
     );
     await fit(host, "eight-results");
+    await host.setViewportSize(sizes[2]);
+    await expect(
+      host.locator('.golf-ranking > li[data-winner="true"]'),
+    ).toHaveCount(8);
+    await host.locator(".golf-ranking-scroll").focus();
+    await host.keyboard.press("Home");
+    await expect
+      .poll(() =>
+        host.locator(".golf-ranking-scroll").evaluate((e) => e.scrollTop),
+      )
+      .toBe(0);
+    await expect(host.locator(".golf-ranking > li").first()).toBeInViewport({
+      ratio: 1,
+    });
+    await host.getByRole("button", { name: "Play Again", exact: true }).focus();
+    await expectStableScreenshot(
+      host,
+      ".golf-game-card",
+      `golf-eight-results-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
     await host.getByRole("button", { name: "Standings", exact: true }).click();
     await expect(host.getByRole("dialog").locator("li")).toHaveCount(8);
     await closePanels(host);

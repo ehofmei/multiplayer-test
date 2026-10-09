@@ -51,6 +51,14 @@ it("gives confirmed Golf contacts distinct cues, deduplicates the shared shot, a
     {
       ...base,
       phase: "rolling",
+      balls: base.balls.map((b) => ({ ...b, x: 750, y: 350, vx: 160 })),
+    },
+    "golf-cup",
+  );
+  check(
+    {
+      ...base,
+      phase: "rolling",
       balls: base.balls.map((b) => ({ ...b, x: 980, vx: 400 })),
     },
     "golf-knock",
