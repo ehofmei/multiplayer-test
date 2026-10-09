@@ -8,6 +8,10 @@ Pair up to eight devices once using QR codes or copy/paste, then let the host ch
 Shared Lights, two-player Pong, three/four-player Arena Pong, Co-op Breakout, Spaceship Panic, Light-cycle Arena, Sumo Bumpers, Reaction Race, Midnight Bakery, Treasure Dive, Meteor Minigolf, Patchwork Picnic, Light Seek, or Glow Clash. Switching games keeps the same
 connections. The app is installable and includes latency diagnostics.
 
+Browse all 14 games in the [screenshot gallery](SCREENSHOTS.md). It links directly
+to the reviewed images in the selected branch, including course variants and
+results. Use GitHub's branch selector to compare `main` with proposed changes.
+
 For possible future additions, [GAME_IDEAS.md](GAME_IDEAS.md) describes twelve
 family game ideas with rules, controls, scoring, timing, and implementation
 notes. Treasure Dive, Meteor Minigolf, Patchwork Picnic, Light Seek, and Glow Clash are now available; the remaining entries are

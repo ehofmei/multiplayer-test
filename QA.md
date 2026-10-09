@@ -185,6 +185,15 @@ and trails, safe areas and rotation, especially the shortest phone viewport.
 
 ## Screenshot portability
 
+The persistent [screenshot gallery](SCREENSHOTS.md) uses versioned baseline paths
+instead of temporary `test-results/` files or expiring Actions artifacts. After a
+game's visual change, review its gallery entry as well as its baseline diff. Keep
+the entry's representative image and links current when renaming or adding states.
+Arena Pong currently uses `docs/screenshots/arena-pong-desktop.png`, a saved macOS
+capture from the four-player pairing test. When changing Arena Pong's appearance,
+refresh it from that test's `test-results/arena-desktop.png` and visually review
+the complete result; it is documentation evidence, not a comparison baseline.
+
 For tests that include `process.platform` in screenshot names, retain reviewed
 `-darwin.png` and `-linux.png` files for every captured state in
 `tests/<test-file>-snapshots/`. `npm run verify` on macOS checks only Darwin
