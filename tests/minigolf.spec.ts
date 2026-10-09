@@ -192,12 +192,14 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
     await expect(host.getByRole("slider", { name: "Shot angle" })).toHaveValue(
       "270",
     );
-    const matrices = await host.locator(".golf-course text").evaluateAll((es) =>
-      es.map((e) => {
-        const m = (e as SVGGraphicsElement).getScreenCTM()!;
-        return { a: m.a, b: m.b, c: m.c, d: m.d };
-      }),
-    );
+    const matrices = await host
+      .locator('.golf-course text, .golf-course [data-golf-object="cup"]')
+      .evaluateAll((es) =>
+        es.map((e) => {
+          const m = (e as SVGGraphicsElement).getScreenCTM()!;
+          return { a: m.a, b: m.b, c: m.c, d: m.d };
+        }),
+      );
     for (const m of matrices) {
       expect(m.a).toBeGreaterThan(0);
       expect(m.d).toBeGreaterThan(0);

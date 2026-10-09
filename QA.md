@@ -430,7 +430,8 @@ Inventory for 2–8 players on desktop, iPad, and narrow iPhones:
   direction, not a complete trajectory. Angle/Power work with touch and arrow keys.
   At short portrait heights use Adjust aim; close the dialog before Ready.
 - Turn between a tall phone, short phone, landscape and tablet. The course should
-  turn upright only when it becomes larger and stays readable. Tee numbers, cup
+  turn upright only when it becomes larger and stays readable. The cup's flagpole
+  stays upright with its flag pointing right in both orientations. Tee numbers, cup
   points, meteor labels and result points stay upright. Angle and wind directions
   follow the screen; a saved draft or locked shot must retain its world direction
   and power. Resize during a drag: restore the previous draft instead of committing

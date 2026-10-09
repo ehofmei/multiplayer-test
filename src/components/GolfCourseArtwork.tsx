@@ -209,7 +209,10 @@ export function GolfCourseArtwork({
           strokeDasharray="5 14"
         />
       ))}
-      <g transform={`translate(${cupX} ${cupY})`}>
+      <g
+        data-golf-object="cup"
+        transform={`translate(${cupX} ${cupY})${portrait ? " rotate(90)" : ""}`}
+      >
         <ellipse cx="5" cy="7" rx="31" ry="27" fill="#092e2d" opacity=".35" />
         <circle r="27" fill={paint("rail")} />
         <circle r="24" fill={paint("cup")} />
@@ -251,14 +254,7 @@ export function GolfCourseArtwork({
           strokeWidth="3"
           opacity=".6"
         />
-        <text
-          transform={portrait ? "rotate(90)" : undefined}
-          x="34"
-          y="52"
-          fill="#f5f1c7"
-          fontSize="24"
-          fontWeight="bold"
-        >
+        <text x="34" y="52" fill="#f5f1c7" fontSize="24" fontWeight="bold">
           100
         </text>
       </g>
