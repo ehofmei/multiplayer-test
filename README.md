@@ -509,8 +509,8 @@ SVG; textures and depth are decorative, with the same flat surface, collision
 geometry, shot controls, and scoring on every device.
 
 The course and controls sit in one dark garden frame. The green turns upright
-when the available space makes it meaningfully larger, keeping labels upright
-and the whole course visible. Short phones retain a wide green and open sliders
+when the available space makes it meaningfully larger, keeping labels and the flag
+upright and the whole course visible. Short phones retain a wide green and open sliders
 with Adjust aim. Angles and wind directions follow the screen (0° right, 90° down);
 turning the view preserves the same shot and shared world on every device.
 Weather feedback uses plain language; detailed rules remain in Help.
