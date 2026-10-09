@@ -148,6 +148,12 @@ test("Pong setup leaves clearance above actions on phones, tablets and desktop",
     await chooseGame(page, "Pong");
     const client = await clientContext.newPage();
     await join(page, client, "Second Player");
+    await page
+      .getByLabel("Player 1", { exact: true })
+      .selectOption({ label: "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456" });
+    await page
+      .getByLabel("Player 2", { exact: true })
+      .selectOption({ label: "Second Player" });
     await expect(
       page.getByRole("button", { name: "Start Pong", exact: true }),
     ).toBeEnabled();
