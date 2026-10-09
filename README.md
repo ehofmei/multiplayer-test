@@ -547,6 +547,22 @@ warning; the shared impact occurs between 4–5.5 seconds and pushes balls outwa
 by 120 units/s. Captured balls ignore later forces. The arrow previews direction,
 not an exact trajectory or distance; its length stays fixed when power changes.
 
+Moving balls keep their shading and contact shadows, with a subtle rolling seam.
+The renderer smooths confirmed snapshots over 50ms, passing through detected
+rebound points rather than cutting across obstacles. It never extrapolates past
+the host's latest position. Pauses, captures, results and gaps over 250ms use exact
+positions. Reduced motion uses exact snapshots and brief static contact highlights.
+
+Launch has a small pulse and putter tap; rails and stone walls flash with a soft
+knock; mushrooms squash and rebound with an outward pulse and spring cue; a meteor
+impact produces a bounded burst and low thump. The visible warning retains its
+full force radius and does not reveal impact timing. These cosmetic cues use
+confirmed velocity changes, existing mushroom cooldowns and the impact flag;
+contacts missed during a longer network gap are omitted instead of replayed.
+Effects last at most 450ms, share a pulse for simultaneous hits at the same spot,
+and are capped at 16. Sounds use the existing local synthesizer, voice limit,
+gesture unlock and saved mute preference. Sound stays off by default.
+
 A 3-second countdown starts the match; each hole has 4 seconds of preview and
 3 seconds of scores. Aiming waits for every Ready. Rolling has no cutoff: balls
 finish naturally, including a pending meteor that could move a resting ball.

@@ -2,7 +2,9 @@ import { newSumo } from "../games/sumo";
 import { newCycle } from "../games/cycle";
 import { launchShip } from "../games/ship";
 import { newBreakout } from "../games/breakout";
+import { newGolf, physicsGolf, type GolfState } from "../games/minigolf";
 import { describe, expect, it } from "vitest";
+import type { Cue } from "./sounds";
 import { soundEvents, soundFrame } from "./events";
 import { newPong, newRoom, raceRound } from "../games/model";
 import { initialGrid, toggleGrid } from "../game/grid";
@@ -16,6 +18,67 @@ const snapshot = (): Snapshot => ({
   error: "",
 });
 const frame = (s: Snapshot) => soundFrame(s, "a", "session");
+it("gives confirmed Golf contacts distinct cues, deduplicates the shared shot, and stays silent on resume", () => {
+  const s = snapshot();
+  s.room = newRoom("minigolf", 1);
+  const check = (game: GolfState, cue: Cue) => {
+    s.room.minigolf = game;
+    let old = frame(s),
+      found = false;
+    for (let i = 0; i < 120; i++) {
+      for (let tick = 0; tick < 6; tick++)
+        s.room.minigolf = physicsGolf(s.room.minigolf!);
+      const next = frame(s),
+        cues = soundEvents(old, next);
+      if (cues.includes(cue)) {
+        expect(cues).toEqual([cue]);
+        expect(soundEvents(next, next)).toEqual([]);
+        expect(soundEvents(null, next)).toEqual([]);
+        const paused = {
+          ...next,
+          golf: { ...next.golf!, phase: "paused" as const },
+        };
+        expect(soundEvents(paused, next)).toEqual([]);
+        found = true;
+        break;
+      }
+      old = next;
+    }
+    expect(found, cue).toBe(true);
+  };
+  const base = newGolf(["a", "b"], () => 0);
+  check(
+    {
+      ...base,
+      phase: "rolling",
+      balls: base.balls.map((b) => ({ ...b, x: 980, vx: 400 })),
+    },
+    "golf-knock",
+  );
+  check(
+    {
+      ...base,
+      phase: "rolling",
+      hole: 3,
+      balls: base.balls.map((b) => ({
+        ...b,
+        x: 405,
+        vx: 200,
+        cooldowns: [0, 0],
+      })),
+    },
+    "golf-spring",
+  );
+  check(
+    {
+      ...base,
+      phase: "rolling",
+      hole: 4,
+      conditions: { strength: 0, impact: 0.05 },
+    },
+    "golf-meteor",
+  );
+});
 describe("game sound transitions", () => {
   it("copies host state, plays toggles once, and stays silent on first state or game switches", () => {
     const s = snapshot(),
@@ -266,7 +329,11 @@ it("announces decision locks, launches, scores and results once without replayin
     before = frame(s);
     choose("b");
     expect(soundEvents(before, frame(s))).toEqual([
-      kind === "minigolf" ? "go" : kind === "picnic" ? "point" : "success",
+      kind === "minigolf"
+        ? "golf-tap"
+        : kind === "picnic"
+          ? "point"
+          : "success",
     ]);
     if (s.room.minigolf) {
       before = frame(s);

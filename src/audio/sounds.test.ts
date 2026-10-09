@@ -49,6 +49,33 @@ afterEach(() => {
   Context.instances = [];
 });
 describe("sound lifecycle", () => {
+  it("plays the four Golf timbres within the shared voice limit and silences them on mute", async () => {
+    vi.stubGlobal("window", { AudioContext: Context });
+    const sounds = new Sounds();
+    sounds.play("golf-tap");
+    expect(Context.instances).toHaveLength(0);
+    sounds.setEnabled(true);
+    await sounds.unlock();
+    const c = Context.instances[0];
+    for (const cue of [
+      "golf-tap",
+      "golf-knock",
+      "golf-spring",
+      "golf-meteor",
+    ] as const)
+      sounds.play(cue);
+    expect(c.voices).toHaveLength(7);
+    expect(c.voices.map((v) => v.frequency.value)).toEqual([
+      460, 230, 420, 760, 1150, 90, 145,
+    ]);
+    sounds.setEnabled(false);
+    expect(
+      c.voices.every((v) =>
+        v.stop.mock.calls.some((args) => args.length === 0),
+      ),
+    ).toBe(true);
+    sounds.dispose();
+  });
   it("starts silent, requires unlocking, bounds rapid audio, and stops on mute/background/dispose", async () => {
     vi.stubGlobal("window", { AudioContext: Context });
     const sounds = new Sounds();

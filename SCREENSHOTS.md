@@ -129,7 +129,26 @@ Mixed course · desktop playing surface.
 
 </details>
 
-[All courses and states](tests/minigolf.spec.ts-snapshots/)
+<details>
+<summary>Movement and impact feedback</summary>
+
+![Minigolf launch pulse](tests/minigolf-motion.spec.ts-snapshots/golf-launch-linux.png)
+
+![Minigolf rolling on desktop](tests/minigolf-motion.spec.ts-snapshots/golf-rolling-desktop-linux.png)
+
+![Minigolf rail contact](tests/minigolf-motion.spec.ts-snapshots/golf-rail-contact-linux.png)
+
+![Minigolf stone contact](tests/minigolf-motion.spec.ts-snapshots/golf-stone-contact-linux.png)
+
+![Minigolf mushroom boost](tests/minigolf-motion.spec.ts-snapshots/golf-mushroom-boost-linux.png)
+
+![Minigolf meteor burst](tests/minigolf-motion.spec.ts-snapshots/golf-meteor-burst-linux.png)
+
+![Minigolf reduced-motion meteor highlight](tests/minigolf-motion.spec.ts-snapshots/golf-meteor-burst-reduced-linux.png)
+
+</details>
+
+[All courses and states](tests/minigolf.spec.ts-snapshots/) · [All movement and impact states](tests/minigolf-motion.spec.ts-snapshots/)
 
 ## Treasure Dive
 

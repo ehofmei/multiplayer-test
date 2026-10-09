@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, type Ref } from "react";
 import { courses } from "../games/minigolf";
 
 export function GolfBallArtwork({
@@ -6,11 +6,13 @@ export function GolfBallArtwork({
   y,
   radius,
   color,
+  rollingRef,
 }: {
   x: number;
   y: number;
   radius: number;
   color: string;
+  rollingRef?: Ref<SVGPathElement>;
 }) {
   const id = `golf-ball-${useId().replace(/:/g, "")}`;
   return (
@@ -38,6 +40,16 @@ export function GolfBallArtwork({
         stroke="#092922"
         strokeWidth="3"
       />
+      {rollingRef && (
+        <path
+          ref={rollingRef}
+          d={`M${-radius * 0.65} ${-radius * 0.65}Q${radius * 0.6} 0 ${-radius * 0.65} ${radius * 0.65}`}
+          fill="none"
+          stroke="#173d33"
+          strokeWidth="1.8"
+          opacity=".35"
+        />
+      )}
       <path
         d={`M${x - radius * 0.7} ${y + radius * 0.45}q${radius * 0.7} ${radius * 0.55} ${radius * 1.4} 0`}
         fill="none"
@@ -304,31 +316,33 @@ export function GolfCourseArtwork({
           data-golf-object="mushroom"
         >
           <ellipse cx="4" cy="9" rx="32" ry="27" fill="#0a302c" opacity=".3" />
-          <circle r="30" fill={paint("mushroom")} />
-          <path
-            d="M-24 15q24 19 48 0"
-            fill="none"
-            stroke="#8f3d69"
-            strokeWidth="5"
-          />
-          <path
-            d="M-9 24q9 5 18 0"
-            fill="none"
-            stroke="#ffdaae"
-            strokeWidth="4"
-          />
-          <circle cx="-11" cy="-9" r="7" fill="#fff1d0" />
-          <circle cx="13" cy="-3" r="6" fill="#ffe8cf" />
-          <circle cx="-2" cy="12" r="5" fill="#ffe8cf" />
-          <path
-            d="M-22-11q7-13 22-13"
-            fill="none"
-            stroke="#ffe5be"
-            strokeWidth="3"
-            strokeLinecap="round"
-            opacity=".8"
-          />
-          <circle r="30" fill="none" stroke="#ffe2c2" strokeWidth="2" />
+          <g data-golf-mushroom-body={i}>
+            <circle r="30" fill={paint("mushroom")} />
+            <path
+              d="M-24 15q24 19 48 0"
+              fill="none"
+              stroke="#8f3d69"
+              strokeWidth="5"
+            />
+            <path
+              d="M-9 24q9 5 18 0"
+              fill="none"
+              stroke="#ffdaae"
+              strokeWidth="4"
+            />
+            <circle cx="-11" cy="-9" r="7" fill="#fff1d0" />
+            <circle cx="13" cy="-3" r="6" fill="#ffe8cf" />
+            <circle cx="-2" cy="12" r="5" fill="#ffe8cf" />
+            <path
+              d="M-22-11q7-13 22-13"
+              fill="none"
+              stroke="#ffe5be"
+              strokeWidth="3"
+              strokeLinecap="round"
+              opacity=".8"
+            />
+            <circle r="30" fill="none" stroke="#ffe2c2" strokeWidth="2" />
+          </g>
         </g>
       ))}
       {course.meteor && (

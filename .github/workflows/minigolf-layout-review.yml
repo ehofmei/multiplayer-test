@@ -1,9 +1,9 @@
-name: Minigolf aiming review
+name: Minigolf motion review
 on:
   push:
     branches: [codex/minigolf-layout]
 permissions:
-  contents: read
+  contents: write
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -16,6 +16,21 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
+      - name: Obtain genuine Linux motion baselines once
+        run: |
+          if [ ! -f tests/minigolf-motion.spec.ts-snapshots/golf-meteor-burst-linux.png ]; then
+            npx playwright test tests/minigolf-motion.spec.ts --update-snapshots
+            npx playwright test tests/minigolf.spec.ts --grep 'Golf pairs' --update-snapshots=all
+          fi
+      - name: Return Linux motion renders to the review branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/minigolf-motion.spec.ts-snapshots/*-linux.png tests/minigolf.spec.ts-snapshots/*-linux.png
+          if ! git diff --cached --quiet; then
+            git commit -m 'Generated Linux motion baselines'
+            git push origin HEAD:codex/minigolf-layout
+          fi
       - run: npm run verify
       - name: Save browser evidence
         if: always()

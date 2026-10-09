@@ -450,6 +450,22 @@ Inventory for 2–8 players on desktop, iPad, and narrow iPhones:
   and a strong Bank shot using the top rail. Low power should permit small changes
   near the cup; strong shots can reach a bank. Repeat all five greens under still
   air and both gust strengths; shots must settle consistently on both devices.
+- With normal motion, watch both devices' rolling balls and subtle seams. Movement
+  should stay continuous between confirmed snapshots, rebound at the collision
+  face, and never coast beyond the host position. Pause mid-roll: positions snap
+  exactly and effects clear. Resume must not repeat the launch or previous hits.
+  Capture and final results use the host's exact position. Interrupt connectivity
+  or background a device; long gaps must snap without replaying stale contacts.
+- Inspect the launch pulse, rail/stone contact flash, mushroom squash/rebound and
+  outward pulse, and meteor burst. They must stay brief, bounded and behind readable
+  ball numbers; simultaneous hits at one spot share a pulse. Check eight golfers.
+  With reduced motion, positions are exact and contacts use static highlights;
+  mushroom caps stay their normal shape. Changing the preference during play works.
+- Sound starts muted. Turn it on with a tap: hear a putter tap, soft wall knock,
+  rising mushroom spring and low meteor thump. Mute again during play. No cue should
+  replay on duplicate snapshots, pause/resume, rematch, game switch or late arrival.
+  Check iOS volume and speaker audibility in a real family session; visuals must
+  remain sufficient while muted.
 - Watch boundary/wall bounces, mushroom boosts, and the shared meteor. Balls never
   collide with one another; the host awards cup or distance points. Results overlay
   each hole's points; Standings shows all five scores and full names. Ties share wins.
@@ -481,6 +497,12 @@ Short-phone and portrait-tablet snapshots retain the complete course/control fra
 Browser assertions cover orientation changes, screen-relative wind and angles,
 preserved drafts, upright text, generous grab targets and enlarged phone course bounds.
 Additional paired baselines cover zero power, strong power and the short-phone aim dialog.
+`src/games/golf-motion.test.ts` checks real-physics contact detection, rebound paths,
+mutable-host copies and stale/pause/gap suppression. Audio tests check distinct,
+deduplicated contact cues and the shared mute/voice limit. `tests/minigolf-motion.spec.ts`
+pairs actual devices for normal and reduced motion, verifies interpolation and exact
+paused/final positions, exercises all contact types, and retains ten paired impact
+and rolling snapshots. These captures freeze known moments in actual shots.
 Follow the screenshot portability workflow above when adding or updating them.
 The complete verification command also checks manifest/icons, repository-subpath
 startup and caching, offline reload, identity/sound persistence and controlled updates.

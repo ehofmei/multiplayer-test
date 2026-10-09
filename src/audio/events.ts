@@ -1,4 +1,5 @@
 import { glowTotal } from "../games/glow";
+import { golfContacts, golfMotionFrame } from "../games/golf-motion";
 import { golfTotal } from "../games/minigolf";
 import { treasureTotal } from "../games/treasure";
 import { picnicScore } from "../games/picnic";
@@ -75,6 +76,7 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
       : null,
     key: `${session}/${room.epoch}/${room.kind}`,
     kind: room.kind,
+    golf: room.minigolf ? golfMotionFrame(room.minigolf) : null,
     seek: room.seek?.last
       ? { event: room.seek.last.event, result: room.seek.last.result }
       : null,
@@ -134,17 +136,39 @@ export function soundEvents(
   after: SoundFrame,
 ): Cue[] {
   if (!before || before.key !== after.key) return [];
+  const golfCues: Cue[] = after.golf
+    ? [
+        ...new Set(
+          golfContacts(before.golf, after.golf).map(
+            (c) =>
+              (
+                ({
+                  launch: "golf-tap",
+                  wall: "golf-knock",
+                  mushroom: "golf-spring",
+                  meteor: "golf-meteor",
+                }) as const
+              )[c.kind],
+          ),
+        ),
+      ]
+    : [];
   const d = after.decision,
     oldDecision = before.decision;
   if (d && oldDecision) {
     if (d.phase === "finished" && oldDecision.phase !== "finished")
       return [d.winner ? "win" : "finish"];
     if (d.result && d.result !== oldDecision.result)
-      return [d.gain > 0 ? "point" : d.gain < 0 ? "miss" : "success"];
-    if (d.phase === "rolling" && oldDecision.phase === "aiming") return ["go"];
+      return [
+        ...golfCues,
+        d.gain > 0 ? "point" : d.gain < 0 ? "miss" : "success",
+      ];
+    if (d.phase === "rolling" && oldDecision.phase === "aiming")
+      return golfCues.length ? golfCues : ["go"];
     if (d.turn === oldDecision.turn && d.locked && !oldDecision.locked)
       return ["success"];
   }
+  if (golfCues.length) return golfCues;
   if (after.seek && after.seek.event !== before.seek?.event)
     return [
       after.seek.result === "found"

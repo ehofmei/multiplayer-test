@@ -6,6 +6,7 @@ import {
   type PointerEvent,
 } from "react";
 import { AppPanel, GameHelp, GameSurface } from "./AppLayout";
+import { GolfMotion } from "./GolfMotion";
 import { GolfBallArtwork, GolfCourseArtwork } from "./GolfCourseArtwork";
 import { courses, golfTotal, type GolfState } from "../games/minigolf";
 import type { Player } from "../network/protocol";
@@ -416,63 +417,15 @@ export function MinigolfGame({
                     )}
                   </>
                 )}
-                {revealed &&
-                  game.balls.map((b, i) => {
-                    const nearby = game.balls.filter(
-                      (other) => Math.hypot(other.x - b.x, other.y - b.y) < 40,
-                    );
-                    const slot = nearby.findIndex((other) => other.id === b.id);
-                    const labelX =
-                      nearby.length > 1
-                        ? Math.min(
-                            960 - (nearby.length - 1) * 48,
-                            Math.max(40, b.x - (nearby.length - 1) * 24),
-                          ) +
-                          slot * 48
-                        : Math.max(24, Math.min(976, b.x));
-                    return (
-                      <g key={b.id} opacity={b.skipped ? 0.4 : 1}>
-                        <GolfBallArtwork
-                          x={b.x}
-                          y={b.y}
-                          radius={b.id === session.me.id ? 15 : 10}
-                          color={colors[i]}
-                        />
-                        <text
-                          transform={
-                            portrait
-                              ? `rotate(90 ${labelX} ${Math.max(32, b.y - 28)})`
-                              : undefined
-                          }
-                          x={labelX}
-                          y={Math.max(32, b.y - 28)}
-                          textAnchor="middle"
-                          fill={colors[i]}
-                          fontSize="32"
-                          fontWeight="bold"
-                        >
-                          {i + 1}
-                        </text>
-                        {results && b.id === session.me.id && (
-                          <text
-                            transform={
-                              portrait
-                                ? `rotate(90 ${b.x} ${b.y > 620 ? b.y - 70 : b.y + 60})`
-                                : undefined
-                            }
-                            x={b.x}
-                            y={b.y > 620 ? b.y - 70 : b.y + 60}
-                            textAnchor="middle"
-                            fill={colors[i]}
-                            fontSize="34"
-                            fontWeight="bold"
-                          >
-                            +{b.scores[game.hole - 1]}
-                          </text>
-                        )}
-                      </g>
-                    );
-                  })}
+                <GolfMotion
+                  game={game}
+                  me={session.me.id}
+                  colors={colors}
+                  portrait={portrait}
+                  revealed={revealed}
+                  results={results}
+                  connected={connected}
+                />
               </g>
             </svg>
           </GameSurface>
@@ -618,6 +571,12 @@ export function MinigolfGame({
             saves shots and conditions; Resume gives a short countdown. Late
             arrivals watch until a rematch. A participant leaving resets the
             match.
+          </p>
+          <p>
+            Short pulses mark launches, rebounds, mushroom boosts and meteor
+            impacts. Optional sound adds a putter tap, knock, spring and thump.
+            Sound starts muted. Reduced motion keeps exact ball positions and
+            static highlights.
           </p>
           <p>Update the app on every device before playing Meteor Minigolf.</p>
         </GameHelp>
