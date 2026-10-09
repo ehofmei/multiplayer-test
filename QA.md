@@ -410,6 +410,12 @@ Inventory for 2–8 players on desktop, iPad, and narrow iPhones:
   first; an old build should give the existing unsupported-game/update message.
 - Preview each of the five greens with all walls, mushrooms, cup rings, and meteor
   warnings visible. Check your numbered ball, total, phase feedback, and wind direction.
+- Inspect the cosmic-garden artwork on small phones: subtle grass and stars must
+  stay behind the ball, aim arrow, cup and obstacles. Stone walls retain rectangular
+  collision faces and mushrooms retain circular caps. The meteor's dashed warning
+  remains radius 90 before and after impact; its crater is decoration, not an obstacle.
+  Check the cup rim, golden flag, player colors/numbers and contact shadows in bright
+  room light. Textures imply no rough, slopes or new surface rules.
 - Drag from the ball toward travel, release a short or long drag, then adjust it.
   Cancel a drag or lose focus: the previous aim should return. The arrow previews
   direction, not a complete trajectory. Angle/Power work with touch and arrow keys.
@@ -442,6 +448,8 @@ short-screen adjustments, a deterministic five-hole match, rematch and game swit
 late spectators, host backgrounding, and retained ready/active/result screenshots.
 Golf's ready, active and results snapshots use separate reviewed Darwin/Linux
 baselines, the bundled font fixture, strict dimensions and a 180-pixel budget.
+Course snapshots also cover Bank shot, Mushrooms, Meteor and Mixed course on
+portrait phones, Mixed course on desktop, and the post-impact meteor crater.
 Follow the screenshot portability workflow above when adding or updating them.
 The complete verification command also checks manifest/icons, repository-subpath
 startup and caching, offline reload, identity/sound persistence and controlled updates.

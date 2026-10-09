@@ -195,6 +195,26 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
     for (let hole = 2; hole <= 5; hole++) {
       await host.clock.runFor(7000);
       await expect(game(host)).toHaveAttribute("data-phase", "aiming");
+      await host.setViewportSize(sizes[2]);
+      await expectStableScreenshot(
+        host,
+        ".golf-course",
+        `golf-hole-${hole}-${process.platform}.png`,
+        { maxDiffPixels: 180 },
+      );
+      await host.screenshot({
+        path: `test-results/golf-hole-${hole}-phone.png`,
+      });
+      if (hole === 5) {
+        await host.setViewportSize(sizes[5]);
+        await expectStableScreenshot(
+          host,
+          ".golf-course",
+          `golf-mixed-desktop-${process.platform}.png`,
+          { maxDiffPixels: 180 },
+        );
+        await host.screenshot({ path: "test-results/golf-mixed-desktop.png" });
+      }
       await ready(host);
       await host.clock.runFor(60000);
       await expect(game(host)).toHaveAttribute("data-phase", "aiming");
@@ -203,6 +223,15 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
       while ((await game(host).getAttribute("data-phase")) === "rolling")
         await host.clock.runFor(100);
       await expect(game(host)).toHaveAttribute("data-phase", "results");
+      if (hole === 4) {
+        await host.setViewportSize(sizes[2]);
+        await expectStableScreenshot(
+          host,
+          ".golf-course",
+          `golf-meteor-impact-${process.platform}.png`,
+          { maxDiffPixels: 180 },
+        );
+      }
     }
     await host.clock.runFor(3000);
     await expect(game(client)).toHaveAttribute("data-phase", "finished");

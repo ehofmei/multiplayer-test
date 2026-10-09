@@ -496,6 +496,14 @@ No new services, dependencies, external media, or persistent progression are use
 
 ## Meteor Minigolf
 
+The five greens share a miniature cosmic-garden style: subtle mown-grass texture,
+star details, beveled garden edging, stone bank-shot walls, rounded mushroom
+caps, and a recessed cup with a golden flag. Meteor landing markers retain the
+full warning radius and become a small crater after impact. Shaded balls and
+contact shadows keep player colors and numbers readable. All artwork is local
+SVG; textures and depth are decorative, with the same flat surface, collision
+geometry, shot controls, and scoring on every device.
+
 Two to eight players each take one simultaneous shot on five fixed cosmic greens:
 Open green, Bank shot, Mushrooms, Meteor, and Mixed course. Balls pass through one
 another. Drag from your numbered ball toward the desired direction; distance sets

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { AppPanel, GameHelp, GameSurface } from "./AppLayout";
+import { GolfBallArtwork, GolfCourseArtwork } from "./GolfCourseArtwork";
 import { courses, golfTotal, type GolfState } from "../games/minigolf";
 import type { Player } from "../network/protocol";
 import type { Session } from "../network/session";
@@ -271,15 +272,6 @@ export function MinigolfGame({
               onLostPointerCapture={cancelDrag}
             >
               <defs>
-                <pattern
-                  id="golf-stars"
-                  width="120"
-                  height="100"
-                  patternUnits="userSpaceOnUse"
-                >
-                  <circle cx="30" cy="40" r="2" fill="#8dd0bc" opacity=".22" />
-                  <path d="M85 72h10m-5-5v10" stroke="#8dd0bc" opacity=".15" />
-                </pattern>
                 <marker
                   id="golf-arrow"
                   viewBox="0 0 10 10"
@@ -292,108 +284,14 @@ export function MinigolfGame({
                   <path d="M0 0L10 5L0 10Z" fill="#ffffff" />
                 </marker>
               </defs>
-              <rect
-                x="5"
-                y="5"
-                width="990"
-                height="690"
-                rx="28"
-                fill="#164b43"
-                stroke="#b7d8a0"
-                strokeWidth="10"
-              />
-              <rect
-                x="12"
-                y="12"
-                width="976"
-                height="676"
-                rx="20"
-                fill="url(#golf-stars)"
-              />
-              {[160, 80, 24].map((r) => (
-                <circle
-                  key={r}
-                  cx={course.cup[0]}
-                  cy={course.cup[1]}
-                  r={r}
-                  fill={r === 24 ? "#092922" : "none"}
-                  stroke="#a9d6ad"
-                  strokeWidth="2"
-                  strokeDasharray={r === 24 ? undefined : "8 12"}
-                />
-              ))}
-              <path
-                d={`M${course.cup[0]} ${course.cup[1]}v-90l55 20-55 20`}
-                fill="#f2ca79"
-                stroke="#f2ca79"
-                strokeWidth="4"
-              />
-              <text
-                x={course.cup[0] + 30}
-                y={course.cup[1] + 50}
-                fill="#e9f4d6"
-                fontSize="23"
-              >
-                100
-              </text>
-              {course.walls.map(([x, y, w, h], i) => (
-                <rect
-                  key={i}
-                  x={x}
-                  y={y}
-                  width={w}
-                  height={h}
-                  rx="4"
-                  fill="#789795"
-                  stroke="#cee1dc"
-                  strokeWidth="4"
-                />
-              ))}
-              {course.mushrooms.map(([x, y], i) => (
-                <g key={i}>
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r="30"
-                    fill="#df959f"
-                    stroke="#ffe6e9"
-                    strokeWidth="4"
-                  />
-                  <circle cx={x - 10} cy={y - 8} r="6" fill="#ffe6e9" />
-                  <circle cx={x + 12} cy={y + 10} r="7" fill="#ffe6e9" />
-                </g>
-              ))}
-              {course.meteor && (
-                <g>
-                  <circle
-                    cx={course.meteor[0]}
-                    cy={course.meteor[1]}
-                    r="90"
-                    fill={game.impacted ? "#efa56133" : "#efa56111"}
-                    stroke="#f2ad76"
-                    strokeDasharray="10 10"
-                    strokeWidth="3"
-                  />
-                  <text
-                    x={course.meteor[0]}
-                    y={course.meteor[1] + 8}
-                    textAnchor="middle"
-                    fontSize="27"
-                    fill="#ffd4a6"
-                  >
-                    {game.impacted ? "Impact" : "☄"}
-                  </text>
-                </g>
-              )}
+              <GolfCourseArtwork hole={game.hole} impacted={game.impacted} />
               {!revealed && (
                 <>
-                  <circle
-                    cx={course.tee[0]}
-                    cy={course.tee[1]}
-                    r="26"
-                    fill={colors[Math.max(0, myIndex)]}
-                    stroke="#092922"
-                    strokeWidth="4"
+                  <GolfBallArtwork
+                    x={course.tee[0]}
+                    y={course.tee[1]}
+                    radius={26}
+                    color={colors[Math.max(0, myIndex)]}
                   />
                   <text
                     x={course.tee[0]}
@@ -434,13 +332,11 @@ export function MinigolfGame({
                       : Math.max(24, Math.min(976, b.x));
                   return (
                     <g key={b.id} opacity={b.skipped ? 0.4 : 1}>
-                      <circle
-                        cx={b.x}
-                        cy={b.y}
-                        r={b.id === session.me.id ? 15 : 10}
-                        fill={colors[i]}
-                        stroke="#092922"
-                        strokeWidth="3"
+                      <GolfBallArtwork
+                        x={b.x}
+                        y={b.y}
+                        radius={b.id === session.me.id ? 15 : 10}
+                        color={colors[i]}
                       />
                       <text
                         x={labelX}
