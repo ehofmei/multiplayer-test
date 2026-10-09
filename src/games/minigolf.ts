@@ -7,6 +7,9 @@ export const GOLF_TIMES = {
   reorient: 3000,
 };
 export const GOLF_STEP = 1 / 120;
+export const GOLF_RESISTANCE = 1.3;
+// Finer control at the gentle end, with enough speed left for deliberate banks.
+export const golfLaunchSpeed = (power: number) => 1450 * power ** 1.4;
 export const courses = [
   {
     name: "Open green",
@@ -154,7 +157,8 @@ export function commitGolf(
     state.hole !== hole ||
     !ball ||
     ball.locked ||
-    !validShot(angle, power)
+    !validShot(angle, power) ||
+    power <= 0
   )
     return state;
   const next = {
@@ -195,7 +199,7 @@ export function physicsGolf(state: GolfState): GolfState {
         b.vy += distance ? (dy / distance) * 120 : -120;
       }
     }
-    const friction = Math.exp(-1.25 * GOLF_STEP);
+    const friction = Math.exp(-GOLF_RESISTANCE * GOLF_STEP);
     // Wind nudges a moving ball but cannot keep a resting ball drifting forever.
     const windScale = Math.min(1, Math.hypot(b.vx, b.vy) / 100);
     b.vx = (b.vx + windX * windScale * GOLF_STEP) * friction;
@@ -295,7 +299,7 @@ function advance(state: GolfState, random: () => number): GolfState {
       return {
         ...phase(state, "rolling"),
         balls: state.balls.map((b) => {
-          const speed = b.shot ? 100 + 1000 * b.shot.power : 0;
+          const speed = b.shot ? golfLaunchSpeed(b.shot.power) : 0;
           const angle = ((b.shot?.angle ?? 0) * Math.PI) / 180;
           return {
             ...b,

@@ -3381,7 +3381,7 @@ main.app-shell {
 }
 .golf-aim {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 2fr;
   gap: 6px 12px;
 }
 .golf-aim label {
@@ -3396,6 +3396,70 @@ main.app-shell {
   padding: 0;
   width: 100%;
   accent-color: #e1e99f;
+}
+.golf-power > span {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f2f5bf;
+}
+.golf-power-marks {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: -10px;
+  font-size: 10px;
+  color: #d2e5c8;
+}
+input.golf-power-input {
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.golf-power-input::-webkit-slider-runnable-track {
+  height: 12px;
+  border-radius: 8px;
+  background: linear-gradient(
+    to right,
+    var(--golf-power-color) 0 var(--golf-power),
+    #496956 var(--golf-power) 100%
+  );
+  box-shadow: inset 0 0 0 1px #8caa7a;
+}
+.golf-power-input::-webkit-slider-thumb {
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  margin-top: -7px;
+  border: 3px solid #f6f4cf;
+  border-radius: 50%;
+  background: #28483a;
+  box-shadow: 0 2px 4px #0004;
+}
+.golf-power-input::-moz-range-track {
+  height: 12px;
+  border-radius: 8px;
+  background: linear-gradient(
+    to right,
+    var(--golf-power-color) 0 var(--golf-power),
+    #496956 var(--golf-power) 100%
+  );
+  box-shadow: inset 0 0 0 1px #8caa7a;
+}
+.golf-power-input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #f6f4cf;
+  border-radius: 50%;
+  background: #28483a;
+}
+.golf-power-input:focus-visible {
+  outline: 3px solid #f8da90;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+.golf-power-input:disabled {
+  cursor: default;
 }
 .golf-ready {
   grid-column: 1 / -1;
@@ -3468,6 +3532,12 @@ main.app-shell {
   display: grid;
   grid-template-columns: 1fr auto;
 }
+.golf-aim-dialog .golf-power > span {
+  color: #275e41;
+}
+.golf-aim-dialog .golf-power-marks {
+  color: #345744;
+}
 .golf-aim-dialog input {
   grid-column: 1 / -1;
   min-height: 44px;
@@ -3528,7 +3598,7 @@ main.app-shell {
     font-size: 14px;
   }
   .golf-aim {
-    grid-template-columns: 1fr 1fr 80px;
+    grid-template-columns: 1fr 2fr 80px;
     gap: 4px 10px;
   }
   .golf-aim label {

@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type PointerEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent,
+} from "react";
 import { AppPanel, GameHelp, GameSurface } from "./AppLayout";
 import { GolfBallArtwork, GolfCourseArtwork } from "./GolfCourseArtwork";
 import { courses, golfTotal, type GolfState } from "../games/minigolf";
@@ -70,6 +76,7 @@ export function MinigolfGame({
     return () => media.removeEventListener("change", change);
   }, []);
   const drag = useRef<{ pointer: number; previous: typeof aim } | null>(null);
+  const [dragging, setDragging] = useState(false);
   const me = game.balls.find((b) => b.id === session.me.id);
   const myIndex = game.balls.findIndex((b) => b.id === session.me.id);
   const active = connected && game.phase === "aiming" && !!me && !me.locked;
@@ -85,11 +92,13 @@ export function MinigolfGame({
     if (drag.current) {
       setAim(drag.current.previous);
       drag.current = null;
+      setDragging(false);
     }
   };
   useEffect(() => {
     setAim({ angle: initialAngle(), power: 0.6, drafted: false });
     drag.current = null;
+    setDragging(false);
   }, [game.hole]);
   useEffect(() => {
     cancelDrag();
@@ -133,7 +142,9 @@ export function MinigolfGame({
                     ? "Shots away! Watch the shared gust."
                     : me.locked
                       ? "Shot confirmed · waiting for players."
-                      : "Aim from your ball, then tap Ready.";
+                      : aim.power === 0
+                        ? "Set power above 0% to Ready."
+                        : "Preview your shot, then tap Ready.";
   const point = (event: PointerEvent<SVGSVGElement>) =>
     new DOMPoint(event.clientX, event.clientY).matrixTransform(
       courseLayer.current!.getScreenCTM()!.inverse(),
@@ -149,12 +160,33 @@ export function MinigolfGame({
         length > 1
           ? Math.round(((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360) % 360
           : aim.angle,
-      power: Math.round(Math.min(1, length / 300) * 100) / 100,
+      // The same 120px gesture reaches full power on every screen size.
+      power:
+        Math.round(
+          Math.min(
+            1,
+            (length * event.currentTarget.getBoundingClientRect().width) /
+              (portrait ? 700 : 1000) /
+              120,
+          ) * 100,
+        ) / 100,
       drafted: true,
     });
   };
-  const arrowLength = 50 + aim.power * 250;
+  // A fixed-length guide shows direction only; the meter shows shot strength.
+  const arrowLength = 180;
   const radians = (aim.angle * Math.PI) / 180;
+  const powerPercent = Math.round(aim.power * 100);
+  const powerName =
+    aim.power === 0
+      ? "No power"
+      : aim.power <= 1 / 3
+        ? "Gentle"
+        : aim.power <= 2 / 3
+          ? "Medium"
+          : "Strong";
+  const powerColor =
+    aim.power <= 1 / 3 ? "#c7efb0" : aim.power <= 2 / 3 ? "#e9edaa" : "#ffd0a3";
   const aimFields = (
     <>
       {" "}
@@ -177,11 +209,19 @@ export function MinigolfGame({
           }
         />
       </label>
-      <label>
-        Power <span>{Math.round(aim.power * 100)}%</span>
+      <label className="golf-power">
+        Power <span>{powerPercent}%</span>
         <input
+          className="golf-power-input"
+          style={
+            {
+              "--golf-power": `${powerPercent}%`,
+              "--golf-power-color": powerColor,
+            } as CSSProperties
+          }
           type="range"
           aria-label="Shot power"
+          aria-valuetext={`${powerPercent}% · ${powerName}`}
           min="0"
           max="100"
           step="1"
@@ -195,6 +235,11 @@ export function MinigolfGame({
             })
           }
         />
+        <small className="golf-power-marks" aria-hidden="true">
+          <span>Gentle</span>
+          <span>Medium</span>
+          <span>Strong</span>
+        </small>
       </label>
     </>
   );
@@ -267,10 +312,11 @@ export function MinigolfGame({
                 if (
                   Math.hypot(p.x - course.tee[0], p.y - course.tee[1]) *
                     (bounds.width / (portrait ? 700 : 1000)) >
-                  32
+                  40
                 )
                   return;
                 drag.current = { pointer: event.pointerId, previous: aim };
+                setDragging(true);
                 event.currentTarget.setPointerCapture(event.pointerId);
               }}
               onPointerMove={move}
@@ -278,6 +324,7 @@ export function MinigolfGame({
                 if (drag.current?.pointer !== event.pointerId) return;
                 move(event);
                 drag.current = null;
+                setDragging(false);
                 event.currentTarget.releasePointerCapture(event.pointerId);
               }}
               onPointerCancel={cancelDrag}
@@ -315,6 +362,18 @@ export function MinigolfGame({
                       radius={26}
                       color={colors[Math.max(0, myIndex)]}
                     />
+                    {me && (
+                      <circle
+                        className="golf-ball-outline"
+                        cx={course.tee[0]}
+                        cy={course.tee[1]}
+                        r="33"
+                        fill="none"
+                        stroke="#fbffd9"
+                        strokeWidth="2"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                    )}
                     <text
                       transform={
                         portrait
@@ -330,16 +389,30 @@ export function MinigolfGame({
                     >
                       {myIndex < 0 ? "T" : myIndex + 1}
                     </text>
-                    {aim.drafted && me && (
-                      <line
-                        x1={course.tee[0]}
-                        y1={course.tee[1]}
-                        x2={course.tee[0] + Math.cos(radians) * arrowLength}
-                        y2={course.tee[1] + Math.sin(radians) * arrowLength}
-                        stroke="#fff"
-                        strokeWidth="5"
-                        markerEnd="url(#golf-arrow)"
-                      />
+                    {me && (
+                      <g
+                        className="golf-aim-guide"
+                        opacity={aim.drafted ? 1 : 0.75}
+                      >
+                        <line
+                          x1={course.tee[0] + Math.cos(radians) * 36}
+                          y1={course.tee[1] + Math.sin(radians) * 36}
+                          x2={course.tee[0] + Math.cos(radians) * arrowLength}
+                          y2={course.tee[1] + Math.sin(radians) * arrowLength}
+                          stroke="#0a302c"
+                          strokeWidth="9"
+                        />
+                        <line
+                          x1={course.tee[0] + Math.cos(radians) * 36}
+                          y1={course.tee[1] + Math.sin(radians) * 36}
+                          x2={course.tee[0] + Math.cos(radians) * arrowLength}
+                          y2={course.tee[1] + Math.sin(radians) * arrowLength}
+                          stroke="#fff"
+                          strokeWidth="5"
+                          strokeDasharray="12 10"
+                          markerEnd="url(#golf-arrow)"
+                        />
+                      </g>
                     )}
                   </>
                 )}
@@ -457,9 +530,9 @@ export function MinigolfGame({
               )}
               <button
                 className="golf-ready"
-                disabled={!active || !aim.drafted}
+                disabled={!active || aim.power <= 0 || dragging}
                 onClick={() => {
-                  cancelDrag();
+                  if (drag.current || !active || aim.power <= 0) return;
                   session.shootGolf(game.hole, aim.angle, aim.power);
                 }}
               >
@@ -511,11 +584,12 @@ export function MinigolfGame({
         <GameHelp label="Help">
           <p>
             Drag from your ball toward the travel direction. Longer drags mean
-            more power. Release to preview; tap Ready to lock. Or use Angle and
-            Power (arrow keys work). Angles and wind follow your screen: 0° goes
-            right; 90° goes down. The course turns upright when that makes it
-            larger, with the same positions and shot on every device. Shots stay
-            secret until everyone launches together.
+            more power, with the same drag distance on every screen. Release to
+            preview; tap Ready to lock, or confirm the suggested shot. Or use
+            Angle and Power (arrow keys work). Angles and wind follow your
+            screen: 0° goes right; 90° goes down. The course turns upright when
+            that makes it larger, with the same positions and shot on every
+            device. Shots stay secret until everyone launches together.
           </p>
           <p>
             Example: on the open green, aim toward the cup with about 60% power.
@@ -529,7 +603,10 @@ export function MinigolfGame({
             boost; walls and edges bounce.
           </p>
           <p>
-            The arrow shows direction, not a predicted path. Everyone sees the
+            The dashed guide shows direction, not distance or a predicted path.
+            The meter marks gentle, medium and strong power; zero does not
+            launch and cannot be confirmed. Lower power gives finer control,
+            while strong shots retain travel after a bank. Everyone sees the
             wind direction; the host draws a shared strength of 0, 12 or 24.
             Meteor warnings have radius 90 and impact between 4 and 5.5 seconds,
             pushing uncaptured balls outward. Actual conditions appear at

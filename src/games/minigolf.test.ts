@@ -4,6 +4,7 @@ import {
   commitGolf,
   courses,
   golfTotal,
+  golfLaunchSpeed,
   golfView,
   newGolf,
   pauseGolf,
@@ -33,7 +34,80 @@ function rolling(hole = 1): GolfState {
     })),
   };
 }
+function calibratedShot(
+  hole: number,
+  angle: number,
+  power: number,
+  strength = 0,
+  wind = 0,
+) {
+  const course = courses[hole - 1];
+  let s: GolfState = {
+    ...aiming(),
+    hole,
+    wind,
+    conditions: { strength, impact: course.meteor ? 4.5 : null },
+  };
+  s.balls = s.balls.map((b) => ({
+    ...b,
+    x: course.tee[0],
+    y: course.tee[1],
+    cooldowns: course.mushrooms.map(() => 0),
+  }));
+  for (const id of ["a", "b"]) s = commitGolf(s, id, hole, angle, power);
+  let elapsed = 0;
+  while (s.phase === "rolling" && elapsed < 20000) {
+    s = stepGolf(s, 100, zero);
+    elapsed += 100;
+  }
+  return s;
+}
 describe("Meteor Minigolf rules", () => {
+  it("gives zero no launch speed, keeps gentle shots controllable, and makes stronger banks useful", () => {
+    expect(golfLaunchSpeed(0)).toBe(0);
+    const gentle = [0.1, 0.25, 0.5].map(
+      (p) => calibratedShot(1, 0, p).balls[0].x - 200,
+    );
+    expect(gentle[0]).toBeGreaterThan(30);
+    expect(gentle[0]).toBeLessThan(50);
+    expect(gentle[1]).toBeGreaterThan(140);
+    expect(gentle[1]).toBeLessThan(170);
+    expect(gentle[2]).toBeGreaterThan(400);
+    expect(gentle[2]).toBeLessThan(440);
+    expect(calibratedShot(1, 0, 0.6).balls[0].captured).toBe(true);
+    // This line banks off the far top rail before reaching the cup.
+    for (const strength of [0, 12, 24]) {
+      const bank = calibratedShot(2, 300, 0.85, strength);
+      expect(bank.phase).toBe("results");
+      expect(bank.balls[0].captured).toBe(true);
+      expect(bank.balls[0].scores[1]).toBe(100);
+    }
+    expect(calibratedShot(2, 300, 0.5).balls[0].captured).toBe(false);
+  });
+  it("settles valid shots on every green with either gust strength in all directions", () => {
+    const shots = [
+      [0, 0.6],
+      [300, 0.85],
+      [54, 0.9],
+      [58, 0.95],
+      [304, 0.85],
+    ];
+    for (const [i, [angle, power]] of shots.entries()) {
+      for (const strength of [0, 12, 24])
+        for (let wind = 0; wind < 4; wind++) {
+          const result = calibratedShot(i + 1, angle, power, strength, wind);
+          expect(result.phase).toBe("results");
+          expect(result.balls[0]).toEqual({ ...result.balls[1], id: "a" });
+          expect(
+            validRoom({
+              ...newRoom("minigolf", 0),
+              minigolf: golfView(result),
+            }),
+          ).toBe(true);
+        }
+      expect(calibratedShot(i + 1, angle, power).balls[0].captured).toBe(true);
+    }
+  });
   it("keeps shots and schedules private, rejects stale/duplicate/invalid/spectator shots, and waits for launch", () => {
     const s = aiming();
     for (const [id, hole, angle, power] of [
@@ -42,6 +116,7 @@ describe("Meteor Minigolf rules", () => {
       ["a", 1, 360, 0.6],
       ["a", 1, 0, 1.1],
       ["a", 1, NaN, 0.6],
+      ["a", 1, 0, 0],
     ] as const)
       expect(commitGolf(s, id, hole, angle, power)).toBe(s);
     const a = commitGolf(s, "a", 1, 0, 0.6);

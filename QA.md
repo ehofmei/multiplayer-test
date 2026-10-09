@@ -425,9 +425,15 @@ Inventory for 2–8 players on desktop, iPad, and narrow iPhones:
   remains radius 90 before and after impact; its crater is decoration, not an obstacle.
   Check the cup rim, golden flag, player colors/numbers and contact shadows in bright
   room light. Textures imply no rough, slopes or new surface rules.
-- Drag from the ball toward travel, release a short or long drag, then adjust it.
+- Enter aiming: a suggested direction is visible and Ready accepts it without a
+  slider adjustment. Inspect the numbered ball outline and grab it just outside
+  the small artwork. Drag from the ball toward travel, release a short or long drag, then adjust it.
   Cancel a drag or lose focus: the previous aim should return. The arrow previews
   direction, not a complete trajectory. Angle/Power work with touch and arrow keys.
+  Compare equal drag distances on phone, tablet and desktop: 120 CSS pixels from
+  the tee means 100% on each. Ready stays disabled while dragging. Check the meter
+  at 0%, gentle, medium and 100%, including keyboard steps and visible focus. Zero
+  power blocks Ready, and changing power never changes the direction-guide length.
   At short portrait heights use Adjust aim; close the dialog before Ready.
 - Turn between a tall phone, short phone, landscape and tablet. The course should
   turn upright only when it becomes larger and stays readable. The cup's flagpole
@@ -440,6 +446,10 @@ Inventory for 2–8 players on desktop, iPad, and narrow iPhones:
   shots and actual gust/impact timing remain hidden until launch. Leave one player
   without a shot for at least a minute: everyone stays in aiming with no score
   loss. Confirm that last shot and verify immediate shared launch.
+- Check gentle 10% and 25% shots in still air, the suggested 60% Open green shot,
+  and a strong Bank shot using the top rail. Low power should permit small changes
+  near the cup; strong shots can reach a bank. Repeat all five greens under still
+  air and both gust strengths; shots must settle consistently on both devices.
 - Watch boundary/wall bounces, mushroom boosts, and the shared meteor. Balls never
   collide with one another; the host awards cup or distance points. Results overlay
   each hole's points; Standings shows all five scores and full names. Ties share wins.
@@ -457,7 +467,8 @@ Inventory for 2–8 players on desktop, iPad, and narrow iPhones:
 Regression coverage lives in `src/games/minigolf.test.ts`, the Golf session tests,
 and `tests/minigolf.spec.ts`. It covers fixed-step scheduling, cup speed thresholds,
 bounce components and separation, cooldowns, shared/exact-center meteor effects,
-identical outcomes, long untimed waits, natural settling, five-hole totals, privacy, bounded eight-player
+identical outcomes, calibrated still-air shots and every wind direction at 0/12/24,
+zero-power rejection, long untimed waits, natural settling, five-hole totals, privacy, bounded eight-player
 messages, permissions, stale/duplicate input, pause/resume, disconnects, and timer
 cleanup. Browser flows use real WebRTC pairing, drag/keyboard/touch controls,
 short-screen adjustments, a deterministic five-hole match, rematch and game switch,
@@ -468,7 +479,8 @@ Course snapshots also cover Bank shot, Mushrooms, Meteor and Mixed course on
 portrait phones, Mixed course on desktop, and the post-impact meteor crater.
 Short-phone and portrait-tablet snapshots retain the complete course/control frame.
 Browser assertions cover orientation changes, screen-relative wind and angles,
-preserved drafts, upright text and enlarged phone course bounds.
+preserved drafts, upright text, generous grab targets and enlarged phone course bounds.
+Additional paired baselines cover zero power, strong power and the short-phone aim dialog.
 Follow the screenshot portability workflow above when adding or updating them.
 The complete verification command also checks manifest/icons, repository-subpath
 startup and caching, offline reload, identity/sound persistence and controlled updates.

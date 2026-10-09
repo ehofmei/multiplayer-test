@@ -126,6 +126,45 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
     await expect(
       host.getByRole("slider", { name: "Shot power" }),
     ).toBeEnabled();
+    await expect(host.locator(".golf-aim-guide")).toBeAttached();
+    await expect
+      .poll(async () => {
+        const guide = (await host.locator(".golf-aim-guide").boundingBox())!;
+        return Math.max(guide.width, guide.height);
+      })
+      .toBeGreaterThan(50);
+    await expect(host.locator(".golf-ball-outline")).toBeVisible();
+    await expect(
+      host.getByRole("button", { name: "Ready", exact: true }),
+    ).toBeEnabled();
+    const guide = host.locator(".golf-aim-guide line").last();
+    const suggestedEnd = await guide.getAttribute("x2");
+    await host.getByRole("slider", { name: "Shot power" }).fill("0");
+    await expect(
+      host.getByRole("button", { name: "Ready", exact: true }),
+    ).toBeDisabled();
+    await expect(host.locator(".golf-status")).toContainText("above 0%");
+    await expect(
+      host.getByRole("slider", { name: "Shot power" }),
+    ).toHaveAttribute("aria-valuetext", "0% · No power");
+    await expectStableScreenshot(
+      host,
+      ".golf-game-card",
+      `golf-zero-power-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
+    await host.getByRole("slider", { name: "Shot power" }).fill("100");
+    await expect(guide).toHaveAttribute("x2", suggestedEnd!);
+    await expect(
+      host.getByRole("slider", { name: "Shot power" }),
+    ).toHaveAttribute("aria-valuetext", "100% · Strong");
+    await expectStableScreenshot(
+      host,
+      ".golf-game-card",
+      `golf-strong-power-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
+    await host.getByRole("slider", { name: "Shot power" }).fill("60");
     await host.screenshot({ path: "test-results/golf-drag-before.png" });
     const court = (await host.locator(".golf-course").boundingBox())!;
     await expect(host.locator(".golf-course")).toHaveAttribute(
@@ -138,9 +177,24 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
       x: court.x + court.width * 0.5,
       y: court.y + court.height * 0.8,
     };
+    // The invisible grab area reaches beyond the small ball artwork.
+    await host.mouse.move(tee.x + 36, tee.y);
+    await host.mouse.down();
+    await host.mouse.move(tee.x, tee.y - 120, { steps: 3 });
+    await expect(host.getByRole("slider", { name: "Shot power" })).toHaveValue(
+      "100",
+    );
+    await host.locator(".golf-course").dispatchEvent("pointercancel");
+    await host.mouse.up();
+    await expect(host.getByRole("slider", { name: "Shot power" })).toHaveValue(
+      "60",
+    );
     await host.mouse.move(tee.x, tee.y);
     await host.mouse.down();
     await host.mouse.move(tee.x, tee.y - 6, { steps: 3 });
+    await expect(
+      host.getByRole("button", { name: "Ready", exact: true }),
+    ).toBeDisabled();
     await host.mouse.up();
     await expect(
       host.getByRole("slider", { name: "Shot power" }),
@@ -185,6 +239,12 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
     );
     await expect(host.getByRole("slider", { name: "Shot power" })).toHaveValue(
       before,
+    );
+    await expectStableScreenshot(
+      host,
+      ".app-panel[open]",
+      `golf-aim-dialog-${process.platform}.png`,
+      { maxDiffPixels: 180 },
     );
     await host.getByRole("slider", { name: "Shot power" }).fill("60");
     await closePanels(host);

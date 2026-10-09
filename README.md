@@ -518,7 +518,11 @@ Weather feedback uses plain language; detailed rules remain in Help.
 Two to eight players each take one simultaneous shot on five fixed cosmic greens:
 Open green, Bank shot, Mushrooms, Meteor, and Mixed course. Balls pass through one
 another. Drag from your numbered ball toward the desired direction; distance sets
-power. Release keeps the preview arrow. Angle and Power sliders offer touch and
+power, with the same drag distance giving the same power on every screen. A suggested
+direction appears immediately. Release keeps the preview; cancelling restores the
+previous aim. The numbered ball has a bright outline and a generous grab area.
+The power meter marks Gentle, Medium and Strong; 0% cannot be confirmed.
+Angle and Power sliders offer touch and
 keyboard alternatives (0° right, 90° down); short phones open them with Adjust aim. Tap Ready to commit; the host confirms
 the lock, and shots stay private until launch. Aiming has no deadline. The last
 Ready launches everyone together; no shot is skipped automatically. Readiness
@@ -531,7 +535,9 @@ breakdown. Your total, ball number, readiness, and result stay on your screen wi
 squeezing in eight names.
 
 The host runs a 1,000 × 700 course at fixed 120 Hz steps. Power 0–1 maps to speed
-100–1,100; rolling resistance is `exp(-1.25 × dt)`. Walls and boundaries retain
+`1450 × power^1.4`; zero power means zero launch speed and is rejected by the host.
+The curve gives finer gentle shots and enough maximum speed for deliberate bank
+shots; rolling resistance is `exp(-1.3 × dt)`. Walls and boundaries retain
 75% of normal bounce velocity; mushrooms add an outward 160-unit/s impulse with a
 0.4-second cooldown. Wind direction is visible before aiming, while a shared
 strength of 0, 12, or 24 units/s² is revealed at launch. Wind influence fades
@@ -539,7 +545,7 @@ with ball speed below 100 units/s; balls below 3 units/s settle, so wind cannot
 keep a resting ball drifting indefinitely. Meteor holes show a radius-90
 warning; the shared impact occurs between 4–5.5 seconds and pushes balls outward
 by 120 units/s. Captured balls ignore later forces. The arrow previews direction,
-not an exact trajectory.
+not an exact trajectory or distance; its length stays fixed when power changes.
 
 A 3-second countdown starts the match; each hole has 4 seconds of preview and
 3 seconds of scores. Aiming waits for every Ready. Rolling has no cutoff: balls
@@ -552,7 +558,8 @@ play. Late arrivals spectate until the next match; losing a participating player
 returns to setup. Rematches reset scores and take the current roster. Stop and
 Choose Game keep other connected devices paired.
 
-Update the app on every device before playing Meteor Minigolf. It uses the existing
+Update the app on every device before playing Meteor Minigolf, including the host
+for the revised power curve and zero-power guard. It uses the existing
 version-2 bounded protocol and leaves saved identity and sound preferences intact.
 Courses, artwork, rules, and cached startup are local; no new service or dependency
 is required. Matches and scores are temporary. Physical iPhone/iPad touch, home-screen

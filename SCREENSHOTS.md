@@ -107,6 +107,12 @@ Mixed course · desktop playing surface.
 
 ![Meteor Minigolf phone aiming screen](tests/minigolf.spec.ts-snapshots/golf-active-linux.png)
 
+![Minigolf zero-power guard](tests/minigolf.spec.ts-snapshots/golf-zero-power-linux.png)
+
+![Minigolf strong-power meter](tests/minigolf.spec.ts-snapshots/golf-strong-power-linux.png)
+
+![Minigolf short-phone aim dialog](tests/minigolf.spec.ts-snapshots/golf-aim-dialog-linux.png)
+
 ![Meteor Minigolf compact phone controls](tests/minigolf.spec.ts-snapshots/golf-short-phone-linux.png)
 
 ![Meteor Minigolf portrait tablet controls](tests/minigolf.spec.ts-snapshots/golf-tablet-linux.png)
