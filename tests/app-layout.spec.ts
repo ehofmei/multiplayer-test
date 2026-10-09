@@ -103,9 +103,19 @@ test("home, paged library, settings and all game setups fit the primary screen",
       "Meteor Minigolf",
       "Patchwork Picnic",
       "Light Seek",
+      "Glow Clash",
     ]) {
       await chooseGame(page, name);
       await expectScreenFits(page);
+      expect(
+        await page
+          .locator("button, button *")
+          .evaluateAll((elements) =>
+            elements.every(
+              (element) => getComputedStyle(element).userSelect === "none",
+            ),
+          ),
+      ).toBe(true);
       await page.screenshot({
         path: `test-results/app-setup-${name.replaceAll(" ", "-")}-${size.width}.png`,
       });
@@ -122,6 +132,101 @@ test("home, paged library, settings and all game setups fit the primary screen",
     }
     await returnHome(page);
   }
+});
+
+test("Pong setup leaves clearance above actions on phones, tablets and desktop", async ({
+  page,
+  browser,
+}) => {
+  const clientContext = await browser.newContext();
+  try {
+    await page.goto("./");
+    await page.getByLabel("Your name").fill("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456");
+    await page
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await chooseGame(page, "Pong");
+    const client = await clientContext.newPage();
+    await join(page, client, "Second Player");
+    await expect(
+      page.getByRole("button", { name: "Start Pong", exact: true }),
+    ).toBeEnabled();
+    for (const size of [{ width: 320, height: 568 }, ...sizes]) {
+      await page.setViewportSize(size);
+      for (const font of ["system", "tall"]) {
+        const style =
+          font === "tall"
+            ? await page.addStyleTag({
+                content: ":root { font-family: serif; line-height: 1.6; }",
+              })
+            : null;
+        await expectScreenFits(page);
+        const picker = page.locator(".pong-game-card .seat-picker");
+        for (const name of ["Start Pong", "Controls & help"]) {
+          await expect
+            .poll(async () => {
+              const seats = (await picker.boundingBox())!;
+              const button = (await page
+                .getByRole("button", { name, exact: true })
+                .boundingBox())!;
+              return button.y - seats.y - seats.height;
+            })
+            .toBeGreaterThanOrEqual(12);
+        }
+        await page.screenshot({
+          path: `test-results/pong-setup-${size.width}x${size.height}-${font}.png`,
+        });
+        await style?.evaluate((element) => element.remove());
+      }
+      if (size.width === 390)
+        await expectStableScreenshot(
+          page,
+          "main",
+          `pong-setup-${process.platform}.png`,
+          { maxDiffPixels: 250 },
+        );
+    }
+    await page
+      .getByLabel("Player 1", { exact: true })
+      .selectOption({ label: "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456" });
+    await showHelp(page);
+    await page
+      .getByRole("button", { name: "Close", exact: true })
+      .press("Escape");
+    await expect(
+      page.getByRole("button", { name: "Controls & help", exact: true }),
+    ).toBeFocused();
+  } finally {
+    await clientContext.close();
+  }
+});
+
+test("dragging button labels does not select text or disable normal activation", async ({
+  page,
+}) => {
+  await page.goto("./");
+  const name = page.getByLabel("Your name");
+  await name.fill("Family Player");
+  expect(
+    await name.evaluate((element) => getComputedStyle(element).userSelect),
+  ).not.toBe("none");
+  const button = page.getByRole("button", { name: "Create Game", exact: true });
+  const bounds = (await button.boundingBox())!;
+  await page.mouse.move(
+    bounds.x + bounds.width / 2 - 20,
+    bounds.y + bounds.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    bounds.x + bounds.width / 2 + 20,
+    bounds.y + bounds.height / 2,
+    { steps: 8 },
+  );
+  await page.mouse.up();
+  expect(await page.evaluate(() => window.getSelection()?.toString())).toBe("");
+  await expect(
+    page.getByRole("region", { name: "Game picker", exact: true }),
+  ).toBeVisible();
 });
 
 test("four connected players keep every game's play and pause screens within phones and tablets", async ({

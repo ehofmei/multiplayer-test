@@ -3,6 +3,7 @@ export default defineConfig({
   testDir: "./tests",
   snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{ext}",
   fullyParallel: false,
+  workers: 2,
   use: {
     baseURL: "http://127.0.0.1:4173/multiplayer-test/",
     trace: "retain-on-failure",

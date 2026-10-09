@@ -4,6 +4,7 @@ import {
   chooseGame,
   closePanels,
   connectionDetails,
+  expectScreenFits,
   openMenu,
   returnHome,
   showHelp,
@@ -1269,7 +1270,7 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
   browser,
   page: host,
 }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(120_000);
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
     hasTouch: true,
@@ -1307,6 +1308,7 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
     const startBounds = await host.locator(".cycle-court").boundingBox();
     expect(startBounds!.y).toBeGreaterThanOrEqual(0);
     expect(startBounds!.y + startBounds!.height).toBeLessThanOrEqual(720);
+    expect(startBounds!.width).toBeGreaterThanOrEqual(500);
     await expectStableScreenshot(host, ".cycle-court", "cycle-court.png");
     await host.clock.runFor(3000);
     await expect(
@@ -1342,7 +1344,25 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
       "data-direction",
       "up",
     );
-    await host.locator(".cycle-court").press("ArrowDown");
+    const downButton = host.getByRole("button", {
+      name: "Steer down",
+      exact: true,
+    });
+    const downBounds = (await downButton.boundingBox())!;
+    await host.mouse.move(
+      downBounds.x + downBounds.width / 2 - 10,
+      downBounds.y + downBounds.height / 2,
+    );
+    await host.mouse.down();
+    await host.mouse.move(
+      downBounds.x + downBounds.width / 2 + 10,
+      downBounds.y + downBounds.height / 2,
+      { steps: 6 },
+    );
+    await host.mouse.up();
+    expect(await host.evaluate(() => window.getSelection()?.toString())).toBe(
+      "",
+    );
     await host.clock.runFor(150);
     await expect(client.getByTestId("cycle-rider-0")).toHaveAttribute(
       "data-direction",
@@ -1353,6 +1373,12 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
     await expect(host.getByTestId("cycle-rider-1")).toHaveAttribute(
       "data-direction",
       "up",
+    );
+    await host.locator(".cycle-court").press("ArrowLeft");
+    await host.clock.runFor(150);
+    await expect(client.getByTestId("cycle-rider-0")).toHaveAttribute(
+      "data-direction",
+      "left",
     );
     await host
       .getByRole("button", { name: "Pause Arena", exact: true })
@@ -1374,9 +1400,13 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
       tick!,
     );
     for (const viewport of [
+      { width: 320, height: 568 },
       { width: 320, height: 700 },
+      { width: 360, height: 740 },
       { width: 390, height: 844 },
+      { width: 844, height: 390 },
       { width: 768, height: 1024 },
+      { width: 1280, height: 720 },
     ]) {
       await client.setViewportSize(viewport);
       for (const font of ["system", "Arial-tall"]) {
@@ -1384,26 +1414,43 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
           font === "system"
             ? null
             : await client.addStyleTag({
-                content: ":root{font-family:Arial,sans-serif;line-height:1.3}",
+                content: ":root{font-family:Arial,sans-serif;line-height:1.6}",
               });
-        await client.keyboard.press("Control+Home");
-        const controls = await client.locator(".cycle-controls").boundingBox();
-        expect(controls!.y + controls!.height).toBeLessThan(
-          viewport.height - 16,
-        );
+        await expectScreenFits(client);
+        const surface = (await client.locator(".game-surface").boundingBox())!;
+        const court = (await client.locator(".cycle-court").boundingBox())!;
+        expect(Math.abs(court.width - court.height)).toBeLessThanOrEqual(1);
         expect(
-          await client.evaluate(() => document.documentElement.scrollWidth),
-        ).toBeLessThanOrEqual(viewport.width);
-        const button = await client
-          .getByRole("button", { name: "Steer up", exact: true })
-          .boundingBox();
-        expect(button!.width).toBeGreaterThanOrEqual(72);
-        expect(button!.height).toBeGreaterThanOrEqual(64);
+          Math.abs(court.width - Math.min(surface.width, surface.height)),
+        ).toBeLessThanOrEqual(2);
+        expect(
+          await client
+            .locator(".cycle-court")
+            .evaluate((e) => getComputedStyle(e).borderRadius),
+        ).toBe("0px");
+        if (viewport.width === 390)
+          expect(court.width).toBeGreaterThanOrEqual(340);
+        if (viewport.width === 1280)
+          expect(court.width).toBeGreaterThanOrEqual(500);
+        const controls = (await client
+          .locator(".cycle-controls")
+          .boundingBox())!;
+        expect(controls.y + controls.height).toBeLessThan(viewport.height - 16);
+        for (const button of await client
+          .locator(".cycle-controls button")
+          .all()) {
+          const bounds = (await button.boundingBox())!;
+          expect(bounds.width).toBeGreaterThanOrEqual(72);
+          expect(bounds.height).toBeGreaterThanOrEqual(64);
+          expect(
+            bounds.x >= court.x + court.width + 4 ||
+              bounds.y >= court.y + court.height + 4,
+          ).toBe(true);
+        }
         await client.screenshot({
-          path: `test-results/cycle-${viewport.width}-${font}.png`,
-          fullPage: true,
+          path: `test-results/cycle-${viewport.width}x${viewport.height}-${font}.png`,
         });
-        await style?.evaluate((el) => el.remove());
+        await style?.evaluate((e) => e.remove());
       }
     }
     await host.screenshot({

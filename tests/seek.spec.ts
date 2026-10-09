@@ -43,8 +43,17 @@ async function fit(page: Page, label: string) {
     const box = (await card(page).boundingBox())!;
     for (const b of await card(page).getByRole("button").all()) {
       const r = (await b.boundingBox())!;
-      expect(r.width).toBeGreaterThanOrEqual(44);
-      expect(r.height).toBeGreaterThanOrEqual(44);
+      if ((await b.getAttribute("class")) === "seek-cell") {
+        // A full 10×10 board deliberately uses compact cells. Keep action targets 44px.
+        expect(
+          r.width,
+          `${label} ${size.width} cell width`,
+        ).toBeGreaterThanOrEqual(20);
+        expect(r.height).toBeGreaterThanOrEqual(20);
+      } else {
+        expect(r.width).toBeGreaterThanOrEqual(44);
+        expect(r.height).toBeGreaterThanOrEqual(44);
+      }
       expect(r.y + r.height).toBeLessThanOrEqual(box.y + box.height);
     }
     const board = (await page.locator(".seek-art").boundingBox())!;
@@ -55,39 +64,18 @@ async function fit(page: Page, label: string) {
     await style.evaluate((e) => e.remove());
   }
 }
-async function area(page: Page, cell: number) {
-  await page
-    .getByRole("button", {
-      name: `${cell >= 50 ? "F–J" : "A–E"} · ${cell % 10 >= 5 ? "6–10" : "1–5"}`,
-      exact: true,
-    })
-    .click();
-}
 const coordinate = (c: number) =>
   `${String.fromCharCode(65 + Math.floor(c / 10))}${(c % 10) + 1}`;
 async function place(page: Page, piece: number, cell: number) {
   await page
-    .locator(".seek-controls")
-    .getByRole("button", {
-      name: new RegExp(
-        ["Three-line", "Three-corner", "Four-line", "Four-square", "Five-plus"][
-          piece
-        ],
-      ),
-    })
-    .click();
-  await page
-    .getByRole("button", { name: "Choose anchor", exact: true })
-    .click();
-  await area(page, cell);
+    .getByRole("combobox", { name: "Shape", exact: true })
+    .selectOption(String(piece));
   await page
     .getByRole("button", { name: new RegExp(`^${coordinate(cell)},`) })
     .click();
   await page.getByRole("button", { name: "Place piece", exact: true }).click();
 }
 async function guess(page: Page, cell: number) {
-  await page.getByRole("button", { name: "Select cell", exact: true }).click();
-  await area(page, cell);
   await page
     .getByRole("button", {
       name: `${coordinate(cell)}, unsearched`,
@@ -147,22 +135,46 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     await expect(
       host.getByRole("button", { name: "Ready", exact: true }),
     ).toBeDisabled();
-    await host.getByRole("button", { name: /Three-line/ }).click();
-    await host
-      .getByRole("button", { name: "Choose anchor", exact: true })
-      .click();
-    await area(host, 9);
+    await expect(host.locator(".seek-cell")).toHaveCount(100);
+    await expect(host.getByRole("group", { name: "Board area" })).toHaveCount(
+      0,
+    );
     await host.getByRole("button", { name: "A10, empty", exact: true }).click();
-    await expect(host.locator('.seek-art rect[stroke="#ffffff"]')).toHaveCount(
+    await expect(host.locator('.seek-cell[data-preview="true"]')).toHaveCount(
       1,
     );
-    await area(host, 99);
     await host.getByRole("button", { name: "J10, empty", exact: true }).click();
     await expect(
       host.getByRole("button", { name: "Place piece", exact: true }),
     ).toBeDisabled();
-    await host.getByRole("button", { name: "Rotate", exact: true }).click();
-    await area(host, 0);
+    await host.getByRole("button", { name: /^Rotate shape/ }).click();
+    await host.getByRole("button", { name: "A1, empty", exact: true }).click();
+    await host
+      .getByRole("button", { name: "A1, empty", exact: true })
+      .press("ArrowLeft");
+    await expect(
+      host.getByRole("button", { name: "A1, empty", exact: true }),
+    ).toBeFocused();
+    await host.getByRole("button", { name: "A5, empty", exact: true }).click();
+    await host
+      .getByRole("button", { name: "A5, empty", exact: true })
+      .press("ArrowRight");
+    await expect(
+      host.getByRole("button", { name: "A6, empty", exact: true }),
+    ).toBeFocused();
+    await host
+      .getByRole("button", { name: "A6, empty", exact: true })
+      .press("ArrowDown");
+    await expect(
+      host.getByRole("button", { name: "B6, empty", exact: true }),
+    ).toBeFocused();
+    await host.getByRole("button", { name: "A10, empty", exact: true }).click();
+    await host
+      .getByRole("button", { name: "A10, empty", exact: true })
+      .press("ArrowRight");
+    await expect(
+      host.getByRole("button", { name: "A10, empty", exact: true }),
+    ).toBeFocused();
     await host.getByRole("button", { name: "A1, empty", exact: true }).click();
     await host
       .getByRole("button", { name: "A1, empty", exact: true })
@@ -176,12 +188,29 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     await host
       .getByRole("button", { name: "A2, empty", exact: true })
       .press("Enter");
+    await client.getByRole("button", { name: "J10, empty", exact: true }).tap();
+    await expect(client.locator(".seek-status")).toContainText(
+      "0/5 placed · J10",
+    );
+    await expect(
+      client.getByRole("button", { name: "Place piece", exact: true }),
+    ).toBeDisabled();
     // Move the already placed piece to the agreed deterministic layout.
     const anchors = [0, 10, 30, 40, 60];
     for (let i = 0; i < 5; i++) {
       await place(host, i, anchors[i]);
       await place(client, i, anchors[i]);
     }
+    await host
+      .getByRole("button", { name: "A1, Three-line", exact: true })
+      .click();
+    await expect(
+      host.locator('.seek-cell[data-invalid="true"]'),
+    ).not.toHaveCount(0);
+    await expect(
+      host.getByRole("button", { name: "Place piece", exact: true }),
+    ).toBeDisabled();
+    await expect(host.locator(".seek-status")).toContainText("5/5 placed");
     await host.getByRole("button", { name: "Ready", exact: true }).click();
     await expect(host.locator(".seek-status")).toContainText("Ready confirmed");
     await host.clock.runFor(90000);
@@ -201,19 +230,19 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     await fit(host, "active");
     await fit(client, "waiting");
     await host.setViewportSize(sizes[0]);
-    await host
-      .getByRole("button", { name: "Select cell", exact: true })
-      .click();
-    for (const button of await host.locator(".seek-cell").all()) {
-      const r = (await button.boundingBox())!;
-      expect(r.width).toBeGreaterThanOrEqual(44);
-      expect(r.height).toBeGreaterThanOrEqual(44);
-    }
-    await area(host, 0);
+    await expect(host.locator(".seek-cell")).toHaveCount(100);
     await host
       .getByRole("button", { name: "A1, unsearched", exact: true })
       .click();
-    await host.screenshot({ path: "test-results/seek-zoom-320.png" });
+    await expect(card(host)).toHaveAttribute("data-phase", "playing");
+    await expect(host.locator(".seek-result")).toHaveText("A1 · unsearched");
+    await expect(host.locator(".seek-top strong")).toHaveText("Turn 1");
+    await expect(
+      host.getByRole("dialog", { name: "Illuminate a cell", exact: true }),
+    ).toHaveCount(0);
+    await fit(host, "selected");
+    await host.setViewportSize(sizes[0]);
+    await host.screenshot({ path: "test-results/seek-full-board-320.png" });
     await closePanels(host);
     await host.getByRole("button", { name: "Pause", exact: true }).click();
     await host.clock.runFor(50000);
@@ -250,9 +279,7 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
         await fit(host, "found");
       }
       if (i < 18) {
-        await expect(
-          client.getByRole("button", { name: "Select cell", exact: true }),
-        ).toBeEnabled();
+        await expect(client.locator(".seek-cell").first()).toBeEnabled();
         await guess(client, 99 - i);
         await expect(host.locator(".seek-result")).toContainText("Miss");
       }
@@ -331,9 +358,7 @@ test("Light Seek fits eight long names, keeps late arrivals public, and resets o
     await host.getByRole("button", { name: "Resume", exact: true }).click();
     await host.clock.runFor(3000);
     await expect(clients[6].locator(".seek-status")).toContainText("Watching");
-    await expect(
-      clients[6].getByRole("button", { name: "Select cell", exact: true }),
-    ).toBeDisabled();
+    await expect(clients[6].locator(".seek-cell").first()).toBeDisabled();
     await clients[6]
       .getByRole("button", { name: "Boards", exact: true })
       .click();

@@ -123,6 +123,25 @@ test("a cached new build waits for consent, cancel preserves play, updating relo
       "•",
     );
     await expectScreenFits(page);
+    await page
+      .getByRole("button", { name: "Choose Game", exact: true })
+      .click();
+    await chooseGame(page, "Light Seek");
+    await page.setViewportSize({ width: 320, height: 568 });
+    await expect(page.locator("aside.banner")).toBeHidden();
+    await expect(page.getByRole("button", { name: /^Menu/ })).toContainText(
+      "•",
+    );
+    await expectScreenFits(page);
+    await page
+      .getByRole("button", { name: "Choose Game", exact: true })
+      .click();
+    await chooseGame(page, "Light-cycle Arena");
+    await expect(page.locator("aside.banner")).toBeHidden();
+    await expect(page.getByRole("button", { name: /^Menu/ })).toContainText(
+      "•",
+    );
+    await expectScreenFits(page);
     await openMenu(page);
     await expect(
       page.getByRole("button", { name: "Update app", exact: true }),

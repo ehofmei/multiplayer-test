@@ -147,10 +147,14 @@ QA inventory for this game:
   step, rejected reversals and rapid duplicate inputs, disabled spectator controls.
 - Pause/resume with a new countdown, pairing pause, host background/stall,
   late spectators, rider/spectator departures, host loss, and game switching.
-- Desktop, tablet, 390px and 320px phone layouts; alternate taller font metrics,
-  eight long names, numbered riders, focus, roughly 80×64px arrow targets with 10px
-  gaps, normal surrounding
-  page scrolling, active-surface gesture handling, and no horizontal overflow.
+- Desktop, tablet, 390px, 360px and 320px phones, including 320×568 and 844×390;
+  taller font metrics, eight long names, numbered riders, focus and at least
+  72×64px arrow targets. Narrow phones retain the two-row pad; wider screens use
+  one row, and desktop/short landscape puts steering beside the board. Verify
+  square arena corners, a square court filling the available play area, clearance
+  between court and controls, and no page/card scrolling or horizontal overflow.
+  Long identity text truncates on the primary screen; complete rider names remain
+  in Help. Check active-surface gesture handling and scrollable secondary content.
 - Motion: continuous head/trail movement between confirmed cells, corners without
   diagonal shortcuts, no extrapolation, exact paused/crashed positions, reduced-motion
   grid steps and recovery after delayed/skipped snapshots.
@@ -170,6 +174,14 @@ Physical-device follow-up: pair two iPhones/iPads on Wi-Fi, then try a larger ro
 Check touch steering and swipe feel, numbered heads on small displays, optional
 sound, Safari/installed PWA background-and-resume, and all-device updates. Browser
 emulation does not establish physical-device latency or iOS behavior.
+
+The enlarged arena’s shared `cycle-court.png` baseline is refreshed from the
+reviewed Darwin render. Genuine Linux rendering and exact-final-commit Ubuntu
+verification remain pending the combined family-playtest commit. Include the
+Light-cycle cases in `tests/game.spec.ts` in the review workflow’s scoped baseline
+refresh, preserve the 64-pixel budget, and visually review the Ubuntu image.
+Physical iPhone/iPad checks remain: comfortable steering reach, legible riders
+and trails, safe areas and rotation, especially the shortest phone viewport.
 
 ## Screenshot portability
 
@@ -518,9 +530,15 @@ QA inventory:
   timers. More than two connected players prevents starting a fresh match.
 - Check 320×568, 320×700, 390×844, 844×390, 768×1024 and 1280×720, taller serif
   metrics, reduced motion, eight long names, waiting and results. Primary content
-  must fit with clearance; the full board is a preview. Four 5×5 selection areas
-  retain 44px targets; short landscape setup moves the tray into that dialog.
-  Check scrolling only in secondary dialogs, contrast, coordinate labels and
+  must fit with clearance. The full 10×10 board is directly tappable, with no
+  region selector or selection dialog. Full-board cells are intentionally compact
+  (at least 20px in these viewports); action buttons and the shape selector retain
+  44px targets. Verify all 100 cells, highlighted selection, colored previews,
+  invalid edge/overlap outlines and explicit confirmation. Tap adjacent cells
+  and check their displayed coordinates before confirming. Keyboard movement
+  stays at edges and crosses the former 5×5 boundaries without wrapping.
+  Short landscape puts controls beside the board. Check scrolling only in
+  secondary dialogs, contrast, coordinate labels and
   adjacent revealed shapes. Results show both complete boards.
 
 Rules/session/protocol tests cover rotations and invariant square/plus shapes,
@@ -534,27 +552,41 @@ eight connected devices/spectators, lifecycle and game switching. Retain separat
 setup, active, found-piece and results baselines on Darwin/Linux using the bundled
 font fixture, strict dimensions and the unchanged 180-pixel budget.
 
-Live persistent Playwright QA paired two current production-preview devices and
-exercised tap placement, editing/rotation, keyboard confirmation, Ready/waiting,
-a keyboard-selected hit at 320×568, My board/Escape, sound toggle/unlock and
-pause/resume. Desktop/mobile/tablet screenshots are reviewed alongside automated
-fit checks. The in-app browser stalled while applying a cached preview update;
-the persistent local Playwright session provided the live pass.
+Live browser QA pairs two production-preview players and covers direct placement,
+rotation/editing, invalid previews, keyboard movement, Help/My board and Escape,
+Ready/waiting, confirmed hits and pause/resume. Review the saved desktop, phone
+and tablet screenshots alongside automated fit checks, including the selected
+coordinate before Illuminate. The four Darwin baselines are reviewed for setup,
+active play, a found piece and results.
 
 Physical iPhone/iPad follow-up: play a complete match on household Wi-Fi in Safari
-and installed PWAs. Check comfortable 5×5 selection, larger text, safe areas,
+and installed PWAs. Check accurate full-grid selection with real thumbs, larger text, safe areas,
 rotation, VoiceOver, sound unlock/volume, background/resume and offline startup
 with updated apps on both devices. Existing production-subpath PWA/cache/update
 checks remain in the full verification command. Browser emulation does not verify
 physical iOS/iPadOS behavior.
 
-Light Seek’s four Linux baselines and refreshed library pagination baseline were
+The previous Light Seek layout’s four Linux baselines and refreshed library pagination baseline were
 rendered by [the review-branch Linux run](https://github.com/ehofmei/multiplayer-test/actions/runs/37350302052)
 and returned in commit `cb82f94`. Every image was visually reviewed alongside its
 Darwin counterpart. No cross-OS copying or tolerance changes were used. The
 review-only workflow runs on `codex/light-seek`, obtains missing Linux renders
 once, returns them to that branch, and runs full verification without deploying
 Pages. Subsequent pushes compare the committed baselines normally.
+
+### Light Seek full-board verification pending
+
+On short Light Seek screens, pending-update feedback stays in Menu (including
+the indicator dot) so the notice does not shrink the grid.
+
+The full-board changes remain uncommitted for the combined family-playtest commit.
+The existing Linux images represent the previous selection-dialog layout and
+must be deliberately refreshed from genuine Ubuntu renders. At the combined
+commit, adapt `.github/workflows/light-seek-review.yml` to the chosen `codex/`
+review branch, scope generation to `tests/seek.spec.ts`, obtain and review all
+changed Linux images, then run normal complete verification for the exact final
+commit with snapshot updates disabled. Do not treat local verification as Linux
+signoff. Real iPhone/iPad thumb accuracy remains an acceptance check.
 
 ## Glow Clash
 
@@ -780,6 +812,32 @@ the bottom; horizontal touch, captured drags outside the court, keyboard and hel
 slider; mirrored opponent, ball and bumper positions; warning/impact/four-bumper
 views; pause/resume, scoring, disconnects; portrait/landscape phones, tablet and
 desktop, taller fonts, focus, reduced motion and simulated iPhone insets.
+
+Pong setup and rematch reserve at least 12px between the player selectors and
+Start Pong/Play Again and Controls & help. Check two paired players (without the
+one-player instruction), 320×568 through desktop and short landscape, long names
+and taller fonts. The paired setup screenshot uses separate Darwin/Linux renders
+with the bundled font and the existing 250-pixel budget. Active play retains its
+court space.
+
+Across every game, drag over button labels and nested artwork, then activate with
+mouse, touch and keyboard. Labels must not become selected or trigger iOS's text
+callout; arrow drags must still steer on contact. Name inputs, pairing text and
+scrollable Help content retain normal editing/selection. Automated checks cover
+all game setups, label dragging and an actual Light-cycle direction change.
+Repeat press/hold and slight-drag checks on physical iPhone/iPad Safari and
+installed PWAs; Chromium cannot certify Safari's callout behavior.
+
+Live current-build QA paired two players, checked 12px phone setup clearance,
+swapped both selectors, opened Help and returned with Escape, and started,
+paused and resumed Pong. A drag across Resume activated without selecting text;
+a drag across Light-cycle's down arrow changed direction after the next step.
+Saved phone, landscape, tablet and desktop screenshots complement these checks.
+
+The browser runner uses two workers for consistent local/Ubuntu verification.
+The family-playtest review workflow obtains the affected Linux images once,
+returns them for visual review, then requires a normal complete verification run
+for the final commit. It does not deploy Pages.
 
 The shell adds 24px beyond the status inset in the installed app (12px in the
 browser), including when iOS reports a zero inset, plus 12px beyond the home-indicator inset. Test Home,

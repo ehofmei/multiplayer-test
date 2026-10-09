@@ -25,11 +25,13 @@ function Board({
   layout,
   preview,
   label,
+  interactive = false,
 }: {
   seat?: SeekSeat;
   layout: SeekPlacement[];
   preview?: SeekPlacement | null;
   label: string;
+  interactive?: boolean;
 }) {
   const cells = new Map(
     layout.flatMap((p) => placedSeekCells(p).map((c) => [c, p.piece] as const)),
@@ -39,8 +41,9 @@ function Board({
     <svg
       className="seek-board"
       viewBox="0 0 330 330"
-      role="img"
-      aria-label={label}
+      role={interactive ? undefined : "img"}
+      aria-hidden={interactive || undefined}
+      aria-label={interactive ? undefined : label}
     >
       {Array.from({ length: 10 }, (_, i) => (
         <g key={i} fill="#b8cedd" fontSize="10" textAnchor="middle">
@@ -56,7 +59,8 @@ function Board({
         const piece = cells.get(c),
           mark = seat?.search[c] ?? "0",
           found = seat?.found.find((p) => placedSeekCells(p).includes(c));
-        const identity = found?.piece ?? piece;
+        const identity =
+          found?.piece ?? piece ?? (shown.has(c) ? preview?.piece : undefined);
         const color =
           identity === undefined
             ? mark === "2"
@@ -122,9 +126,7 @@ export function SeekGame({
     [piece, setPiece] = useState(0),
     [rotation, setRotation] = useState(0),
     [cell, setCell] = useState<number | null>(null),
-    [selectionOpen, setSelectionOpen] = useState(false),
     [boardOpen, setBoardOpen] = useState(false),
-    [quadrant, setQuadrant] = useState([0, 0]),
     [pending, setPending] = useState(false);
   const keyboardCell = useRef<number | null>(null);
   useLayoutEffect(() => {
@@ -132,7 +134,7 @@ export function SeekGame({
       document.getElementById(`seek-cell-${keyboardCell.current}`)?.focus();
       keyboardCell.current = null;
     }
-  }, [cell, quadrant]);
+  }, [cell]);
   const me = game.seats.find((s) => s.id === session.me.id),
     opponent = game.seats.find((s) => s.id !== session.me.id),
     setup = game.phase === "setup",
@@ -150,12 +152,10 @@ export function SeekGame({
   useEffect(() => {
     setCell(null);
     setPending(false);
-    setSelectionOpen(false);
   }, [game.turn, game.phase]);
   useEffect(() => {
     if (me?.ready) {
       setPending(false);
-      setSelectionOpen(false);
     }
   }, [me?.ready]);
   const preview: SeekPlacement | null =
@@ -183,7 +183,7 @@ export function SeekGame({
               : setup
                 ? me.ready
                   ? `Ready confirmed · ${opponent?.ready ? "both ready" : "waiting for opponent"}`
-                  : `${layout.length}/5 placed · arrange your secret board`
+                  : `${layout.length}/5 placed · ${cell === null ? "tap a square" : `${seekCoordinate(cell)} · ${fits ? "Fits" : "Doesn’t fit"}`}`
                 : pending
                   ? "Sending · waiting for host"
                   : canGuess
@@ -194,57 +194,89 @@ export function SeekGame({
     const p = layout.find((p) => p.piece === i);
     setRotation(p?.rotation ?? 0);
     setCell(p ? p.y * 10 + p.x : null);
-    if (p) setQuadrant([p.x >= 5 ? 1 : 0, p.y >= 5 ? 1 : 0]);
   };
   const place = () => {
     if (canPlace && !pending && fits && preview) {
       setLayout([...layout.filter((p) => p.piece !== piece), preview]);
       setCell(null);
-      setSelectionOpen(false);
     }
   };
   const illuminate = () => {
     if (canGuess && cell !== null && opponent?.search[cell] === "0") {
       setPending(true);
       session.guessSeek(game.turn, cell);
-      setSelectionOpen(false);
     }
   };
-  const tray = (
-    <div className="seek-tray" role="group" aria-label="Your five pieces">
-      {seekPieces.map((p, i) => (
-        <button
-          key={i}
-          className="secondary"
-          aria-pressed={piece === i}
-          disabled={!canPlace || pending}
-          onClick={() => selectPiece(i)}
-        >
-          <span style={{ color: p.color }}>{p.symbol}</span>
-          <span>
-            {p.name}
-            <small>
-              {layout.some((q) => q.piece === i)
-                ? "Placed · edit"
-                : `${p.cells.length} tiles`}
-            </small>
-          </span>
-        </button>
-      ))}
-    </div>
-  );
-  const placementActions = (
-    <div className="seek-actions">
-      <button
-        className="secondary"
-        disabled={!canPlace || pending}
-        onClick={() => setRotation((r) => (r + 1) % 4)}
-      >
-        Rotate
-      </button>
-      <button disabled={!canPlace || pending || !fits} onClick={place}>
-        Place piece
-      </button>
+  const selection =
+    cell === null
+      ? "Tap a square to preview."
+      : setup
+        ? `${seekCoordinate(cell)} · ${fits ? "Fits" : "Overlap or outside board"}`
+        : `${seekCoordinate(cell)} · ${opponent?.search[cell] === "0" ? "unsearched" : "already searched"}`;
+  const grid = (
+    <div
+      className="seek-grid"
+      role="group"
+      aria-label={setup ? "Your secret board" : "Search board"}
+      onKeyDown={(e) => {
+        if (!canPlace && !canGuess) return;
+        if (e.key.toLowerCase() === "r" && canPlace) {
+          e.preventDefault();
+          setRotation((r) => (r + 1) % 4);
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (setup) place();
+          else illuminate();
+        }
+        const current = cell ?? 0;
+        const x = current % 10,
+          y = Math.floor(current / 10);
+        const next = {
+          ArrowLeft: y * 10 + Math.max(0, x - 1),
+          ArrowRight: y * 10 + Math.min(9, x + 1),
+          ArrowUp: Math.max(0, y - 1) * 10 + x,
+          ArrowDown: Math.min(9, y + 1) * 10 + x,
+        }[e.key];
+        if (next !== undefined) {
+          e.preventDefault();
+          keyboardCell.current = next;
+          setCell(next);
+        }
+      }}
+    >
+      {Array.from({ length: 100 }, (_, c) => {
+        const placed = setup
+          ? ownLayout.find((p) => placedSeekCells(p).includes(c))
+          : opponent?.found.find((p) => placedSeekCells(p).includes(c));
+        const mark = setup ? "0" : (opponent?.search[c] ?? "0");
+        const shown = canPlace && preview && previewCells(preview).includes(c);
+        const accessible = setup
+          ? placed
+            ? seekPieces[placed.piece].name
+            : "empty"
+          : mark === "1"
+            ? "miss"
+            : mark === "2"
+              ? placed
+                ? `${seekPieces[placed.piece].name} found`
+                : "hit"
+              : "unsearched";
+        return (
+          <button
+            id={`seek-cell-${c}`}
+            key={c}
+            className="seek-cell"
+            data-preview={shown || undefined}
+            data-invalid={(shown && !fits) || undefined}
+            aria-label={`${seekCoordinate(c)}, ${accessible}`}
+            aria-pressed={cell === c}
+            disabled={(!canPlace && !canGuess) || pending}
+            tabIndex={c === (cell ?? 0) ? 0 : -1}
+            onClick={() => setCell(c)}
+          />
+        );
+      })}
     </div>
   );
   const target = canPlace || setup ? me : opponent;
@@ -294,21 +326,25 @@ export function SeekGame({
               ))}
             </div>
           ) : (
-            <Board
-              seat={target}
-              layout={
-                ready
-                  ? [
-                      { piece: 0, x: 1, y: 1, rotation: 0 },
-                      { piece: 4, x: 5, y: 5, rotation: 0 },
-                    ]
-                  : boardLayout
-              }
-              preview={canPlace ? preview : null}
-              label={
-                setup ? "Your secret board preview" : "Opponent search board"
-              }
-            />
+            <div className="seek-play-board">
+              <Board
+                seat={target}
+                layout={
+                  ready
+                    ? [
+                        { piece: 0, x: 1, y: 1, rotation: 0 },
+                        { piece: 4, x: 5, y: 5, rotation: 0 },
+                      ]
+                    : boardLayout
+                }
+                preview={canPlace ? preview : null}
+                label={
+                  setup ? "Your secret board preview" : "Opponent search board"
+                }
+                interactive={!ready}
+              />
+              {!ready && grid}
+            </div>
           )}
         </div>
         <div className="seek-controls">
@@ -319,22 +355,46 @@ export function SeekGame({
             </p>
           ) : setup && me ? (
             <>
-              {tray}
-              <button
-                disabled={!canPlace || pending}
-                onClick={() => setSelectionOpen(true)}
-              >
-                Choose anchor
-              </button>
-              <button
-                disabled={!canPlace || pending || !validSeekLayout(layout)}
-                onClick={() => {
-                  setPending(true);
-                  session.readySeek(layout);
-                }}
-              >
-                Ready
-              </button>
+              <div className="seek-piece-controls">
+                <select
+                  aria-label="Shape"
+                  value={piece}
+                  disabled={!canPlace || pending}
+                  onChange={(e) => selectPiece(Number(e.target.value))}
+                >
+                  {seekPieces.map((p, i) => (
+                    <option key={i} value={i}>
+                      {p.symbol} {p.name}
+                      {layout.some((q) => q.piece === i) ? " · Placed" : ""}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className="secondary"
+                  disabled={!canPlace || pending}
+                  onClick={() => setRotation((r) => (r + 1) % 4)}
+                  aria-label={`Rotate shape (${rotation * 90} degrees)`}
+                >
+                  Rotate
+                </button>
+              </div>
+              <div className="seek-actions">
+                <button
+                  disabled={!canPlace || pending || !fits}
+                  onClick={place}
+                >
+                  Place piece
+                </button>
+                <button
+                  disabled={!canPlace || pending || !validSeekLayout(layout)}
+                  onClick={() => {
+                    setPending(true);
+                    session.readySeek(layout);
+                  }}
+                >
+                  Ready
+                </button>
+              </div>
             </>
           ) : (
             <>
@@ -351,16 +411,10 @@ export function SeekGame({
                 ))}
               </div>
               <p className="seek-result" aria-live="polite">
-                {result}
+                {cell === null || finished ? result : selection}
               </p>
               {!finished && (
                 <>
-                  <button
-                    disabled={!canGuess}
-                    onClick={() => setSelectionOpen(true)}
-                  >
-                    Select cell
-                  </button>
                   <button
                     disabled={
                       !canGuess ||
@@ -381,23 +435,24 @@ export function SeekGame({
         <GameHelp label="Help">
           <p>
             Exactly two players. Start opens manual setup; there are no time
-            limits and no automatic placements or guesses. Select a shape,
-            Choose anchor, tap a square, Rotate and Place piece. To move a
-            placed piece, select it again. Pieces may touch, but never overlap.
-            Ready locks all five legal shapes after host confirmation.
+            limits and no automatic placements or guesses. Select a shape, tap a
+            square on the full board, Rotate and Place piece. To move a placed
+            piece, select it again. Pieces may touch, but never overlap. Ready
+            locks all five legal shapes after host confirmation.
           </p>
           <p>
-            Both Ready actions begin a short countdown. On your turn, Select
-            cell and Illuminate. A miss is ×; an ordinary hit is ● and keeps the
+            Both Ready actions begin a short countdown. On your turn, tap a cell
+            and Illuminate. A miss is ×; an ordinary hit is ● and keeps the
             piece’s identity secret. Its last hit reveals the whole colored
             shape and symbol. Turns alternate after every guess. Find all five
             first to win immediately.
           </p>
           <p>
-            Example: B7 means row B, column 7. The selection panel uses four 5×5
-            areas for large touch targets. Arrow keys navigate the full board, R
-            rotates in setup, Enter places or illuminates. Close keeps your
-            preview; selecting a cell alone never submits a guess.
+            Example: B7 means row B, column 7. The full 10×10 board is directly
+            tappable. The selected coordinate appears above the confirmation
+            controls; tap another square to adjust it. Arrow keys navigate
+            without wrapping at the edges, R rotates in setup, and Enter places
+            or illuminates. Selecting a cell alone never submits a guess.
           </p>
           <p>
             My board shows incoming guesses. Spectators see only public search
@@ -442,147 +497,6 @@ export function SeekGame({
             </>
           ))}
       </div>
-      <AppPanel
-        title={setup ? "Place your shape" : "Illuminate a cell"}
-        open={selectionOpen}
-        onClose={() => setSelectionOpen(false)}
-      >
-        {setup && tray}
-        <p>
-          {setup
-            ? `${seekPieces[piece].name} · rotation ${rotation * 90}°`
-            : "Select an unsearched cell. Confirm to send."}
-        </p>
-        <div className="seek-quadrants" role="group" aria-label="Board area">
-          {[
-            [0, 0],
-            [1, 0],
-            [0, 1],
-            [1, 1],
-          ].map(([x, y]) => (
-            <button
-              key={`${x}${y}`}
-              className="secondary"
-              aria-pressed={quadrant[0] === x && quadrant[1] === y}
-              onClick={() => setQuadrant([x, y])}
-            >
-              {y ? "F–J" : "A–E"} · {x ? "6–10" : "1–5"}
-            </button>
-          ))}
-        </div>
-        <div
-          className="seek-zoom"
-          role="group"
-          aria-label="Zoomed grid"
-          onKeyDown={(e) => {
-            if (!canPlace && !canGuess) return;
-            if (e.key.toLowerCase() === "r" && canPlace) {
-              e.preventDefault();
-              setRotation((r) => (r + 1) % 4);
-            }
-            if (e.key === "Enter") {
-              e.preventDefault();
-              if (setup) place();
-              else illuminate();
-            }
-            const delta = {
-              ArrowLeft: -1,
-              ArrowRight: 1,
-              ArrowUp: -10,
-              ArrowDown: 10,
-            }[e.key];
-            if (delta !== undefined) {
-              e.preventDefault();
-              const next = Math.max(
-                0,
-                Math.min(
-                  99,
-                  (cell ?? quadrant[1] * 50 + quadrant[0] * 5) + delta,
-                ),
-              );
-              keyboardCell.current = next;
-              setCell(next);
-              setQuadrant([next % 10 >= 5 ? 1 : 0, next >= 50 ? 1 : 0]);
-            }
-          }}
-        >
-          {Array.from({ length: 25 }, (_, i) => {
-            const c =
-              (quadrant[1] * 5 + Math.floor(i / 5)) * 10 +
-              quadrant[0] * 5 +
-              (i % 5);
-            const placed = setup
-              ? layout.find((p) => placedSeekCells(p).includes(c))
-              : opponent?.found.find((p) => placedSeekCells(p).includes(c));
-            const mark = setup ? "0" : (opponent?.search[c] ?? "0");
-            const shown = setup && preview && previewCells(preview).includes(c);
-            const accessible = setup
-              ? placed
-                ? seekPieces[placed.piece].name
-                : "empty"
-              : mark === "1"
-                ? "miss"
-                : mark === "2"
-                  ? placed
-                    ? `${seekPieces[placed.piece].name} found`
-                    : "hit"
-                  : "unsearched";
-            return (
-              <button
-                id={`seek-cell-${c}`}
-                key={c}
-                className="seek-cell"
-                data-preview={shown}
-                data-invalid={shown && !fits}
-                aria-label={`${seekCoordinate(c)}, ${accessible}`}
-                aria-pressed={cell === c}
-                disabled={(!canPlace && !canGuess) || pending}
-                tabIndex={
-                  c === (cell ?? quadrant[1] * 50 + quadrant[0] * 5) ? 0 : -1
-                }
-                style={{
-                  background: placed
-                    ? seekPieces[placed.piece].color
-                    : mark === "2"
-                      ? "#fff3aa"
-                      : undefined,
-                }}
-                onClick={() => setCell(c)}
-              >
-                <small>{seekCoordinate(c)}</small>
-                <span>
-                  {placed
-                    ? seekPieces[placed.piece].symbol
-                    : mark === "1"
-                      ? "×"
-                      : mark === "2"
-                        ? "●"
-                        : "·"}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        <p className="seek-selection" aria-live="polite">
-          {cell === null
-            ? "Tap a square to preview."
-            : setup
-              ? `${seekCoordinate(cell)} · ${fits ? "Fits" : "Overlap or outside board"}`
-              : `${seekCoordinate(cell)} · ${opponent?.search[cell] === "0" ? "unsearched" : "already searched"}`}
-        </p>
-        {setup ? (
-          placementActions
-        ) : (
-          <button
-            disabled={
-              !canGuess || cell === null || opponent?.search[cell] !== "0"
-            }
-            onClick={illuminate}
-          >
-            Illuminate{cell !== null ? ` ${seekCoordinate(cell)}` : ""}
-          </button>
-        )}
-      </AppPanel>
       <AppPanel
         title={me ? "My board" : "Public boards"}
         open={boardOpen}

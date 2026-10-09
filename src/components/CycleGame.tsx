@@ -142,15 +142,14 @@ export function CycleGame({
         }
       }}
     >
-      <div className="board-heading">
-        <h2>Light-cycle Arena</h2>
-        <span>
+      <div className="cycle-heading">
+        <p className="cycle-status" aria-live="polite">
+          {status}
+        </p>
+        <span className="cycle-timer" aria-label="Seconds remaining">
           {Math.ceil(((CYCLE_LIMIT - game.ticks) * CYCLE_STEP_MS) / 1000)}s
         </span>
       </div>
-      <p className="cycle-status" aria-live="polite">
-        {status}
-      </p>
       <GameSurface>
         <div
           ref={court}
@@ -355,64 +354,69 @@ export function CycleGame({
           )}
         </>
       )}
-      <GameHelp>
-        <p className="muted cycle-help">
-          Keep moving. Avoid walls and every trail, including yours. Tap arrows,
-          swipe the arena, or focus it and use arrow keys / WASD. One turn per
-          step; no reversing. Last survivor wins.
-        </p>
-        {!configure && (
-          <>
-            {!!game.riders.length && (
-              <ol className="cycle-riders" aria-label="Riders">
-                {game.riders.map((r, i) => (
-                  <li key={r.id} className={r.alive ? "" : "crashed"}>
-                    <span
-                      className="cycle-number"
-                      style={{ background: cycleColors[i] }}
-                    >
-                      {i + 1}
-                    </span>
-                    <span className="cycle-name">
-                      {name(r.id)}
-                      {r.id === session.me.id ? " · You" : ""}
-                    </span>
-                    <small>{r.alive ? "Riding" : "Out"}</small>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </>
-        )}
-      </GameHelp>
-      {session.role === "host" ? (
-        configure ? (
-          <>
+      <div className="cycle-footer">
+        <GameHelp>
+          <p className="muted cycle-help">
+            Keep moving. Avoid walls and every trail, including yours. Tap
+            arrows, swipe the arena, or focus it and use arrow keys / WASD. One
+            turn per step; no reversing. Last survivor wins.
+          </p>
+          {!configure && (
+            <>
+              {!!game.riders.length && (
+                <ol className="cycle-riders" aria-label="Riders">
+                  {game.riders.map((r, i) => (
+                    <li key={r.id} className={r.alive ? "" : "crashed"}>
+                      <span
+                        className="cycle-number"
+                        style={{ background: cycleColors[i] }}
+                      >
+                        {i + 1}
+                      </span>
+                      <span className="cycle-name">
+                        {name(r.id)}
+                        {r.id === session.me.id ? " · You" : ""}
+                      </span>
+                      <small>{r.alive ? "Riding" : "Out"}</small>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </>
+          )}
+        </GameHelp>
+        {session.role === "host" ? (
+          configure ? (
+            <>
+              <button
+                disabled={players.length < 2}
+                onClick={() => session.startCycle()}
+              >
+                {game.phase === "finished" ? "Ride Again" : "Start Arena"}
+              </button>
+            </>
+          ) : (
             <button
-              disabled={players.length < 2}
-              onClick={() => session.startCycle()}
+              className="secondary"
+              onClick={() =>
+                game.phase === "paused"
+                  ? session.resumeCycle()
+                  : session.pauseGames()
+              }
             >
-              {game.phase === "finished" ? "Ride Again" : "Start Arena"}
+              {game.phase === "paused" ? "Resume Arena" : "Pause Arena"}
             </button>
-            {players.length < 2 && (
-              <p className="muted">Add another player to start.</p>
-            )}
-          </>
+          )
+        ) : null}
+      </div>
+      {configure &&
+        (session.role === "host" ? (
+          players.length < 2 && (
+            <p className="muted">Add another player to start.</p>
+          )
         ) : (
-          <button
-            className="secondary"
-            onClick={() =>
-              game.phase === "paused"
-                ? session.resumeCycle()
-                : session.pauseGames()
-            }
-          >
-            {game.phase === "paused" ? "Resume Arena" : "Pause Arena"}
-          </button>
-        )
-      ) : (
-        configure && <p className="muted">Waiting for the host to start.</p>
-      )}
+          <p className="muted">Waiting for the host to start.</p>
+        ))}
     </section>
   );
 }

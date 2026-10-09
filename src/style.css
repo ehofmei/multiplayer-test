@@ -133,6 +133,13 @@ button {
   font-weight: 650;
   touch-action: manipulation;
 }
+/* Labels, arrows and nested artwork are part of the control on touch and mouse. */
+button,
+button * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 button span:not(.light):not(.cell-state) {
   float: right;
 }
@@ -1148,7 +1155,7 @@ select:focus-visible {
   margin: auto;
   background: #122c29;
   border: 2px solid #527064;
-  border-radius: 8px;
+  border-radius: 0;
   overflow: hidden;
 }
 .cycle-court svg {
@@ -2203,6 +2210,118 @@ main.app-shell {
   aspect-ratio: var(--surface-ratio);
 }
 
+/* Square Light-cycle arena: reserve room for large steering targets, then
+   spend the remaining width/height on the actual board rather than letterboxing. */
+.app-shell .games-card.cycle-game-card:not(.game-library) {
+  padding: 8px;
+  gap: 6px;
+}
+.cycle-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.app-shell .cycle-heading .cycle-status {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  margin: 0;
+}
+.app-shell .cycle-game-card[data-phase="finished"] .cycle-status {
+  font-size: 22px;
+}
+.cycle-timer {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #3f5b50;
+}
+.app-shell .cycle-game-card > .game-surface {
+  background: transparent;
+  border-radius: 0;
+}
+.app-shell .cycle-game-card[data-phase="ready"] > .game-surface {
+  display: flex;
+}
+.app-shell .cycle-feedback {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.cycle-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+}
+.cycle-footer > button {
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+.cycle-footer > .game-help-button {
+  margin-left: auto;
+}
+@media (min-width: 360px) {
+  .app-shell .cycle-controls {
+    width: min(100%, 350px);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: 64px;
+    gap: 10px;
+  }
+  .app-shell .cycle-controls button {
+    grid-area: auto;
+  }
+  .app-shell .cycle-controls .cycle-left {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .app-shell .cycle-controls .cycle-up {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .app-shell .cycle-controls .cycle-down {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .app-shell .cycle-controls .cycle-right {
+    grid-column: 4;
+    grid-row: 1;
+  }
+  .app-shell .cycle-control-center {
+    display: none;
+  }
+}
+@media (min-width: 900px), (max-height: 550px) and (min-width: 500px) {
+  .app-shell
+    .games-card.cycle-game-card:not(.game-library):not(
+      [data-phase="finished"]
+    ) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 350px;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    column-gap: 16px;
+  }
+  .app-shell .cycle-game-card:not([data-phase="finished"]) > * {
+    grid-column: 2;
+  }
+  .app-shell .cycle-game-card:not([data-phase="finished"]) > .game-surface {
+    grid-column: 1;
+    grid-row: 1 / 5;
+  }
+  .app-shell .cycle-controls {
+    align-self: center;
+  }
+}
+@media (max-height: 650px) {
+  /* Keep update feedback/action in Menu without taking arena height. */
+  .app-shell:has(.cycle-game-card) > aside.banner {
+    display: none;
+  }
+}
+
 /* The visible portrait court is also the input area; no dark letterboxing. */
 .app-shell .pong-game-card > .game-surface {
   background: transparent;
@@ -2214,6 +2333,10 @@ main.app-shell {
 .app-shell .games-card.pong-game-card:not(.game-library) {
   padding: 8px 12px 56px;
   gap: 6px;
+}
+.app-shell .games-card.pong-game-card[data-phase="ready"],
+.app-shell .games-card.pong-game-card[data-phase="finished"] {
+  padding-bottom: 68px;
 }
 .app-shell .pong-game-card .game-score strong {
   font-size: 24px;
@@ -2234,6 +2357,11 @@ main.app-shell {
     position: static;
     max-width: none;
     align-self: end;
+  }
+  .app-shell .games-card.pong-game-card[data-phase="ready"],
+  .app-shell .games-card.pong-game-card[data-phase="finished"] {
+    padding-bottom: 8px;
+    row-gap: 12px;
   }
 }
 @media (min-width: 651px) and (min-height: 551px) {
@@ -3771,7 +3899,7 @@ main.app-shell {
   padding: 12px;
 }
 
-/* A whole-board preview and four focused 5×5 areas keep phone targets generous. */
+/* Light Seek uses a single full board; confirmation stays outside its cells. */
 .app-shell .games-card.seek-game-card:not(.game-library) {
   display: flex;
   flex-direction: column;
@@ -3799,7 +3927,7 @@ main.app-shell {
 .seek-workspace {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
   gap: 18px;
   align-items: center;
 }
@@ -3812,18 +3940,63 @@ main.app-shell {
   justify-content: center;
   container-type: size;
 }
+.seek-play-board {
+  position: relative;
+  width: min(100%, 100cqh);
+  aspect-ratio: 1;
+}
 .seek-board {
   width: 100%;
-  max-width: min(440px, 100cqh);
+  max-width: min(640px, 100cqh);
   max-height: 100%;
   aspect-ratio: 1;
   display: block;
   background: #0e2034;
   border-radius: 8px;
 }
+.seek-play-board .seek-board {
+  max-width: none;
+}
 .panel-content .seek-board {
   max-width: 330px;
   margin: 0 auto;
+}
+/* Match the SVG's 300×300 cell area at (16,16) in its 330×330 viewBox. */
+.seek-grid {
+  position: absolute;
+  left: calc(100% * 16 / 330);
+  top: calc(100% * 16 / 330);
+  width: calc(100% * 300 / 330);
+  height: calc(100% * 300 / 330);
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  grid-template-rows: repeat(10, minmax(0, 1fr));
+  touch-action: manipulation;
+}
+.seek-grid .seek-cell {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+}
+.seek-grid .seek-cell:disabled {
+  opacity: 1;
+}
+.seek-grid .seek-cell[data-preview="true"] {
+  box-shadow: inset 0 0 0 2px #67d8ef;
+}
+.seek-grid .seek-cell[data-invalid="true"] {
+  box-shadow: inset 0 0 0 2px #ff7777;
+}
+.seek-grid .seek-cell[aria-pressed="true"] {
+  outline: 3px solid #ffd05b;
+  outline-offset: -3px;
+}
+.seek-grid .seek-cell:focus-visible {
+  outline: 3px dashed #ffffff;
+  outline-offset: -3px;
 }
 .seek-controls {
   min-width: 0;
@@ -3835,33 +4008,24 @@ main.app-shell {
   margin: 0;
   line-height: 1.35;
 }
-.seek-tray {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+.seek-controls button {
+  min-height: 44px;
+  padding: 6px 8px;
 }
-.seek-tray button {
+.seek-piece-controls {
   display: flex;
+  gap: 8px;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+}
+.app-shell .seek-piece-controls select {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  min-height: 44px;
   padding: 6px;
-  text-align: left;
-  min-height: 48px;
   background: #233b55;
   color: #eef5ff;
-}
-.seek-tray button > span:first-child {
-  font-size: 24px;
-}
-.seek-tray small {
-  display: block;
-  font-size: 11px;
-}
-.seek-game-card button[aria-pressed="true"],
-.seek-quadrants button[aria-pressed="true"] {
-  outline: 2px solid #67d8ef;
-  outline-offset: -2px;
+  border-color: #8099b0;
 }
 .seek-footer {
   display: flex;
@@ -3889,12 +4053,13 @@ main.app-shell {
   display: flex;
   gap: 4px;
   align-items: center;
-  padding: 6px;
+  padding: 3px;
+  line-height: 1;
   border: 1px solid #8099b0;
   border-radius: 6px;
 }
 .seek-tracker b {
-  font-size: 23px;
+  font-size: 18px;
 }
 .seek-tracker [data-found="true"] {
   background: #2c4c43;
@@ -3904,60 +4069,9 @@ main.app-shell {
   font-size: 14px;
   min-height: 36px;
 }
-.seek-quadrants {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-.seek-quadrants button {
-  padding: 6px;
-  min-height: 44px;
-}
-.seek-zoom {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(44px, 1fr));
-  width: 100%;
-  max-width: 360px;
-  margin: auto;
-  gap: 2px;
-  touch-action: manipulation;
-}
-.seek-cell {
-  position: relative;
-  min-width: 44px;
-  min-height: 48px;
-  padding: 2px;
-  border: 1px solid #66819d;
-  border-radius: 4px;
-  background: #192e46;
-  color: #eef5ff;
-}
-.seek-cell[style*="background"] {
-  color: #0e2034;
-}
-.seek-cell small {
-  display: block;
-  font-size: 10px;
-}
-.seek-cell span {
-  display: block;
-  font-size: 21px;
-  line-height: 1;
-}
-.seek-cell[data-preview="true"] {
-  outline: 3px solid #4b9dcc;
-  outline-offset: -3px;
-}
-.seek-cell[data-invalid="true"] {
-  outline-color: #d44848;
-}
-.seek-cell[aria-pressed="true"] {
-  box-shadow: inset 0 0 0 3px #ffd05b;
-}
 .seek-selection {
-  min-height: 24px;
-  font-size: 14px;
+  min-height: 20px;
+  font-size: 13px;
 }
 .seek-actions {
   display: flex;
@@ -3968,6 +4082,7 @@ main.app-shell {
 }
 .seek-final-boards {
   width: 100%;
+  max-width: min(100%, calc(200cqh - 48px));
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
@@ -3999,42 +4114,25 @@ main.app-shell {
     width: 100%;
     flex-shrink: 0;
   }
-  .seek-tray {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .seek-tray button {
-    font-size: 11px;
-    gap: 3px;
-  }
-  .seek-tray button > span:first-child {
-    font-size: 20px;
-  }
-  .seek-controls > button {
-    min-height: 44px;
-    padding: 6px;
+  .seek-final-boards {
+    grid-template-columns: 1fr;
+    max-width: min(100%, calc((100cqh - 48px) / 2));
   }
 }
-@media (max-height: 550px) {
+@media (max-height: 650px) {
+  /* The Menu dot retains update feedback without shrinking the full grid. */
+  .app-shell:has(.seek-game-card) > aside.banner {
+    display: none;
+  }
   .app-shell .games-card.seek-game-card:not(.game-library) {
     padding: 8px;
     gap: 4px;
   }
   .seek-workspace {
-    gap: 8px;
-  }
-  .seek-tray {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .seek-tray button {
-    min-height: 44px;
-    padding: 3px;
+    gap: 6px;
   }
   .seek-controls {
     gap: 4px;
-  }
-  .seek-controls > button {
-    min-height: 44px;
-    padding: 4px;
   }
   .seek-status {
     font-size: 13px;
@@ -4044,37 +4142,33 @@ main.app-shell {
     min-height: 0;
   }
 }
-@media (max-height: 550px) {
-  .seek-controls > .seek-tray {
+@media (max-height: 650px) and (max-width: 650px) {
+  .seek-top {
     display: none;
   }
 }
-.panel-content .seek-tray {
-  margin-bottom: 12px;
-}
-@media (max-height: 550px) {
-  .seek-controls {
+
+@media (max-height: 550px) and (min-width: 651px) {
+  .app-shell .games-card.seek-game-card:not(.game-library) {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(230px, 320px);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    column-gap: 12px;
   }
-  .seek-controls > p,
-  .seek-controls > .seek-tracker {
-    grid-column: 1 / -1;
+  .seek-top {
+    display: none;
   }
-  .seek-tracker {
-    line-height: 1.2;
+  .seek-status,
+  .seek-controls,
+  .seek-footer {
+    grid-column: 2;
   }
-  .seek-tracker b {
-    line-height: 1;
+  .app-shell .seek-game-card > .seek-workspace {
+    display: contents;
   }
-}
-.seek-final-boards {
-  max-width: min(100%, calc(200cqh - 48px));
-}
-@media (max-width: 650px) and (min-height: 551px) {
-  .seek-final-boards {
-    grid-template-columns: 1fr;
-    max-width: min(100%, calc((100cqh - 48px) / 2));
+  .seek-art {
+    grid-column: 1;
+    grid-row: 1 / 4;
   }
 }
 

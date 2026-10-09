@@ -87,6 +87,8 @@ existing pause/stop behavior before pairing. Each game's Controls & help panel
 contains instructions and, for paddle games, color choices and an alternative
 slider. Pause/stop, essential status, and touch controls stay on the play screen.
 Detailed rider/bumper lists move into Help while playing and appear with results.
+Button labels, arrows and nested artwork cannot be text-selected, including on
+iOS. Editing inputs, pairing text and Help remain selectable.
 
 Pairing keeps the QR and scan action prominent. Import QR image expands the image
 fallback; Other ways to connect opens the text-transfer panel. Closing that panel
@@ -166,6 +168,8 @@ in fixed 120 Hz steps, renders at about 60 Hz, and sends state at about 20 Hz.
 Clients smooth the ball between updates. Paddle hits increase speed and change
 angle according to the impact position. A one-second serve delay follows each
 point. The host can pause/resume and choose new players after a match.
+Setup and rematch leave at least 12px above the Start/Play Again and Controls &
+help buttons, separating them from the player selectors on phones and landscape.
 Paddle sizes stay fixed. Long rallies introduce a small central bumper after
 8 seconds, then another every 6 seconds, up to four. Each dashed ring warns for
 1.5 seconds before becoming solid; solidity waits if the ball is too close.
@@ -287,9 +291,14 @@ present when the host starts rides; late arrivals watch until the next round.
 After a three-second countdown, riders move automatically one cell every 150 ms
 on a shared 32×32 arena. Steer with the four large arrow buttons, swipe on the
 arena, or focus the arena and use arrow keys/WASD. Arrow buttons are about 80×64px
-with 10px gaps, including on narrow phones. Touch buttons turn on contact.
+with 10px gaps. Narrow phones keep a two-row pad; wider screens use one row.
+The square-cornered board fills the available play area, with steering beside it
+on desktop and short landscape screens. The timer shares the status row. During
+play, long rider names stay in Help so they cannot squeeze the arena. Touch
+buttons turn on contact.
 Only one perpendicular turn is accepted per step; reversing is forbidden. Each
-rider has a distinct color and number, with names and elimination status below.
+rider has a distinct color and number, with names and elimination status in
+Controls & help.
 
 Walls and all trails—including your own and eliminated riders’ trails—are lethal.
 Collisions resolve simultaneously: riders entering the same cell or swapping
@@ -570,7 +579,7 @@ cannot understand the new game, while saved identity and sound preferences stay 
 
 Exactly two connected players can Start Seek. Each secretly places five shapes on a
 10×10 board: a three-line, three-corner, four-line, four-square and five-plus
-(19 tiles). Select a piece, Choose anchor, tap an anchor, Rotate and Place piece.
+(19 tiles). Choose a shape, tap its anchor on the full board, Rotate and Place piece.
 Placed pieces can be edited until Ready locks a complete legal layout. Pieces may
 touch; overlaps and off-board tiles are rejected. Drafts stay on your device.
 Setup and turns are untimed: nobody is auto-readied or given an automatic guess.
@@ -582,12 +591,17 @@ reveals that piece’s color, symbol and complete outline. Turns alternate after
 every valid guess, including hits. Find all five first to win immediately, without
 an extra reply turn. Results reveal both boards; there are no scores or ties.
 
-The primary screen shows a whole-board preview. Its focused selection dialog has
-four 5×5 areas with large touch targets, row letters and column numbers. Arrow
-keys navigate the whole grid, R rotates during setup and Enter confirms. My board
-shows incoming guesses; changing views preserves the turn. On short landscape
-screens the piece tray lives inside the placement dialog. Help and secondary
-views scroll when necessary. Miss, hit and found use distinct locally synthesized
+The primary screen has one directly tappable 10×10 board with row letters and
+column numbers. A compact shape selector leaves more room for the board. Tapping
+only previews a placement or search; Place piece and Illuminate explicitly
+confirm it. The selected coordinate and placement validity appear in the
+status area before confirmation, and a highlighted outline marks the selected cell. Arrow
+keys navigate without wrapping at the board edges, R rotates during setup and
+Enter confirms. My board shows incoming guesses; changing views preserves the
+turn. Short landscape screens put controls beside the board. Help and secondary
+views scroll when necessary. Full-board cells are smaller than action buttons on
+narrow phones; check the coordinate before confirming and tap another cell to
+adjust. Miss, hit and found use distinct locally synthesized
 sounds, with the existing muted-by-default preference and gesture unlock.
 
 The host’s rendered view is filtered just like clients. Only your own committed
