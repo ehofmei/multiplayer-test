@@ -3,7 +3,7 @@ on:
   push:
     branches: [codex/family-playtest-boards]
 permissions:
-  contents: write
+  contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -16,22 +16,6 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - name: Refresh affected Linux renders once
-        run: |
-          if [ ! -f tests/app-layout.spec.ts-snapshots/pong-setup-linux.png ]; then
-            npx playwright test tests/seek.spec.ts --update-snapshots=all
-            npx playwright test tests/game.spec.ts --grep 'Light-cycle|host picks games' --update-snapshots=all
-            npx playwright test tests/app-layout.spec.ts --grep 'Pong setup|safe area' --update-snapshots=all
-          fi
-      - name: Return Linux renders to the review branch
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tests/seek.spec.ts-snapshots/*-linux.png tests/game.spec.ts-snapshots/cycle-court.png tests/game.spec.ts-snapshots/pong-court-linux.png tests/app-layout.spec.ts-snapshots/pong-setup-linux.png tests/app-layout.spec.ts-snapshots/pong-safe-area-linux.png
-          if ! git diff --cached --quiet; then
-            git commit -m 'Refreshed Linux family playtest baselines'
-            git push origin HEAD:codex/family-playtest-boards
-          fi
       - run: npm run verify
       - name: Save browser evidence
         if: always()

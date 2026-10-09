@@ -175,11 +175,11 @@ Check touch steering and swipe feel, numbered heads on small displays, optional
 sound, Safari/installed PWA background-and-resume, and all-device updates. Browser
 emulation does not establish physical-device latency or iOS behavior.
 
-The enlarged arena’s shared `cycle-court.png` baseline is refreshed from the
-reviewed Darwin render. Genuine Linux rendering and exact-final-commit Ubuntu
-verification remain pending the combined family-playtest commit. Include the
-Light-cycle cases in `tests/game.spec.ts` in the review workflow’s scoped baseline
-refresh, preserve the 64-pixel budget, and visually review the Ubuntu image.
+The enlarged arena’s shared `cycle-court.png` baseline was rendered on Darwin
+and Ubuntu. The genuine Ubuntu image came from
+[the family-playtest review run](https://github.com/ehofmei/multiplayer-test/actions/runs/37865516178)
+and returned in `dbbdcf8`. Both renders were visually reviewed; the 64-pixel
+budget and strict dimensions remain unchanged.
 Physical iPhone/iPad checks remain: comfortable steering reach, legible riders
 and trails, safe areas and rotation, especially the shortest phone viewport.
 
@@ -574,19 +574,18 @@ review-only workflow runs on `codex/light-seek`, obtains missing Linux renders
 once, returns them to that branch, and runs full verification without deploying
 Pages. Subsequent pushes compare the committed baselines normally.
 
-### Light Seek full-board verification pending
+### Light Seek full-board verification
 
 On short Light Seek screens, pending-update feedback stays in Menu (including
 the indicator dot) so the notice does not shrink the grid.
 
-The full-board changes remain uncommitted for the combined family-playtest commit.
-The existing Linux images represent the previous selection-dialog layout and
-must be deliberately refreshed from genuine Ubuntu renders. At the combined
-commit, adapt `.github/workflows/light-seek-review.yml` to the chosen `codex/`
-review branch, scope generation to `tests/seek.spec.ts`, obtain and review all
-changed Linux images, then run normal complete verification for the exact final
-commit with snapshot updates disabled. Do not treat local verification as Linux
-signoff. Real iPhone/iPad thumb accuracy remains an acceptance check.
+All four full-board Darwin/Linux states were visually reviewed. Genuine Ubuntu
+renders came from
+[the family-playtest review run](https://github.com/ehofmei/multiplayer-test/actions/runs/37865516178)
+and returned in `dbbdcf8`; the bundled font, strict dimensions and 180-pixel
+budget remain unchanged. The non-deploying family-playtest workflow compares
+committed images with snapshot updates disabled. Real iPhone/iPad thumb accuracy
+remains an acceptance check.
 
 ## Glow Clash
 
@@ -835,9 +834,12 @@ a drag across Light-cycle's down arrow changed direction after the next step.
 Saved phone, landscape, tablet and desktop screenshots complement these checks.
 
 The browser runner uses two workers for consistent local/Ubuntu verification.
-The family-playtest review workflow obtains the affected Linux images once,
-returns them for visual review, then requires a normal complete verification run
-for the final commit. It does not deploy Pages.
+The paired setup, inset setup and court preview have reviewed Darwin/Linux
+images. The genuine Ubuntu renders came from
+[the family-playtest review run](https://github.com/ehofmei/multiplayer-test/actions/runs/37865516178)
+and returned in `dbbdcf8`. The family-playtest review workflow now uses read-only
+repository access and ordinary complete verification, with no baseline generation
+or Pages deployment.
 
 The shell adds 24px beyond the status inset in the installed app (12px in the
 browser), including when iOS reports a zero inset, plus 12px beyond the home-indicator inset. Test Home,
