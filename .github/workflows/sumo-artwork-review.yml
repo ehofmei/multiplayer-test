@@ -3,7 +3,7 @@ on:
   push:
     branches: [codex/sumo-artwork]
 permissions:
-  contents: write
+  contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -16,17 +16,6 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - name: Refresh the reviewed ready and closing-ring Linux states once
-        run: npx playwright test tests/sumo.spec.ts --update-snapshots=changed
-      - name: Return Linux renders to the review branch
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tests/sumo.spec.ts-snapshots/*-linux.png tests/game.spec.ts-snapshots/sumo-*-linux.png
-          if ! git diff --cached --quiet; then
-            git commit -m 'Generated Linux Sumo artwork baselines'
-            git push origin HEAD:codex/sumo-artwork
-          fi
       - run: npm run verify
       - name: Save browser evidence
         if: always()

@@ -273,10 +273,12 @@ Artwork and composition QA:
   pairs. Check 320×700 with a 20px bottom safe area, taller fonts, reduced motion,
   long names, square arena bounds and full controls/footer clearance. The old
   portable court snapshot is superseded by platform-specific court snapshots.
-- Linux renders are obtained on the non-deploying codex/sumo-artwork branch with
-  .github/workflows/sumo-artwork-review.yml; generation is scoped to the Sumo
-  specs. After reviewing the returned images, disable baseline generation and
-  require a separate successful normal verify run for the final commit.
+- Linux verification runs on the non-deploying codex/sumo-artwork branch with
+  .github/workflows/sumo-artwork-review.yml. Its normal workflow has read-only
+  permissions and compares committed baselines without update flags. For future
+  artwork changes, obtain genuine renders with temporary generation scoped to
+  the Sumo specs, review the returned images, then require a separate successful
+  normal verify run for the final commit, following AGENTS.md.
 - Physical iPhone/iPad checks remain required: installed portrait/landscape fit,
   actual safe areas, readable small bumper numbers, thumb comfort, simultaneous
   movement/dash, and contrast in bright rooms. Continue gameplay-feel tuning in
