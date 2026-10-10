@@ -192,6 +192,7 @@ export function parseMessage(raw: unknown): Message | null {
       return m as Message;
     if (
       m.type === "state" &&
+      // Includes bounded optional Sumo contact ticks; older snapshots may omit them.
       validRoom(m.room) &&
       (m.ack === undefined || integer(m.ack)) &&
       record(m.grid) &&

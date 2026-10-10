@@ -1,4 +1,5 @@
 export type Cue =
+  | "sumo-hit"
   | "sumo-dash"
   | "golf-cup"
   | "golf-tap"
@@ -26,6 +27,10 @@ export type Cue =
 type Note = [frequency: number, duration: number, delay?: number];
 const notes: Record<Cue, Note[]> = {
   "sumo-dash": [[800, 0.18]],
+  "sumo-hit": [
+    [180, 0.075],
+    [360, 0.045],
+  ],
   "golf-cup": [
     [280, 0.08],
     [660, 0.1, 0.1],

@@ -257,6 +257,30 @@ remain useful; browser emulation does not establish device performance or latenc
 
 ## Sumo Bumpers
 
+Feedback and results checks:
+
+- Dash two paired bumpers into each other. Both devices should show brief contact
+  sparks, with one optional soft impact cue per confirmed contact snapshot.
+  Gentle resting overlap should not chatter or replay old contacts.
+- Ring out one of three players: a colored flare and numbered OUT label appear
+  while the remaining two keep playing. The eliminated player cannot steer or
+  dash. Feedback expires, including after the round finishes; pause/resume and
+  rematches do not replay it. Reduced motion uses static, short-lived feedback.
+- Confirm the winner's bumper, full name and local You win verdict; simultaneous
+  elimination gets a distinct draw card. Bump Again resets the result and effects
+  for both devices. Help retains the full roster and returns keyboard focus.
+- Review collision, ring-out, draw and winner snapshots at phone, tablet, desktop,
+  landscape and short-phone sizes. Check long names, 320×700, taller fonts and
+  a 20px bottom safe area. Result text must remain inside its card, and the arena
+  and rematch footer must stay visible without page scrolling.
+- The non-deploying codex/sumo-feedback review branch uses
+  .github/workflows/sumo-feedback-review.yml. Generate only the new feedback
+  states on Ubuntu once, review actual Linux/Darwin pairs, then require a separate
+  normal complete verify run for the exact final commit without snapshot updates.
+- Physical iPhone/iPad checks remain: installed portrait/landscape result fit,
+  spark/flare clarity during fast collisions, sound when enabled, actual two-thumb
+  comfort, safe areas, backgrounding and service-worker updates on every device.
+
 Pass two checks:
 
 - Compare ordinary steering with the stronger short dash, release braking and
@@ -294,8 +318,8 @@ Artwork and composition QA:
 - Ready screens preview connected players and hide the inactive thumb deck.
   Start requires two players. Countdown, pause and host loss appear on the arena;
   active play clears the overlay. Help & players contains the full roster and
-  names; Escape/Close returns focus to its opener. Finished rounds retain the
-  existing results/rematch behavior. Controls, dash and arena pressure use the
+  names; Escape/Close returns focus to its opener. Finished rounds show the
+  arena result card and host rematch control. Controls, dash and arena pressure use the
   pass-two behavior above.
 - Review phone/tablet/desktop/landscape snapshots from tests/sumo.spec.ts and the
   two/eight-player Sumo cases in tests/game.spec.ts, with genuine Darwin/Linux
@@ -310,8 +334,7 @@ Artwork and composition QA:
   normal verify run for the final commit, following AGENTS.md.
 - Physical iPhone/iPad checks remain required: installed portrait/landscape fit,
   actual safe areas, readable small bumper numbers, thumb comfort, simultaneous
-  movement/dash, and contrast in bright rooms. Continue gameplay-feel tuning in
-  the effects/results pass.
+  movement/dash, and contrast in bright rooms. Use the feedback/results checks above for the final polish pass.
 
 QA inventory:
 

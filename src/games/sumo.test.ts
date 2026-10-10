@@ -1,3 +1,4 @@
+import { initialGrid } from "../game/grid";
 import { expect, it } from "vitest";
 import { newRoom } from "./model";
 import { validRoom } from "./validate";
@@ -87,6 +88,8 @@ it("transfers a head-on bump without repeated kicks and separates coincident cen
   s.bumpers[0] = { ...s.bumpers[0], x: 0.465, vx: 0.4 };
   s.bumpers[1] = { ...s.bumpers[1], x: 0.53, y: 0.5 };
   const bumped = stepSumo(s);
+  expect(bumped.bumpers.map((b) => b.impact)).toEqual([1, 1]);
+  expect(stepSumo(bumped).bumpers.map((b) => b.impact)).toEqual([1, 1]);
   expect(bumped.bumpers[1].vx).toBeGreaterThan(0.35);
   expect(bumped.bumpers[0].vx).toBeLessThan(0.05);
   const speed = bumped.bumpers[1].vx;
@@ -94,6 +97,7 @@ it("transfers a head-on bump without repeated kicks and separates coincident cen
   s.bumpers[0].x = s.bumpers[1].x = 0.5;
   s.bumpers[0].vx = 0;
   const apart = stepSumo(s);
+  expect(apart.bumpers.every((b) => b.impact === undefined)).toBe(true);
   expect(apart.bumpers[1].x - apart.bumpers[0].x).toBeCloseTo(2 * SUMO_BODY);
 });
 it("rings out simultaneously, stops eliminated movement and resolves wins and simultaneous draws without a timed survivor win", () => {
@@ -168,6 +172,11 @@ it("validates a full eight-player simulation and bounds malformed wire fields", 
     ["vy", Infinity],
     ["dx", 2],
     ["cooldown", 241],
+    ["impact", -1],
+    ["impact", 0],
+    ["impact", 0.5],
+    ["impact", 1],
+    ["impact", "1"],
     ["inputFor", 46],
     ["alive", 1],
     ["id", ""],
@@ -230,4 +239,27 @@ it("rejects pressure ticks outside the bounded wire range and rejects shared sur
   expect(
     validRoom(room({ ...s, ticks: 60 * SUMO_HZ, phase: "finished" })),
   ).toBe(false);
+});
+
+it("accepts legacy snapshots without impact ticks and rejects malformed contact ticks at the protocol boundary", () => {
+  const state = playing();
+  state.ticks = 10;
+  const wire = () =>
+    JSON.stringify({
+      v: 2,
+      type: "state",
+      grid: initialGrid(),
+      room: room(state),
+      players: [],
+    });
+  expect(validRoom(room(state))).toBe(true);
+  expect(parseMessage(wire())).not.toBeNull();
+  state.bumpers[0].impact = 8;
+  expect(validRoom(room(state))).toBe(true);
+  expect(parseMessage(wire())).not.toBeNull();
+  for (const impact of [11, -1, 0, 1.5, "8", null]) {
+    Object.assign(state.bumpers[0], { impact });
+    expect(validRoom(room(state))).toBe(false);
+    expect(parseMessage(wire())).toBeNull();
+  }
 });

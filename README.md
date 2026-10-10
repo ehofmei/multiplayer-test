@@ -263,11 +263,21 @@ A participant leaving resets the round; a spectator leaving preserves it.
 Clients smooth confirmed bumper positions without predicting ring-outs; the host
 renders its own physics immediately. Paused/eliminated positions stay exact, with
 reduced-motion support. Optional local sounds
-announce start, dash, your ring-out and the result; sound remains muted by default.
+announce start, dash, firm impacts, your ring-out and the result; sound remains muted by default.
+Confirmed firm contacts show short sparks; contact ticks persist between paired
+snapshots so clients can see them too. Ring-outs produce a colored flare and a
+numbered OUT label, then leave a dimmed bumper for spectators. Short feedback
+expires without replaying on pause/resume or rematch. Reduced motion keeps the
+flashes static and skips the result entrance animation. The arena result card
+shows the winning bumper and name, or a distinct simultaneous draw. Inactive
+thumb controls disappear; Bump Again stays available to the host and the full
+roster remains in Help & players.
 Update **every device** before selecting Sumo Bumpers: older builds cannot validate
 its state or inputs. Update every device for the continued-pressure rules too:
-older Sumo builds reject snapshots beyond sixty seconds. No wire fields or input
-actions were added. Pairing, offline support and saved preferences are unchanged.
+older Sumo builds reject snapshots beyond sixty seconds. Snapshots now include an optional, bounded last-contact tick per bumper; older
+snapshots without it remain accepted, but all devices need the latest build to
+share collision feedback. No new input actions were added. Pairing, offline
+support and saved preferences are unchanged.
 
 **Spaceship Panic** is a timed cooperative score chase for two to eight players,
 with solo practice available. The host chooses 1, 2, or 3 minutes (2 recommended

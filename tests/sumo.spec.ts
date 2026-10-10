@@ -309,3 +309,230 @@ test("Sumo dash confirms a burst, fills recharge and keeps playing past sixty se
     await context.close();
   }
 });
+
+// Feedback QA: confirmed paired collision, no replay, elimination while others
+// play, winner/draw, long names, rematch reset, reduced motion, result fit/focus.
+test("Sumo feedback confirms collisions and celebrates a paired winner", async ({
+  page: host,
+  browser,
+}) => {
+  test.setTimeout(90_000);
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
+  try {
+    const client = await context.newPage();
+    await host.setViewportSize({ width: 390, height: 844 });
+    await host.goto("./");
+    await host.getByLabel("Your name").fill("Alex");
+    await host
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await chooseGame(host, "Sumo Bumpers");
+    await join(host, client, "Emma with a very long name");
+    await host.emulateMedia({ reducedMotion: "reduce" });
+    await host.clock.install();
+    await host.clock.pauseAt(new Date(Date.now() + 1000));
+    await host
+      .getByRole("button", { name: "Start Bumpers", exact: true })
+      .click();
+    await host.clock.runFor(3050);
+    await client.locator(".sumo-court").focus();
+    await client.keyboard.down("ArrowLeft");
+    await client.keyboard.press("Space");
+    await expect(host.getByTestId("sumo-bumper-1")).toHaveAttribute(
+      "data-cooldown",
+      "240",
+    );
+    await host.locator(".sumo-court").focus();
+    await host.keyboard.down("ArrowRight");
+    await host.keyboard.press("Space");
+    // Advance to the first confirmed contact without expiring its short feedback.
+    for (let i = 0; i < 30; i++) {
+      await host.clock.runFor(10);
+      if (await host.locator(".sumo-effect-impact").count()) break;
+    }
+    await expect(host.locator(".sumo-effect-impact")).toHaveCount(2);
+    await host.clock.runFor(50); // Reach the next 20Hz paired snapshot.
+    await expect(client.locator(".sumo-effect-impact").first()).toBeAttached();
+    await expect(host.locator(".sumo-effect-burst").first()).toHaveCSS(
+      "animation-name",
+      "none",
+    );
+    await host.keyboard.up("ArrowRight");
+    await client.keyboard.up("ArrowLeft");
+    await expectStableScreenshot(
+      host,
+      ".sumo-game-card",
+      `sumo-impact-phone-${process.platform}.png`,
+      { maxDiffPixels: 160 },
+    );
+    await host.clock.runFor(300);
+    await expect(host.locator(".sumo-effect-impact")).toHaveCount(0);
+    await host.clock.runFor(2200);
+    // A real outward dash ends the round; the surviving long name remains readable.
+    await host.keyboard.down("ArrowLeft");
+    await host.keyboard.press("Space");
+    await host.clock.runFor(1200);
+    await host.keyboard.up("ArrowLeft");
+    await expect(host.locator(".sumo-result")).toHaveAttribute(
+      "data-result",
+      "winner",
+    );
+    await expect(host.locator(".sumo-result strong")).toHaveText(
+      "Emma with a very long name",
+    );
+    await expect(client.locator(".sumo-result-verdict")).toHaveText("You win!");
+    await expect(host.locator(".sumo-controls")).toBeHidden();
+    await expect(host.locator(".sumo-effect")).toHaveCount(0);
+    for (const [name, viewport] of [
+      ["phone", { width: 390, height: 844 }],
+      ["tablet", { width: 768, height: 1024 }],
+      ["desktop", { width: 1280, height: 900 }],
+      ["landscape", { width: 844, height: 390 }],
+      ["short-phone", { width: 320, height: 700 }],
+    ] as const) {
+      await host.setViewportSize(viewport);
+      if (name === "short-phone")
+        await host.addStyleTag({
+          content:
+            ":root { --safe-area-bottom:20px; font-family:Arial,sans-serif; line-height:1.3; }",
+        });
+      await expectScreenFits(host);
+      const result = (await host.locator(".sumo-result").boundingBox())!;
+      for (const selector of [
+        ".sumo-result-kicker",
+        ".sumo-result strong",
+        ".sumo-result-verdict",
+        ".sumo-result small",
+      ]) {
+        const text = (await host.locator(selector).boundingBox())!;
+        expect(text.y).toBeGreaterThanOrEqual(result.y);
+        expect(text.y + text.height).toBeLessThanOrEqual(
+          result.y + result.height,
+        );
+      }
+      await expectStableScreenshot(
+        host,
+        ".sumo-game-card",
+        `sumo-winner-${name}-${process.platform}.png`,
+        { maxDiffPixels: 160 },
+      );
+    }
+    await showHelp(host);
+    await expect(host.getByRole("dialog")).toContainText(
+      "Emma with a very long name",
+    );
+    await host.keyboard.press("Escape");
+    await expect(
+      host.getByRole("button", { name: "Controls & help", exact: true }),
+    ).toBeFocused();
+    await host.getByRole("button", { name: "Bump Again", exact: true }).click();
+    await expect(client.locator(".sumo-arena-message strong")).toHaveText("3");
+    await expect(host.locator(".sumo-result")).toHaveCount(0);
+    await expect(host.locator(".sumo-effect")).toHaveCount(0);
+    await host.clock.runFor(3050);
+    await expect(host.locator(".sumo-game-card")).toHaveAttribute(
+      "data-phase",
+      "playing",
+    );
+    await expect(host.locator(".sumo-effect")).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
+});
+
+test("Sumo feedback marks a ring-out while others play and distinguishes a draw", async ({
+  page: host,
+  browser,
+}) => {
+  test.setTimeout(90_000);
+  const contexts = await Promise.all([
+    browser.newContext(),
+    browser.newContext(),
+  ]);
+  try {
+    const clients = await Promise.all(contexts.map((c) => c.newPage()));
+    await host.setViewportSize({ width: 390, height: 844 });
+    await host.goto("./");
+    await host.getByLabel("Your name").fill("Alex");
+    await host
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await chooseGame(host, "Sumo Bumpers");
+    await join(host, clients[0], "Emma");
+    await join(host, clients[1], "Sam");
+    await host.emulateMedia({ reducedMotion: "reduce" });
+    await host.clock.install();
+    await host.clock.pauseAt(new Date(Date.now() + 1000));
+    await host
+      .getByRole("button", { name: "Start Bumpers", exact: true })
+      .click();
+    await host.clock.runFor(3050);
+    await host.locator(".sumo-court").focus();
+    await host.keyboard.down("ArrowLeft");
+    await host.keyboard.press("Space");
+    for (let i = 0; i < 40; i++) {
+      await host.clock.runFor(10);
+      if (await host.locator(".sumo-effect-out").count()) break;
+    }
+    await host.keyboard.up("ArrowLeft");
+    await expect(host.locator(".sumo-effect-out")).toContainText("1 OUT!");
+    await expect(host.locator(".sumo-effect-out .sumo-effect-burst")).toHaveCSS(
+      "animation-name",
+      "none",
+    );
+    await expect(host.locator(".sumo-status")).toContainText(
+      "2 bumpers remain",
+    );
+    await expect(
+      host.getByRole("button", { name: "Dash", exact: true }),
+    ).toBeDisabled();
+    await expectStableScreenshot(
+      host,
+      ".sumo-game-card",
+      `sumo-ring-out-phone-${process.platform}.png`,
+      { maxDiffPixels: 160 },
+    );
+    await host.clock.runFor(850);
+    await expect(host.locator(".sumo-effect")).toHaveCount(0);
+    await host
+      .getByRole("button", { name: "Pause Bumpers", exact: true })
+      .click();
+    await host
+      .getByRole("button", { name: "Resume Bumpers", exact: true })
+      .click();
+    await host.clock.runFor(3050);
+    await expect(host.locator(".sumo-effect")).toHaveCount(0);
+    // Reset for a symmetric, simultaneous ring-out using the actual pressure rule.
+    await host
+      .getByRole("button", { name: "Pause Bumpers", exact: true })
+      .click();
+    // The existing leave/reset flow provides a clean two-player rematch.
+    await clients[1].close();
+    await expect(
+      host.getByRole("button", { name: "Start Bumpers", exact: true }),
+    ).toBeVisible();
+    await host
+      .getByRole("button", { name: "Start Bumpers", exact: true })
+      .click();
+    await host.clock.runFor(3050);
+    await host.clock.runFor(50_000);
+    await expect(host.locator(".sumo-result")).toHaveAttribute(
+      "data-result",
+      "draw",
+    );
+    await expect(clients[0].locator(".sumo-result strong")).toHaveText(
+      "It’s a draw!",
+    );
+    await expectScreenFits(host);
+    await expectStableScreenshot(
+      host,
+      ".sumo-game-card",
+      `sumo-draw-phone-${process.platform}.png`,
+      { maxDiffPixels: 160 },
+    );
+  } finally {
+    await Promise.all(contexts.map((c) => c.close()));
+  }
+});

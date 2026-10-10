@@ -8,6 +8,7 @@ import {
   sumoRadius,
   type SumoState,
 } from "../games/sumo";
+import { SumoEffects } from "./SumoEffects";
 import { SumoArenaArtwork, SumoBumperArtwork } from "./SumoArtwork";
 import { cycleColors } from "../games/cycle";
 import type { Player } from "../network/protocol";
@@ -152,6 +153,9 @@ export function SumoGame({
         };
       });
   const alive = game.bumpers.filter((b) => b.alive);
+  const winner =
+    game.phase === "finished" && alive.length === 1 ? alive[0] : null;
+  const winnerSeat = winner ? game.bumpers.indexOf(winner) : -1;
   const name = (id: string) =>
     players.find((p) => p.id === id)?.name ?? "Player";
   const roster = (
@@ -251,7 +255,9 @@ export function SumoGame({
         >
           {me
             ? !me.alive
-              ? "You’re out. Watch the remaining bumpers."
+              ? game.phase === "finished"
+                ? "Next round, new chance"
+                : "You’re out. Watch the remaining bumpers."
               : `You · ${seat + 1} · ${name(me.id)}`
             : configure
               ? players.length < 2
@@ -320,7 +326,80 @@ export function SumoGame({
                 />
               </g>
             ))}
+            <SumoEffects game={game} connected={connected} />
           </svg>
+          {connected && game.phase === "finished" && (
+            <div
+              className="sumo-result"
+              data-result={winner ? "winner" : "draw"}
+              role="group"
+              aria-label="Round result"
+            >
+              <span className="sumo-result-kicker">
+                {winner
+                  ? "Last bumper standing"
+                  : "Everyone went over the edge"}
+              </span>
+              <svg
+                className="sumo-result-art"
+                viewBox="-100 -100 200 200"
+                aria-hidden="true"
+              >
+                <path
+                  className="sumo-result-rays"
+                  d="M0 -76 V-91 M54 -54 L65 -65 M76 0 H91 M54 54 L65 65 M0 76 V91 M-54 54 L-65 65 M-76 0 H-91 M-54 -54 L-65 -65"
+                  fill="none"
+                  stroke="#ffe09a"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                />
+                {winner ? (
+                  <g transform="scale(1.4)">
+                    <SumoBumperArtwork
+                      color={cycleColors[winnerSeat]}
+                      number={winnerSeat + 1}
+                      local={winner.id === session.me.id}
+                      alive
+                      paint={paint}
+                    />
+                  </g>
+                ) : (
+                  <>
+                    <circle
+                      r="51"
+                      fill="#263b56"
+                      stroke="#91efdb"
+                      strokeWidth="4"
+                    />
+                    <text
+                      y="17"
+                      textAnchor="middle"
+                      fontSize="54"
+                      fontWeight="850"
+                      fill="#fff1bc"
+                    >
+                      =
+                    </text>
+                  </>
+                )}
+              </svg>
+              <strong title={winner ? name(winner.id) : undefined}>
+                {winner ? name(winner.id) : "It’s a draw!"}
+              </strong>
+              <span className="sumo-result-verdict">
+                {winner
+                  ? winner.id === session.me.id
+                    ? "You win!"
+                    : "Wins the round!"
+                  : "No survivor this round"}
+              </span>
+              <small>
+                {session.role === "host"
+                  ? "Ready for a rematch?"
+                  : "The host can start a rematch"}
+              </small>
+            </div>
+          )}
           {(!connected ||
             ["ready", "countdown", "paused"].includes(game.phase)) && (
             <div className="sumo-arena-message" data-phase={game.phase}>
@@ -454,7 +533,6 @@ export function SumoGame({
           </span>
         </div>
       </div>
-      {game.phase === "finished" && roster}
       <div className="sumo-footer">
         <GameHelp label="Help & players">
           <p className="muted sumo-help">

@@ -216,6 +216,7 @@ export function validRoom(v: unknown): v is Room {
           Math.hypot(b.dx, b.dy) <= 1.000001 &&
           integer(b.inputFor, 0, SUMO_LEASE) &&
           integer(b.cooldown, 0, SUMO_COOLDOWN) &&
+          (b.impact === undefined || integer(b.impact, 1, s.ticks as number)) &&
           (b.alive ||
             (b.inputFor === 0 &&
               b.dx === 0 &&

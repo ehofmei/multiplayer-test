@@ -102,6 +102,9 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
     sumo: room.sumo
       ? {
           phase: room.sumo.phase,
+          ticks: room.sumo.ticks,
+          impacts: room.sumo.bumpers.map((b) => b.impact ?? 0),
+          remaining: room.sumo.bumpers.filter((b) => b.alive).length,
           alive: room.sumo.bumpers.find((b) => b.id === me)?.alive,
           cooldown: room.sumo.bumpers.find((b) => b.id === me)?.cooldown,
         }
@@ -190,12 +193,26 @@ export function soundEvents(
     return [after.lit >= before.lit ? "on" : "off"];
   if (after.sumo && before.sumo) {
     if (after.sumo.phase === "finished" && before.sumo.phase !== "finished")
-      return [after.sumo.alive ? "win" : "finish"];
+      return [
+        after.sumo.remaining === 1 && after.sumo.alive ? "win" : "finish",
+      ];
     if (before.sumo.alive && after.sumo.alive === false) return ["miss"];
     if (after.sumo.phase === "playing" && before.sumo.phase === "countdown")
       return ["go"];
     if ((after.sumo.cooldown ?? 0) > (before.sumo.cooldown ?? 0))
       return ["sumo-dash"];
+    if (
+      after.sumo.phase === "playing" &&
+      before.sumo.phase === "playing" &&
+      after.sumo.ticks >= before.sumo.ticks &&
+      after.sumo.ticks - before.sumo.ticks <= 120 &&
+      after.sumo.impacts.some(
+        (tick, i) =>
+          tick > (before.sumo!.impacts[i] ?? 0) &&
+          after.sumo!.ticks - tick <= 24,
+      )
+    )
+      return ["sumo-hit"];
   }
   if (after.cycle && before.cycle) {
     if (after.cycle.phase === "finished" && before.cycle.phase !== "finished")

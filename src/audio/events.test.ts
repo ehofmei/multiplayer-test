@@ -261,6 +261,7 @@ it("announces Sumo starts, dashes, ring-outs and outcomes once", () => {
   before = frame(s);
   s.room.sumo.phase = "finished";
   expect(soundEvents(before, frame(s))).toEqual(["finish"]);
+  s.room.sumo.bumpers[1].alive = s.room.sumo.bumpers[2].alive = false;
   s.room.sumo.bumpers[0].alive = true;
   expect(soundEvents(before, frame(s))).toEqual(["win"]);
   expect(soundEvents(frame(s), frame(s))).toEqual([]);
@@ -428,4 +429,21 @@ it("plays Glow locks, gains, zero gains and shared victory once, without replay 
   expect(soundEvents(frame(s), soundFrame(s, "spectator", "session"))).toEqual(
     [],
   );
+});
+
+it("announces shared Sumo impacts once and uses a neutral finish for a draw", () => {
+  const s = snapshot();
+  s.room = newRoom("sumo", 1);
+  s.room.sumo = newSumo(["a", "b"]);
+  s.room.sumo.phase = "playing";
+  let before = frame(s);
+  s.room.sumo.ticks = 6;
+  s.room.sumo.bumpers.forEach((b) => (b.impact = 6));
+  expect(soundEvents(before, frame(s))).toEqual(["sumo-hit"]);
+  expect(soundEvents(frame(s), frame(s))).toEqual([]);
+  expect(soundEvents(null, frame(s))).toEqual([]);
+  before = frame(s);
+  s.room.sumo.phase = "finished";
+  s.room.sumo.bumpers.forEach((b) => (b.alive = false));
+  expect(soundEvents(before, frame(s))).toEqual(["finish"]);
 });

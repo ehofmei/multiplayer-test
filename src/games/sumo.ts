@@ -18,6 +18,8 @@ export interface Bumper {
   inputFor: number;
   cooldown: number;
   alive: boolean;
+  // Last firm contact tick survives the gap between client snapshots.
+  impact?: number;
 }
 export interface SumoState {
   phase: "ready" | "countdown" | "playing" | "paused" | "finished";
@@ -174,6 +176,12 @@ export function stepSumo(state: SumoState): SumoState {
         b.y += ny * overlap;
         const approaching = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
         if (approaching > 0) {
+          if (
+            approaching > 0.12 &&
+            state.ticks + 1 - Math.max(a.impact ?? -12, b.impact ?? -12) >= 12
+          ) {
+            a.impact = b.impact = state.ticks + 1;
+          }
           const impulse = approaching * 0.95;
           a.vx -= impulse * nx;
           a.vy -= impulse * ny;
