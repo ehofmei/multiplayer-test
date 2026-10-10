@@ -1,12 +1,7 @@
 import { GameSurface, GameHelp } from "./AppLayout";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import {
-  SUMO_BODY,
-  SUMO_HZ,
-  SUMO_LIMIT,
-  sumoRadius,
-  type SumoState,
-} from "../games/sumo";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { SUMO_HZ, SUMO_LIMIT, sumoRadius, type SumoState } from "../games/sumo";
+import { SumoArenaArtwork, SumoBumperArtwork } from "./SumoArtwork";
 import { cycleColors } from "../games/cycle";
 import type { Player } from "../network/protocol";
 import type { Session } from "../network/session";
@@ -31,6 +26,7 @@ export function SumoGame({
   session: Session;
   connected: boolean;
 }) {
+  const paint = `sumo-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const court = useRef<HTMLDivElement>(null);
   const bodies = useRef<(SVGGElement | null)[]>([]);
   const positions = useRef<Record<string, { x: number; y: number }>>({});
@@ -119,9 +115,41 @@ export function SumoGame({
     draw();
     return () => cancelAnimationFrame(frame);
   }, [game.ticks, game.phase, connected]);
+  const shownBumpers = game.bumpers.length
+    ? game.bumpers
+    : players.map((player, i) => {
+        const angle = Math.PI + (i * Math.PI * 2) / players.length;
+        return {
+          id: player.id,
+          x: 0.5 + Math.cos(angle) * 0.25,
+          y: 0.5 + Math.sin(angle) * 0.25,
+          alive: true,
+          dx: 0,
+          dy: 0,
+          cooldown: 0,
+        };
+      });
   const alive = game.bumpers.filter((b) => b.alive);
   const name = (id: string) =>
     players.find((p) => p.id === id)?.name ?? "Player";
+  const roster = (
+    <ol className="cycle-riders" aria-label="Bumpers">
+      {shownBumpers.map((b, i) => (
+        <li key={b.id} className={b.alive ? "" : "crashed"}>
+          <span className="cycle-number" style={{ background: cycleColors[i] }}>
+            {i + 1}
+          </span>
+          <span className="cycle-name">
+            {name(b.id)}
+            {b.id === session.me.id ? " · You" : ""}
+          </span>
+          <small>
+            {game.phase === "ready" ? "Ready" : b.alive ? "In" : "Out"}
+          </small>
+        </li>
+      ))}
+    </ol>
+  );
   const status = !connected
     ? "Host disconnected"
     : game.phase === "ready"
@@ -181,13 +209,33 @@ export function SumoGame({
         if (!e.currentTarget.contains(e.relatedTarget)) stop();
       }}
     >
-      <div className="board-heading">
+      <div className="sumo-heading">
         <h2>Sumo Bumpers</h2>
-        <span>{Math.ceil((SUMO_LIMIT - game.ticks) / SUMO_HZ)}s</span>
+        <span className="sumo-timer" aria-label="Round clock">
+          {game.phase === "ready"
+            ? "2–8 players"
+            : `${Math.ceil((SUMO_LIMIT - game.ticks) / SUMO_HZ)}s`}
+        </span>
       </div>
-      <p className="sumo-status" aria-live="polite">
-        {status}
-      </p>
+      <div className="sumo-hud">
+        <p className="sumo-status" aria-live="polite">
+          {status}
+        </p>
+        <p
+          className="sumo-feedback"
+          title={me ? `You are bumper ${seat + 1} · ${name(me.id)}` : undefined}
+        >
+          {me
+            ? !me.alive
+              ? "You’re out. Watch the remaining bumpers."
+              : `You · ${seat + 1} · ${name(me.id)}`
+            : configure
+              ? players.length < 2
+                ? "Add another player to start."
+                : "Everyone here bumps"
+              : "You’re watching. Join the next round."}
+        </p>
+      </div>
       <GameSurface>
         <div
           className="sumo-court"
@@ -198,31 +246,21 @@ export function SumoGame({
           data-tick={game.ticks}
         >
           <svg viewBox="0 0 1000 1000" aria-hidden="true">
-            <circle cx="500" cy="500" r="460" fill="#26483f" />
-            <circle
-              cx="500"
-              cy="500"
-              r={sumoRadius(game.ticks) * 1000}
-              fill="#122c29"
-              stroke="#c9ee87"
-              strokeWidth="8"
+            <SumoArenaArtwork
+              radius={sumoRadius(game.ticks) * 1000}
+              paint={paint}
             />
-            <circle
-              cx="500"
-              cy="500"
-              r="70"
-              fill="none"
-              stroke="#527064"
-              strokeWidth="3"
-            />
-            <path d="M480 500h40M500 480v40" stroke="#527064" strokeWidth="3" />
-            {game.bumpers.map((b, i) => (
+            {shownBumpers.map((b, i) => (
               <g
                 key={b.id}
                 ref={(element) => {
                   bodies.current[i] = element;
                 }}
-                data-testid={`sumo-bumper-${i}`}
+                transform={`translate(${b.x * 1000} ${b.y * 1000})`}
+                data-testid={
+                  game.bumpers.length ? `sumo-bumper-${i}` : undefined
+                }
+                data-preview={!game.bumpers.length || undefined}
                 data-dx={b.dx}
                 data-dy={b.dy}
                 data-x={b.x}
@@ -231,42 +269,48 @@ export function SumoGame({
                 data-cooldown={b.cooldown}
                 opacity={b.alive ? 1 : 0.4}
               >
-                <circle
-                  r={SUMO_BODY * 1000 + 5}
-                  fill={cycleColors[i]}
-                  stroke={i === seat ? "#fff" : "#527064"}
-                  strokeWidth={i === seat ? 9 : 4}
+                <SumoBumperArtwork
+                  color={cycleColors[i]}
+                  number={i + 1}
+                  local={b.id === session.me.id}
+                  alive={b.alive}
+                  paint={paint}
                 />
-                <circle
-                  r={SUMO_BODY * 1000 - 7}
-                  fill="none"
-                  stroke="#122c29"
-                  strokeWidth="4"
-                />
-                <text
-                  y="1"
-                  dominantBaseline="central"
-                  textAnchor="middle"
-                  fontSize="35"
-                  fontWeight="800"
-                  fill="#122c29"
-                >
-                  {b.alive ? i + 1 : "×"}
-                </text>
               </g>
             ))}
-            {game.phase === "ready" && (
-              <text
-                x="500"
-                y="620"
-                fill="#c9ee87"
-                textAnchor="middle"
-                fontSize="35"
-              >
-                HOLD YOUR GROUND
-              </text>
-            )}
           </svg>
+          {(!connected ||
+            ["ready", "countdown", "paused"].includes(game.phase)) && (
+            <div className="sumo-arena-message" data-phase={game.phase}>
+              <span>
+                {!connected
+                  ? "Connection lost"
+                  : game.phase === "countdown"
+                    ? "Get ready"
+                    : game.phase === "paused"
+                      ? "Take a breather"
+                      : "Bumper arena"}
+              </span>
+              <strong>
+                {!connected
+                  ? "Host disconnected"
+                  : game.phase === "countdown"
+                    ? Math.ceil(game.countdown / SUMO_HZ)
+                    : game.phase === "paused"
+                      ? "Paused"
+                      : "Hold your ground"}
+              </strong>
+              {game.phase !== "countdown" && (
+                <small>
+                  {!connected
+                    ? "Waiting for the host"
+                    : game.phase === "ready"
+                      ? "Steer · Dash · Stay in"
+                      : "The ring is frozen"}
+                </small>
+              )}
+            </div>
+          )}
         </div>
       </GameSurface>
       <div className="sumo-controls">
@@ -350,97 +394,43 @@ export function SumoGame({
           </span>
         </div>
       </div>
-      <p className="sumo-feedback">
-        {me
-          ? !me.alive
-            ? "You’re out. Watch the remaining bumpers."
-            : `You are bumper ${seat + 1} · ${name(me.id)}`
-          : configure
-            ? "2–8 players · Everyone here bumps."
-            : "You’re watching. Join the next round."}
-      </p>
-      {configure && (
-        <>
-          {!!game.bumpers.length && (
-            <ol className="cycle-riders" aria-label="Bumpers">
-              {game.bumpers.map((b, i) => (
-                <li key={b.id} className={b.alive ? "" : "crashed"}>
-                  <span
-                    className="cycle-number"
-                    style={{ background: cycleColors[i] }}
-                  >
-                    {i + 1}
-                  </span>
-                  <span className="cycle-name">
-                    {name(b.id)}
-                    {b.id === session.me.id ? " · You" : ""}
-                  </span>
-                  <small>{b.alive ? "In" : "Out"}</small>
-                </li>
-              ))}
-            </ol>
-          )}
-        </>
-      )}
-      <GameHelp>
-        <p className="muted sumo-help">
-          Drag the thumb pad to move; release to brake. Move and tap Dash to
-          bump harder (2s recharge). Keyboard: arrows / WASD + Space. Your
-          center crossing the shrinking edge means you’re out. Last survivor
-          wins.
-        </p>
-        {!configure && (
-          <>
-            {!!game.bumpers.length && (
-              <ol className="cycle-riders" aria-label="Bumpers">
-                {game.bumpers.map((b, i) => (
-                  <li key={b.id} className={b.alive ? "" : "crashed"}>
-                    <span
-                      className="cycle-number"
-                      style={{ background: cycleColors[i] }}
-                    >
-                      {i + 1}
-                    </span>
-                    <span className="cycle-name">
-                      {name(b.id)}
-                      {b.id === session.me.id ? " · You" : ""}
-                    </span>
-                    <small>{b.alive ? "In" : "Out"}</small>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </>
-        )}
-      </GameHelp>
-      {session.role === "host" ? (
-        configure ? (
-          <>
+      {game.phase === "finished" && roster}
+      <div className="sumo-footer">
+        <GameHelp label="Help & players">
+          <p className="muted sumo-help">
+            Drag the thumb pad to move; release to brake. Move and tap Dash to
+            bump harder (2s recharge). Keyboard: arrows / WASD + Space. Your
+            center crossing the shrinking edge means you’re out. Last survivor
+            wins.
+          </p>
+          {roster}
+        </GameHelp>
+        {session.role === "host" ? (
+          configure ? (
+            <>
+              <button
+                disabled={players.length < 2}
+                onClick={() => session.startSumo()}
+              >
+                {game.phase === "finished" ? "Bump Again" : "Start Bumpers"}
+              </button>
+            </>
+          ) : (
             <button
-              disabled={players.length < 2}
-              onClick={() => session.startSumo()}
+              className="secondary"
+              onClick={() =>
+                game.phase === "paused"
+                  ? session.resumeSumo()
+                  : session.pauseGames()
+              }
             >
-              {game.phase === "finished" ? "Bump Again" : "Start Bumpers"}
+              {game.phase === "paused" ? "Resume Bumpers" : "Pause Bumpers"}
             </button>
-            {players.length < 2 && (
-              <p className="muted">Add another player to start.</p>
-            )}
-          </>
+          )
         ) : (
-          <button
-            className="secondary"
-            onClick={() =>
-              game.phase === "paused"
-                ? session.resumeSumo()
-                : session.pauseGames()
-            }
-          >
-            {game.phase === "paused" ? "Resume Bumpers" : "Pause Bumpers"}
-          </button>
-        )
-      ) : (
-        configure && <p className="muted">Waiting for the host to start.</p>
-      )}
+          configure && <p className="muted">Waiting for the host to start.</p>
+        )}
+      </div>
     </section>
   );
 }

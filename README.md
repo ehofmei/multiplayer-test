@@ -225,6 +225,16 @@ older builds cannot validate its room snapshots. No pairing protocol or saved
 identity/sound storage change is required.
 
 **Sumo Bumpers** is a competitive ring-out game for two to eight players.
+Its arcade screen uses locally drawn bumper bots with numbered shells, rubber
+rims, visors and ground shadows on a raised, tiled arena. A white halo and
+chevron mark your bumper; the illuminated cyan ring is the actual elimination
+boundary, and striped amber flooring marks the area outside it. The compact HUD,
+thumb deck and footer leave the square arena as much viewport space as possible.
+Ready screens preview the connected players; countdown and pause messages appear
+on the arena. **Help & players** opens the instructions and full player roster,
+including names truncated in the HUD. The surrounding room controls share the
+arena's dark palette. Artwork is bundled SVG and needs no external assets.
+
 Everyone present at Start Bumpers joins; late arrivals watch until Bump Again.
 A three-second countdown gives everyone time to find their numbered, colored
 bumper. Drag the large thumb pad in any direction to accelerate, and release to

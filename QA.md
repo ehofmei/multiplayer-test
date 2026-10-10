@@ -257,12 +257,38 @@ remain useful; browser emulation does not establish device performance or latenc
 
 ## Sumo Bumpers
 
+Artwork and composition QA:
+
+- Check the dark room chrome, raised arena, tiled floor, cyan playable boundary,
+  striped danger zone, numbered bumper bots, and white local-player halo/chevron.
+  Decorative shells use the existing collision radius; the boundary uses the
+  simulation radius. Confirm the danger zone expands as the ring shrinks.
+- Ready screens preview connected players and hide the inactive thumb deck.
+  Start requires two players. Countdown, pause and host loss appear on the arena;
+  active play clears the overlay. Help & players contains the full roster and
+  names; Escape/Close returns focus to its opener. Finished rounds retain the
+  existing results/rematch behavior. Dash and the sixty-second rule are unchanged.
+- Review phone/tablet/desktop/landscape snapshots from tests/sumo.spec.ts and the
+  two/eight-player Sumo cases in tests/game.spec.ts, with genuine Darwin/Linux
+  pairs. Check 320×700 with a 20px bottom safe area, taller fonts, reduced motion,
+  long names, square arena bounds and full controls/footer clearance. The old
+  portable court snapshot is superseded by platform-specific court snapshots.
+- Linux renders are obtained on the non-deploying codex/sumo-artwork branch with
+  .github/workflows/sumo-artwork-review.yml; generation is scoped to the Sumo
+  specs. After reviewing the returned images, disable baseline generation and
+  require a separate successful normal verify run for the final commit.
+- Physical iPhone/iPad checks remain required: installed portrait/landscape fit,
+  actual safe areas, readable small bumper numbers, thumb comfort, simultaneous
+  movement/dash, and contrast in bright rooms. Continue gameplay-feel tuning in
+  the controls/dash/pressure and effects/results passes.
+
 QA inventory:
 
 - Host starts 2–8 players; three-second countdown, numbered/color seats, moving
   collisions, ring-outs, simultaneous draw, shrinking ring, sixty-second shared
   win, and fresh rematch. Late arrivals watch, eliminated controls disable.
-- 144px movement pad with capture/release/cancel and a 96×72px Dash button. Verify
+- 104–120px movement pad (96px in landscape) with capture/release/cancel and a
+  92px-wide Dash button. Verify
   simultaneous two-thumb movement/dash, diagonal normalization, braking, recharge,
   lost-input expiry, focus loss, arrows/WASD + Space, and normal surrounding scrolling.
 - Pause/resume clears velocity/input and freezes ring/recharge timers; pairing,

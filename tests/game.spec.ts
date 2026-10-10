@@ -1689,7 +1689,11 @@ test("Sumo Bumpers pairs, moves by thumb pad and keyboard, dashes, pauses, finis
       client.getByRole("button", { name: "Dash", exact: true }),
     ).toBeDisabled();
     await expect(host.locator(".sumo-court")).toBeFocused();
-    await expectStableScreenshot(host, ".sumo-court", "sumo-court.png");
+    await expectStableScreenshot(
+      host,
+      ".sumo-court",
+      `sumo-court-${process.platform}.png`,
+    );
     await host.clock.runFor(3050);
     await expect(client.locator(".sumo-status")).toContainText(
       "2 bumpers remain",
@@ -1948,6 +1952,13 @@ test("eight Sumo bumpers fit narrow phones, clear movement on background and han
       .click();
     const client = clients[0];
     await expect(client.locator(".cycle-riders li")).toHaveCount(8);
+    await expectScreenFits(client);
+    await expectStableScreenshot(
+      client,
+      ".sumo-game-card",
+      `sumo-eight-phone-${process.platform}.png`,
+      { maxDiffPixels: 160 },
+    );
     await client.addStyleTag({
       content: ":root{font-family:Arial,sans-serif;line-height:1.3}",
     });

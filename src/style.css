@@ -5428,3 +5428,307 @@ input.golf-power-input {
     opacity: 0.45;
   }
 }
+
+/* Sumo's arcade stage: one compact HUD, a square arena, and a thumb deck.
+   Artwork stays in simulation coordinates; this pass does not change physics. */
+.app-shell .games-card.sumo-game-card:not(.game-library) {
+  padding: 12px;
+  gap: 8px;
+  color: #eff7ff;
+  background: radial-gradient(ellipse at 50% 0%, #243653, #10192d 65%);
+  border: 1px solid #344761;
+  border-radius: 20px;
+}
+.sumo-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.app-shell .sumo-heading h2 {
+  font-size: 17px;
+  letter-spacing: -0.4px;
+}
+.sumo-timer {
+  padding: 5px 10px;
+  border: 1px solid #435675;
+  border-radius: 20px;
+  color: #d6e5f6;
+  background: #16243b;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.sumo-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.app-shell .sumo-hud p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.app-shell .sumo-hud .sumo-status {
+  flex: 1;
+  text-align: left;
+  font-weight: 650;
+  color: #acdcdf;
+}
+.app-shell .sumo-hud .sumo-feedback {
+  max-width: 42%;
+  color: #d2dcec;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-shell .sumo-game-card > .game-surface {
+  min-height: 130px;
+  background: radial-gradient(ellipse, #243754, #111b2f 70%);
+  border: 1px solid #2d405d;
+  border-radius: 16px;
+}
+.app-shell .sumo-game-card .sumo-court {
+  position: relative;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+.sumo-court:focus-visible {
+  outline: 3px solid #9cf6ef;
+  outline-offset: -3px;
+}
+.sumo-arena-message {
+  position: absolute;
+  inset: 30% 10%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+  text-align: center;
+  text-shadow: 0 2px 6px #081325;
+}
+.sumo-arena-message span {
+  color: #bce9f0;
+  font-size: clamp(10px, 3cqw, 14px);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 750;
+}
+.sumo-arena-message strong {
+  font-size: clamp(20px, 6cqw, 38px);
+  line-height: 1.05;
+  letter-spacing: -0.6px;
+  color: #fff;
+}
+.sumo-arena-message small {
+  font-size: clamp(10px, 3cqw, 14px);
+  color: #d2e0ef;
+}
+.sumo-arena-message[data-phase="countdown"] strong {
+  font-size: clamp(42px, 16cqw, 100px);
+  color: #fff1bc;
+}
+.app-shell .sumo-game-card .sumo-controls {
+  width: min(100%, 420px);
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 12px;
+  margin: 0 auto;
+  border: 1px solid #30415e;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #22314c, #152039);
+  box-shadow: inset 0 1px 0 #ffffff0d;
+}
+.app-shell .sumo-game-card .sumo-stick {
+  width: 120px;
+  height: 120px;
+  border: 2px solid #536b86;
+  background: radial-gradient(circle, #0c172b 35%, #253c56 70%, #19283e);
+  box-shadow:
+    inset 0 3px 8px #060c1a,
+    0 2px 0 #070f20;
+}
+.sumo-game-card .sumo-stick > span:not(.sumo-stick-knob) {
+  color: #a6bfd2;
+  font-size: 18px;
+}
+.sumo-game-card .sumo-stick-up,
+.sumo-game-card .sumo-stick-down {
+  left: calc(50% - 9px);
+}
+.sumo-game-card .sumo-stick-left,
+.sumo-game-card .sumo-stick-right {
+  top: calc(50% - 9px);
+}
+.sumo-game-card .sumo-stick-knob {
+  left: calc(50% - 24px);
+  top: calc(50% - 24px);
+  background: radial-gradient(circle at 35% 25%, #aec6dd, #536f8c 60%, #2e435e);
+  border: 2px solid #b6d0e0;
+  box-shadow:
+    0 5px 8px #070f20,
+    inset 0 2px 2px #ffffff38;
+}
+.sumo-game-card .sumo-dash-control {
+  width: 100px;
+}
+.sumo-game-card .sumo-dash-control button {
+  width: 92px;
+  height: 92px;
+  min-height: 72px;
+  border: 3px solid #ffe0a8;
+  border-radius: 50%;
+  color: #24182b;
+  background: radial-gradient(circle at 40% 25%, #ffe7ac, #f4aa6c 70%);
+  box-shadow:
+    0 5px 0 #8f513e,
+    0 8px 12px #090f21;
+  font-size: 18px;
+  font-weight: 850;
+}
+.sumo-game-card .sumo-dash-control button:active:not(:disabled) {
+  box-shadow: 0 2px 0 #8f513e;
+}
+.sumo-game-card .sumo-dash-control button:disabled {
+  opacity: 0.55;
+}
+.sumo-game-card .sumo-dash-control span {
+  color: #d3ddeb;
+  font-size: 11px;
+  margin-top: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.sumo-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+}
+.sumo-footer > .game-help-button {
+  position: static;
+  order: 2;
+  align-self: auto;
+  margin-left: auto;
+}
+.sumo-footer > button {
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 12px;
+  border: 1px solid #8af0e8;
+  background: #98eee3;
+  color: #10293a;
+}
+.sumo-footer > button:is(.quiet, .secondary) {
+  color: #e7f0ff;
+  border-color: #536783;
+  background: #25334e;
+}
+.sumo-footer > button:focus-visible,
+.sumo-game-card .sumo-dash-control button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+.sumo-footer > .muted {
+  color: #c5d3e4;
+  font-size: 12px;
+  margin: 0;
+}
+.app-shell .sumo-game-card[data-phase="ready"] .sumo-controls {
+  display: none;
+}
+.app-shell .sumo-game-card[data-phase="finished"] .sumo-hud {
+  align-items: flex-start;
+  flex-direction: column;
+}
+.app-shell .sumo-game-card[data-phase="finished"] .sumo-status {
+  color: #fff1bc;
+  font-size: 24px;
+}
+.app-shell .sumo-game-card[data-phase="finished"] .sumo-feedback {
+  max-width: none;
+  white-space: normal;
+}
+.sumo-game-card > .cycle-riders li {
+  color: #eff7ff;
+  background: #21304a;
+  border-color: #435574;
+}
+.sumo-game-card > .cycle-riders .crashed {
+  opacity: 0.7;
+}
+@media (max-height: 740px) and (max-width: 499px) {
+  .app-shell .games-card.sumo-game-card:not(.game-library) {
+    padding: 8px;
+    gap: 6px;
+  }
+  .app-shell .sumo-game-card .sumo-stick {
+    width: 104px;
+    height: 104px;
+  }
+  .app-shell .sumo-game-card .sumo-controls {
+    padding: 6px 10px;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .sumo-game-card > .sumo-footer {
+    align-self: end;
+  }
+}
+.app-shell:has(.sumo-game-card) {
+  background: #0d1628;
+  color: #eff7ff;
+}
+.app-shell:has(.sumo-game-card) > header {
+  border-color: #30415e;
+}
+.app-shell:has(.sumo-game-card) .room-toolbar .status {
+  color: #c5d8e8;
+}
+.app-shell:has(.sumo-game-card) :is(.header-tools, .room-toolbar) button {
+  color: #e1ecfa;
+  background: #1d2b43;
+  border-color: #435571;
+}
+.sumo-arena-message[data-phase="ready"] strong {
+  max-width: 55%;
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .games-card.sumo-game-card:not(.game-library) {
+    padding: 8px;
+    gap: 6px;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+  .app-shell .sumo-game-card > .game-surface {
+    grid-row: 1 / 5;
+    min-height: 0;
+  }
+  .app-shell .sumo-game-card .sumo-controls {
+    padding: 4px 8px;
+    align-self: center;
+  }
+  .app-shell .sumo-game-card .sumo-stick {
+    width: 96px;
+    height: 96px;
+  }
+  .sumo-game-card .sumo-dash-control button {
+    width: 92px;
+    height: 80px;
+  }
+}
+.app-panel .sumo-help + .cycle-riders {
+  grid-template-columns: 1fr;
+}
+.app-panel .sumo-help + .cycle-riders .cycle-name {
+  flex: 1;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
