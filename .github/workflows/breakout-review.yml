@@ -3,7 +3,7 @@ on:
   push:
     branches: [codex/breakout-reaction-space]
 permissions:
-  contents: write
+  contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -16,21 +16,6 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - name: Obtain genuine Linux Breakout baselines once
-        run: |
-          if [ ! -f tests/breakout.spec.ts-snapshots/breakout-ready-phone-linux.png ]; then
-            npx playwright test tests/breakout.spec.ts --update-snapshots
-            npx playwright test tests/game.spec.ts --grep 'Co-op Breakout pairs' --update-snapshots
-          fi
-      - name: Return Linux Breakout renders to the review branch
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tests/breakout.spec.ts-snapshots/*-linux.png tests/game.spec.ts-snapshots/breakout-court-linux.png
-          if ! git diff --cached --quiet; then
-            git commit -m 'Generated Linux Breakout baselines'
-            git push origin HEAD:codex/breakout-reaction-space
-          fi
       - run: npm run verify
       - name: Save browser evidence
         if: always()
