@@ -158,7 +158,7 @@ describe("game sound transitions", () => {
     s.room.pong = { ...newBreakout(["a", "b"]), phase: "playing" };
     let before = frame(s);
     s.room.pong.breakout!.bricks[0]--;
-    expect(soundEvents(before, frame(s))).toEqual(["success"]);
+    expect(soundEvents(before, frame(s))).toEqual(["breakout-break"]);
     before = frame(s);
     s.room.pong.breakout!.lives--;
     expect(soundEvents(before, frame(s))).toEqual(["miss"]);
@@ -172,6 +172,30 @@ describe("game sound transitions", () => {
     s.room.pong.phase = "finished";
     s.room.pong.breakout!.lives = 0;
     expect(soundEvents(before, frame(s))).toEqual(["finish"]);
+  });
+  it("distinguishes reinforced hits, breaks and level clears without replay", () => {
+    const s = snapshot();
+    s.room = newRoom("breakout", 1);
+    s.room.pong = { ...newBreakout(["a"]), phase: "playing" };
+    s.room.pong.breakout!.bricks[0] = 2;
+    let before = frame(s);
+    s.room.pong.breakout!.bricks[0] = 1;
+    expect(soundEvents(before, frame(s))).toEqual(["breakout-hit"]);
+    before = frame(s);
+    s.room.pong.breakout!.bricks[0] = 0;
+    expect(soundEvents(before, frame(s))).toEqual(["breakout-break"]);
+    before = frame(s);
+    s.room.pong.breakout!.level = 2;
+    s.room.pong.phase = "serve";
+    expect(soundEvents(before, frame(s))).toEqual(["breakout-clear"]);
+    expect(soundEvents(frame(s), frame(s))).toEqual([]);
+    before = frame(s);
+    s.room.pong.phase = "paused";
+    s.room.pong.breakout!.bricks[1] = 0;
+    expect(soundEvents(before, frame(s))).toEqual([]);
+    before = frame(s);
+    s.room.epoch++;
+    expect(soundEvents(before, frame(s))).toEqual([]);
   });
   it("announces ship scores, mistakes and shared completion without replay", () => {
     const s = snapshot();

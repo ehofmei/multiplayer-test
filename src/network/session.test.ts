@@ -300,6 +300,7 @@ describe("shared game room", () => {
     await vi.advanceTimersByTimeAsync(1100);
     expect(client.snapshot().room.kind).toBe("breakout");
     expect(client.snapshot().room.pong?.breakout?.lives).toBe(5);
+    expect(client.snapshot().room.pong?.breakout?.bricks).toHaveLength(25);
     client.move(0.8);
     await vi.advanceTimersByTimeAsync(100);
     expect(host.snapshot().room.pong?.paddles[1]).toBe(0.8);
@@ -311,6 +312,13 @@ describe("shared game room", () => {
     host.resumePong();
     await vi.advanceTimersByTimeAsync(1100);
     expect(client.snapshot().room.pong?.phase).toBe("playing");
+    await vi.advanceTimersByTimeAsync(300);
+    expect(
+      client.snapshot().room.pong?.breakout?.bricks.filter(Boolean),
+    ).toHaveLength(24);
+    expect(client.snapshot().room.pong?.breakout).toEqual(
+      host.snapshot().room.pong?.breakout,
+    );
     const epoch = host.snapshot().room.epoch;
     host.startPong(["host", "client"]);
     hostChannel.onmessage!({

@@ -86,6 +86,10 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
       ? {
           phase: pong.phase,
           bumperHits: pong.bumpers?.reduce((sum, b) => sum + b.hits, 0) ?? 0,
+          x: pong.ball.x,
+          y: pong.ball.y,
+          brickCount: pong.breakout?.bricks.filter(Boolean).length,
+          occupiedSides: pong.seats.length,
           vx: pong.ball.vx,
           vy: pong.ball.vy,
           score: pong.score.reduce((a, b) => a + b, 0),
@@ -234,21 +238,42 @@ export function soundEvents(
   if (a && b) {
     if (a.phase === "finished" && b.phase !== "finished")
       return [a.winner ? "win" : "finish"];
+    if (a.level !== undefined && (a.phase === "paused" || b.phase === "paused"))
+      return [];
     if (
       a.teamLives !== undefined &&
       b.teamLives !== undefined &&
       a.teamLives < b.teamLives
     )
       return ["miss"];
+    if (a.level !== undefined && b.level !== undefined && a.level > b.level)
+      return ["breakout-clear"];
     if (
-      a.bricks !== undefined &&
-      b.bricks !== undefined &&
-      (a.bricks < b.bricks || a.level !== b.level)
+      a.brickCount !== undefined &&
+      b.brickCount !== undefined &&
+      a.brickCount < b.brickCount
     )
-      return ["success"];
+      return ["breakout-break"];
+    if (a.bricks !== undefined && b.bricks !== undefined && a.bricks < b.bricks)
+      return ["breakout-hit"];
     if (a.score > b.score) return ["point"];
     if (a.phase === "playing" && b.phase === "serve") return ["serve"];
     if (a.phase === "playing" && b.phase === "playing") {
+      if (a.level !== undefined) {
+        const side =
+          a.vy * b.vy < 0 && a.y > 0.9
+            ? 0
+            : a.vx * b.vx < 0 && a.x > 0.9
+              ? 1
+              : a.vy * b.vy < 0 && a.y < 0.1
+                ? 2
+                : a.vx * b.vx < 0 && a.x < 0.1
+                  ? 3
+                  : null;
+        return side === null
+          ? []
+          : [side < a.occupiedSides ? "paddle" : "wall"];
+      }
       if (a.bumperHits > b.bumperHits) return ["bumper"];
       if (a.vx * b.vx < 0) return ["paddle"];
       if (a.vy * b.vy < 0) return ["wall"];

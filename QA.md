@@ -87,25 +87,49 @@ unlock, device volume/mute behavior, and foreground recovery need physical testi
 
 ## Co-op Breakout
 
-- Inventory: host-only selection/setup, distinct contiguous seats for 1–4 players,
-  shared five-life counter, three levels, one/two-hit bricks, team win/loss/rematch,
-  own paddle at bottom, pointer/keyboard/slider, palette, pause/resume, spectators,
-  switching, participant disconnect and host background pause.
-- Automated rules cover every entering brick face, no repeated overlap damage,
-  shared misses without elimination, walls, serve timing, level advancement,
-  victory/loss, paused/finished freeze, bounded full simulation and malformed wire state.
-- Session checks cover synchronized state/input, host permissions, stale epochs,
-  pause/resume, disconnect reset, solo restart and timer cleanup.
-- Production browser checks pair real WebRTC contexts, exercise rotated keyboard
-  and touch input, duplicate setup rejection, spectators, pause/resume, disconnect
-  restart and game switching. A deterministic ready court snapshot is retained.
-- Review desktop and 320×700/390×844/768×1024 screenshots, including taller Arial
-  metrics and four teammates with a long name. Check court clearance, focus,
-  touch targets, wrapping, contrast and contained scrolling in secondary panels.
-- Live browser pass covers solo start, keyboard movement, palette, pause/resume,
-  game selection and phone viewport inspection. Physical iPhone/iPad co-op feel,
-  a complete team victory, sound audibility and host background/resume still need
-  device testing; update all devices before pairing with this mode.
+- Inventory: 1–4 contiguous, distinct seats; ready core preview; 25-brick central
+  grid; five shared lives; three named cores and reinforcement; own paddle at
+  bottom; court/steering-strip pointer and touch, keyboard and help slider;
+  palette/roster; confirmed hit/break/paddle feedback; pause/resume countdown;
+  spectators; persistent team victory/loss and rematch; disconnect reset.
+- Rules tests cover symmetric 445ms minimum geometric reaction travel at the
+  0.60 speed cap, nearest entering brick faces/corners, no repeat overlap damage,
+  ramp and paddle acceleration limits, shared misses/walls, pause/finished
+  freezing, a complete steering-driven victory with lives carried between cores,
+  bounded simulations and malformed/old 16-brick wire state. Arena retains its
+  original speed defaults. Feedback/audio tests distinguish damage, destruction
+  and core clear, without replay on repeated snapshots, paused transitions,
+  new epochs or late joins.
+- Real WebRTC tests retain four-player rotated controls, spectators and departure
+  recovery. `tests/breakout.spec.ts` adds paired confirmed destruction,
+  steering-strip input, help focus return/palette, pause/resume, natural loss,
+  persistent results/rematch, complete paired victory through three cores using
+  normal pointer/touch input, and cached production-subpath offline startup.
+- Review phone, 320×700 short-phone, portrait-tablet, desktop and landscape ready,
+  active, destroyed-brick, paused, reinforced-core and result screenshots. Include
+  taller font metrics, long names, reduced motion and safe-area clearance. Keep
+  the compact core legible, the ball clear of effects, the whole court and footer
+  visible, and all secondary content scrollable. Results must retain the court;
+  old generic finished-game CSS must not hide it.
+- Use `playwright-interactive` for a persistent live pass: start, keyboard/court
+  and strip input, pause/resume, slider, palette and help focus return. Explore
+  rapid pause/resume and invalid duplicate/noncontiguous team choices. Inspect
+  desktop/phone/tablet/landscape screenshots and actual element bounds.
+- New baselines have reviewed Darwin/Linux pairs. Obtain genuine Linux renders
+  with `.github/workflows/breakout-review.yml` on `codex/breakout-reaction-space`;
+  after reviewing every returned image, remove generation/return steps and run
+  complete local and exact-final-commit Ubuntu `npm run verify` with snapshot
+  updates disabled. No Pages deployment belongs in that review workflow.
+- Physical device checks remain essential: install/update every iPhone/iPad,
+  pair on household Wi-Fi, play from every occupied side at maximum rally speed,
+  check thumbs on both court and strip, reinforced-brick readability, optional
+  sound and muted/reduced-motion feedback, safe areas and rotation, all three
+  cores through a complete victory, host background/resume, offline relaunch,
+  and waiting service-worker updates without an automatic in-game reload.
+- Family tuning: judge time to react after core rebounds and paddle saves,
+  especially the busiest four-player room. Check the last few bricks and the
+  all-reinforced final core for a lively pace. The geometric 445ms budget does
+  not establish human comfort or compensate for network/display delay.
 
 ## Spaceship Panic
 

@@ -10,6 +10,8 @@ import { validRoom } from "../games/validate";
 import type { Room, GameInput } from "../games/model";
 import type { GridState } from "../game/grid";
 
+// Breakout rules now use a 25-brick core and a 0.6 speed cap. Update every
+// device together: older 16-brick snapshots are rejected. No new input action.
 // Breakout uses the existing bounded paddle input; its level, brick hit points,
 // and shared lives are validated as part of every room snapshot by validRoom.
 // Decision phases use remaining=0; validRoom checks their timing and Golf

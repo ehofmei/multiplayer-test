@@ -5911,3 +5911,320 @@ input.golf-power-input {
     display: grid;
   }
 }
+
+/* Breakout's arcade screen keeps all chrome outside the generous reaction lanes. */
+.app-shell .breakout-game-card {
+  color: #e4f8f5;
+  background: linear-gradient(155deg, #132d3c, #091922 65%);
+  border: 1px solid #386071;
+  border-radius: 20px;
+  overflow: hidden;
+  gap: 8px;
+}
+.breakout-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.breakout-hud small,
+.breakout-message small {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: #a4c7d3;
+}
+.breakout-level strong {
+  display: block;
+  font-size: clamp(14px, 2.4vh, 20px);
+  margin-top: 3px;
+}
+.breakout-health {
+  text-align: center;
+  font-size: 11px;
+  color: #c5e5df;
+}
+.breakout-life-dots {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+.breakout-life-dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  border: 1px solid #a1c5cb;
+}
+.breakout-life-dots i[data-filled="true"] {
+  background: #a3ffe0;
+  border-color: #a3ffe0;
+  box-shadow: 0 0 10px #70e6bf33;
+}
+.breakout-brick-count {
+  text-align: right;
+}
+.breakout-brick-count strong {
+  font-size: 22px;
+  line-height: 1;
+}
+.breakout-brick-count small {
+  letter-spacing: 0;
+}
+.app-shell .breakout-status {
+  color: #b6d4dd;
+  text-align: center;
+  font-size: 12px;
+}
+.app-shell .breakout-court {
+  position: relative;
+  border: 1px solid #48788d;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #07141e;
+  box-shadow:
+    0 12px 30px #0004,
+    inset 0 0 30px #53a4be10;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.breakout-court svg {
+  display: block;
+  width: 100%;
+}
+.breakout-court:focus-visible {
+  outline: 3px solid #a3ffe0;
+  outline-offset: 3px;
+}
+.breakout-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: #04131a66;
+}
+.breakout-message {
+  width: 84%;
+  text-align: center;
+  padding: 20px 8px;
+  background: #091d2fee;
+  border-block: 1px solid #6195a7;
+  box-shadow: 0 10px 40px #0005;
+}
+.breakout-message strong {
+  display: block;
+  font-size: clamp(22px, 5vw, 36px);
+  line-height: 1.1;
+  margin: 10px 0;
+  color: #e6fff5;
+}
+.breakout-message > span {
+  font-size: clamp(11px, 2vw, 14px);
+  color: #bedce4;
+}
+.breakout-result-stars {
+  font-size: 32px;
+  letter-spacing: 12px;
+  margin-top: 10px;
+  color: #afffdd;
+}
+.breakout-overlay[data-result="win"] .breakout-message {
+  border-color: #a3ffe0;
+  background: linear-gradient(130deg, #153e41f5, #12283bf5);
+  animation: breakout-victory 650ms ease-out;
+}
+.breakout-steer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  border: 1px solid #386071;
+  border-radius: 10px;
+  background: #07151f;
+  font-size: 11px;
+  color: #c0dce5;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.breakout-steer-rail {
+  position: relative;
+  width: 88%;
+  height: 4px;
+  background: #315265;
+  border-radius: 3px;
+}
+.breakout-steer-rail i {
+  position: absolute;
+  top: -4px;
+  width: 38px;
+  height: 12px;
+  transform: translateX(-50%);
+  border: 2px solid #e4fff5;
+  border-radius: 6px;
+}
+.breakout-footer {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.app-shell .breakout-footer button {
+  min-height: 44px;
+  padding: 8px 12px;
+}
+.app-shell .breakout-footer .game-help-button {
+  order: 0;
+  color: #c5e5df;
+  background: transparent;
+  border: 1px solid #386071;
+}
+.breakout-footer > button:last-child {
+  flex: 1;
+  background: #a3ffe0;
+  color: #082522;
+  border: 1px solid #a3ffe0;
+}
+.breakout-footer > button.secondary {
+  background: #153445;
+  color: #e4f8f5;
+  border-color: #48788d;
+}
+.breakout-host-note {
+  color: #b6d4dd;
+  font-size: 12px;
+  text-align: right;
+  flex: 1;
+}
+.app-shell .breakout-setup .seat-picker {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  font-size: 11px;
+}
+.app-shell .breakout-setup select {
+  background: #102838;
+  color: #e4f8f5;
+  border-color: #48788d;
+}
+.breakout-setup-hint {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: #ffd9ad;
+}
+.breakout-brick[data-hit="true"] {
+  filter: brightness(1.7);
+}
+.breakout-paddle[data-hit="true"] {
+  filter: brightness(1.7);
+}
+.breakout-break {
+  animation: breakout-shatter 280ms ease-out both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes breakout-shatter {
+  to {
+    opacity: 0;
+    scale: 1.65;
+  }
+}
+@keyframes breakout-victory {
+  from {
+    opacity: 0.4;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .breakout-break,
+  .breakout-overlay[data-result="win"] .breakout-message {
+    animation: none;
+  }
+  .breakout-ball-tail {
+    display: none;
+  }
+}
+
+/* Override the lab's older generic ready/results composition only for Breakout. */
+.app-shell .games-card.breakout-game-card {
+  padding-bottom: 12px;
+}
+.app-shell .games-card.breakout-game-card > .game-surface {
+  display: flex;
+  min-height: 130px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+.app-shell .games-card.breakout-game-card > .game-status {
+  font-size: 12px;
+}
+@media (min-width: 650px) and (max-height: 550px) {
+  .app-shell .games-card.breakout-game-card:not(.game-library) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 260px);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    row-gap: 8px;
+    column-gap: 16px;
+  }
+  .app-shell .games-card.breakout-game-card > .game-surface {
+    grid-column: 1;
+    grid-row: 1 / 4;
+    min-height: 0;
+  }
+  .breakout-hud {
+    grid-column: 2;
+    grid-row: 1;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .app-shell .games-card.breakout-game-card > .breakout-status {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+  }
+  .breakout-steer,
+  .breakout-setup {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
+  }
+  .breakout-footer {
+    grid-column: 2;
+    grid-row: 3;
+    flex-wrap: wrap;
+  }
+  .breakout-footer > button {
+    width: 100%;
+  }
+  .breakout-host-note {
+    text-align: center;
+  }
+}
+.breakout-game-card[data-phase="serve"] .breakout-overlay {
+  place-items: start center;
+  padding-top: 10px;
+  background: transparent;
+}
+.breakout-game-card[data-phase="serve"] .breakout-message {
+  width: calc(100% - 24px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #6195a7;
+  border-radius: 10px;
+  box-shadow: none;
+}
+.breakout-game-card[data-phase="serve"] .breakout-message strong {
+  font-size: 22px;
+  margin: 0;
+}
+.breakout-game-card[data-phase="serve"] .breakout-message > span {
+  font-size: 11px;
+}

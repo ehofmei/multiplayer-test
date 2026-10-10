@@ -208,21 +208,39 @@ seconds of each rally even without paddle hits. Paddle hits also give a stronger
 with bounded top speeds. Every point/lost life resets the ramp; pausing freezes it.
 Update all devices before using the new Arena lives settings.
 
-**Co-op Breakout** is a one-to-four-player team game, with solo practice and
-spectators. The host fills bottom/right/top/left seats in order; unused sides are
-walls. Each teammate sees their paddle at the bottom and uses horizontal drag,
-the slider, or ←/→, with the same local paddle response and smoothed ball as Arena.
-Everyone shares five lives: a miss on any occupied edge costs one team life and
-never eliminates a teammate. Clear all sixteen central bricks in each of three
-levels to win together. Level two adds some two-hit bricks; level three makes all
-bricks two-hit (marked with a dark dash). Lives carry between levels. A one-second
-serve follows a miss or cleared level; serves rotate between teammates. The host
-can pause/resume or start a fresh match after victory/loss. Late arrivals watch
-until the next match; a participating player leaving resets the match. Switching,
-pairing, background handling, color preferences and muted local sounds use the
-existing game lifecycle. Update every device before selecting Co-op Breakout;
-older builds cannot validate its room snapshots. No pairing protocol or saved
-identity/sound storage change is required.
+**Co-op Breakout** is a one-to-four-player team arcade game, with solo practice
+and spectators. Its luminous court has a compact, symmetric 5×5 core of 25 bricks,
+with broad clear lanes toward all four paddles. Each teammate sees their paddle
+at the bottom; drag on the court or the steering strip, use ←/→, or open
+**How to play** for the slider, paddle colors and full team roster. Local paddle
+response is immediate and clients smooth confirmed ball snapshots. The host
+fills bottom/right/top/left seats in order; unused sides become walls.
+
+Breakout has its own gentle speed ramp and paddle acceleration, capped at 0.60
+court widths per second. The ball has at least 0.267 court widths of clear travel
+from the core toward each paddle, approximately 445ms at the cap before network
+and rendering delays. Serve speed rises slightly across the three cores:
+**First light**, **Prism field** and **Supernova**. Everyone shares five lives;
+a miss costs one team life and never eliminates a teammate. Clear every core
+to win together. Core two adds some reinforced bricks; core three reinforces
+all bricks. Reinforced bricks are amber with a + and take two hits. Lives carry
+between cores. A one-second serve follows a miss, cleared core or host resume;
+new serves after misses/core clears rotate between teammates and reset the ramp.
+
+Confirmed hits flash, destroyed bricks shatter briefly, and paddle saves light
+up the paddle. Optional local sounds distinguish hits, breaks and core clears;
+sound remains muted by default. Reduced motion uses static flashes and removes
+the ball trail and result entrance motion. Pause and connection messages appear
+on the court; team victory/loss stays visible with total cleared bricks and
+remaining lives until the host chooses to play again. Late arrivals watch until
+the next match; a participating player leaving resets the match. Background
+handling, manual pairing, offline startup and stored identity/sound/color
+preferences retain the existing lifecycle.
+
+**Update every device before playing this Breakout revision.** The new snapshots
+require 25 bricks and bounded Breakout speed; older 16-brick builds cannot
+validate them. No new client action, pairing protocol version or storage format
+is introduced.
 
 **Sumo Bumpers** is a competitive ring-out game for two to eight players.
 Its arcade screen uses locally drawn bumper bots with numbered shells, rubber

@@ -1,3 +1,4 @@
+import { BREAKOUT_BRICKS, BREAKOUT_PACE } from "./breakout";
 import { validGlow } from "./glow-validate";
 import { validSeek } from "./seek-validate";
 import { validPicnic } from "./picnic-validate";
@@ -389,7 +390,7 @@ export function validRoom(v: unknown): v is Room {
             (n, i) => n === (i < (p.seats as string[]).length ? 5 : 0),
           ) &&
           Array.isArray(p.breakout.bricks) &&
-          p.breakout.bricks.length === 16 &&
+          p.breakout.bricks.length === BREAKOUT_BRICKS &&
           p.breakout.bricks.every((n) => integer(n, 0, 2)) &&
           (p.phase !== "finished" ||
             p.breakout.lives === 0 ||
@@ -452,7 +453,10 @@ export function validRoom(v: unknown): v is Room {
       number(p.ball.x, -0.04, 1.04) &&
       number(p.ball.y, 0, 1) &&
       number(p.ball.vx, -1, 1) &&
-      number(p.ball.vy, -1, 1)
+      number(p.ball.vy, -1, 1) &&
+      (!breakout ||
+        Math.hypot(p.ball.vx as number, p.ball.vy as number) <=
+          BREAKOUT_PACE.cap + 1e-9)
     );
   }
   if (v.kind === "reaction") {

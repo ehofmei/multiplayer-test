@@ -1,19 +1,29 @@
 import { newArena, stepArena } from "./arena";
 import type { PongState } from "./model";
 
-// A fixed central grid leaves a clear lane between the bricks and every paddle.
+// The core is symmetric: 0.30 court widths, with 0.267 clear ball travel to
+// every paddle face. At the speed cap that is at least 445ms before rendering.
+export const BREAKOUT_COLUMNS = 5;
+export const BREAKOUT_BRICKS = BREAKOUT_COLUMNS ** 2;
+export const BREAKOUT_RADIUS = 0.018;
+export const BREAKOUT_PACE = {
+  start: 0.42,
+  ramp: 0.012,
+  cap: 0.6,
+  paddleGain: 1.04,
+};
 export const brickBounds = (index: number) => ({
-  x: 0.32 + (index % 4) * 0.09,
-  y: 0.32 + Math.floor(index / 4) * 0.09,
-  width: 0.075,
-  height: 0.075,
+  x: 0.35 + (index % BREAKOUT_COLUMNS) * 0.0625,
+  y: 0.35 + Math.floor(index / BREAKOUT_COLUMNS) * 0.0625,
+  width: 0.05,
+  height: 0.05,
 });
 export const levelBricks = (level: number) =>
-  Array.from({ length: 16 }, (_, i) =>
+  Array.from({ length: BREAKOUT_BRICKS }, (_, i) =>
     level === 3 || (level === 2 && i % 2 === 0) ? 2 : 1,
   );
 function serveBall(side: number, level: number) {
-  const speed = 0.36 + level * 0.04;
+  const speed = 0.38 + level * 0.02;
   return [
     { x: 0.5, y: 0.8, vx: 0.13, vy: -speed },
     { x: 0.8, y: 0.5, vx: -speed, vy: -0.13 },
@@ -30,10 +40,11 @@ export function newBreakout(seats: string[]): PongState {
 }
 export function stepBreakout(state: PongState, seconds: number): PongState {
   const team = state.breakout;
-  if (!team || state.phase !== "playing") return stepArena(state, seconds);
+  if (!team || state.phase !== "playing")
+    return stepArena(state, seconds, BREAKOUT_PACE);
   // Reuse arena edge collisions, but every occupied side stays active. A miss
   // costs the team one life rather than eliminating the owner of that paddle.
-  const next = stepArena(state, seconds);
+  const next = stepArena(state, seconds, BREAKOUT_PACE);
   if (next.score.some((n, i) => n !== state.score[i])) {
     const lives = team.lives - 1;
     return {
@@ -45,32 +56,54 @@ export function stepBreakout(state: PongState, seconds: number): PongState {
       ball: serveBall((5 - lives) % state.seats.length, team.level),
     };
   }
-  const radius = 0.018;
+  // Sweep entering faces and choose the earliest contact, including corners.
+  // Expanded rectangles retain the original forgiving ball collision shape.
+  const dx = next.ball.x - state.ball.x;
+  const dy = next.ball.y - state.ball.y;
+  let contact: {
+    index: number;
+    t: number;
+    vertical: boolean;
+    face: number;
+  } | null = null;
   for (let i = 0; i < team.bricks.length; i++) {
     if (!team.bricks[i]) continue;
     const b = brickBounds(i);
-    const left = b.x - radius,
-      right = b.x + b.width + radius;
-    const top = b.y - radius,
-      bottom = b.y + b.height + radius;
+    const left = b.x - BREAKOUT_RADIUS,
+      right = b.x + b.width + BREAKOUT_RADIUS;
+    const top = b.y - BREAKOUT_RADIUS,
+      bottom = b.y + b.height + BREAKOUT_RADIUS;
+    for (const [vertical, face, entering] of [
+      [true, left, state.ball.x <= left && dx > 0],
+      [true, right, state.ball.x >= right && dx < 0],
+      [false, top, state.ball.y <= top && dy > 0],
+      [false, bottom, state.ball.y >= bottom && dy < 0],
+    ] as const) {
+      if (!entering) continue;
+      const t =
+        (face - (vertical ? state.ball.x : state.ball.y)) /
+        (vertical ? dx : dy);
+      const along = vertical ? state.ball.y + dy * t : state.ball.x + dx * t;
+      if (
+        t < 0 ||
+        t > 1 ||
+        along < (vertical ? top : left) ||
+        along > (vertical ? bottom : right)
+      )
+        continue;
+      if (!contact || t < contact.t) contact = { index: i, t, vertical, face };
+    }
+  }
+  if (contact) {
+    const i = contact.index;
     const ball = { ...next.ball };
-    if (ball.x < left || ball.x > right || ball.y < top || ball.y > bottom)
-      continue;
-    // Resolve only an entering face, so an overlapping ball cannot damage a
-    // brick repeatedly. Fixed 120 Hz steps are much smaller than a brick.
-    if (state.ball.x <= left && ball.vx > 0) {
-      ball.x = left;
-      ball.vx = -Math.abs(ball.vx);
-    } else if (state.ball.x >= right && ball.vx < 0) {
-      ball.x = right;
-      ball.vx = Math.abs(ball.vx);
-    } else if (state.ball.y <= top && ball.vy > 0) {
-      ball.y = top;
-      ball.vy = -Math.abs(ball.vy);
-    } else if (state.ball.y >= bottom && ball.vy < 0) {
-      ball.y = bottom;
-      ball.vy = Math.abs(ball.vy);
-    } else continue;
+    if (contact.vertical) {
+      ball.x = contact.face - dx * (1 - contact.t);
+      ball.vx = -ball.vx;
+    } else {
+      ball.y = contact.face - dy * (1 - contact.t);
+      ball.vy = -ball.vy;
+    }
     const bricks = [...team.bricks];
     bricks[i]--;
     if (bricks.every((n) => n === 0)) {

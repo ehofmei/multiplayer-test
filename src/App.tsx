@@ -8,6 +8,7 @@ import { AppPanel } from "./components/AppLayout";
 import { SumoGame } from "./components/SumoGame";
 import { CycleGame } from "./components/CycleGame";
 import { ShipGame } from "./components/ShipGame";
+import { BreakoutGame } from "./components/BreakoutGame";
 import { ArenaGame } from "./components/ArenaGame";
 import { applyUpdate, checkForUpdate, useUpdates } from "./pwa/updates";
 import { useEffect, useRef, useState } from "react";
@@ -347,18 +348,24 @@ export function App() {
                   {snapshot?.room.kind === "lobby" && (
                     <GamePicker session={session} />
                   )}
-                  {(snapshot?.room.kind === "arena" ||
-                    snapshot?.room.kind === "breakout") &&
-                    snapshot.room.pong && (
-                      <ArenaGame
-                        cooperative={snapshot.room.kind === "breakout"}
-                        key={snapshot.room.epoch}
-                        game={snapshot.room.pong}
-                        players={snapshot.players}
-                        session={session}
-                        connected={connected}
-                      />
-                    )}
+                  {snapshot?.room.kind === "arena" && snapshot.room.pong && (
+                    <ArenaGame
+                      key={snapshot.room.epoch}
+                      game={snapshot.room.pong}
+                      players={snapshot.players}
+                      session={session}
+                      connected={connected}
+                    />
+                  )}
+                  {snapshot?.room.kind === "breakout" && snapshot.room.pong && (
+                    <BreakoutGame
+                      key={snapshot.room.epoch}
+                      game={snapshot.room.pong}
+                      players={snapshot.players}
+                      session={session}
+                      connected={connected}
+                    />
+                  )}
                   {snapshot?.room.kind === "pong" && snapshot.room.pong && (
                     <PongGame
                       key={snapshot.room.epoch}

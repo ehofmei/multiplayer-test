@@ -1088,7 +1088,11 @@ test("Co-op Breakout pairs teammates, rotates controls, pauses and handles spect
     await expect(
       client.getByRole("button", { name: "Start Co-op Breakout", exact: true }),
     ).toHaveCount(0);
-    await expectStableScreenshot(host, ".arena-court", "breakout-court.png");
+    await expectStableScreenshot(
+      host,
+      ".arena-court",
+      `breakout-court-${process.platform}.png`,
+    );
     // Reject duplicate assignments, and allow solo practice with spectators.
     await host
       .getByLabel("Right player", { exact: true })

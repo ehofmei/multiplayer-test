@@ -50,9 +50,16 @@ Active mission · phone layout.
 
 ## Co-op Breakout
 
-Playing surface · shared baseline.
+Active phone · macOS baseline. Broad reaction lanes around the compact core.
 
-![Co-op Breakout court](tests/game.spec.ts-snapshots/breakout-court.png)
+![Co-op Breakout](tests/breakout.spec.ts-snapshots/breakout-active-phone-darwin.png)
+
+[Ready](tests/breakout.spec.ts-snapshots/breakout-ready-phone-darwin.png) ·
+[Tablet](tests/breakout.spec.ts-snapshots/breakout-active-tablet-darwin.png) ·
+[Landscape](tests/breakout.spec.ts-snapshots/breakout-active-landscape-darwin.png) ·
+[Short phone paused](tests/breakout.spec.ts-snapshots/breakout-paused-short-phone-darwin.png) ·
+[Team results](tests/breakout.spec.ts-snapshots/breakout-results-phone-darwin.png) ·
+[Team victory](tests/breakout.spec.ts-snapshots/breakout-victory-phone-darwin.png).
 
 ## Pong
 

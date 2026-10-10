@@ -1,4 +1,7 @@
 export type Cue =
+  | "breakout-hit"
+  | "breakout-break"
+  | "breakout-clear"
   | "sumo-hit"
   | "sumo-dash"
   | "golf-cup"
@@ -26,6 +29,19 @@ export type Cue =
   | "finish";
 type Note = [frequency: number, duration: number, delay?: number];
 const notes: Record<Cue, Note[]> = {
+  "breakout-hit": [
+    [510, 0.035],
+    [760, 0.05, 0.015],
+  ],
+  "breakout-break": [
+    [850, 0.04],
+    [1270, 0.075, 0.025],
+  ],
+  "breakout-clear": [
+    [660, 0.08],
+    [880, 0.08, 0.085],
+    [1320, 0.14, 0.17],
+  ],
   "sumo-dash": [[800, 0.18]],
   "sumo-hit": [
     [180, 0.075],
