@@ -429,6 +429,20 @@ Physical iPhone/iPad checks remain required below.
 
 ## Midnight Bakery
 
+Polish QA includes short rule hints, personality motion, the illustrated personal
+tray, pair/match progress, +0 jelly explanation, public gains on reveal, persistent
+passing destinations, green gremlin reversal/cancellation/keep-hand notices, a
+centered last card, and ranked batch/final results. Regression captures cover
+setup, untouched/selected hands, a muted reduced-motion reveal, collection,
+one-card hands, eight-player hands and shared eight-player champions. Exercise
+320×568 in addition to the sizes below, keeping all fit/pixel assertions strict.
+Sound tests use confirmed model transitions and cover combinations in either
+order, cue priority, shared gremlins, spectators, duplicate/delayed snapshots,
+first state, pause/resume, rematch and room changes. Physical listening still
+needs to check cue distinction, volume and several devices sounding together.
+Ask children to point to a pair reward and explain where the remaining hand went;
+check the short-phone compact artwork and passing names with real thumbs.
+
 QA inventory:
 
 - Select the ninth game through all three phone library pages; follow host selection.
@@ -460,7 +474,7 @@ device, and offline startup/pairing after an online visit. Browser tests cannot
 establish real iOS behavior or whether the family enjoys the balance.
 
 Bakery cross-platform regression checks: keep separate reviewed Darwin and Linux
-hand baselines with the same strict pixel budget; text rasterization differs even
+Bakery state baselines with the same strict pixel budgets; text rasterization differs even
 with the bundled fixture font. Exercise tied results with long names and taller
 Arial metrics at every Bakery viewport. Primary results show compact names and
 final scores; Table & scores retains full names and both batch totals. Fit

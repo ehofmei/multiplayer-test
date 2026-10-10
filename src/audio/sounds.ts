@@ -1,4 +1,10 @@
 export type Cue =
+  | "bakery-lock"
+  | "bakery-reveal"
+  | "bakery-pass"
+  | "bakery-combination"
+  | "bakery-gremlin"
+  | "bakery-batch"
   | "breakout-hit"
   | "breakout-break"
   | "breakout-clear"
@@ -29,6 +35,33 @@ export type Cue =
   | "finish";
 type Note = [frequency: number, duration: number, delay?: number];
 const notes: Record<Cue, Note[]> = {
+  "bakery-lock": [
+    [390, 0.045],
+    [580, 0.06, 0.03],
+  ],
+  "bakery-reveal": [
+    [520, 0.08],
+    [780, 0.1, 0.06],
+  ],
+  "bakery-pass": [
+    [620, 0.045],
+    [460, 0.06, 0.045],
+  ],
+  "bakery-combination": [
+    [660, 0.07],
+    [830, 0.07, 0.07],
+    [990, 0.12, 0.14],
+  ],
+  "bakery-gremlin": [
+    [330, 0.08],
+    [220, 0.08, 0.08],
+    [440, 0.1, 0.16],
+  ],
+  "bakery-batch": [
+    [440, 0.09],
+    [660, 0.1, 0.1],
+    [880, 0.14, 0.2],
+  ],
   "breakout-hit": [
     [510, 0.035],
     [760, 0.05, 0.015],

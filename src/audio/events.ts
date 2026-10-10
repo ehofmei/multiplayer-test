@@ -1,3 +1,5 @@
+import { bakeryScore } from "../games/bakery";
+import { bakeryReward } from "../games/bakery-feedback";
 import { glowTotal } from "../games/glow";
 import { golfContacts, golfMotionFrame } from "../games/golf-motion";
 import { golfTotal } from "../games/minigolf";
@@ -64,6 +66,28 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
       );
   }
   return {
+    bakery: room.bakery
+      ? (() => {
+          const g = room.bakery,
+            b = g.bakers.find((b) => b.id === me);
+          return {
+            phase: g.resumePhase ?? g.phase,
+            round: g.round,
+            pick: g.pick,
+            locked: b?.locked ?? false,
+            count: g.bakers.reduce((n, b) => n + b.treats.length, 0),
+            gremlins: g.bakers.filter((b) => b.last === "gremlin").length,
+            combination: b ? bakeryReward(b.treats).combination : false,
+            winner:
+              !!b &&
+              g.bakers.every(
+                (other) =>
+                  other.banked + bakeryScore(other.treats) <=
+                  b.banked + bakeryScore(b.treats),
+              ),
+          };
+        })()
+      : null,
     decision: decision
       ? {
           phase: decision.resumePhase ?? decision.phase,
@@ -143,6 +167,32 @@ export function soundEvents(
   after: SoundFrame,
 ): Cue[] {
   if (!before || before.key !== after.key) return [];
+  const bakery = after.bakery,
+    oldBakery = before.bakery;
+  if (bakery && oldBakery) {
+    if (bakery.phase === "finished" && oldBakery.phase !== "finished")
+      return [bakery.winner ? "win" : "finish"];
+    if (bakery.phase === "round-results" && oldBakery.phase !== "round-results")
+      return ["bakery-batch"];
+    if (bakery.round === oldBakery.round && bakery.count > oldBakery.count)
+      return [
+        bakery.gremlins
+          ? "bakery-gremlin"
+          : bakery.combination
+            ? "bakery-combination"
+            : "bakery-reveal",
+      ];
+    if (
+      bakery.round === oldBakery.round &&
+      bakery.pick === oldBakery.pick &&
+      bakery.locked &&
+      !oldBakery.locked
+    )
+      return ["bakery-lock"];
+    if (bakery.round === oldBakery.round && bakery.pick > oldBakery.pick)
+      return ["bakery-pass"];
+    return [];
+  }
   const golfCues: Cue[] = after.golf
     ? [
         ...new Set(

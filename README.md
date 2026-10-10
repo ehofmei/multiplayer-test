@@ -133,6 +133,21 @@ Tap a card to preview its exact score gain, then Lock my pick. Picks cannot chan
 once locked. Everyone reveals together, then remaining hands pass after 1.8 seconds.
 The host starts batch two after everyone has had a chance to see the first scores.
 
+Illustrated cards keep a short rule visible on phones and show the exact gain in
+selection previews. The personal tray pictures each treat count, completed pairs
+and cake/sprinkle matches; a lone jelly explains that one more earns 7 points.
+Reveals show each baker's gain and completed combination, with a brief arrival
+onto the counter. Passing names the next recipient; gremlins get a shared green
+notice explaining reversal, cancellation or the two-player kept hand. The final
+pick closes the batch rather than promising another pass. One-card hands stay
+centered. Batch and bake-off results highlight ranks, leaders/shared champions
+and your total, with full names and batch breakdowns in Table & scores.
+Optional synthesized lock, reveal, pass, combination and gremlin cues remain
+muted by default. Gremlins take priority over simultaneous rewards; batch and
+match endings have their own finish cues. Repeated snapshots, late joining and
+pause/resume do not replay old sounds. Reduced motion keeps all reward text and
+collection indicators. These presentation changes add no network fields or rules.
+
 Googly Cookies earn 2 each plus 2 per pair (a pair earns 6). Wobble Jelly pairs earn
 7; unpaired jelly earns 0. Burp Cakes earn 3 each. Disco Sprinkles earn 1 each plus
 2 when matched with a cake, with one sprinkle per cake. Spoon Gremlins earn 1 and

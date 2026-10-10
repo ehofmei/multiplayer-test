@@ -1,0 +1,41 @@
+name: Bakery polish review
+on:
+  push:
+    branches: [codex/bakery-polish]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Obtain genuine Linux Bakery renders once
+        run: |
+          if [ ! -f tests/bakery.spec.ts-snapshots/bakery-finale-linux.png ]; then
+            npx playwright test tests/bakery.spec.ts --update-snapshots=all
+          fi
+      - name: Return Linux renders to the review branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/bakery.spec.ts-snapshots/*-linux.png
+          if ! git diff --cached --quiet; then
+            git commit -m 'Generated Linux Bakery baselines'
+            git push origin HEAD:codex/bakery-polish
+          fi
+      - run: npm run verify
+      - name: Save browser evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-failure-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7

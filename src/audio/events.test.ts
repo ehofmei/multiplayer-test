@@ -471,3 +471,87 @@ it("announces shared Sumo impacts once and uses a neutral finish for a draw", ()
   s.room.sumo.bumpers.forEach((b) => (b.alive = false));
   expect(soundEvents(before, frame(s))).toEqual(["finish"]);
 });
+
+it("gives Bakery locks, combinations, gremlins, passes and finales one cue without replaying lifecycle snapshots", async () => {
+  const { newBakery, pickBakery, advanceBakery } =
+    await import("../games/bakery");
+  const s = snapshot();
+  s.room = newRoom("bakery", 1);
+  s.room.bakery = newBakery(["a", "b"], () => 0.5);
+  let before = frame(s);
+  s.room.bakery.bakers[0].hand![0] = "jelly";
+  s.room.bakery.bakers[1].hand![0] = "cookie";
+  s.room.bakery = pickBakery(s.room.bakery, "a", 1, 1, 0);
+  expect(soundEvents(before, frame(s))).toEqual(["bakery-lock"]);
+  before = frame(s);
+  s.room.bakery = pickBakery(s.room.bakery, "b", 1, 1, 0);
+  expect(soundEvents(before, frame(s))).toEqual(["bakery-reveal"]);
+  const reveal = frame(s);
+  expect(soundEvents(reveal, reveal)).toEqual([]);
+  expect(soundEvents(null, reveal)).toEqual([]);
+  s.room.bakery = { ...s.room.bakery, phase: "paused", resumePhase: "reveal" };
+  expect(soundEvents(reveal, frame(s))).toEqual([]);
+  before = frame(s);
+  s.room.bakery = { ...s.room.bakery, phase: "reveal", resumePhase: null };
+  expect(soundEvents(before, frame(s))).toEqual([]);
+  before = frame(s);
+  s.room.bakery = advanceBakery(s.room.bakery);
+  expect(soundEvents(before, frame(s))).toEqual(["bakery-pass"]);
+  // A delayed reveal snapshot can arrive only after the next hand has passed.
+  expect(
+    soundEvents(
+      { ...reveal, bakery: { ...reveal.bakery!, count: 0 } },
+      frame(s),
+    ),
+  ).toEqual(["bakery-reveal"]);
+  for (const [card, cue] of [
+    ["jelly", "bakery-combination"],
+    ["gremlin", "bakery-gremlin"],
+    ["cookie", "bakery-gremlin"],
+  ] as const) {
+    const g = s.room.bakery;
+    g.bakers[0].hand![0] = card;
+    g.bakers[1].hand![0] = card === "cookie" ? "gremlin" : "cookie";
+    before = frame(s);
+    s.room.bakery = pickBakery(
+      pickBakery(g, "a", g.round, g.pick, 0),
+      "b",
+      g.round,
+      g.pick,
+      0,
+    );
+    expect(soundEvents(before, frame(s))).toEqual([cue]);
+    const spectatorBefore = {
+      ...before,
+      bakery: {
+        ...before.bakery!,
+        combination: false,
+        locked: false,
+        winner: false,
+      },
+    };
+    const spectatorAfter = soundFrame(s, "watcher", "session");
+    expect(soundEvents(spectatorBefore, spectatorAfter)).toEqual([
+      card === "jelly" ? "bakery-reveal" : "bakery-gremlin",
+    ]);
+    s.room.bakery = advanceBakery(s.room.bakery);
+  }
+  before = frame(s);
+  s.room.bakery.phase = "round-results";
+  expect(soundEvents(before, frame(s))).toEqual(["bakery-batch"]);
+  before = frame(s);
+  s.room.bakery.phase = "finished";
+  expect(soundEvents(before, frame(s))).toEqual([
+    frame(s).bakery!.winner ? "win" : "finish",
+  ]);
+  expect(soundEvents(frame(s), frame(s))).toEqual([]);
+  before = frame(s);
+  s.room.bakery = newBakery(["a", "b"], () => 0.5);
+  expect(soundEvents(before, frame(s))).toEqual([]);
+  s.room.bakery = { ...s.room.bakery, phase: "paused", resumePhase: "picking" };
+  before = frame(s);
+  s.room.bakery = { ...s.room.bakery, phase: "picking", resumePhase: null };
+  expect(soundEvents(before, frame(s))).toEqual([]);
+  s.room.epoch++;
+  expect(soundEvents(before, frame(s))).toEqual([]);
+});

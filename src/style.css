@@ -2386,17 +2386,22 @@ main.app-shell {
 }
 
 /* Midnight Bakery keeps choices central; larger rosters live in a focused panel. */
+/* Bakery uses illustrated cards, a personal tray and a persistent passing cue. */
 .app-shell .bakery-game-card {
   display: flex !important;
   max-width: 1100px;
   margin: 0 auto;
-  background: #fff8ed;
+  background: radial-gradient(ellipse at top, #fffdf8, #fff3df);
   color: #382944;
-  gap: 8px;
+  gap: 6px;
+}
+.bakery-game-card > *,
+.bakery-workspace {
+  min-width: 0;
 }
 .bakery-game-card .board-heading {
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 2px;
 }
 .bakery-game-card .board-heading > span {
   font-size: 12px;
@@ -2409,21 +2414,39 @@ main.app-shell {
 }
 .bakery-workspace {
   flex: 1 1 0 !important;
+  min-height: min-content;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 .bakery-hand {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   flex: 1;
+  min-height: min-content;
+}
+.bakery-hand[data-cards="1"] {
+  align-items: center;
+  grid-template-columns: minmax(0, 320px);
+  justify-content: center;
+}
+.bakery-hand[data-cards="1"] .bakery-treat {
+  min-height: 180px;
+  max-height: 240px;
+}
+.bakery-hand[data-cards="1"] .bakery-treat .treat-art {
+  height: 110px;
+}
+.bakery-hand[data-cards="2"] {
+  grid-template-columns: repeat(2, minmax(0, 320px));
+  justify-content: center;
 }
 .bakery-treat {
-  background: var(--treat-color);
+  background: linear-gradient(145deg, #fffdf8, var(--treat-color));
   color: #382944;
-  border: 2px solid #816d82;
-  border-radius: 14px;
+  border: 2px solid #a58aa3;
+  border-radius: 16px;
   padding: 8px;
   display: flex;
   flex-direction: column;
@@ -2431,14 +2454,21 @@ main.app-shell {
   justify-content: center;
   gap: 3px;
   min-height: 100px;
+  box-shadow:
+    inset 0 2px 0 white,
+    0 3px 0 #d3bdab;
 }
 .bakery-treat[aria-pressed="true"] {
-  border-color: #382944;
-  outline: 3px solid #382944;
+  border-color: #624274;
+  outline: 3px solid #624274;
   outline-offset: -5px;
+  background: linear-gradient(145deg, #fff, var(--treat-color));
+  box-shadow:
+    inset 0 0 0 5px #fff5,
+    0 3px 0 #624274;
 }
 .bakery-treat:disabled {
-  opacity: 0.7;
+  opacity: 0.75;
 }
 .bakery-treat:focus-visible {
   outline: 3px solid #382944;
@@ -2447,18 +2477,22 @@ main.app-shell {
 .treat-art {
   width: 100%;
   height: 74px;
-  flex-shrink: 1;
-  min-height: 28px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+.bakery-treat .treat-art {
+  width: min(100%, 180px);
+  height: clamp(44px, calc((100dvh - 630px) / 2), 130px);
 }
 .bakery-treat strong {
   font-size: 14px;
 }
-.bakery-treat small {
+.bakery-treat small,
+.bakery-gain {
   font-size: 12px;
   line-height: 1.2;
 }
 .bakery-gain {
-  font-size: 12px;
   font-weight: 700;
 }
 .bakery-preview {
@@ -2468,6 +2502,10 @@ main.app-shell {
   line-height: 1.3;
 }
 .bakery-lock {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  max-width: calc(100% - 160px);
   min-height: 44px;
   padding: 8px;
   background: #624274;
@@ -2476,58 +2514,113 @@ main.app-shell {
 .bakery-reveal {
   display: none;
 }
-.bakery-game-card[data-phase="reveal"] .bakery-hand,
-.bakery-game-card[data-phase="reveal"] .bakery-preview {
+.bakery-game-card:is([data-phase="reveal"], [data-resume-phase="reveal"])
+  .bakery-hand,
+.bakery-game-card:is([data-phase="reveal"], [data-resume-phase="reveal"])
+  .bakery-preview {
   display: none;
 }
-.bakery-game-card[data-phase="reveal"] .bakery-reveal {
+.bakery-game-card:is([data-phase="reveal"], [data-resume-phase="reveal"])
+  .bakery-reveal {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   flex: 1;
-  gap: 8px;
+  gap: 6px;
 }
 .bakery-reveal > div {
-  background: #f1e2f0;
+  background: linear-gradient(145deg, #fffdf8, #f1e2f0);
   border: 1px solid #af93b9;
   border-radius: 12px;
-  padding: 12px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
+.bakery-reveal .treat-art {
+  width: 120px;
+  height: clamp(80px, 15dvh, 160px);
+}
 .bakery-reveal span {
-  overflow-wrap: anywhere;
   font-size: 13px;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .bakery-reveal strong {
   font-size: 14px;
 }
+.bakery-reveal small {
+  font-size: 12px;
+  text-align: center;
+}
+.bakery-reveal [data-combination="true"] {
+  border: 2px solid #816329;
+  background: #fff0b7;
+}
 .bakery-counter {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 8px 10px;
-  border: 1px solid #d6c3d8;
-  border-radius: 10px;
-  background: #fffdf8;
+  gap: 3px;
+  padding: 6px 8px;
+  border: 1px solid #bca38a;
+  border-radius: 12px;
+  background: linear-gradient(#fffdf8, #f1e1cb);
   font-size: 13px;
+  box-shadow: inset 0 -3px #d7bda0;
 }
-.bakery-counter > span {
-  font-size: 12px;
-  line-height: 1.25;
+.bakery-collection {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 3px;
+}
+.bakery-collection > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  border-radius: 6px;
+  padding: 2px 4px;
+  background: #fff9;
+}
+.bakery-collection [data-filled="false"] {
+  opacity: 0.65;
+}
+.bakery-collection .treat-art {
+  width: 44px;
+  height: 32px;
+}
+.bakery-collection small {
+  grid-column: 1/-1;
+  font-size: 11px;
+  text-align: center;
+  white-space: nowrap;
 }
 .bakery-table {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 12px;
 }
-.bakery-table > span {
+.bakery-passing {
+  flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   overflow-wrap: anywhere;
+}
+.bakery-passing small {
+  font-size: 11px;
+}
+.bakery-game-card[data-gremlins="true"] .bakery-passing {
+  background: #d9e9b9;
+  padding: 4px 6px;
+  border-radius: 8px;
+  border-left: 4px solid #47653a;
 }
 .bakery-table button {
   flex-shrink: 0;
@@ -2537,6 +2630,8 @@ main.app-shell {
 }
 .bakery-intro {
   margin: auto;
+  min-width: 0;
+  max-width: 100%;
 }
 .bakery-welcome-art {
   display: flex;
@@ -2544,6 +2639,7 @@ main.app-shell {
 }
 .bakery-welcome-art .treat-art {
   height: 80px;
+  width: min(130px, 33%);
 }
 .bakery-intro h3 {
   margin: 8px 0;
@@ -2552,7 +2648,7 @@ main.app-shell {
 .bakery-results p {
   font-size: 14px;
   line-height: 1.35;
-  margin: 8px 0;
+  margin: 6px 0;
 }
 .bakery-menu {
   display: grid;
@@ -2575,29 +2671,137 @@ main.app-shell {
 .bakery-results {
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.bakery-finale {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 14px;
+  padding: 10px;
+  margin-bottom: 8px;
+  background: linear-gradient(120deg, #f9e3aa, #f2dcf2);
+  border: 1px solid #bca38a;
+}
+.bakery-finale .treat-art {
+  width: 90px;
+  height: 68px;
+}
+.bakery-finale > div {
+  min-width: 0;
+}
+.bakery-finale strong {
+  font-size: 26px;
+}
+.bakery-finale p {
+  overflow-wrap: anywhere;
+  max-height: 3.6em;
+  overflow: auto;
+}
+.bakery-finale span {
+  font-size: 13px;
+  font-weight: 700;
 }
 .bakery-scores {
   list-style: none;
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 .bakery-scores li {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 3px 8px;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border: 1px solid #d6c3d8;
   border-radius: 10px;
   background: #fffdf8;
+}
+.bakery-scores li[data-winner="true"] {
+  border-color: #816329;
+  background: #fff3c7;
 }
 .bakery-scores li > span {
   overflow-wrap: anywhere;
 }
 .bakery-scores small {
-  grid-column: 1 / -1;
+  grid-column: 1/-1;
   color: #665470;
+}
+.bakery-results .bakery-scores {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.bakery-results .bakery-scores li > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bakery-results .bakery-scores small {
+  display: none;
+}
+@keyframes bakery-arrive {
+  from {
+    transform: translateY(-24px) scale(0.85);
+    opacity: 0.3;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes bakery-wobble {
+  25% {
+    transform: rotate(-7deg) scale(1.04);
+  }
+  75% {
+    transform: rotate(7deg) scale(1.04);
+  }
+}
+@keyframes bakery-hop {
+  50% {
+    transform: translateY(-7px) rotate(3deg);
+  }
+}
+.bakery-treat[aria-pressed="true"] .treat-art {
+  animation: bakery-hop 0.4s ease-out;
+}
+.bakery-treat[aria-pressed="true"]
+  .treat-art:is([data-treat="jelly"], [data-treat="gremlin"]) {
+  animation-name: bakery-wobble;
+}
+.bakery-treat[aria-pressed="true"] .treat-art[data-treat="sprinkles"] {
+  animation: bakery-wobble 0.3s ease-out 2;
+}
+.bakery-game-card[data-fresh-reveal="true"] .bakery-reveal .treat-art {
+  animation: bakery-arrive 0.5s ease-out;
+}
+.bakery-game-card[data-fresh-reveal="true"]
+  .bakery-collection
+  [data-latest="true"]
+  .treat-art {
+  animation: bakery-arrive 0.5s ease-out;
+}
+.bakery-game-card[data-phase="paused"] * {
+  animation-play-state: paused;
+}
+@keyframes bakery-puff {
+  50% {
+    transform: scale(1.13) translateY(-3px);
+  }
+}
+.bakery-treat[aria-pressed="true"] .treat-art[data-treat="cupcake"] {
+  animation: bakery-puff 0.45s ease-out;
+}
+.bakery-treat[aria-pressed="true"] .treat-art[data-treat="gremlin"] {
+  animation: bakery-wobble 0.6s ease-out 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bakery-game-card * {
+    animation: none !important;
+  }
 }
 @media (max-width: 600px) {
   .bakery-hand {
@@ -2606,16 +2810,44 @@ main.app-shell {
   }
   .bakery-treat {
     padding: 5px;
+    min-height: 86px;
     gap: 2px;
+  }
+  .bakery-treat .treat-art {
+    height: clamp(36px, 5.5dvh, 56px);
   }
   .bakery-treat strong {
     font-size: 12px;
   }
   .bakery-treat small {
-    display: none;
+    display: block;
+    font-size: 11px;
   }
-  .bakery-counter {
-    padding: 6px 8px;
+  .bakery-collection > div {
+    padding: 0 2px;
+  }
+  .bakery-collection .treat-art {
+    width: 30px;
+    height: 24px;
+  }
+  .bakery-collection strong {
+    font-size: 11px;
+  }
+  .bakery-collection small {
+    font-size: 10px;
+  }
+  .bakery-table {
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+  .bakery-passing {
+    flex-basis: 100%;
+  }
+  .bakery-table .secondary {
+    margin-right: auto;
+  }
+  .bakery-table .quiet {
+    margin-left: auto;
   }
   .bakery-menu > div {
     font-size: 12px;
@@ -2624,35 +2856,320 @@ main.app-shell {
   .bakery-welcome-art .treat-art {
     height: 60px;
   }
+  .bakery-reveal > div {
+    padding: 5px;
+    gap: 2px;
+  }
+  .bakery-reveal .treat-art {
+    height: 110px;
+    width: 140px;
+  }
+  .bakery-reveal strong {
+    font-size: 12px;
+  }
+  .bakery-reveal small {
+    font-size: 11px;
+  }
   .bakery-scores {
     gap: 5px;
   }
   .bakery-scores li {
-    padding: 6px 8px;
-    font-size: 13px;
+    padding: 6px;
+    font-size: 12px;
+  }
+  .bakery-finale {
+    padding: 6px;
+  }
+  .bakery-finale strong {
+    font-size: 17px;
+  }
+  .bakery-finale .treat-art {
+    width: 60px;
+    height: 48px;
   }
 }
-@media (max-height: 550px) and (min-width: 500px) {
-  .app-shell .bakery-game-card {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1.5fr) minmax(190px, 1fr);
-    gap: 4px 12px;
+@media (max-width: 600px) {
+  .bakery-game-card:is(
+      [data-bakers="5"],
+      [data-bakers="6"],
+      [data-bakers="7"],
+      [data-bakers="8"]
+    )
+    .bakery-reveal
+    > div {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 1px 3px;
+    align-content: center;
   }
-  .bakery-game-card > .bakery-workspace {
+  .bakery-game-card:is(
+      [data-bakers="5"],
+      [data-bakers="6"],
+      [data-bakers="7"],
+      [data-bakers="8"]
+    )
+    .bakery-reveal
+    span {
+    grid-column: 1/-1;
+  }
+  .bakery-game-card:is(
+      [data-bakers="5"],
+      [data-bakers="6"],
+      [data-bakers="7"],
+      [data-bakers="8"]
+    )
+    .bakery-reveal
+    .treat-art {
+    width: 32px;
+    height: 28px;
     grid-column: 1;
+    grid-row: 2/4;
   }
+  .bakery-game-card:is(
+      [data-bakers="5"],
+      [data-bakers="6"],
+      [data-bakers="7"],
+      [data-bakers="8"]
+    )
+    .bakery-reveal
+    strong {
+    font-size: 11px;
+  }
+  .bakery-game-card:is(
+      [data-bakers="5"],
+      [data-bakers="6"],
+      [data-bakers="7"],
+      [data-bakers="8"]
+    )
+    .bakery-reveal
+    small {
+    font-size: 10px;
+    text-align: left;
+  }
+}
+@media (max-width: 600px) and (max-height: 730px) {
+  .bakery-treat .bakery-gain {
+    display: none;
+  }
+  .bakery-game-card .bakery-counter {
+    padding: 4px 6px;
+    gap: 1px;
+  }
+  .bakery-collection .treat-art {
+    height: 20px;
+  }
+  .bakery-game-card .bakery-workspace {
+    gap: 4px;
+  }
+  .bakery-game-card .bakery-passing {
+    font-size: 11px;
+  }
+
+  .bakery-treat .treat-art {
+    height: 36px;
+  }
+  .bakery-treat {
+    min-height: 80px;
+  }
+  .bakery-table .secondary,
+  .bakery-table .quiet {
+    min-height: 44px;
+  }
+  .bakery-table {
+    flex-wrap: nowrap;
+  }
+  .bakery-passing {
+    flex-basis: auto;
+  }
+  .bakery-passing small {
+    display: none;
+  }
+  .bakery-game-card .board-heading h2 {
+    font-size: 18px;
+  }
+}
+@media (max-width: 600px) and (max-height: 600px) {
+  .bakery-hand[data-cards="1"] .bakery-treat {
+    min-height: 120px;
+    max-height: 170px;
+  }
+  .bakery-hand[data-cards="1"] .bakery-treat .treat-art {
+    height: 70px;
+  }
+  .bakery-reveal .treat-art {
+    height: 70px;
+    width: 100px;
+  }
+
+  .bakery-results > p {
+    display: none;
+  }
+  .bakery-finale {
+    padding: 4px;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .bakery-finale strong {
+    font-size: 15px;
+  }
+  .bakery-finale p {
+    margin: 2px 0;
+  }
+  .bakery-results .bakery-scores li {
+    padding: 4px;
+  }
+
+  .app-shell .bakery-game-card {
+    gap: 3px;
+  }
+  .bakery-counter > strong {
+    font-size: 12px;
+  }
+
   .bakery-hand {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .bakery-treat {
-    min-height: 60px;
-    padding: 4px;
+    min-height: 74px;
+    padding: 3px;
+  }
+  .bakery-treat .treat-art {
+    height: 32px;
   }
   .bakery-treat strong {
-    font-size: 12px;
+    font-size: 11px;
   }
   .bakery-treat small {
+    font-size: 10px;
+  }
+  .bakery-gain {
     display: none;
+  }
+  .bakery-status,
+  .bakery-preview {
+    font-size: 12px;
+  }
+  .bakery-welcome-art {
+    display: none;
+  }
+  .bakery-finale p {
+    font-size: 12px;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .bakery-hand[data-cards="1"] .bakery-treat {
+    min-height: 100px;
+    max-height: 160px;
+  }
+  .bakery-hand[data-cards="1"] .bakery-treat .treat-art {
+    height: 60px;
+  }
+
+  .bakery-game-card .bakery-counter {
+    gap: 1px;
+    line-height: 1.2;
+    font-size: 12px;
+  }
+  .bakery-collection > div {
+    padding: 0 2px;
+  }
+  .bakery-collection small {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+  .bakery-game-card .bakery-preview {
+    min-height: 16px;
+    line-height: 1.2;
+  }
+
+  .bakery-treat .bakery-gain {
+    display: none;
+  }
+  .app-shell .bakery-game-card {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.5fr) minmax(190px, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    gap: 2px 12px;
+  }
+  .bakery-game-card .board-heading {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .bakery-game-card .board-heading h2 {
+    display: none;
+  }
+  .bakery-game-card .bakery-status {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: 12px;
+  }
+  .bakery-game-card > .bakery-workspace {
+    grid-column: 1;
+    grid-row: 1/6;
+  }
+  .bakery-game-card:not([data-phase="ready"]):not(
+      [data-phase="round-results"]
+    ):not([data-phase="finished"])
+    .bakery-workspace {
+    display: contents;
+  }
+  .bakery-game-card .bakery-hand,
+  .bakery-game-card .bakery-reveal {
+    grid-column: 1;
+    grid-row: 1/6;
+  }
+  .bakery-game-card .bakery-preview {
+    grid-column: 2;
+    grid-row: 4;
+    align-self: end;
+    font-size: 12px;
+  }
+  .bakery-game-card .bakery-counter {
+    grid-column: 2;
+    grid-row: 3;
+    padding: 4px;
+  }
+  .bakery-collection .treat-art {
+    width: 30px;
+    height: 20px;
+  }
+  .bakery-game-card .bakery-table {
+    grid-column: 2;
+    grid-row: 5;
+  }
+  .bakery-passing {
+    font-size: 11px;
+  }
+  .bakery-passing small {
+    display: none;
+  }
+  .bakery-treat {
+    min-height: 65px;
+    padding: 4px;
+  }
+  .bakery-treat .treat-art {
+    height: 30px;
+  }
+  .bakery-treat strong,
+  .bakery-treat small {
+    font-size: 11px;
+  }
+  .bakery-game-card .bakery-lock {
+    left: 12px;
+    right: 160px;
+    max-width: none;
+  }
+  .bakery-reveal .treat-art {
+    width: 60px;
+    height: 28px;
+  }
+  .bakery-reveal > div {
+    padding: 3px;
+    gap: 1px;
+  }
+  .bakery-reveal strong,
+  .bakery-reveal small {
+    font-size: 11px;
   }
   .bakery-welcome-art {
     display: none;
@@ -2669,233 +3186,32 @@ main.app-shell {
     font-size: 12px;
     padding: 2px 0;
   }
-  .bakery-counter > span {
-    line-height: 1.15;
-  }
-  .bakery-preview {
-    font-size: 12px;
-  }
-  .bakery-reveal > div {
-    padding: 6px;
-  }
-  .bakery-results .bakery-menu,
   .bakery-results > p {
     display: none;
   }
-  .bakery-scores {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .bakery-scores li {
-    font-size: 12px;
+  .bakery-finale {
     padding: 4px;
+    margin-bottom: 4px;
   }
-}
-.app-shell .bakery-game-card > * {
-  min-width: 0;
-}
-.bakery-intro {
-  min-width: 0;
-  max-width: 100%;
-}
-.bakery-welcome-art .treat-art {
-  min-width: 0;
-  width: min(100px, 33%);
-}
-.bakery-hand {
-  min-height: min-content;
-}
-.bakery-treat .treat-art {
-  width: 90px;
-  height: 44px;
-  min-height: 36px;
-  flex-shrink: 0;
-}
-@media (max-width: 600px) {
-  .bakery-treat {
-    min-height: 78px;
-  }
-  .bakery-treat .treat-art {
-    height: 32px;
-    min-height: 32px;
-  }
-}
-@media (max-height: 550px) and (min-width: 500px) {
-  .bakery-treat .treat-art {
-    height: 28px;
-    min-height: 28px;
-  }
-}
-@media (max-height: 550px) and (min-width: 500px) {
-  .bakery-game-card:not([data-phase="ready"]):not(
-      [data-phase="round-results"]
-    ):not([data-phase="finished"])
-    .bakery-workspace {
-    display: contents;
-  }
-  .bakery-game-card .bakery-hand,
-  .bakery-game-card .bakery-reveal {
-    grid-column: 1;
-  }
-  .bakery-game-card .bakery-preview {
-    margin: 0;
-  }
-  .bakery-game-card .bakery-counter {
-    grid-column: 2;
-  }
-  .bakery-game-card .bakery-table {
-    bottom: 12px;
-    right: 160px;
-  }
-  .bakery-game-card .bakery-lock {
-    position: absolute;
-    bottom: 12px;
-    left: 12px;
-    right: 285px;
-  }
-  .bakery-game-card[data-host="true"] .bakery-lock {
-    left: 155px;
-  }
-  .bakery-game-card .board-heading h2 {
-    display: none;
-  }
-}
-.bakery-workspace {
-  min-height: min-content;
-}
-.bakery-lock {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  max-width: calc(100% - 160px);
-}
-.bakery-reveal .treat-art {
-  width: 90px;
-  height: 60px;
-  flex-shrink: 0;
-}
-.bakery-table > .secondary {
-  font-size: 12px;
-  min-height: 44px;
-  padding: 6px 8px;
-  flex-shrink: 0;
-}
-@media (max-width: 600px) {
-  .bakery-pass-target {
-    display: none;
-  }
-  .bakery-table {
-    gap: 4px;
-  }
-  .bakery-reveal .treat-art {
+  .bakery-finale .treat-art {
+    width: 50px;
     height: 36px;
   }
-}
-@media (max-height: 550px) and (min-width: 500px) {
-  .bakery-game-card .bakery-table {
-    position: static;
-    grid-column: 2;
+  .bakery-finale strong {
+    font-size: 15px;
   }
-  .bakery-game-card .bakery-table > span {
-    display: none;
-  }
-  .bakery-game-card .bakery-preview {
-    align-self: end;
+  .bakery-finale p {
     font-size: 12px;
+    margin: 2px 0;
   }
-  .bakery-game-card .bakery-hand {
-    grid-row: 1 / 4;
-  }
-  .bakery-game-card .bakery-reveal {
-    grid-row: 1 / 5;
-  }
-  .bakery-game-card .bakery-lock,
-  .bakery-game-card[data-host="true"] .bakery-lock {
-    left: 12px;
-    right: 160px;
-    max-width: none;
-  }
-  .bakery-reveal .treat-art {
-    height: 28px;
-  }
-}
-@media (max-width: 600px) {
-  .bakery-reveal > div {
-    padding: 6px;
-    gap: 2px;
-  }
-  .bakery-reveal span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .bakery-reveal strong {
-    font-size: 12px;
-  }
-  .bakery-game-card:is(
-      [data-bakers="5"],
-      [data-bakers="6"],
-      [data-bakers="7"],
-      [data-bakers="8"]
-    )
-    .bakery-reveal
-    .treat-art {
-    display: none;
-  }
-}
-@media (max-height: 550px) and (min-width: 500px) {
-  .app-shell .bakery-game-card {
-    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
-    row-gap: 2px;
-  }
-  .bakery-game-card .board-heading {
-    grid-column: 2;
-    grid-row: 1;
-    min-height: 16px;
-  }
-  .bakery-game-card .bakery-status {
-    grid-column: 2;
-    grid-row: 2;
-    line-height: 1.2;
-  }
-  .bakery-game-card .bakery-counter {
-    grid-row: 3;
-    padding: 4px 6px;
-    gap: 2px;
-    font-size: 12px;
-  }
-  .bakery-game-card .bakery-preview {
-    grid-column: 2;
-    grid-row: 4;
-    line-height: 1.2;
-  }
-  .bakery-game-card .bakery-table {
-    grid-row: 5;
-  }
-  .bakery-game-card .bakery-hand,
-  .bakery-game-card .bakery-reveal {
-    grid-row: 1 / 6;
-  }
-  .bakery-game-card > .bakery-workspace {
-    grid-row: 1 / 6;
-  }
-}
-@media (max-width: 600px) {
-  .app-shell .bakery-game-card {
+  .bakery-scores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
   }
-}
-/* Keep the primary results compact even with long names or taller system fonts.
-   The score panel retains complete names and both batch totals. */
-.bakery-results .bakery-scores {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.bakery-results .bakery-scores li > span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bakery-results .bakery-scores small {
-  display: none;
+  .bakery-scores li {
+    padding: 4px;
+    font-size: 12px;
+  }
 }
 
 /* Treasure Dive keeps the personal decision prominent and the roster in a dialog. */

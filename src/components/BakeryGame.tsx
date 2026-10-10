@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { AppPanel, GameHelp } from "./AppLayout";
 import {
   bakeryCards,
@@ -9,6 +9,7 @@ import {
   type BakeryCard,
   type BakeryState,
 } from "../games/bakery";
+import { bakeryPass, bakeryReward } from "../games/bakery-feedback";
 import type { Player } from "../network/protocol";
 import type { Session } from "../network/session";
 
@@ -16,7 +17,12 @@ import type { Session } from "../network/session";
 export function TreatArt({ card }: { card: BakeryCard }) {
   const color = bakeryMenu[card].color;
   return (
-    <svg viewBox="0 0 120 90" aria-hidden="true" className="treat-art">
+    <svg
+      viewBox="0 0 120 90"
+      aria-hidden="true"
+      className="treat-art"
+      data-treat={card}
+    >
       <ellipse cx="60" cy="80" rx="36" ry="5" fill="#382944" opacity=".12" />
       {card === "cookie" ? (
         <>
@@ -104,6 +110,14 @@ export function TreatArt({ card }: { card: BakeryCard }) {
           />
         </>
       )}
+      <path
+        d="M42 25Q50 17 59 19"
+        stroke="white"
+        strokeWidth="5"
+        strokeLinecap="round"
+        opacity=".5"
+        fill="none"
+      />
       {[48, 72].map((x) => (
         <g key={x}>
           <ellipse cx={x} cy="42" rx="9" ry="10" fill="white" />
@@ -151,6 +165,20 @@ export function BakeryGame({
   const chosen = selected !== null ? me?.hand?.[selected] : undefined;
   const ready = game.bakers.filter((b) => b.locked).length;
   const counts = bakeryCounts(me?.treats ?? []);
+  const pass = bakeryPass(game, session.me.id, name);
+  const revealedCount = game.bakers.reduce(
+    (sum, b) => sum + b.treats.length,
+    0,
+  );
+  const previousReveal = useRef({ round: game.round, count: revealedCount });
+  const [freshReveal, setFreshReveal] = useState(false);
+  useEffect(() => {
+    setFreshReveal(
+      previousReveal.current.round === game.round &&
+        revealedCount > previousReveal.current.count,
+    );
+    previousReveal.current = { round: game.round, count: revealedCount };
+  }, [game.round, revealedCount]);
   const status = !connected
     ? "Host disconnected"
     : game.phase === "ready"
@@ -168,7 +196,9 @@ export function BakeryGame({
                 ? game.bakers.length === 2
                   ? "Spoon gremlin! Keep your hands this time!"
                   : "Spoon gremlin! Passing reverses!"
-                : "Fresh treats! Everyone reveals."
+                : pass.gremlins
+                  ? `${pass.gremlins} spoon gremlins cancel! Passing stays the same.`
+                  : "Fresh treats! Everyone reveals."
               : !me
                 ? "You’re watching. Join the next game."
                 : me.locked
@@ -179,8 +209,12 @@ export function BakeryGame({
       {[...game.bakers]
         .sort((a, b) => total(b) - total(a))
         .map((b) => (
-          <li key={b.id}>
+          <li key={b.id} data-winner={results && total(b) === highest}>
             <span>
+              #
+              {1 +
+                game.bakers.filter((other) => total(other) > total(b))
+                  .length}{" "}
               {name(b.id)}
               {b.id === session.me.id ? " · You" : ""}
             </span>
@@ -200,8 +234,11 @@ export function BakeryGame({
     <section
       className="games-card bakery-game-card"
       data-phase={game.phase}
+      data-resume-phase={game.resumePhase}
       data-host={session.role === "host"}
       data-bakers={game.bakers.length}
+      data-fresh-reveal={freshReveal}
+      data-gremlins={pass.gremlins > 0}
       aria-label="Midnight Bakery game"
     >
       <div className="board-heading">
@@ -237,6 +274,26 @@ export function BakeryGame({
           </div>
         ) : results ? (
           <div className="bakery-results">
+            <div className="bakery-finale">
+              <TreatArt card="cupcake" />
+              <div>
+                <strong>
+                  {finished ? "Bake-off champions" : "Batch one baked!"}
+                </strong>
+                <p>
+                  {finished
+                    ? winners.length > 1
+                      ? `${winners.length} bakers share first place`
+                      : name(winners[0].id)
+                    : "Your combinations are baked into your score."}
+                </p>
+                {me && (
+                  <span>
+                    You: {total(me)} pts · This batch: {bakeryScore(me.treats)}
+                  </span>
+                )}
+              </div>
+            </div>
             {scoreboard}
             <p>
               {finished
@@ -246,7 +303,12 @@ export function BakeryGame({
           </div>
         ) : (
           <>
-            <div className="bakery-hand" role="group" aria-label="Your hand">
+            <div
+              className="bakery-hand"
+              data-cards={me?.hand?.length ?? 0}
+              role="group"
+              aria-label="Your hand"
+            >
               {me?.hand?.map((c, i) => (
                 <button
                   key={`${game.round}-${game.pick}-${i}`}
@@ -263,7 +325,17 @@ export function BakeryGame({
                 >
                   <TreatArt card={c} />
                   <strong>{bakeryMenu[c].name}</strong>
-                  <small>{bakeryMenu[c].rule}</small>
+                  <small>
+                    {
+                      {
+                        cookie: "Pair = 6",
+                        jelly: "Pair = 7",
+                        cupcake: "3 each",
+                        sprinkles: "+2 with cake",
+                        gremlin: "Reverse pass",
+                      }[c]
+                    }
+                  </small>
                   <span className="bakery-gain">
                     +{bakeryScore([...me.treats, c]) - bakeryScore(me.treats)}{" "}
                     pts now
@@ -277,10 +349,10 @@ export function BakeryGame({
                 : game.phase === "reveal"
                   ? "Treats are on the counter. Hands pass in a moment…"
                   : chosen
-                    ? `${bakeryMenu[chosen].name} · ${bakeryMenu[chosen].rule} · +${bakeryScore([...me!.treats, chosen]) - bakeryScore(me!.treats)} points`
+                    ? `${bakeryMenu[chosen].name} · +${bakeryScore([...me!.treats, chosen]) - bakeryScore(me!.treats)} points · ${bakeryReward([...me!.treats, chosen]).label}`
                     : me?.locked
                       ? "No peeking! Waiting for the other bakers."
-                      : "Tap a card to see its points, then lock your pick."}
+                      : "Choose a treat, then lock your pick."}
             </p>
             {game.phase === "picking" && me && (
               <button
@@ -297,12 +369,21 @@ export function BakeryGame({
             {!!game.bakers.length && (
               <div className="bakery-reveal" aria-label="Last reveal">
                 {game.bakers.map((b) => (
-                  <div key={b.id}>
+                  <div
+                    key={`${game.round}-${b.treats.length}-${b.id}`}
+                    data-combination={bakeryReward(b.treats).combination}
+                  >
                     <span>{name(b.id)}</span>
                     {b.last && <TreatArt card={b.last} />}
                     <strong>
                       {b.last ? bakeryMenu[b.last].name : "Oven warming…"}
                     </strong>
+                    {b.last && (
+                      <small>
+                        +{bakeryReward(b.treats).gain} pts ·{" "}
+                        {bakeryReward(b.treats).label}
+                      </small>
+                    )}
                   </div>
                 ))}
               </div>
@@ -313,30 +394,33 @@ export function BakeryGame({
       {me && !results && (
         <div className="bakery-counter" aria-label="Your treats">
           <strong>Your counter · {total(me)} pts</strong>
-          <span>
-            {me.treats.length
-              ? bakeryCards
-                  .filter((c) => counts[c] > 0)
-                  .map(
-                    (c) =>
-                      `${{ cookie: "Cookies", jelly: "Jelly", cupcake: "Cakes", sprinkles: "Sprinkles", gremlin: "Gremlins" }[c]} ×${counts[c]}`,
-                  )
-                  .join(" · ")
-              : "Your first treat is waiting."}
-          </span>
+          <div className="bakery-collection">
+            {bakeryCards.map((c) => (
+              <div
+                key={`${game.round}-${me.treats.length}-${c}`}
+                data-latest={me.last === c}
+                data-filled={counts[c] > 0}
+                aria-label={`${bakeryMenu[c].name}: ${counts[c]}, ${bakeryBreakdown(me.treats)[c]} points`}
+              >
+                <TreatArt card={c} />
+                <strong>×{counts[c]}</strong>
+                <small>
+                  {c === "cookie" || c === "jelly"
+                    ? `${Math.floor(counts[c] / 2)} pairs${counts[c] % 2 ? " + 1" : ""}`
+                    : c === "cupcake" || c === "sprinkles"
+                      ? `${Math.min(counts.cupcake, counts.sprinkles)} matched`
+                      : "1 each"}
+                </small>
+              </div>
+            ))}
+          </div>
         </div>
       )}
       {game.phase !== "ready" && (
         <div className="bakery-table">
-          <span>
-            Pass {game.direction === 1 ? "→" : "←"}
-            <span className="bakery-pass-target">
-              {" "}
-              ·{" "}
-              {me
-                ? `to ${name(game.bakers[(game.bakers.indexOf(me) + game.direction + game.bakers.length) % game.bakers.length].id)}`
-                : "around the table"}
-            </span>
+          <span className="bakery-passing" aria-live="polite">
+            <strong>{pass.label}</strong>
+            <small>{pass.note}</small>
           </span>
           {session.role === "host" && !results && (
             <button
