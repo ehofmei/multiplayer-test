@@ -100,11 +100,13 @@ export function SumoGame({
       court.current?.scrollIntoView({ block: "center" });
     }
   }, [game.phase]);
-  // Smooth confirmed snapshots without extrapolating a bumper across the edge.
+  // Clients smooth confirmed snapshots; the host renders its own physics immediately.
+  // Neither predicts a bumper across the edge.
   useLayoutEffect(() => {
     const before = previous.current;
     previous.current = game;
     const animate =
+      session.role !== "host" &&
       connected &&
       game.phase === "playing" &&
       before?.phase === "playing" &&
@@ -290,27 +292,25 @@ export function SumoGame({
                 data-alive={b.alive}
                 data-cooldown={b.cooldown}
                 data-dashing={
-                  game.phase === "playing" && b.alive && sumoDashing(b.cooldown)
+                  game.phase === "playing" && b.alive && sumoDashing(b)
                 }
                 opacity={b.alive ? 1 : 0.4}
               >
-                {game.phase === "playing" &&
-                  b.alive &&
-                  sumoDashing(b.cooldown) && (
-                    <g
-                      className="sumo-dash-trail"
-                      transform={`rotate(${(Math.atan2(b.vy, b.vx) * 180) / Math.PI})`}
-                    >
-                      <path
-                        d="M-35 -18 Q-88 -24 -142 -10 M-40 0 H-170 M-35 18 Q-88 24 -142 10"
-                        stroke={cycleColors[i]}
-                        strokeWidth="12"
-                        strokeLinecap="round"
-                        opacity="0.75"
-                        fill="none"
-                      />
-                    </g>
-                  )}
+                {game.phase === "playing" && b.alive && sumoDashing(b) && (
+                  <g
+                    className="sumo-dash-trail"
+                    transform={`rotate(${(Math.atan2(b.vy, b.vx) * 180) / Math.PI})`}
+                  >
+                    <path
+                      d="M-35 -18 Q-88 -24 -142 -10 M-40 0 H-170 M-35 18 Q-88 24 -142 10"
+                      stroke={cycleColors[i]}
+                      strokeWidth="12"
+                      strokeLinecap="round"
+                      opacity="0.75"
+                      fill="none"
+                    />
+                  </g>
+                )}
                 <SumoBumperArtwork
                   color={cycleColors[i]}
                   number={i + 1}

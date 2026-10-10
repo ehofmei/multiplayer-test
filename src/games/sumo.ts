@@ -32,8 +32,9 @@ export const sumoRadius = (ticks: number) => {
     0.44 - 0.004 * Math.min(60, seconds) - Math.max(0, seconds - 60) / 150,
   );
 };
-export const sumoDashing = (cooldown: number) =>
-  cooldown > SUMO_COOLDOWN - SUMO_DASH_TICKS;
+export const sumoDashing = (bumper: Pick<Bumper, "cooldown" | "vx" | "vy">) =>
+  bumper.cooldown > SUMO_COOLDOWN - SUMO_DASH_TICKS &&
+  Math.hypot(bumper.vx, bumper.vy) > 0.45;
 // A small neutral area absorbs thumb jitter; travel beyond the pad stays bounded.
 export function sumoStick(x: number, y: number) {
   const length = Math.hypot(x, y);
@@ -135,7 +136,7 @@ export function stepSumo(state: SumoState): SumoState {
     const dx = inputFor ? b.dx : 0,
       dy = inputFor ? b.dy : 0;
     // Fast response while steering, a short low-drag burst, then firm braking.
-    const drag = sumoDashing(b.cooldown) && inputFor ? 1.5 : 7;
+    const drag = sumoDashing(b) && inputFor ? 1.5 : 7;
     let vx = (b.vx + dx * 2.2 * dt) * Math.exp(-drag * dt);
     let vy = (b.vy + dy * 2.2 * dt) * Math.exp(-drag * dt);
     const speed = Math.max(1, Math.hypot(vx, vy) / SUMO_SPEED);

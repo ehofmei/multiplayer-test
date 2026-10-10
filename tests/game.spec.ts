@@ -1762,7 +1762,8 @@ test("Sumo Bumpers pairs, moves by thumb pad and keyboard, dashes, pauses, finis
             .matrix.e / 1000,
         target: Number(element.getAttribute("data-x")),
       }));
-    expect(smooth.drawn).toBeGreaterThan(smooth.target);
+    // The host draws its own confirmed simulation without client interpolation lag.
+    expect(smooth.drawn).toBeCloseTo(smooth.target, 6);
     expect(smooth.drawn).toBeLessThan(0.75);
     await cdp.send("Input.dispatchTouchEvent", {
       type: "touchEnd",

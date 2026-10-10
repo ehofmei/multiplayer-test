@@ -260,8 +260,9 @@ client clears its input; momentum slows naturally. Pause, host backgrounding,
 pairing and scheduling stalls freeze play and clear movement/momentum. Resume
 Bumpers uses a fresh three-second countdown with the same ring and recharge timers.
 A participant leaving resets the round; a spectator leaving preserves it.
-Confirmed bumper positions are smoothed without predicting ring-outs, with exact
-paused/eliminated positions and reduced-motion support. Optional local sounds
+Clients smooth confirmed bumper positions without predicting ring-outs; the host
+renders its own physics immediately. Paused/eliminated positions stay exact, with
+reduced-motion support. Optional local sounds
 announce start, dash, your ring-out and the result; sound remains muted by default.
 Update **every device** before selecting Sumo Bumpers: older builds cannot validate
 its state or inputs. Update every device for the continued-pressure rules too:

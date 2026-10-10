@@ -247,6 +247,40 @@ test("Sumo dash confirms a burst, fills recharge and keeps playing past sixty se
       `sumo-final-squeeze-phone-${process.platform}.png`,
       { maxDiffPixels: 160 },
     );
+    const pad = (await host
+      .getByRole("group", { name: "Movement thumb pad", exact: true })
+      .boundingBox())!;
+    await host.mouse.move(pad.x + pad.width / 2 + 1, pad.y + pad.height / 2);
+    await host.mouse.down();
+    await host.clock.runFor(17);
+    await expect(host.getByTestId("sumo-bumper-0")).toHaveAttribute(
+      "data-dx",
+      "0",
+    );
+    // Captured off-pad travel stays normalized and keeps the knob inside its well.
+    await host.mouse.move(pad.x + pad.width + 30, pad.y - 30);
+    await host.clock.runFor(17);
+    const dx = Number(
+      await host.getByTestId("sumo-bumper-0").getAttribute("data-dx"),
+    );
+    const dy = Number(
+      await host.getByTestId("sumo-bumper-0").getAttribute("data-dy"),
+    );
+    expect(Math.hypot(dx, dy)).toBeCloseTo(1);
+    expect(dx).toBeGreaterThan(0);
+    expect(dy).toBeLessThan(0);
+    const knob = (await host.locator(".sumo-stick-knob").boundingBox())!;
+    expect(knob.x).toBeGreaterThanOrEqual(pad.x);
+    expect(knob.y).toBeGreaterThanOrEqual(pad.y);
+    expect(knob.x + knob.width).toBeLessThanOrEqual(pad.x + pad.width);
+    expect(knob.y + knob.height).toBeLessThanOrEqual(pad.y + pad.height);
+    await host.mouse.up();
+    await host.clock.runFor(17);
+    await expect(host.getByTestId("sumo-bumper-0")).toHaveAttribute(
+      "data-dx",
+      "0",
+    );
+    await host.locator(".sumo-court").focus();
     await host
       .getByRole("button", { name: "Pause Bumpers", exact: true })
       .click();

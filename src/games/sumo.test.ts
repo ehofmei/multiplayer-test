@@ -17,6 +17,7 @@ import {
   SUMO_SPEED,
   SUMO_HZ,
   sumoStick,
+  sumoDashing,
   type SumoState,
 } from "./sumo";
 const playing = (ids = ["a", "b"]): SumoState => ({
@@ -127,6 +128,14 @@ it("freezes pause/countdown controls and stops velocity before resuming", () => 
   expect(stepSumo(paused)).toBe(paused);
   expect(moveSumo(paused, "a", 1, 0)).toBe(paused);
   expect(dashSumo(paused, "a")).toBe(paused);
+  expect(paused.bumpers[0].cooldown).toBe(moving.bumpers[0].cooldown);
+  expect(sumoDashing(paused.bumpers[0])).toBe(false);
+  const resumed = advance(
+    moveSumo({ ...paused, phase: "playing" }, "a", 1, 0),
+    22,
+  );
+  expect(resumed.bumpers[0].vx).toBeLessThan(0.3);
+  expect(sumoDashing(resumed.bumpers[0])).toBe(false);
   expect(paused.bumpers[0]).toMatchObject({
     vx: 0,
     vy: 0,

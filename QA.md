@@ -270,6 +270,7 @@ Pass two checks:
   Pause/resume freezes pressure and recharge, with the usual resume countdown.
 - Rule/sound tests cover burst distance, bounded speed, braking, dead-zone travel,
   post-minute pressure, terminal validation and the gesture-unlocked swoosh.
+  The host draws confirmed physics immediately; clients retain snapshot smoothing.
   The paired Sumo specs retain phone/tablet/desktop/landscape states and add
   confirmed dash and final squeeze snapshots on Darwin and genuine Linux.
 - Live native Chromium QA used a real paired production room at phone size and

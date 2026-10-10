@@ -18,8 +18,7 @@ jobs:
       - run: npm run build
       - name: Refresh reviewed Sumo renders once
         run: |
-          npx playwright test tests/sumo.spec.ts --update-snapshots=changed
-          npx playwright test tests/game.spec.ts --grep 'Sumo' --update-snapshots=changed
+          npx playwright test tests/sumo.spec.ts --grep 'dash confirms' --update-snapshots=changed
       - name: Return Linux renders
         run: |
           git config user.name 'github-actions[bot]'
