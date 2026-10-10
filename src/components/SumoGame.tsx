@@ -448,7 +448,7 @@ export function SumoGame({
               ? `${(me.cooldown / SUMO_HZ).toFixed(1)}s recharge`
               : !active
                 ? "Move + dash"
-                : Math.hypot(stick.x, stick.y) > 0.08
+                : Math.hypot(stick.x, stick.y) >= 0.1
                   ? "Ready!"
                   : "Steer to dash"}
           </span>

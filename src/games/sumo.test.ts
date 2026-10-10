@@ -71,6 +71,7 @@ it("normalizes diagonal motion, brakes on release and expires lost input", () =>
 it("dashes only while moving, enforces recharge and bounds speed", () => {
   let s = playing();
   expect(dashSumo(s, "a").bumpers).toEqual(s.bumpers);
+  expect(dashSumo(moveSumo(s, "a", 0.09, 0), "a").bumpers[0].cooldown).toBe(0);
   s = dashSumo(moveSumo(s, "a", 1, 0), "a");
   expect(s.bumpers[0].vx).toBeCloseTo(1.35);
   expect(s.bumpers[0].cooldown).toBe(SUMO_COOLDOWN);

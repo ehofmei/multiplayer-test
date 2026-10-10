@@ -273,6 +273,9 @@ Pass two checks:
   The host draws confirmed physics immediately; clients retain snapshot smoothing.
   The paired Sumo specs retain phone/tablet/desktop/landscape states and add
   confirmed dash and final squeeze snapshots on Darwin and genuine Linux.
+  Linux verification uses codex/sumo-controls and
+  .github/workflows/sumo-controls-review.yml; its normal workflow compares reviewed
+  baselines with read-only permissions, no update flags and no deployment.
 - Live native Chromium QA used a real paired production room at phone size and
   checked start, stationary-dash rejection, pause/resume, help/roster readability
   and Escape focus return. The native tool does not support holding a steering
