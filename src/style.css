@@ -3045,6 +3045,28 @@ main.app-shell {
 .bakery-reward-compact {
   display: none;
 }
+@media (max-width: 600px) and (max-height: 730px) {
+  .bakery-game-card:is(
+      [data-bakers="5"],
+      [data-bakers="6"],
+      [data-bakers="7"],
+      [data-bakers="8"]
+    )
+    .bakery-reveal
+    .bakery-reward-full {
+    display: none;
+  }
+  .bakery-game-card:is(
+      [data-bakers="5"],
+      [data-bakers="6"],
+      [data-bakers="7"],
+      [data-bakers="8"]
+    )
+    .bakery-reveal
+    .bakery-reward-compact {
+    display: inline;
+  }
+}
 @media (max-width: 600px) and (max-height: 600px) {
   .bakery-game-card:is(
       [data-bakers="5"],

@@ -443,6 +443,11 @@ test("eight bakers fit, late arrivals spectate, and losing the host disables pic
                 `bakery-eight-short-pairs-${process.platform}.png`,
                 { maxDiffPixels: 180 },
               );
+            const taller = await clients[0].addStyleTag({
+              content: ":root {font-family:Arial,sans-serif;line-height:1.5}",
+            });
+            await expectScreenFits(clients[0]);
+            await taller.evaluate((e) => e.remove());
           }
           await clients[0].setViewportSize({ width: 320, height: 700 });
           await host
