@@ -292,13 +292,19 @@ export function SumoGame({
                       : "Bumper arena"}
               </span>
               <strong>
-                {!connected
-                  ? "Host disconnected"
-                  : game.phase === "countdown"
-                    ? Math.ceil(game.countdown / SUMO_HZ)
-                    : game.phase === "paused"
-                      ? "Paused"
-                      : "Hold your ground"}
+                {!connected ? (
+                  "Host disconnected"
+                ) : game.phase === "countdown" ? (
+                  Math.ceil(game.countdown / SUMO_HZ)
+                ) : game.phase === "paused" ? (
+                  "Paused"
+                ) : (
+                  <>
+                    Hold your
+                    <br />
+                    ground
+                  </>
+                )}
               </strong>
               {game.phase !== "countdown" && (
                 <small>

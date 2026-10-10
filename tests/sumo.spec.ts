@@ -88,7 +88,7 @@ test("Sumo artwork and arcade composition fit phones, tablets and desktop", asyn
     );
     await expectScreenFits(client);
     await expectStableScreenshot(
-      client,
+      host,
       ".sumo-game-card",
       `sumo-closing-phone-${process.platform}.png`,
       { maxDiffPixels: 160 },

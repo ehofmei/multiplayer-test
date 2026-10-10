@@ -16,12 +16,8 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - name: Obtain genuine Linux artwork baselines once
-        run: |
-          if [ ! -f tests/sumo.spec.ts-snapshots/sumo-active-phone-linux.png ]; then
-            npx playwright test tests/sumo.spec.ts --update-snapshots
-            npx playwright test tests/game.spec.ts --grep 'Sumo Bumpers pairs|eight Sumo bumpers' --update-snapshots
-          fi
+      - name: Refresh the reviewed ready and closing-ring Linux states once
+        run: npx playwright test tests/sumo.spec.ts --update-snapshots=changed
       - name: Return Linux renders to the review branch
         run: |
           git config user.name 'github-actions[bot]'
