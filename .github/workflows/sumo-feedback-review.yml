@@ -3,7 +3,7 @@ on:
   push:
     branches: [codex/sumo-feedback]
 permissions:
-  contents: write
+  contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -16,23 +16,6 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - name: Obtain genuine Linux feedback baselines once
-        run: |
-          if [ ! -f tests/sumo.spec.ts-snapshots/sumo-winner-phone-linux.png ]; then
-            npx playwright test tests/sumo.spec.ts --grep 'Sumo feedback' --update-snapshots
-          fi
-          # Review found transient ring-out flares behind the draw card.
-          # Refresh only that feedback spec after explicitly settling its timer.
-          npx playwright test tests/sumo.spec.ts --grep "Sumo feedback marks" --update-snapshots=all
-      - name: Return Linux renders to the review branch
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tests/sumo.spec.ts-snapshots/*-linux.png
-          if ! git diff --cached --quiet; then
-            git commit -m 'Generated Linux Sumo feedback baselines'
-            git push origin HEAD:codex/sumo-feedback
-          fi
       - run: npm run verify
       - name: Save browser evidence
         if: always()
