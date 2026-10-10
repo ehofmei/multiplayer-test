@@ -55,8 +55,10 @@ export function bakeryPass(
     gremlins,
     keep,
     label:
-      game.pick === 6 && revealed
-        ? "All six treats collected · batch complete"
+      game.pick === 6
+        ? game.bakers.every((b) => b.treats.length === 6)
+          ? "All six treats collected · batch complete"
+          : "Last treat · then bake this batch"
         : keep
           ? "Gremlin kept your hand! Next pick stays with you."
           : `${action} ${game.direction === 1 ? "→" : "←"} to ${target}`,

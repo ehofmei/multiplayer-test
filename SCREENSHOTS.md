@@ -99,9 +99,12 @@ Shared board · shared baseline.
 
 ## Midnight Bakery
 
-Player's hand · phone layout.
+Player's hand · phone layout. Rule hints stay visible; collection and passing are below the hand.
 
 ![Midnight Bakery hand](tests/bakery.spec.ts-snapshots/bakery-hand-linux.png)
+
+[Eight bakers completing cookie pairs](tests/bakery.spec.ts-snapshots/bakery-eight-pairs-linux.png) ·
+[Shared bake-off champions](tests/bakery.spec.ts-snapshots/bakery-eight-finale-linux.png)
 
 ## Meteor Minigolf
 

@@ -140,13 +140,17 @@ Reveals show each baker's gain and completed combination, with a brief arrival
 onto the counter. Passing names the next recipient; gremlins get a shared green
 notice explaining reversal, cancellation or the two-player kept hand. The final
 pick closes the batch rather than promising another pass. One-card hands stay
-centered. Batch and bake-off results highlight ranks, leaders/shared champions
+centered. Crowded reveals on short phones use pictured gain chips; screen readers
+retain full card/reward descriptions, and Table & scores keeps full player names.
+Batch and bake-off results highlight ranks, leaders/shared champions
 and your total, with full names and batch breakdowns in Table & scores.
 Optional synthesized lock, reveal, pass, combination and gremlin cues remain
 muted by default. Gremlins take priority over simultaneous rewards; batch and
 match endings have their own finish cues. Repeated snapshots, late joining and
 pause/resume do not replay old sounds. Reduced motion keeps all reward text and
-collection indicators. These presentation changes add no network fields or rules.
+collection indicators. These presentation changes add no network fields or rules; devices that already
+support Bakery remain compatible. Update each device to see the polish and hear
+the new cues.
 
 Googly Cookies earn 2 each plus 2 per pair (a pair earns 6). Wobble Jelly pairs earn
 7; unpaired jelly earns 0. Burp Cakes earn 3 each. Disco Sprinkles earn 1 each plus

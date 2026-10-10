@@ -203,7 +203,7 @@ export function BakeryGame({
                 ? "You’re watching. Join the next game."
                 : me.locked
                   ? `Your pick is locked · ${ready}/${game.bakers.length} ready`
-                  : "Pick one treat. What will you bake?";
+                  : "Choose one treat.";
   const scoreboard = (
     <ol className="bakery-scores" aria-label="Bakery scores">
       {[...game.bakers]
@@ -372,6 +372,8 @@ export function BakeryGame({
                   <div
                     key={`${game.round}-${b.treats.length}-${b.id}`}
                     data-combination={bakeryReward(b.treats).combination}
+                    role="group"
+                    aria-label={`${name(b.id)}: ${b.last ? bakeryMenu[b.last].name : "Oven warming"}, +${bakeryReward(b.treats).gain} points, ${bakeryReward(b.treats).label}`}
                   >
                     <span>{name(b.id)}</span>
                     {b.last && <TreatArt card={b.last} />}
@@ -380,8 +382,21 @@ export function BakeryGame({
                     </strong>
                     {b.last && (
                       <small>
-                        +{bakeryReward(b.treats).gain} pts ·{" "}
-                        {bakeryReward(b.treats).label}
+                        <span className="bakery-reward-full">
+                          +{bakeryReward(b.treats).gain} pts ·{" "}
+                          {bakeryReward(b.treats).label}
+                        </span>
+                        <span
+                          className="bakery-reward-compact"
+                          aria-hidden="true"
+                        >
+                          +{bakeryReward(b.treats).gain} pts
+                          {bakeryReward(b.treats).combination
+                            ? b.last === "cookie" || b.last === "jelly"
+                              ? " · Pair!"
+                              : " · Match!"
+                            : ""}
+                        </span>
                       </small>
                     )}
                   </div>

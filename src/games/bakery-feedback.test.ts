@@ -48,6 +48,12 @@ it("closes the final pick without promising another pass", () => {
   game.pick = 6;
   game.bakers[0].last = "gremlin";
   expect(bakeryPass(game, "a", (id) => id).label).toBe(
+    "Last treat · then bake this batch",
+  );
+  game.bakers.forEach((b) => {
+    b.treats = Array(6).fill("cookie");
+  });
+  expect(bakeryPass(game, "a", (id) => id).label).toBe(
     "All six treats collected · batch complete",
   );
 });

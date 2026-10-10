@@ -434,7 +434,8 @@ tray, pair/match progress, +0 jelly explanation, public gains on reveal, persist
 passing destinations, green gremlin reversal/cancellation/keep-hand notices, a
 centered last card, and ranked batch/final results. Regression captures cover
 setup, untouched/selected hands, a muted reduced-motion reveal, collection,
-one-card hands, eight-player hands and shared eight-player champions. Exercise
+one-card hands, wide cards, eight-player hands, compact eight-player pair/gremlin
+reveals and shared eight-player champions. Exercise
 320×568 in addition to the sizes below, keeping all fit/pixel assertions strict.
 Sound tests use confirmed model transitions and cover combinations in either
 order, cue priority, shared gremlins, spectators, duplicate/delayed snapshots,

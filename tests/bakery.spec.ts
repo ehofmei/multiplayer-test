@@ -121,6 +121,12 @@ test("Bakery pairs, previews, secretly locks, passes, scores two batches and rem
       });
       await style.evaluate((e) => e.remove());
     }
+    await expectStableScreenshot(
+      client,
+      ".bakery-hand",
+      `bakery-wide-hand-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
     await client.setViewportSize({ width: 390, height: 844 });
     await expectStableScreenshot(
       client,
@@ -417,6 +423,28 @@ test("eight bakers fit, late arrivals spectate, and losing the host disables pic
             `bakery-eight-pairs-${process.platform}.png`,
             { maxDiffPixels: 180 },
           );
+          for (const size of sizes) {
+            await clients[0].setViewportSize(size);
+            await clients[0].screenshot({
+              path: `test-results/bakery-eight-pairs-${size.width}-${size.height}.png`,
+            });
+            await expectScreenFits(clients[0]);
+            if (size.width === 844)
+              await expectStableScreenshot(
+                clients[0],
+                ".bakery-game-card",
+                `bakery-eight-landscape-pairs-${process.platform}.png`,
+                { maxDiffPixels: 180 },
+              );
+            if (size.width === 320 && size.height === 568)
+              await expectStableScreenshot(
+                clients[0],
+                ".bakery-game-card",
+                `bakery-eight-short-pairs-${process.platform}.png`,
+                { maxDiffPixels: 180 },
+              );
+          }
+          await clients[0].setViewportSize({ width: 320, height: 700 });
           await host
             .getByRole("button", { name: "Resume Bakery", exact: true })
             .click();
@@ -425,6 +453,26 @@ test("eight bakers fit, late arrivals spectate, and losing the host disables pic
           await expect(clients[0].locator(".bakery-status")).toContainText(
             "8 spoon gremlins cancel",
           );
+        if (round === 1 && pick === 6) {
+          await host
+            .getByRole("button", { name: "Pause Bakery", exact: true })
+            .click();
+          await clients[0].setViewportSize({ width: 320, height: 568 });
+          await expectScreenFits(clients[0]);
+          await expect(clients[0].locator(".bakery-passing")).toContainText(
+            "All six treats collected",
+          );
+          await expectStableScreenshot(
+            clients[0],
+            ".bakery-game-card",
+            `bakery-eight-gremlins-${process.platform}.png`,
+            { maxDiffPixels: 180 },
+          );
+          await clients[0].setViewportSize({ width: 320, height: 700 });
+          await host
+            .getByRole("button", { name: "Resume Bakery", exact: true })
+            .click();
+        }
         await expect(host.locator(".bakery-game-card")).not.toHaveAttribute(
           "data-phase",
           "reveal",
