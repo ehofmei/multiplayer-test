@@ -528,6 +528,8 @@ test("Sumo feedback marks a ring-out while others play and distinguishes a draw"
     await expect(clients[0].locator(".sumo-result strong")).toHaveText(
       "It’s a draw!",
     );
+    await host.clock.runFor(850);
+    await expect(host.locator(".sumo-effect")).toHaveCount(0);
     await expectScreenFits(host);
     await expectStableScreenshot(
       host,

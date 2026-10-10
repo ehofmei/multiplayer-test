@@ -21,6 +21,9 @@ jobs:
           if [ ! -f tests/sumo.spec.ts-snapshots/sumo-winner-phone-linux.png ]; then
             npx playwright test tests/sumo.spec.ts --grep 'Sumo feedback' --update-snapshots
           fi
+          # Review found transient ring-out flares behind the draw card.
+          # Refresh only that feedback spec after explicitly settling its timer.
+          npx playwright test tests/sumo.spec.ts --grep "Sumo feedback marks" --update-snapshots=all
       - name: Return Linux renders to the review branch
         run: |
           git config user.name 'github-actions[bot]'
