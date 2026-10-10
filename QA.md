@@ -277,6 +277,10 @@ Feedback and results checks:
   .github/workflows/sumo-feedback-review.yml. Generate only the new feedback
   states on Ubuntu once, review actual Linux/Darwin pairs, then require a separate
   normal complete verify run for the exact final commit without snapshot updates.
+- Live native Chromium QA checked a real paired winner screen, help/roster,
+  Escape focus return, Bump Again, the new countdown, pause/resume and a rejected
+  stationary dash after the rematch. Deterministic paired tests cover impacts
+  and short-lived ring-outs that the native tool cannot reliably stage by hand.
 - Physical iPhone/iPad checks remain: installed portrait/landscape result fit,
   spark/flare clarity during fast collisions, sound when enabled, actual two-thumb
   comfort, safe areas, backgrounding and service-worker updates on every device.

@@ -384,6 +384,9 @@ test("Sumo feedback confirms collisions and celebrates a paired winner", async (
     );
     await expect(client.locator(".sumo-result-verdict")).toHaveText("You win!");
     await expect(host.locator(".sumo-controls")).toBeHidden();
+    // Feedback starts when React displays the confirmed ring-out, not at its
+    // earlier simulation tick inside runFor. Advance its own lifetime explicitly.
+    await host.clock.runFor(850);
     await expect(host.locator(".sumo-effect")).toHaveCount(0);
     for (const [name, viewport] of [
       ["phone", { width: 390, height: 844 }],
