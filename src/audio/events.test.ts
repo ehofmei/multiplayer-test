@@ -254,7 +254,7 @@ it("announces Sumo starts, dashes, ring-outs and outcomes once", () => {
   expect(soundEvents(before, frame(s))).toEqual(["go"]);
   before = frame(s);
   s.room.sumo.bumpers[0].cooldown = 240;
-  expect(soundEvents(before, frame(s))).toEqual(["paddle"]);
+  expect(soundEvents(before, frame(s))).toEqual(["sumo-dash"]);
   before = frame(s);
   s.room.sumo.bumpers[0].alive = false;
   expect(soundEvents(before, frame(s))).toEqual(["miss"]);

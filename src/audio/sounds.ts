@@ -1,4 +1,5 @@
 export type Cue =
+  | "sumo-dash"
   | "golf-cup"
   | "golf-tap"
   | "golf-knock"
@@ -24,6 +25,7 @@ export type Cue =
   | "finish";
 type Note = [frequency: number, duration: number, delay?: number];
 const notes: Record<Cue, Note[]> = {
+  "sumo-dash": [[800, 0.18]],
   "golf-cup": [
     [280, 0.08],
     [660, 0.1, 0.1],
@@ -135,6 +137,11 @@ export class Sounds {
         const at = now + delay;
         oscillator.type = cue === "wrong" ? "triangle" : "sine";
         oscillator.frequency.value = frequency;
+        if (cue === "sumo-dash") {
+          oscillator.type = "triangle";
+          oscillator.frequency.setValueAtTime(frequency, at);
+          oscillator.frequency.exponentialRampToValueAtTime(100, at + duration);
+        }
         gain.gain.setValueAtTime(0, at);
         gain.gain.linearRampToValueAtTime(0.09, at + 0.006);
         gain.gain.exponentialRampToValueAtTime(0.001, at + duration);

@@ -12,8 +12,11 @@ import {
   SUMO_BODY,
   SUMO_COOLDOWN,
   SUMO_COUNTDOWN,
-  SUMO_LIMIT,
+  SUMO_PRESSURE,
   SUMO_LEASE,
+  SUMO_SPEED,
+  SUMO_HZ,
+  sumoStick,
   type SumoState,
 } from "./sumo";
 const playing = (ids = ["a", "b"]): SumoState => ({
@@ -68,7 +71,7 @@ it("dashes only while moving, enforces recharge and bounds speed", () => {
   let s = playing();
   expect(dashSumo(s, "a").bumpers).toEqual(s.bumpers);
   s = dashSumo(moveSumo(s, "a", 1, 0), "a");
-  expect(s.bumpers[0].vx).toBeCloseTo(0.65);
+  expect(s.bumpers[0].vx).toBeCloseTo(1.35);
   expect(s.bumpers[0].cooldown).toBe(SUMO_COOLDOWN);
   expect(dashSumo(s, "a").bumpers).toEqual(s.bumpers);
   s = advance(s, SUMO_COOLDOWN);
@@ -91,7 +94,7 @@ it("transfers a head-on bump without repeated kicks and separates coincident cen
   const apart = stepSumo(s);
   expect(apart.bumpers[1].x - apart.bumpers[0].x).toBeCloseTo(2 * SUMO_BODY);
 });
-it("rings out simultaneously, stops eliminated movement and resolves win, draw and timeout", () => {
+it("rings out simultaneously, stops eliminated movement and resolves wins and simultaneous draws without a timed survivor win", () => {
   let s = playing();
   s.bumpers[0].x = 0.945;
   const won = stepSumo(s);
@@ -102,14 +105,21 @@ it("rings out simultaneously, stops eliminated movement and resolves win, draw a
   s.bumpers[1].x = 0.055;
   expect(stepSumo(s).bumpers.every((b) => !b.alive)).toBe(true);
   s = playing();
-  s.ticks = SUMO_LIMIT - 1;
+  s.ticks = 60 * 120 - 1;
   s.bumpers[0].x = 0.4;
   s.bumpers[1].x = 0.6;
   const timed = stepSumo(s);
-  expect(timed.phase).toBe("finished");
+  expect(timed.phase).toBe("playing");
+  expect(validRoom(room(timed))).toBe(true);
   expect(timed.bumpers.every((b) => b.alive)).toBe(true);
   expect(sumoRadius(0)).toBeCloseTo(0.44);
-  expect(sumoRadius(SUMO_LIMIT)).toBeCloseTo(0.2);
+  expect(sumoRadius(60 * 120)).toBeCloseTo(0.2);
+  expect(sumoRadius(SUMO_PRESSURE)).toBe(0);
+  const squeezed = advance(timed, 30 * 120);
+  expect(squeezed.phase).toBe("finished");
+  expect(squeezed.bumpers.filter((b) => b.alive).length).toBeLessThanOrEqual(1);
+  expect(validRoom(room(squeezed))).toBe(true);
+  expect(validRoom(room({ ...timed, phase: "finished" }))).toBe(false);
 });
 it("freezes pause/countdown controls and stops velocity before resuming", () => {
   const moving = dashSumo(moveSumo(playing(), "a", 1, 0), "a");
@@ -127,7 +137,7 @@ it("freezes pause/countdown controls and stops velocity before resuming", () => 
 });
 it("validates a full eight-player simulation and bounds malformed wire fields", () => {
   let s = playing(Array.from({ length: 8 }, (_, i) => String(i)));
-  for (let tick = 0; tick < SUMO_LIMIT && s.phase !== "finished"; tick++) {
+  for (let tick = 0; tick < SUMO_PRESSURE && s.phase !== "finished"; tick++) {
     if (tick % 12 === 0)
       for (const b of s.bumpers) {
         s = moveSumo(
@@ -179,4 +189,35 @@ it("a fast contact pushes an opponent across the edge while the attacker survive
   const result = advance(s, 120);
   expect(result.phase).toBe("finished");
   expect(result.bumpers.map((b) => b.alive)).toEqual([true, false]);
+});
+
+it("filters thumb jitter, preserves analog travel and bounds off-pad diagonals", () => {
+  expect(sumoStick(0.04, -0.04)).toEqual({ x: 0, y: 0 });
+  expect(sumoStick(0.54, 0).x).toBeCloseTo(0.5);
+  expect(sumoStick(-4, 0)).toEqual({ x: -1, y: 0 });
+  const diagonal = sumoStick(2, 2);
+  expect(Math.hypot(diagonal.x, diagonal.y)).toBeCloseTo(1);
+});
+it("dash covers substantially more ground than steering and brakes on release", () => {
+  const start = moveSumo(playing(), "a", 1, 0);
+  const normal = advance(start, 22);
+  const burst = advance(dashSumo(start, "a"), 22);
+  expect(burst.bumpers[0].x - 0.25).toBeGreaterThan(
+    (normal.bumpers[0].x - 0.25) * 4,
+  );
+  expect(
+    Math.hypot(burst.bumpers[0].vx, burst.bumpers[0].vy),
+  ).toBeLessThanOrEqual(SUMO_SPEED);
+  const released = advance(moveSumo(burst, "a", 0, 0), 24);
+  expect(
+    Math.hypot(released.bumpers[0].vx, released.bumpers[0].vy),
+  ).toBeLessThan(0.4);
+});
+
+it("rejects pressure ticks outside the bounded wire range and rejects shared survivor results", () => {
+  const s = playing();
+  expect(validRoom(room({ ...s, ticks: SUMO_PRESSURE + 1 }))).toBe(false);
+  expect(
+    validRoom(room({ ...s, ticks: 60 * SUMO_HZ, phase: "finished" })),
+  ).toBe(false);
 });

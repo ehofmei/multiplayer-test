@@ -4,7 +4,12 @@ import { validPicnic } from "./picnic-validate";
 import { validGolf } from "./minigolf-validate";
 import { validTreasure } from "./treasure-validate";
 import { bakeryCards } from "./bakery";
-import { SUMO_COUNTDOWN, SUMO_LIMIT, SUMO_LEASE, SUMO_COOLDOWN } from "./sumo";
+import {
+  SUMO_COUNTDOWN,
+  SUMO_PRESSURE,
+  SUMO_LEASE,
+  SUMO_COOLDOWN,
+} from "./sumo";
 import {
   CYCLE_SIZE,
   CYCLE_COUNTDOWN,
@@ -188,7 +193,7 @@ export function validRoom(v: unknown): v is Room {
       !["ready", "countdown", "playing", "paused", "finished"].includes(
         String(s.phase),
       ) ||
-      !integer(s.ticks, 0, SUMO_LIMIT) ||
+      !integer(s.ticks, 0, SUMO_PRESSURE) ||
       !integer(s.countdown, 0, SUMO_COUNTDOWN) ||
       !Array.isArray(s.bumpers) ||
       s.bumpers.length > 8 ||
@@ -225,9 +230,9 @@ export function validRoom(v: unknown): v is Room {
     return s.phase === "ready"
       ? s.ticks === 0 && s.countdown === SUMO_COUNTDOWN
       : s.phase === "finished"
-        ? s.countdown === 0 && (alive <= 1 || s.ticks === SUMO_LIMIT)
+        ? s.countdown === 0 && alive <= 1
         : alive >= 2 &&
-          s.ticks < SUMO_LIMIT &&
+          s.ticks < SUMO_PRESSURE &&
           (s.phase === "countdown"
             ? s.countdown > 0
             : s.phase !== "playing" || s.countdown === 0);

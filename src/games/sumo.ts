@@ -1,6 +1,9 @@
 export const SUMO_HZ = 120;
 export const SUMO_COUNTDOWN = 3 * SUMO_HZ;
-export const SUMO_LIMIT = 60 * SUMO_HZ;
+// Pressure closes the arena; it never awards surviving players a timed win.
+export const SUMO_PRESSURE = 90 * SUMO_HZ;
+export const SUMO_DASH_TICKS = 22;
+export const SUMO_SPEED = 1.5;
 export const SUMO_BODY = 0.035;
 export const SUMO_LEASE = 45;
 export const SUMO_COOLDOWN = 2 * SUMO_HZ;
@@ -22,8 +25,22 @@ export interface SumoState {
   ticks: number;
   countdown: number;
 }
-export const sumoRadius = (ticks: number) =>
-  0.44 - 0.24 * Math.min(1, Math.max(0, ticks / SUMO_LIMIT));
+export const sumoRadius = (ticks: number) => {
+  const seconds = Math.max(0, ticks / SUMO_HZ);
+  return Math.max(
+    0,
+    0.44 - 0.004 * Math.min(60, seconds) - Math.max(0, seconds - 60) / 150,
+  );
+};
+export const sumoDashing = (cooldown: number) =>
+  cooldown > SUMO_COOLDOWN - SUMO_DASH_TICKS;
+// A small neutral area absorbs thumb jitter; travel beyond the pad stays bounded.
+export function sumoStick(x: number, y: number) {
+  const length = Math.hypot(x, y);
+  if (length <= 0.08) return { x: 0, y: 0 };
+  const magnitude = Math.min(1, (length - 0.08) / 0.92);
+  return { x: (x / length) * magnitude, y: (y / length) * magnitude };
+}
 export function newSumo(ids: string[] = []): SumoState {
   return {
     phase: ids.length ? "countdown" : "ready",
@@ -83,9 +100,9 @@ export function dashSumo(state: SumoState, id: string): SumoState {
       const length = Math.hypot(b.dx, b.dy);
       if (b.id !== id || !b.alive || b.cooldown || !b.inputFor || length < 0.1)
         return b;
-      const vx = b.vx + (b.dx / length) * 0.65,
-        vy = b.vy + (b.dy / length) * 0.65;
-      const speed = Math.max(1, Math.hypot(vx, vy));
+      const vx = b.vx + (b.dx / length) * 1.35,
+        vy = b.vy + (b.dy / length) * 1.35;
+      const speed = Math.max(1, Math.hypot(vx, vy) / SUMO_SPEED);
       return { ...b, vx: vx / speed, vy: vy / speed, cooldown: SUMO_COOLDOWN };
     }),
   };
@@ -117,9 +134,11 @@ export function stepSumo(state: SumoState): SumoState {
     const inputFor = Math.max(0, b.inputFor - 1);
     const dx = inputFor ? b.dx : 0,
       dy = inputFor ? b.dy : 0;
-    let vx = (b.vx + dx * 1.5 * dt) * Math.exp(-4.5 * dt);
-    let vy = (b.vy + dy * 1.5 * dt) * Math.exp(-4.5 * dt);
-    const speed = Math.max(1, Math.hypot(vx, vy));
+    // Fast response while steering, a short low-drag burst, then firm braking.
+    const drag = sumoDashing(b.cooldown) && inputFor ? 1.5 : 7;
+    let vx = (b.vx + dx * 2.2 * dt) * Math.exp(-drag * dt);
+    let vy = (b.vy + dy * 2.2 * dt) * Math.exp(-drag * dt);
+    const speed = Math.max(1, Math.hypot(vx, vy) / SUMO_SPEED);
     vx /= speed;
     vy /= speed;
     return {
@@ -171,7 +190,7 @@ export function stepSumo(state: SumoState): SumoState {
       b.alive = false;
       b.dx = b.dy = b.vx = b.vy = b.inputFor = 0;
     }
-    const speed = Math.max(1, Math.hypot(b.vx, b.vy));
+    const speed = Math.max(1, Math.hypot(b.vx, b.vy) / SUMO_SPEED);
     b.vx /= speed;
     b.vy /= speed;
     b.x = Math.max(0, Math.min(1, b.x));
@@ -181,9 +200,6 @@ export function stepSumo(state: SumoState): SumoState {
     ...state,
     bumpers,
     ticks,
-    phase:
-      bumpers.filter((b) => b.alive).length <= 1 || ticks === SUMO_LIMIT
-        ? "finished"
-        : "playing",
+    phase: bumpers.filter((b) => b.alive).length <= 1 ? "finished" : "playing",
   };
 }

@@ -257,6 +257,30 @@ remain useful; browser emulation does not establish device performance or latenc
 
 ## Sumo Bumpers
 
+Pass two checks:
+
+- Compare ordinary steering with the stronger short dash, release braking and
+  small neutral area. Check that the knob remains inside the pad during off-pad
+  captured input, including diagonal drags and pointer cancellation.
+- Confirm the dash trail on both paired devices, a rejected stationary dash,
+  two-thumb input, numeric recharge and its filling light. Reduced motion hides
+  trails while preserving charge feedback; optional swoosh remains muted by default.
+- Bring both bumpers inward and continue beyond sixty seconds. Final squeeze
+  must continue play until ring-outs leave one winner or a simultaneous draw.
+  Pause/resume freezes pressure and recharge, with the usual resume countdown.
+- Rule/sound tests cover burst distance, bounded speed, braking, dead-zone travel,
+  post-minute pressure, terminal validation and the gesture-unlocked swoosh.
+  The paired Sumo specs retain phone/tablet/desktop/landscape states and add
+  confirmed dash and final squeeze snapshots on Darwin and genuine Linux.
+- Live native Chromium QA used a real paired production room at phone size and
+  checked start, stationary-dash rejection, pause/resume, help/roster readability
+  and Escape focus return. The native tool does not support holding a steering
+  key while pressing Dash; deterministic paired/two-thumb tests cover that flow.
+  A separate Firefox pairing attempt failed ICE locally.
+- Physical iPhone/iPad checks remain for thumb comfort, response under Wi-Fi
+  latency, optional sound, safe areas, cancellation/backgrounding and PWA updates.
+  Update every device: older builds reject Sumo ticks beyond sixty seconds.
+
 Artwork and composition QA:
 
 - Check the dark room chrome, raised arena, tiled floor, cyan playable boundary,
@@ -267,7 +291,8 @@ Artwork and composition QA:
   Start requires two players. Countdown, pause and host loss appear on the arena;
   active play clears the overlay. Help & players contains the full roster and
   names; Escape/Close returns focus to its opener. Finished rounds retain the
-  existing results/rematch behavior. Dash and the sixty-second rule are unchanged.
+  existing results/rematch behavior. Controls, dash and arena pressure use the
+  pass-two behavior above.
 - Review phone/tablet/desktop/landscape snapshots from tests/sumo.spec.ts and the
   two/eight-player Sumo cases in tests/game.spec.ts, with genuine Darwin/Linux
   pairs. Check 320×700 with a 20px bottom safe area, taller fonts, reduced motion,
@@ -282,13 +307,13 @@ Artwork and composition QA:
 - Physical iPhone/iPad checks remain required: installed portrait/landscape fit,
   actual safe areas, readable small bumper numbers, thumb comfort, simultaneous
   movement/dash, and contrast in bright rooms. Continue gameplay-feel tuning in
-  the controls/dash/pressure and effects/results passes.
+  the effects/results pass.
 
 QA inventory:
 
 - Host starts 2–8 players; three-second countdown, numbered/color seats, moving
-  collisions, ring-outs, simultaneous draw, shrinking ring, sixty-second shared
-  win, and fresh rematch. Late arrivals watch, eliminated controls disable.
+  collisions, ring-outs, simultaneous draw, shrinking ring, continued final
+  squeeze, and fresh rematch. Late arrivals watch, eliminated controls disable.
 - 104–120px movement pad (96px in landscape) with capture/release/cancel and a
   92px-wide Dash button. Verify
   simultaneous two-thumb movement/dash, diagonal normalization, braking, recharge,
@@ -301,7 +326,7 @@ QA inventory:
 
 Rules/protocol tests cover spawns, normalization, expired input, dash limits,
 contact separation/momentum, a successful knock-out, simultaneous ring-outs,
-terminal states, timeout, a full eight-player simulation and malformed wire state.
+terminal states, continued pressure, a full eight-player simulation and malformed wire state.
 Session tests cover actual input sequencing/epochs, permissions, shared movement,
 pause/resume, spectators, disconnect cleanup and scheduling stalls. Production
 Chromium tests pair two/eight independent WebRTC contexts, exercise physical-style
@@ -310,13 +335,10 @@ controls/departures, background pause, participant loss and host loss. A determi
 ring snapshot is retained and desktop/mobile/tablet screenshots are reviewed.
 Existing production-subpath cache/offline/update checks remain in `npm run verify`.
 
-The attempted live pass was unavailable because the in-app browser blocked local
-preview navigation. Native access was also unavailable in the preceding feedback
-pass due to pending OS permissions. Automated checks and screenshot inspection
-cover this implementation; live interaction remains unverified. Physical iPhone/
-iPad follow-up should check two-thumb steering/dash feel, Wi-Fi latency, movement
-clarity, optional sound and Safari/installed-PWA background/resume. Update all
-devices before selecting this game.
+Physical iPhone/iPad follow-up should check two-thumb steering/dash feel, Wi-Fi
+latency, movement clarity, optional sound and Safari/installed-PWA background/resume.
+Update all devices before selecting this game. Live coverage and its limits are
+recorded above.
 
 ## Immersive iPhone/iPad app shell
 

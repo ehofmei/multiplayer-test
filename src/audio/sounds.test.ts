@@ -2,7 +2,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Sounds } from "./sounds";
 class Oscillator {
   type = "sine";
-  frequency = { value: 0 };
+  frequency = {
+    value: 0,
+    setValueAtTime: vi.fn(),
+    exponentialRampToValueAtTime: vi.fn(),
+  };
   connect = vi.fn();
   disconnect = vi.fn();
   start = vi.fn();
@@ -49,6 +53,22 @@ afterEach(() => {
   Context.instances = [];
 });
 describe("sound lifecycle", () => {
+  it("sweeps the optional dash swoosh and never plays it before unlocking", async () => {
+    vi.stubGlobal("window", { AudioContext: Context });
+    const sounds = new Sounds();
+    sounds.play("sumo-dash");
+    expect(Context.instances).toHaveLength(0);
+    sounds.setEnabled(true);
+    await sounds.unlock();
+    sounds.play("sumo-dash");
+    const voice = Context.instances[0].voices[0];
+    expect(voice.type).toBe("triangle");
+    expect(voice.frequency.exponentialRampToValueAtTime).toHaveBeenCalledWith(
+      100,
+      0.18,
+    );
+    sounds.dispose();
+  });
   it("plays the four Golf timbres within the shared voice limit and silences them on mute", async () => {
     vi.stubGlobal("window", { AudioContext: Context });
     const sounds = new Sounds();

@@ -237,15 +237,20 @@ arena's dark palette. Artwork is bundled SVG and needs no external assets.
 
 Everyone present at Start Bumpers joins; late arrivals watch until Bump Again.
 A three-second countdown gives everyone time to find their numbered, colored
-bumper. Drag the large thumb pad in any direction to accelerate, and release to
-brake. While moving, tap Dash with your other thumb for a short burst; it recharges
-in two seconds. On a keyboard, focus the ring and hold arrows/WASD, with Space to
+bumper. Drag the large thumb pad in any direction to steer, and release to
+brake. A small neutral area filters thumb jitter, analog travel controls steering,
+and the knob stays inside the pad even when your thumb moves beyond it. While
+moving, tap Dash with your other thumb for a stronger forward burst; it recharges
+in two seconds. A light around Dash fills during recharge; the remaining time
+stays visible. Confirmed bursts show a colored trail and an optional descending
+swoosh. Reduced motion hides trails while keeping recharge feedback. On a keyboard, focus the ring and hold arrows/WASD, with Space to
 dash. The second thumb works while movement remains held.
 
 Bumpers transfer momentum on contact. Your center crossing the bright ring edge
 eliminates you; eliminated bumpers stop colliding. The ring shrinks continuously
-through a maximum sixty-second round. Last survivor wins, simultaneous final
-ring-outs draw, and any survivors at the time limit share the win. Bump Again
+and keeps closing after sixty seconds, with a faster final squeeze toward the
+center. There is no timed survivor win: last survivor wins and simultaneous final
+ring-outs draw. Bump Again
 starts a fresh round with everyone currently connected.
 
 The host simulates fixed 120 Hz steps and sends bounded full snapshots. Movement
@@ -259,7 +264,9 @@ Confirmed bumper positions are smoothed without predicting ring-outs, with exact
 paused/eliminated positions and reduced-motion support. Optional local sounds
 announce start, dash, your ring-out and the result; sound remains muted by default.
 Update **every device** before selecting Sumo Bumpers: older builds cannot validate
-its state or inputs. Pairing, offline support and saved preferences are unchanged.
+its state or inputs. Update every device for the continued-pressure rules too:
+older Sumo builds reject snapshots beyond sixty seconds. No wire fields or input
+actions were added. Pairing, offline support and saved preferences are unchanged.
 
 **Spaceship Panic** is a timed cooperative score chase for two to eight players,
 with solo practice available. The host chooses 1, 2, or 3 minutes (2 recommended

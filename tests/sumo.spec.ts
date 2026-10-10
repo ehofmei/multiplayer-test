@@ -146,3 +146,132 @@ test("Sumo artwork and arcade composition fit phones, tablets and desktop", asyn
     await context.close();
   }
 });
+
+test("Sumo dash confirms a burst, fills recharge and keeps playing past sixty seconds", async ({
+  page: host,
+  browser,
+}) => {
+  test.setTimeout(90_000);
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+  });
+  try {
+    const client = await context.newPage();
+    await host.setViewportSize({ width: 390, height: 844 });
+    await host.goto("./");
+    await host.getByLabel("Your name").fill("Alex");
+    await host
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await chooseGame(host, "Sumo Bumpers");
+    await join(host, client, "Emma");
+    await host.clock.install();
+    await host.clock.pauseAt(new Date(Date.now() + 1000));
+    await host
+      .getByRole("button", { name: "Start Bumpers", exact: true })
+      .click();
+    await host.clock.runFor(3050);
+    await host.locator(".sumo-court").focus();
+    // A stationary dash neither fires nor consumes charge.
+    await host.keyboard.press("Space");
+    await expect(host.getByTestId("sumo-bumper-0")).toHaveAttribute(
+      "data-cooldown",
+      "0",
+    );
+    await host.keyboard.down("ArrowRight");
+    await host.keyboard.press("Space");
+    await host.clock.runFor(100);
+    await expect(host.getByTestId("sumo-bumper-0")).toHaveAttribute(
+      "data-dashing",
+      "true",
+    );
+    await expect(client.getByTestId("sumo-bumper-0")).toHaveAttribute(
+      "data-dashing",
+      "true",
+    );
+    await expect(
+      host.getByRole("button", { name: "Dash", exact: true }),
+    ).toBeDisabled();
+    await expect(host.locator(".sumo-dash-control")).toContainText("recharge");
+    const charging = await host
+      .locator(".sumo-recharge circle")
+      .last()
+      .getAttribute("stroke-dasharray");
+    expect(Number(charging!.split(" ")[0])).toBeLessThan(0.1);
+    await expectStableScreenshot(
+      host,
+      ".sumo-game-card",
+      `sumo-dash-phone-${process.platform}.png`,
+      { maxDiffPixels: 160 },
+    );
+    await host.emulateMedia({ reducedMotion: "reduce" });
+    await expect(host.locator(".sumo-dash-trail")).toBeHidden();
+    await host.emulateMedia({ reducedMotion: "no-preference" });
+    await host.keyboard.up("ArrowRight");
+    await host.clock.runFor(2050);
+    await expect(
+      host.getByRole("button", { name: "Dash", exact: true }),
+    ).toBeEnabled();
+    await expect(host.locator(".sumo-recharge circle").last()).toHaveAttribute(
+      "stroke-dasharray",
+      "1 1",
+    );
+    // Bring the other bumper inward using actual paired keyboard input.
+    await client.locator(".sumo-court").focus();
+    await client.keyboard.down("ArrowLeft");
+    await expect(host.getByTestId("sumo-bumper-1")).toHaveAttribute(
+      "data-dx",
+      "-1",
+    );
+    await client.keyboard.press("Space");
+    await expect(host.getByTestId("sumo-bumper-1")).toHaveAttribute(
+      "data-cooldown",
+      "240",
+    );
+    await host.clock.runFor(100);
+    await client.keyboard.up("ArrowLeft");
+    await expect(host.getByTestId("sumo-bumper-1")).toHaveAttribute(
+      "data-dx",
+      "0",
+    );
+    await host.clock.runFor(60_000);
+    await expect(host.locator(".sumo-game-card")).toHaveAttribute(
+      "data-phase",
+      "playing",
+    );
+    await expect(client.locator(".sumo-status")).toContainText("Final squeeze");
+    await expectStableScreenshot(
+      host,
+      ".sumo-game-card",
+      `sumo-final-squeeze-phone-${process.platform}.png`,
+      { maxDiffPixels: 160 },
+    );
+    await host
+      .getByRole("button", { name: "Pause Bumpers", exact: true })
+      .click();
+    const tick = await host.locator(".sumo-court").getAttribute("data-tick");
+    await host.clock.runFor(3000);
+    await expect(host.locator(".sumo-court")).toHaveAttribute(
+      "data-tick",
+      tick!,
+    );
+    await host
+      .getByRole("button", { name: "Resume Bumpers", exact: true })
+      .click();
+    await host.clock.runFor(3150);
+    await expect(client.locator(".sumo-game-card")).toHaveAttribute(
+      "data-phase",
+      "playing",
+    );
+    await host.clock.runFor(30_000);
+    await expect(client.locator(".sumo-game-card")).toHaveAttribute(
+      "data-phase",
+      "finished",
+    );
+    await expect(client.locator(".sumo-status")).not.toContainText("Time’s up");
+    await expectScreenFits(host);
+  } finally {
+    await context.close();
+  }
+});

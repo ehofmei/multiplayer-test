@@ -5732,3 +5732,45 @@ input.golf-power-input {
   white-space: normal;
   overflow-wrap: anywhere;
 }
+
+/* Confirmed dash feedback works silently; no extra arena motion in reduced mode. */
+.sumo-dash-control {
+  position: relative;
+}
+.sumo-recharge {
+  position: absolute;
+  width: 104px;
+  height: 104px;
+  top: -6px;
+  left: -2px;
+  pointer-events: none;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+.sumo-recharge circle {
+  fill: none;
+  stroke: #91efdb;
+  stroke-width: 3;
+}
+.sumo-recharge .sumo-recharge-track {
+  stroke: #536b86;
+}
+.sumo-dash-control[data-ready="true"] .sumo-recharge {
+  filter: drop-shadow(0 0 3px #91efdb80);
+}
+.sumo-game-card .sumo-dash-control button:disabled {
+  opacity: 0.8;
+}
+.sumo-game-card .sumo-stick-knob {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sumo-dash-trail {
+    display: none;
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .sumo-recharge {
+    height: 92px;
+  }
+}

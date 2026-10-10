@@ -1,6 +1,13 @@
 import { GameSurface, GameHelp } from "./AppLayout";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
-import { SUMO_HZ, SUMO_LIMIT, sumoRadius, type SumoState } from "../games/sumo";
+import {
+  SUMO_HZ,
+  SUMO_COOLDOWN,
+  sumoDashing,
+  sumoStick,
+  sumoRadius,
+  type SumoState,
+} from "../games/sumo";
 import { SumoArenaArtwork, SumoBumperArtwork } from "./SumoArtwork";
 import { cycleColors } from "../games/cycle";
 import type { Player } from "../network/protocol";
@@ -36,6 +43,17 @@ export function SumoGame({
   const dashTouch = useRef(false);
   const movement = useRef({ x: 0, y: 0 });
   const [stick, setStick] = useState({ x: 0, y: 0 });
+  const [travel, setTravel] = useState(28);
+  const pointStick = (element: HTMLElement, x: number, y: number) => {
+    const r = element.getBoundingClientRect();
+    const range = Math.max(1, r.width / 2 - 24);
+    setTravel(range);
+    const input = sumoStick(
+      (x - r.left - r.width / 2) / range,
+      (y - r.top - r.height / 2) / range,
+    );
+    send(input.x, input.y);
+  };
   const me = game.bumpers.find((b) => b.id === session.me.id);
   const seat = game.bumpers.indexOf(me!);
   const active = connected && game.phase === "playing" && !!me?.alive;
@@ -127,6 +145,8 @@ export function SumoGame({
           dx: 0,
           dy: 0,
           cooldown: 0,
+          vx: 0,
+          vy: 0,
         };
       });
   const alive = game.bumpers.filter((b) => b.alive);
@@ -163,8 +183,8 @@ export function SumoGame({
               ? "Draw! Everyone is out."
               : alive.length === 1
                 ? `${name(alive[0].id)} wins!`
-                : "Time’s up! Survivors share the win."
-            : `${alive.length} bumpers remain · Ring shrinking`;
+                : "Round complete"
+            : `${alive.length} bumpers remain · ${game.ticks >= 60 * SUMO_HZ ? "Final squeeze" : "Ring shrinking"}`;
   const keyboardMove = () => {
     let x = 0,
       y = 0;
@@ -211,10 +231,12 @@ export function SumoGame({
     >
       <div className="sumo-heading">
         <h2>Sumo Bumpers</h2>
-        <span className="sumo-timer" aria-label="Round clock">
+        <span className="sumo-timer" aria-label="Arena pressure">
           {game.phase === "ready"
             ? "2–8 players"
-            : `${Math.ceil((SUMO_LIMIT - game.ticks) / SUMO_HZ)}s`}
+            : game.ticks >= 60 * SUMO_HZ
+              ? "Final squeeze"
+              : "Ring closing"}
         </span>
       </div>
       <div className="sumo-hud">
@@ -267,8 +289,28 @@ export function SumoGame({
                 data-y={b.y}
                 data-alive={b.alive}
                 data-cooldown={b.cooldown}
+                data-dashing={
+                  game.phase === "playing" && b.alive && sumoDashing(b.cooldown)
+                }
                 opacity={b.alive ? 1 : 0.4}
               >
+                {game.phase === "playing" &&
+                  b.alive &&
+                  sumoDashing(b.cooldown) && (
+                    <g
+                      className="sumo-dash-trail"
+                      transform={`rotate(${(Math.atan2(b.vy, b.vx) * 180) / Math.PI})`}
+                    >
+                      <path
+                        d="M-35 -18 Q-88 -24 -142 -10 M-40 0 H-170 M-35 18 Q-88 24 -142 10"
+                        stroke={cycleColors[i]}
+                        strokeWidth="12"
+                        strokeLinecap="round"
+                        opacity="0.75"
+                        fill="none"
+                      />
+                    </g>
+                  )}
                 <SumoBumperArtwork
                   color={cycleColors[i]}
                   number={i + 1}
@@ -331,19 +373,11 @@ export function SumoGame({
             e.preventDefault();
             stickPointer.current = e.pointerId;
             e.currentTarget.setPointerCapture(e.pointerId);
-            const r = e.currentTarget.getBoundingClientRect();
-            send(
-              (e.clientX - r.left - r.width / 2) / (r.width / 2 - 24),
-              (e.clientY - r.top - r.height / 2) / (r.height / 2 - 24),
-            );
+            pointStick(e.currentTarget, e.clientX, e.clientY);
           }}
           onPointerMove={(e) => {
             if (!active || stickPointer.current !== e.pointerId) return;
-            const r = e.currentTarget.getBoundingClientRect();
-            const x = (e.clientX - r.left - r.width / 2) / (r.width / 2 - 24),
-              y = (e.clientY - r.top - r.height / 2) / (r.height / 2 - 24);
-            const length = Math.max(1, Math.hypot(x, y));
-            send(x / length, y / length);
+            pointStick(e.currentTarget, e.clientX, e.clientY);
           }}
           onPointerUp={(e) => {
             if (stickPointer.current === e.pointerId) stop();
@@ -370,14 +404,30 @@ export function SumoGame({
           <span
             className="sumo-stick-knob"
             style={{
-              transform: `translate(${stick.x * 44}px, ${stick.y * 44}px)`,
+              transform: `translate(${stick.x * travel}px, ${stick.y * travel}px)`,
             }}
             aria-hidden="true"
           />
         </div>
-        <div className="sumo-dash-control">
+        <div className="sumo-dash-control" data-ready={active && !me?.cooldown}>
+          <svg
+            preserveAspectRatio="none"
+            className="sumo-recharge"
+            viewBox="0 0 100 100"
+            aria-hidden="true"
+          >
+            <circle cx="50" cy="50" r="47" className="sumo-recharge-track" />
+            <circle
+              cx="50"
+              cy="50"
+              r="47"
+              pathLength="1"
+              strokeDasharray={`${1 - (me?.cooldown ?? 0) / SUMO_COOLDOWN} 1`}
+            />
+          </svg>
           <button
             aria-label="Dash"
+            aria-describedby={`${paint}-charge`}
             disabled={!active || !!me?.cooldown}
             onPointerDown={(e) => {
               dashTouch.current = e.pointerType === "touch";
@@ -393,10 +443,14 @@ export function SumoGame({
           >
             Dash
           </button>
-          <span>
+          <span id={`${paint}-charge`}>
             {me?.cooldown
               ? `${(me.cooldown / SUMO_HZ).toFixed(1)}s recharge`
-              : "Move + dash"}
+              : !active
+                ? "Move + dash"
+                : Math.hypot(stick.x, stick.y) > 0.08
+                  ? "Ready!"
+                  : "Steer to dash"}
           </span>
         </div>
       </div>
@@ -405,9 +459,10 @@ export function SumoGame({
         <GameHelp label="Help & players">
           <p className="muted sumo-help">
             Drag the thumb pad to move; release to brake. Move and tap Dash to
-            bump harder (2s recharge). Keyboard: arrows / WASD + Space. Your
-            center crossing the shrinking edge means you’re out. Last survivor
-            wins.
+            burst forward (2s recharge). The light around Dash fills as it
+            recharges. Keyboard: arrows / WASD + Space. Your center crossing the
+            shrinking edge means you’re out. Last survivor wins. The ring keeps
+            closing; after a minute the final squeeze speeds up.
           </p>
           {roster}
         </GameHelp>

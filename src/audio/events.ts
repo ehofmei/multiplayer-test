@@ -195,7 +195,7 @@ export function soundEvents(
     if (after.sumo.phase === "playing" && before.sumo.phase === "countdown")
       return ["go"];
     if ((after.sumo.cooldown ?? 0) > (before.sumo.cooldown ?? 0))
-      return ["paddle"];
+      return ["sumo-dash"];
   }
   if (after.cycle && before.cycle) {
     if (after.cycle.phase === "finished" && before.cycle.phase !== "finished")
