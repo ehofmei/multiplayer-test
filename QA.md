@@ -724,7 +724,6 @@ QA inventory:
 - Listen to placement versus completed-row cues, including a delayed snapshot,
   repeated snapshots, Skip, spectators, pause/reorient/resume, rematch and switching.
   Sounds remain muted by default. Verify the same feedback without sound/motion.
-
 - Find the game on the paged picker; Start requires two players. Select one of the
   shared shapes, preview an anchor, Rotate, Reset, Place and Skip. Try blocked,
   off-board and crowded previews. Confirm exactly one lock and a simultaneous reveal.
@@ -751,22 +750,30 @@ shuffled bags, forced singles, seeded ten-piece play, crowded rotated fits and S
 untimed waiting/overshoot, frozen pauses, ties and maximal eight-player wire messages.
 Session tests cover host permissions, privacy, epochs/sequences, duplicate locks,
 pause/resume, late arrivals, departures, stalls, rematches and timer disposal.
-The production-browser suite pairs real WebRTC contexts and retains ready, active
-and result screenshots with the bundled font fixture and strict 180-pixel budget.
-`npm run verify` passed locally: formatting, 130 unit/session tests, the production
-build and 39 Playwright tests. The live production-preview pass paired two devices,
-checked invalid previews, rotation, keyboard anchoring/confirmation, private locks,
-pause/resume, simultaneous reveal, untimed waiting, standings/Escape, app updates and
-phone/tablet layouts. The 320×568 Arrange panel and full-size squares were visually
-reviewed. Saved desktop/mobile/tablet images and all three Darwin regression
-baselines were reviewed.
+The production-browser suite pairs real WebRTC contexts and covers private preview,
+lock, pause/resume, untimed waiting, simultaneous reveal, rematch, switching and
+spectators. A deterministic ten-round packing flow checks every forecast against
+host score gains, separately accumulated bonuses, row completion and final totals.
+The eight-player tie fixes the shared bonus before capture and uses long names.
+Ten Darwin/Linux screenshot pairs cover setup, placement, short-phone Arrange,
+matching edges, row reveal, sparse/packed finales and blanket comparisons. All
+actual platform images were visually reviewed; strict dimensions, the bundled font
+fixture and the 180-pixel comparison budget remain unchanged.
 
-All three Linux baselines were recovered from the `browser-failure-results`
-artifact of [the matching CI run](https://github.com/ehofmei/multiplayer-test/actions/runs/37340763661)
-for commit `537c41e`. The artifact digest was verified and the actual ready,
-active and results images were visually reviewed before adding them. Both platform
-baseline sets retain strict dimensions and the unchanged 180-pixel budget.
-A passing Linux CI rerun and physical-device behavior remain unverified.
+Task 3 complete local `npm run verify` passed: formatting, 203 unit/session tests,
+four script tests, production build, 61 Playwright tests and baseline-pair checking.
+Production-subpath manifest/icons, cached offline startup, identity/sound persistence
+and user-controlled updates are covered by the shared browser suite. Genuine Ubuntu
+renders are returned by the non-deploying Picnic review workflow; its final phase
+runs normal verification with read-only permissions and no snapshot updates.
+
+The Task 3 persistent browser pass remains incomplete while the Mac is locked:
+manual pairing and setup were reached, but the app reload and subsequent interaction
+checks could not be completed. Complete live preview/Rotate/Reset/Place/Skip,
+row reveal, finale/Standings/Escape and short-screen scrolling after unlocking.
+Physical iPhone/iPad installation, safe areas, real-thumb edge/corner accuracy,
+rotation, Safari sound unlock/recovery and household multi-device listening still
+need the device pass. No timing, scoring rules or network fields changed.
 
 ## Light Seek
 

@@ -221,6 +221,8 @@ Score forecast and completed-row feedback:
 
 ![Eight-player shared victory](tests/picnic.spec.ts-snapshots/picnic-eight-tie-linux.png)
 
+![Eight long names in ranked Standings](tests/picnic.spec.ts-snapshots/picnic-eight-standings-linux.png)
+
 ![Short-phone Arrange forecast](tests/picnic.spec.ts-snapshots/picnic-arrange-linux.png)
 
 ![Larger ranked blanket comparisons](tests/picnic.spec.ts-snapshots/picnic-blanket-comparison-linux.png)
