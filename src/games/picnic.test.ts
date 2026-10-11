@@ -5,6 +5,7 @@ import {
   newPicnic,
   pausePicnic,
   picnicScore,
+  picnicPlacement,
   picnicView,
   pieceCells,
   resumePicnic,
@@ -118,6 +119,53 @@ describe("Patchwork Picnic", () => {
     s = commitPicnic(s, "b", 2, null);
     expect(s.picnickers[0].gain).toBe(0);
     expect(picnicScore(s.picnickers[0].board, s.bonus).rows).toBe(1);
+  });
+  it("previews every legal rotation with exact host gain, new edges, rows and separate bonus", () => {
+    for (const bonus of ["corners", "border", "center"] as const)
+      for (const shape of shapes)
+        for (const food of [1, 2, 3] as const)
+          for (let rotation = 0; rotation < 4; rotation++)
+            for (let y = 0; y < 6; y++)
+              for (let x = 0; x < 6; x++) {
+                const board = "111110" + "020000" + "000300" + "0".repeat(18);
+                const piece = { shape, food },
+                  placement = { option: 0, x, y, rotation };
+                const preview = picnicPlacement(board, piece, placement, bonus);
+                if (!fitsPiece(board, piece, placement)) {
+                  expect(preview).toBeNull();
+                  continue;
+                }
+                const state = {
+                  ...placing(),
+                  bonus,
+                  offer: [piece],
+                  picnickers: placing().picnickers.map((p) => ({
+                    ...p,
+                    board,
+                  })),
+                };
+                const result = commitPicnic(
+                  commitPicnic(state, "a", 1, placement),
+                  "b",
+                  1,
+                  null,
+                ).picnickers[0];
+                expect(result.board).toBe(preview!.board);
+                expect(result.gain).toBe(preview!.gain);
+                expect(result.rows).toEqual(preview!.rows);
+                const before = picnicScore(board, bonus),
+                  after = picnicScore(result.board, bonus);
+                expect(preview!.gain).toBe(
+                  preview!.cells.length +
+                    preview!.edges.length +
+                    preview!.rows.length * 6,
+                );
+                expect(preview!.edges.length).toBe(after.edges - before.edges);
+                expect(preview!.bonus).toBe(after.bonus - before.bonus);
+                expect(after.total - before.total).toBe(
+                  result.gain + preview!.bonus,
+                );
+              }
   });
   it("uses shape/food bags with a free single in the opening and closing rounds", () => {
     let s = placing();

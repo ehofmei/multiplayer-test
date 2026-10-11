@@ -684,7 +684,11 @@ layout, Wi-Fi pairing, and background/resume checks remain in QA.md.
 A simultaneous spatial puzzle for 2–8 players. Everyone gets the same three food
 shapes each round and fills a separate 6×6 picnic blanket. Tap a piece, tap its
 top-left anchor, rotate if needed, and Place to lock. Reset clears the local
-preview; Skip leaves your blanket unchanged. Invalid placements cannot be committed.
+preview; Skip leaves your blanket unchanged. The score forecast separates points
+on Place (cells, new matching edges and completed rows) from the projected bonus
+change saved for the finale. New matching edges and completed rows are marked on
+the preview. Rotate updates both the selected offer picture and the footprint;
+invalid squares carry a cross as well as a red outline. Invalid placements cannot be committed.
 On short screens, Arrange piece opens a scrollable panel with full-size tap squares.
 Keyboard players can Tab to a piece or the board, move with arrows, rotate with R,
 and Place with Enter on the board.
@@ -700,13 +704,20 @@ Each filled cell earns 1 point, each orthogonal matching-food edge earns 1, and
 completed rows earn 6. Rows never disappear. The shared bonus is drawn at Start:
 strawberry corners earn 3 each, cheese border cells 1 each, or the middle four
 grape cells 2 each. Its projected value appears throughout and is added once at
-match end. Standings shows everyone's blanket and cells/edges/rows/bonus breakdown;
+match end. The main finale identifies the winner or shared winners, your tied rank
+and final total. Standings offers larger blanket comparisons with ranks and each
+cells/edges/rows/bonus breakdown;
 equal highest totals share the win.
 
 Offers use shuffled six-shape and three-food bags. The first round and rounds
 7–10 always offer a single square, leaving a useful way to finish crowded rows.
 Rotation uses quarter-turns without reflection. Food symbols and outlines supplement
-color; the gold outline marks bonus squares. No extra assets or dependencies are needed.
+color; gold outlines and small stars mark bonus squares. Centered offer pictures,
+subtle stitching and food shadows keep the cell boundaries readable. Placement
+and completed-row sounds are distinct; row feedback takes priority, remains visible
+when muted and stays still with reduced motion. Repeated snapshots, skips, watching
+and pause/resume do not replay placement sounds. No wire fields, assets or dependencies
+were added for this polish.
 
 Pause, pairing, host backgrounding, and scheduling stalls preserve the current offer,
 remaining time, boards and locks. Resume adds a short countdown. Late arrivals watch

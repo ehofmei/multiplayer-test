@@ -66,6 +66,17 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
       );
   }
   return {
+    picnic: room.picnic
+      ? {
+          phase: room.picnic.resumePhase ?? room.picnic.phase,
+          suspended: ["paused", "reorient"].includes(room.picnic.phase),
+          round: room.picnic.round,
+          board: room.picnic.picnickers.find((p) => p.id === me)?.board,
+          rows:
+            room.picnic.picnickers.find((p) => p.id === me)?.rows.length ?? 0,
+          outcome: room.picnic.picnickers.find((p) => p.id === me)?.outcome,
+        }
+      : null,
     treasure: room.treasure
       ? (() => {
           const g = room.treasure,
@@ -233,6 +244,25 @@ export function soundEvents(
   if (d && oldDecision) {
     if (d.phase === "finished" && oldDecision.phase !== "finished")
       return [d.winner ? "win" : "finish"];
+    if (after.picnic && before.picnic) {
+      const p = after.picnic,
+        old = before.picnic;
+      if (p.suspended) return [];
+      if (
+        p.phase === "reveal" &&
+        p.outcome === "placed" &&
+        p.board !== old.board
+      )
+        return [p.rows ? "picnic-row" : "picnic-place"];
+      if (
+        p.phase === "placing" &&
+        d.turn === oldDecision.turn &&
+        d.locked &&
+        !oldDecision.locked
+      )
+        return ["success"];
+      return [];
+    }
     if (after.treasure && before.treasure) {
       const t = after.treasure,
         old = before.treasure;

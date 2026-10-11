@@ -365,7 +365,7 @@ it("announces decision locks, launches, scores and results once without replayin
       kind === "minigolf"
         ? "golf-tap"
         : kind === "picnic"
-          ? "point"
+          ? "picnic-place"
           : "dive-bank",
     ]);
     if (s.room.minigolf) {
@@ -605,4 +605,66 @@ it("distinguishes Dive treasure, bank, shield and caught outcomes without old bo
       expect(soundEvents(old, frame(s))).toEqual([]);
     }
   }
+});
+
+it("prioritizes Picnic rows, ignores skips/spectators and deduplicates paused reveal and finish", async () => {
+  const { newPicnic, stepPicnic, commitPicnic, pausePicnic, resumePicnic } =
+    await import("../games/picnic");
+  const s = snapshot();
+  s.room = newRoom("picnic", 1);
+  let g = stepPicnic(
+    newPicnic(["a", "b"], () => 0),
+    3000,
+  );
+  g.picnickers[0].board = "111110" + "0".repeat(30);
+  g.offer[0] = { shape: "single", food: 1 };
+  s.room.picnic = g;
+  const before = frame(s);
+  g = commitPicnic(
+    commitPicnic(g, "a", 1, { option: 0, x: 5, y: 0, rotation: 0 }),
+    "b",
+    1,
+    null,
+  );
+  s.room.picnic = g;
+  const revealed = frame(s);
+  expect(soundEvents(before, revealed)).toEqual(["picnic-row"]);
+  expect(soundEvents(revealed, revealed)).toEqual([]);
+  expect(soundEvents(null, revealed)).toEqual([]);
+  expect(
+    soundEvents(
+      soundFrame(
+        {
+          ...s,
+          room: {
+            ...s.room,
+            picnic: stepPicnic(
+              newPicnic(["a", "b"], () => 0),
+              3000,
+            ),
+          },
+        },
+        "watcher",
+        "test",
+      ),
+      soundFrame(s, "watcher", "test"),
+    ),
+  ).toEqual([]);
+  s.room.picnic = pausePicnic(g);
+  const paused = frame(s);
+  expect(soundEvents(revealed, paused)).toEqual([]);
+  s.room.picnic = resumePicnic(s.room.picnic);
+  const reorient = frame(s);
+  expect(soundEvents(paused, reorient)).toEqual([]);
+  s.room.picnic = stepPicnic(s.room.picnic, 3000);
+  expect(soundEvents(reorient, frame(s))).toEqual([]);
+  s.room.picnic = stepPicnic(s.room.picnic, 3000);
+  const choosing = frame(s);
+  s.room.picnic = commitPicnic(
+    commitPicnic(s.room.picnic, "a", 2, null),
+    "b",
+    2,
+    null,
+  );
+  expect(soundEvents(choosing, frame(s))).toEqual([]);
 });

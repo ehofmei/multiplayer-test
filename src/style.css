@@ -4361,7 +4361,7 @@ input.golf-power-input {
   display: block;
 }
 .picnic-standings .picnic-mini {
-  max-width: 240px;
+  max-width: 340px;
 }
 .picnic-standings p {
   font-size: 14px;
@@ -4388,7 +4388,7 @@ input.golf-power-input {
     width: 100%;
   }
   .picnic-grid {
-    max-width: min(100%, calc(100cqh - 205px));
+    max-width: min(100%, calc(100cqh - 263px));
   }
   .picnic-controls {
     width: 100%;
@@ -7208,4 +7208,146 @@ input.golf-power-input {
   .dive-finale > strong {
     line-height: 1.1;
   }
+}
+
+/* Stitching and score feedback keep the blanket grid unobscured. */
+.picnic-cell {
+  position: relative;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 7px,
+    #ac825518 7px 8px
+  );
+}
+.picnic-food {
+  filter: drop-shadow(0 2px 1px #714d3938);
+}
+.picnic-cell[data-bonus="true"]::before {
+  content: "✦";
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 12px;
+  color: #765012;
+}
+.picnic-cell[data-match-right="true"]::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: 30%;
+  height: 40%;
+  border-right: 5px solid #265c3b;
+  z-index: 2;
+}
+.picnic-cell[data-match-down="true"] {
+  border-bottom: 5px solid #265c3b;
+}
+.picnic-invalid-mark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 36px;
+  font-weight: 900;
+  color: #a3253a;
+  z-index: 3;
+  text-shadow: 0 0 3px white;
+}
+.picnic-forecast {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #e8f0df;
+  color: #193c2d;
+  border-left: 3px solid #436a3d;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.25;
+}
+.picnic-final h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.picnic-final-total {
+  font-size: 32px;
+  font-weight: 800;
+  color: #bde3ad;
+}
+.picnic-final-total small {
+  font-size: 13px;
+}
+.picnic-game-card[data-phase="finished"] .picnic-status {
+  font-size: 20px;
+  color: #e0f1b6;
+}
+.picnic-game-card[data-phase="finished"] .picnic-mini {
+  max-width: min(300px, calc(100cqh - 192px));
+}
+@media (min-width: 651px) {
+  .picnic-game-card[data-phase="finished"] .picnic-mini {
+    max-width: min(408px, 100cqh);
+  }
+}
+@keyframes picnic-row {
+  from {
+    box-shadow: inset 0 0 0 4px #e8b747;
+  }
+  to {
+    box-shadow: inset 0 0 0 2px #265c3b;
+  }
+}
+.picnic-game-card[data-phase="reveal"] .picnic-cell[data-row="true"] {
+  animation: picnic-row 650ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .picnic-game-card[data-phase="reveal"] .picnic-cell[data-row="true"] {
+    animation: none;
+    box-shadow: inset 0 0 0 2px #265c3b;
+  }
+}
+.picnic-final-total {
+  color: #28533a;
+}
+.picnic-game-card[data-phase="finished"] .picnic-status {
+  color: #28533a;
+}
+@media (max-height: 650px) and (min-width: 651px) {
+  .picnic-game-card[data-phase="finished"] .picnic-controls {
+    gap: 4px;
+  }
+  .picnic-game-card[data-phase="finished"] .picnic-status {
+    font-size: 14px;
+    min-height: 18px;
+  }
+  .picnic-final h2 {
+    font-size: 14px;
+  }
+  .picnic-final-total {
+    font-size: 22px;
+    line-height: 1.1;
+  }
+  .picnic-final {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  .picnic-final p {
+    display: none;
+  }
+}
+
+.picnic-commit {
+  display: grid;
+  gap: 6px;
+}
+.panel-content .picnic-commit {
+  position: sticky;
+  bottom: -4px;
+  padding: 6px 0;
+  background: #f5f4ee;
+  z-index: 4;
+}
+.panel-content .picnic-commit .picnic-actions {
+  position: static;
+  padding: 0;
 }

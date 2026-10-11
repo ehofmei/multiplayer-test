@@ -155,6 +155,47 @@ export function picnicScore(board: string, bonus: Bonus) {
     total: cells + edges + rows * 6 + extra,
   };
 }
+// Shared by the local preview and host resolution; bonus stays separate from gain.
+export function picnicPlacement(
+  board: string,
+  piece: Piece,
+  p: Placement,
+  bonus: Bonus,
+) {
+  if (!fitsPiece(board, piece, p)) return null;
+  const next = [...board];
+  const cells = pieceCells(piece.shape, p.rotation).map(
+    ([x, y]) => (y + p.y) * 6 + x + p.x,
+  );
+  for (const i of cells) next[i] = String(piece.food);
+  const result = next.join("");
+  const before = picnicScore(board, bonus),
+    after = picnicScore(result, bonus);
+  const rows = Array.from({ length: 6 }, (_, y) => y).filter(
+    (y) =>
+      board.slice(y * 6, y * 6 + 6).includes("0") &&
+      !result.slice(y * 6, y * 6 + 6).includes("0"),
+  );
+  const edges: [number, number][] = [];
+  for (let i = 0; i < 36; i++) {
+    for (const j of [i % 6 < 5 ? i + 1 : -1, i < 30 ? i + 6 : -1])
+      if (
+        j >= 0 &&
+        result[i] !== "0" &&
+        result[i] === result[j] &&
+        (cells.includes(i) || cells.includes(j))
+      )
+        edges.push([i, j]);
+  }
+  return {
+    board: result,
+    cells,
+    edges,
+    rows,
+    gain: after.base - before.base,
+    bonus: after.bonus - before.bonus,
+  };
+}
 function shuffled<T>(items: readonly T[], random: () => number): T[] {
   const bag = [...items];
   for (let i = bag.length - 1; i > 0; i--) {
@@ -221,25 +262,19 @@ export function resolvePicnic(state: PicnicState): PicnicState {
           gain: 0,
           rows: [],
         };
-      const board = [...p.board],
-        piece = state.offer[p.placement.option];
-      for (const [x, y] of pieceCells(piece.shape, p.placement.rotation))
-        board[(y + p.placement.y) * 6 + x + p.placement.x] = String(piece.food);
-      const next = board.join("");
-      const rows = Array.from({ length: 6 }, (_, y) => y).filter(
-        (y) =>
-          p.board.slice(y * 6, y * 6 + 6).includes("0") &&
-          !next.slice(y * 6, y * 6 + 6).includes("0"),
-      );
+      const preview = picnicPlacement(
+        p.board,
+        state.offer[p.placement.option],
+        p.placement,
+        state.bonus,
+      )!;
       return {
         ...p,
-        board: next,
+        board: preview.board,
         placement: null,
         outcome: "placed",
-        gain:
-          picnicScore(next, state.bonus).base -
-          picnicScore(p.board, state.bonus).base,
-        rows,
+        gain: preview.gain,
+        rows: preview.rows,
       };
     }),
   };

@@ -211,6 +211,20 @@ Placement · phone layout.
 
 </details>
 
+Score forecast and completed-row feedback:
+
+![Matching edges and projected row points](tests/picnic.spec.ts-snapshots/picnic-row-preview-linux.png)
+
+![Completed-row reveal](tests/picnic.spec.ts-snapshots/picnic-row-reveal-linux.png)
+
+![Ten-round packed blanket finale](tests/picnic.spec.ts-snapshots/picnic-packed-results-linux.png)
+
+![Eight-player shared victory](tests/picnic.spec.ts-snapshots/picnic-eight-tie-linux.png)
+
+![Short-phone Arrange forecast](tests/picnic.spec.ts-snapshots/picnic-arrange-linux.png)
+
+![Larger ranked blanket comparisons](tests/picnic.spec.ts-snapshots/picnic-blanket-comparison-linux.png)
+
 ## Light Seek
 
 Active board · phone layout.

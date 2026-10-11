@@ -7,6 +7,7 @@ import {
   returnHome,
   showHelp,
 } from "./ui";
+import { picnicPlacement, type Shape } from "../src/games/picnic";
 import { expectStableScreenshot } from "./screenshot";
 const sizes = [
   { width: 320, height: 568 },
@@ -166,6 +167,10 @@ test("Picnic pairs, previews, rotates, locks privately, pauses, waits untimed, s
       `picnic-active-${process.platform}.png`,
       { maxDiffPixels: 180 },
     );
+    await expect(host.locator(".picnic-forecast:visible")).toContainText(
+      "+1 points on Place",
+    );
+    await expect(client.locator('[data-preview="true"]')).toHaveCount(0);
     await fit(host, "preview");
     await fit(client, "client");
     await host.setViewportSize(sizes[2]);
@@ -257,6 +262,12 @@ test("Picnic pairs, previews, rotates, locks privately, pauses, waits untimed, s
     await host
       .getByRole("button", { name: "Row 1, column 1, Empty", exact: true })
       .click();
+    await expectStableScreenshot(
+      host,
+      ".app-panel[open]",
+      `picnic-arrange-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
     await host.screenshot({ path: "test-results/picnic-short-placement.png" });
     await host.getByRole("button", { name: "Place", exact: true }).click();
     await expect(
@@ -322,6 +333,13 @@ test("eight long names fit, late arrivals watch, background pauses, and disconne
       "8 picnickers share the win",
     );
     await fit(host, "eight-results");
+    await host.setViewportSize(sizes[2]);
+    await expectStableScreenshot(
+      host,
+      ".picnic-game-card",
+      `picnic-eight-tie-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
     await host.getByRole("button", { name: "Standings", exact: true }).click();
     await expect(host.getByRole("dialog").locator("li")).toHaveCount(8);
     await closePanels(host);
@@ -354,5 +372,170 @@ test("eight long names fit, late arrivals watch, background pauses, and disconne
     await expect(game(host)).toHaveAttribute("data-phase", "ready");
   } finally {
     for (const c of contexts) await c.close();
+  }
+});
+
+test("ten packed rounds preview exact rewards, celebrate rows, and compare final blankets", async ({
+  page: host,
+  browser,
+}) => {
+  test.setTimeout(120000);
+  await host.addInitScript(() => {
+    Math.random = () => 0;
+  });
+  const context = await browser.newContext({
+    viewport: sizes[2],
+    reducedMotion: "reduce",
+    hasTouch: true,
+  });
+  try {
+    const client = await context.newPage();
+    await host.goto("./");
+    await host.getByLabel("Your name").fill("Alex");
+    await host
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await join(host, client, "Emma");
+    await chooseGame(host, "Patchwork Picnic");
+    await host.clock.install();
+    await host.clock.pauseAt(new Date(Date.now() + 1000));
+    await host.setViewportSize(sizes[2]);
+    await host
+      .getByRole("button", { name: "Start Picnic", exact: true })
+      .click();
+    await host.clock.runFor(3000);
+    let rowCaptured = false,
+      base = 0,
+      bonus = 0;
+    const shapeNames: Record<string, Shape> = {
+      Single: "single",
+      Domino: "domino",
+      Line: "line",
+      Corner: "corner",
+      Square: "square",
+      "Long L": "ell",
+    };
+    for (let round = 1; round <= 10; round++) {
+      await expect(game(client)).toHaveAttribute("data-phase", "placing");
+      const board = await host
+        .locator(".picnic-grid:visible .picnic-cell")
+        .evaluateAll((es) =>
+          es.map((e) => e.getAttribute("data-food")).join(""),
+        );
+      const offers = await host
+        .locator(".picnic-options:visible button")
+        .evaluateAll((es) => es.map((e) => e.getAttribute("aria-label")!));
+      let best: {
+        option: number;
+        x: number;
+        y: number;
+        rotation: number;
+        preview: NonNullable<ReturnType<typeof picnicPlacement>>;
+      } | null = null;
+      for (const [option, label] of offers.entries()) {
+        const [, food, shape] = label.match(
+          /Piece \d: (Strawberry|Cheese|Grapes) (.+)/,
+        )!;
+        const piece = {
+          shape: shapeNames[shape],
+          food: ({ Strawberry: 1, Cheese: 2, Grapes: 3 } as const)[
+            food as "Strawberry" | "Cheese" | "Grapes"
+          ],
+        };
+        for (let rotation = 0; rotation < 4; rotation++)
+          for (let y = 0; y < 6; y++)
+            for (let x = 0; x < 6; x++) {
+              const preview = picnicPlacement(
+                board,
+                piece,
+                { option, x, y, rotation },
+                "corners",
+              );
+              if (
+                preview &&
+                (!best ||
+                  preview.gain + preview.bonus >
+                    best.preview.gain + best.preview.bonus)
+              )
+                best = { option, x, y, rotation, preview };
+            }
+      }
+      expect(best).not.toBeNull();
+      const b = best!;
+      await host
+        .getByRole("button", { name: new RegExp(`^Piece ${b.option + 1}:`) })
+        .click();
+      for (let r = 0; r < b.rotation; r++)
+        await host.getByRole("button", { name: "Rotate", exact: true }).click();
+      await host
+        .locator(".picnic-cell:visible")
+        .nth(b.y * 6 + b.x)
+        .click();
+      await expect(host.locator(".picnic-forecast:visible")).toContainText(
+        `+${b.preview.gain} points on Place`,
+      );
+      await expect(host.locator(".picnic-forecast:visible")).toContainText(
+        `+${b.preview.bonus} bonus at finale`,
+      );
+      if (b.preview.edges.length)
+        await expect(
+          host.locator('[data-match-right="true"], [data-match-down="true"]'),
+        ).not.toHaveCount(0);
+      if (b.preview.rows.length && !rowCaptured) {
+        await expectStableScreenshot(
+          host,
+          ".picnic-game-card",
+          `picnic-row-preview-${process.platform}.png`,
+          { maxDiffPixels: 180 },
+        );
+      }
+      await host.getByRole("button", { name: "Place", exact: true }).click();
+      await expect(
+        client.locator('.picnic-grid:visible [data-food="1"]'),
+      ).toHaveCount(0);
+      await client.getByRole("button", { name: "Skip", exact: true }).click();
+      await expect(game(host)).toHaveAttribute("data-phase", "reveal");
+      await expect(game(client)).toHaveAttribute("data-phase", "reveal");
+      await expect(host.locator(".picnic-status")).toContainText(
+        `+${b.preview.gain} points`,
+      );
+      base += b.preview.gain;
+      bonus += b.preview.bonus;
+      await expect(host.locator(".picnic-top")).toContainText(
+        `${base} pts · bonus ${bonus}`,
+      );
+      if (b.preview.rows.length && !rowCaptured) {
+        rowCaptured = true;
+        await expectStableScreenshot(
+          host,
+          ".picnic-game-card",
+          `picnic-row-reveal-${process.platform}.png`,
+          { maxDiffPixels: 180 },
+        );
+      }
+      await host.clock.runFor(3000);
+    }
+    expect(rowCaptured).toBe(true);
+    await expect(host.locator(".picnic-final")).toContainText("earned #1");
+    await expect(host.locator(".picnic-final-total")).toContainText(
+      `${base + bonus}`,
+    );
+    await fit(host, "packed-results");
+    await host.setViewportSize(sizes[2]);
+    await expectStableScreenshot(
+      host,
+      ".picnic-game-card",
+      `picnic-packed-results-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
+    await host.getByRole("button", { name: "Standings", exact: true }).click();
+    await expectStableScreenshot(
+      host,
+      ".app-panel[open]",
+      `picnic-blanket-comparison-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
+  } finally {
+    await context.close();
   }
 });

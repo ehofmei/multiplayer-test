@@ -715,6 +715,16 @@ five-minute preference is a pacing goal, not an exact match-time requirement.
 
 QA inventory:
 
+- Task 3 score forecast: compare cell/matching-edge/row points with the actual
+  reveal, with projected bonus changes kept separate until the finale. Check
+  normalized rotated offer pictures, new-edge markers, row celebration, invalid
+  crosses and Reset. On short screens keep forecast and explicit Place/Skip together
+  while the Arrange panel scrolls. Main results show winner/shared winners, your
+  tied rank and total; Standings has larger blanket comparisons.
+- Listen to placement versus completed-row cues, including a delayed snapshot,
+  repeated snapshots, Skip, spectators, pause/reorient/resume, rematch and switching.
+  Sounds remain muted by default. Verify the same feedback without sound/motion.
+
 - Find the game on the paged picker; Start requires two players. Select one of the
   shared shapes, preview an anchor, Rotate, Reset, Place and Skip. Try blocked,
   off-board and crowded previews. Confirm exactly one lock and a simultaneous reveal.

@@ -1,4 +1,6 @@
 export type Cue =
+  | "picnic-place"
+  | "picnic-row"
   | "dive-treasure"
   | "dive-bank"
   | "dive-shield"
@@ -39,6 +41,15 @@ export type Cue =
   | "finish";
 type Note = [frequency: number, duration: number, delay?: number];
 const notes: Record<Cue, Note[]> = {
+  "picnic-place": [
+    [480, 0.055],
+    [720, 0.09, 0.055],
+  ],
+  "picnic-row": [
+    [523, 0.07],
+    [784, 0.08, 0.08],
+    [1046, 0.14, 0.16],
+  ],
   "dive-treasure": [
     [720, 0.06],
     [1080, 0.11, 0.07],

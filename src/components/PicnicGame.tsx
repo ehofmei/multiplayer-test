@@ -4,6 +4,7 @@ import {
   fitsPiece,
   pieceCells,
   picnicScore,
+  picnicPlacement,
   type Piece,
   type PicnicState,
   type Placement,
@@ -89,14 +90,26 @@ function FoodArt({ food }: { food: number }) {
     </svg>
   );
 }
-function PieceArt({ piece }: { piece: Piece }) {
-  const cells = pieceCells(piece.shape, 0);
+function PieceArt({
+  piece,
+  rotation = 0,
+}: {
+  piece: Piece;
+  rotation?: number;
+}) {
+  const cells = pieceCells(piece.shape, rotation);
+  const width = Math.max(...cells.map(([x]) => x)) + 1,
+    height = Math.max(...cells.map(([, y]) => y)) + 1;
   return (
-    <svg viewBox="0 0 120 90" aria-hidden="true" className="picnic-piece">
+    <svg
+      viewBox={`0 0 ${width * 28 + 8} ${height * 28 + 8}`}
+      aria-hidden="true"
+      className="picnic-piece"
+    >
       {cells.map(([x, y]) => (
         <g
           key={`${x}-${y}`}
-          transform={`translate(${(x + 0.5) * 28} ${(y + 0.15) * 28})`}
+          transform={`translate(${x * 28 + 5} ${y * 28 + 5})`}
         >
           <rect
             width="25"
@@ -178,6 +191,10 @@ export function PicnicGame({
       : { option, x: anchor % 6, y: Math.floor(anchor / 6), rotation };
   const piece = option === null ? null : game.offer[option];
   const fits = !!placement && !!piece && fitsPiece(board, piece, placement);
+  const projected =
+    active && fits
+      ? picnicPlacement(board, piece!, placement!, game.bonus)
+      : null;
   const preview =
     active && piece && placement
       ? pieceCells(piece.shape, rotation).map(([x, y]) => ({
@@ -197,6 +214,11 @@ export function PicnicGame({
       picnicScore(p.board, game.bonus).total ===
       picnicScore(sorted[0].board, game.bonus).total,
   );
+  const rank = me
+    ? 1 +
+      sorted.filter((p) => picnicScore(p.board, game.bonus).total > score.total)
+        .length
+    : null;
   const locked = game.picnickers.filter((p) => p.locked).length;
   const status = !connected
     ? "Host disconnected"
@@ -283,13 +305,27 @@ export function PicnicGame({
                   ? x === 0 || x === 5 || y === 0 || y === 5
                   : (x === 2 || x === 3) && (y === 2 || y === 3)
             }
-            data-row={game.phase === "reveal" && me?.rows.includes(y)}
+            data-row={
+              (game.phase === "reveal" && me?.rows.includes(y)) ||
+              projected?.rows.includes(y)
+            }
+            data-match-right={projected?.edges.some(
+              ([a, b]) => a === i && b === i + 1,
+            )}
+            data-match-down={projected?.edges.some(
+              ([a, b]) => a === i && b === i + 6,
+            )}
             aria-label={`Row ${y + 1}, column ${x + 1}, ${foodNames[Number(food)]}${shown ? ", preview" : ""}`}
             aria-pressed={active && anchor === i}
             disabled={!active}
             tabIndex={i === (anchor ?? 0) ? 0 : -1}
             onClick={() => setAnchor(i)}
           >
+            {shown && !fits && (
+              <span className="picnic-invalid-mark" aria-hidden="true">
+                ×
+              </span>
+            )}
             {(food !== "0" || shown) && (
               <FoodArt food={food !== "0" ? Number(food) : piece!.food} />
             )}
@@ -311,12 +347,45 @@ export function PicnicGame({
             setRotation(0);
           }}
         >
-          <PieceArt piece={p} />
+          <PieceArt piece={p} rotation={option === i ? rotation : 0} />
           <span>
             {i + 1} · {shapeNames[p.shape]}
           </span>
         </button>
       ))}
+    </div>
+  );
+  const forecast = (
+    <div className="picnic-forecast" aria-live="polite">
+      {projected ? (
+        <>
+          <strong>+{projected.gain} points on Place</strong>
+          <span>
+            {projected.cells.length} cells + {projected.edges.length} matches +{" "}
+            {projected.rows.length * 6} row points
+          </span>
+          <span>
+            +{projected.bonus} bonus at finale · projected{" "}
+            {score.bonus + projected.bonus}
+          </span>
+        </>
+      ) : game.phase === "reveal" && me?.outcome === "placed" ? (
+        <>
+          <strong>+{me.gain} placement points</strong>
+          <span>
+            {me.rows.length
+              ? `${me.rows.length} completed row${me.rows.length > 1 ? "s" : ""} · +${me.rows.length * 6} included`
+              : "Cells and matching edges added"}
+          </span>
+          <span>{score.bonus} bonus saved for finale</span>
+        </>
+      ) : (
+        <span>
+          {active && placement && !fits
+            ? "× Overlap or off-board · move or rotate"
+            : `Rotation ${rotation * 90}° · bonus added at finale`}
+        </span>
+      )}
     </div>
   );
   const actions = (
@@ -359,7 +428,15 @@ export function PicnicGame({
             <h3>
               {name(p.id)}
               {p.id === session.me.id ? " · You" : ""}{" "}
-              <strong>{finished ? s.total : s.base} points</strong>
+              <strong>
+                #
+                {1 +
+                  sorted.filter(
+                    (other) =>
+                      picnicScore(other.board, game.bonus).total > s.total,
+                  ).length}{" "}
+                · {finished ? s.total : s.base} points
+              </strong>
             </h3>
             <MiniBlanket board={p.board} />
             <p>
@@ -422,6 +499,17 @@ export function PicnicGame({
             </p>
           ) : finished ? (
             <div className="picnic-final">
+              <h2>
+                {rank
+                  ? `You ${winners.some((p) => p.id === me?.id) && winners.length > 1 ? "share" : "earned"} #${rank}`
+                  : "Picnic complete"}
+              </h2>
+              <div className="picnic-final-total">
+                {me
+                  ? score.total
+                  : picnicScore(sorted[0].board, game.bonus).total}
+                <small> final points</small>
+              </div>
               <strong>
                 {score.cells} cells + {score.edges} matches + {score.rows * 6}{" "}
                 rows + {score.bonus} bonus
@@ -435,7 +523,10 @@ export function PicnicGame({
           ) : (
             <>
               {options}
-              {actions}
+              <div className="picnic-commit">
+                {forecast}
+                {actions}
+              </div>
               <small className="picnic-progress">
                 {locked}/{game.picnickers.length} locked · same offer for
                 everyone
@@ -534,7 +625,10 @@ export function PicnicGame({
         <p>{status}</p>
         {options}
         {grid}
-        {actions}
+        <div className="picnic-commit">
+          {forecast}
+          {actions}
+        </div>
         <p>Bonus: {bonusLabels[game.bonus]}</p>
       </AppPanel>
     </section>
