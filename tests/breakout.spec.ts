@@ -325,6 +325,39 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
         await expect(client.locator(".breakout-level small")).toContainText(
           `0${level} / 03`,
         );
+        // Core transitions retain the last live paddle input, which depends on
+        // WebRTC timing. Establish a deliberate pose through the real sliders
+        // and confirm the remote paddle before comparing the entire screen.
+        for (const player of [host, client]) {
+          await showHelp(player);
+          await player.getByRole("slider", { name: "Your paddle" }).fill("50");
+          await closePanels(player);
+        }
+        await host.clock.runFor(50); // Flush the host's 33ms input queue.
+        await expect(host.getByTestId("arena-paddle-1")).toHaveAttribute(
+          "y",
+          "380",
+        );
+        await expect(client.getByTestId("arena-paddle-0")).toHaveAttribute(
+          "x",
+          "380",
+        );
+        await host.clock.runFor(300); // Let the last contact feedback expire.
+        for (const player of [host, client]) {
+          await expect(player.locator(".breakout-game-card")).toHaveAttribute(
+            "data-phase",
+            "serve",
+          );
+          await expect(player.getByTestId("arena-paddle-0")).toHaveAttribute(
+            "x",
+            "380",
+          );
+          await expect(player.getByTestId("arena-paddle-1")).toHaveAttribute(
+            "y",
+            "380",
+          );
+        }
+        targets.fill(0.5);
         await expectStableScreenshot(
           host,
           ".breakout-game-card",

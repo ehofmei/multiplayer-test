@@ -105,6 +105,9 @@ unlock, device volume/mute behavior, and foreground recovery need physical testi
   steering-strip input, help focus return/palette, pause/resume, natural loss,
   persistent results/rematch, complete paired victory through three cores using
   normal pointer/touch input, and cached production-subpath offline startup.
+  Core-transition snapshots center both paddles with the help sliders, flush
+  queued input and confirm remote positions before capture. They retain the
+  strict 160-pixel comparison budget; live rally endpoints are not baseline poses.
 - Review phone, 320×700 short-phone, portrait-tablet, desktop and landscape ready,
   active, destroyed-brick, paused, reinforced-core and result screenshots. Include
   taller font metrics, long names, reduced motion and safe-area clearance. Keep
