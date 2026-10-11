@@ -4,6 +4,7 @@ export default defineConfig({
   snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{ext}",
   fullyParallel: false,
   workers: 2,
+  reporter: process.env.CI ? [["dot"], ["github"]] : undefined,
   use: {
     baseURL: "http://127.0.0.1:4173/multiplayer-test/",
     trace: "retain-on-failure",
