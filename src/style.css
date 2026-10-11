@@ -7530,3 +7530,9 @@ input.golf-power-input {
   .race-cue {
   height: 56px;
 }
+@media (max-height: 620px) {
+  /* The Menu dot and update controls keep the notice available on short screens. */
+  .app-shell:has(.reaction-game-card) > aside.banner {
+    display: none;
+  }
+}

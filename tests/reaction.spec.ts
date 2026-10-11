@@ -19,7 +19,6 @@ const sizes = [
 async function fit(page: Page, label: string) {
   for (const size of sizes) {
     await page.setViewportSize(size);
-    await page.clock.runFor(32);
     const style = await page.addStyleTag({
       content: ":root {font-family:serif;line-height:1.6}",
     });
@@ -36,7 +35,9 @@ async function fit(page: Page, label: string) {
       .locator(".reaction-game-card")
       .getByRole("button")
       .all()) {
-      const b = (await button.boundingBox())!;
+      const b = await button.evaluate((e) =>
+        e.getBoundingClientRect().toJSON(),
+      );
       expect(b.width).toBeGreaterThanOrEqual(44);
       expect(b.height).toBeGreaterThanOrEqual(44);
       expect(b.y + b.height).toBeLessThanOrEqual(size.height);
@@ -74,6 +75,18 @@ test("Race shows immediate cues, exact hit rewards, keyboard input, misses and s
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 1000));
   await fit(page, "ready");
+  // Same layout notice as a waiting service worker; lifecycle is covered in updates.spec.
+  await page.evaluate(() => {
+    const banner = document.createElement("aside");
+    banner.className = "banner race-update-fixture";
+    banner.textContent = "An update is ready in Menu when you’re done playing.";
+    document.querySelector("main > header")!.after(banner);
+  });
+  await fit(page, "update-notice");
+  await page.evaluate(() =>
+    document.querySelector(".race-update-fixture")!.remove(),
+  );
+
   await showHelp(page);
   await expect(
     page.getByText(/Faster correct hits earn up to 100/),
@@ -81,12 +94,16 @@ test("Race shows immediate cues, exact hit rewards, keyboard input, misses and s
   await closePanels(page);
   await page.getByRole("button", { name: "Start Race", exact: true }).click();
   const target = page.getByRole("button", { name: "Target 1", exact: true });
-  const before = await target.boundingBox();
+  const before = await target.evaluate((e) =>
+    e.getBoundingClientRect().toJSON(),
+  );
   await expect(page.locator(".race-target.lit,.race-target.decoy")).toHaveCount(
     0,
   );
   await advance(page, "active");
-  expect(await target.boundingBox()).toEqual(before);
+  expect(
+    await target.evaluate((e) => e.getBoundingClientRect().toJSON()),
+  ).toEqual(before);
   await expect(target).toContainText("TAP");
   await target.press("Tab");
   await target.press("Enter");
@@ -113,16 +130,21 @@ test("Race shows immediate cues, exact hit rewards, keyboard input, misses and s
   for (const size of sizes) {
     await advance(page, "waiting");
     await page.setViewportSize(size);
-    // Let the browser apply the viewport before measuring a stable cue layout.
-    await page.clock.runFor(32);
+    // Read DOM bounds directly: compositor boxes can lag after emulated rotation.
     const font = await page.addStyleTag({
       content: ":root {font-family:serif;line-height:1.6}",
     });
-    const bounds = await target.boundingBox();
+    const bounds = await target.evaluate((e) =>
+      e.getBoundingClientRect().toJSON(),
+    );
     await advance(page, "active");
-    expect(await target.boundingBox()).toEqual(bounds);
+    expect(
+      await target.evaluate((e) => e.getBoundingClientRect().toJSON()),
+    ).toEqual(bounds);
     await advance(page, "results");
-    expect(await target.boundingBox()).toEqual(bounds);
+    expect(
+      await target.evaluate((e) => e.getBoundingClientRect().toJSON()),
+    ).toEqual(bounds);
     await expectScreenFits(page);
     await font.evaluate((e) => e.remove());
   }

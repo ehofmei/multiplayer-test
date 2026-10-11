@@ -1145,13 +1145,17 @@ should update for matching controls.
   `tests/game.spec.ts` retains real paired early/wrong/hit/hold play, synthesized
   sound, the full ten-round flow and touch contact with a slight drag.
 - Layout checks and saved screenshots cover 390×844, 320×700, 320×568, 844×390,
-  768×1024 and 1280×720, including taller serif metrics. Deterministic Darwin
+  768×1024 and 1280×720, including taller serif metrics and the full update
+  notice. On short screens, its duplicate banner yields to the Menu dot and update
+  controls. Deterministic Darwin
   and Linux snapshots cover ready pads, hit reward, wrong pad versus intended
   target, HOLD, successful hold and eight shared winners; reduced motion and
   muted play are included. The short landscape finale uses side-by-side results.
 - Review workflow: `.github/workflows/reaction-review.yml` on
-  `codex/reaction-polish`, Ubuntu/Node 22, scoped one-time genuine Linux renders
-  returned to that branch, then complete verification without snapshot updates.
+  `codex/reaction-polish`, Ubuntu/Node 22 and complete verification without
+  snapshot updates or deployment. Genuine Linux renders were returned by the
+  initial scoped generation run; all six Darwin/Linux pairs were visually
+  reviewed. The final workflow has read-only repository permission.
 - Physical iPhone/iPad follow-up: installed PWA safe areas and rotation, six-pad
   thumb reach, single contact scoring, VoiceOver TAP/HOLD and scored-pad
   descriptions, Safari gesture audio unlock/recovery and eight devices sounding
