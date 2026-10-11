@@ -130,9 +130,12 @@ test("Race shows immediate cues, exact hit rewards, keyboard input, misses and s
   for (const size of sizes) {
     await advance(page, "waiting");
     await page.setViewportSize(size);
-    // Read DOM bounds directly: compositor boxes can lag after emulated rotation.
+    // Establish the rendered waiting frame after rotation before comparing cues.
     const font = await page.addStyleTag({
       content: ":root {font-family:serif;line-height:1.6}",
+    });
+    await page.screenshot({
+      path: `test-results/race-waiting-${size.width}x${size.height}.png`,
     });
     const bounds = await target.evaluate((e) =>
       e.getBoundingClientRect().toJSON(),
