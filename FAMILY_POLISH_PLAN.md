@@ -2,7 +2,8 @@
 
 This follow-up plan was created as the final deliverable of
 [FAMILY_PLAYTEST_PLAN.md](FAMILY_PLAYTEST_PLAN.md). **Implementation is in progress:**
-Tasks 1–2 are implemented and verified; Task 3 is implemented with live QA pending; Task 4 is implemented with Linux verification pending; Tasks 5–15 remain planned. Read
+Tasks 1–2 and 4 are implemented; Task 3 is implemented with live QA pending;
+Tasks 5–15 remain planned. Read
 [AGENTS.md](AGENTS.md) before implementing. Each remaining numbered task can be
 assigned to a separate Codex session.
 
@@ -13,7 +14,7 @@ assigned to a separate Codex session.
 | 1    | Midnight Bakery          | Implemented; local and Linux verification complete |
 | 2    | Treasure Dive            | Implemented; local and Linux verification complete |
 | 3    | Patchwork Picnic         | Implemented; live QA pending                       |
-| 4    | Reaction Race            | Implemented; Linux verification pending            |
+| 4    | Reaction Race            | Implemented; physical-device QA pending            |
 | 5    | Arena Pong               | Planned                                            |
 | 6    | Light-cycle Arena        | Planned                                            |
 | 7    | Light Seek               | Planned                                            |
@@ -34,9 +35,10 @@ checks. Keep this table current as each remaining task is completed.
 
 ## Where the biggest gains are
 
-Continue with **tasks 4–5**: Reaction Race and Arena Pong, after completing
-Task 3’s pending live/device checks for Patchwork Picnic.
-Midnight Bakery and Treasure Dive complete the first two priorities. These five
+Continue with **Task 5: Arena Pong**, after completing Task 3’s pending
+live/device checks for Patchwork Picnic and the physical-device checks for
+Reaction Race in QA.md.
+Midnight Bakery, Treasure Dive and Reaction Race now have their planned polish. These five
 games were identified as having the clearest gaps in action feedback, sound,
 score communication or results. Then do **tasks 6–10** for control
 clarity, atmosphere and navigation. **Tasks 11–15** are smaller refinements to

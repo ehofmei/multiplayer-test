@@ -1156,6 +1156,11 @@ should update for matching controls.
   snapshot updates or deployment. Genuine Linux renders were returned by the
   initial scoped generation run; all six Darwin/Linux pairs were visually
   reviewed. The final workflow has read-only repository permission.
+- A persistent production-preview browser pass exercised help, visible keyboard
+  focus, early and wrong attempts, a timed valid keyboard hit, natural holds and
+  misses, final totals, replay, stopping, and the normal user-controlled update.
+  Desktop, phone and tablet layouts were reviewed alongside saved screenshots
+  and actual element bounds. No cue transition or decorative motion delays TAP.
 - Physical iPhone/iPad follow-up: installed PWA safe areas and rotation, six-pad
   thumb reach, single contact scoring, VoiceOver TAP/HOLD and scored-pad
   descriptions, Safari gesture audio unlock/recovery and eight devices sounding
