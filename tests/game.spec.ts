@@ -675,16 +675,23 @@ test("Reaction Race penalizes early/wrong taps, mixes hold rounds, finishes and 
       throw new Error(`Race did not reach ${text}`);
     };
     await chooseGame(host, "Reaction Race");
-    await expectStableScreenshot(host, ".race-targets", "race-targets.png", {
-      maxDiffPixels: 250,
-    });
+    await expectStableScreenshot(
+      host,
+      ".race-targets",
+      `race-ready-${process.platform}.png`,
+      {
+        maxDiffPixels: 250,
+      },
+    );
     await host.getByRole("button", { name: "Start Race", exact: true }).click();
     await expect(
       client.getByText("Wait… hands ready!", { exact: true }),
     ).toBeVisible();
     await client.getByRole("button", { name: "Target 2", exact: true }).click();
+    await expect(client.locator(".race-target.mistake")).toHaveCount(1);
+    await expect(client.locator(".race-target.intended")).toHaveCount(0);
     await expect(
-      client.getByText("Too early · −25", { exact: true }),
+      client.getByText("Too early · −25", { exact: false }),
     ).toBeVisible();
     await expect(
       client.getByRole("button", { name: "Target 1", exact: true }),
@@ -709,6 +716,18 @@ test("Reaction Race penalizes early/wrong taps, mixes hold rounds, finishes and 
         await expect(
           client.getByText("Wrong target · −25", { exact: true }),
         ).toBeVisible();
+        await expect(client.locator(".race-target.mistake")).toHaveText(
+          /2.*TAPPED/,
+        );
+        await expect(client.locator(".race-target.intended")).toHaveText(
+          /1.*TAP/,
+        );
+        await expectStableScreenshot(
+          client,
+          ".reaction-game-card",
+          `race-wrong-${process.platform}.png`,
+          { maxDiffPixels: 250 },
+        );
       } else if (!hold && round > 1) {
         await client
           .getByRole("button", { name: "Target 1", exact: true })
@@ -723,11 +742,18 @@ test("Reaction Race penalizes early/wrong taps, mixes hold rounds, finishes and 
         await expect(client.locator(".race-feedback")).toHaveText(
           "Held steady · +75",
         );
-      if (round === 3)
+      if (round === 3) {
+        await expectStableScreenshot(
+          client,
+          ".reaction-game-card",
+          `race-held-${process.platform}.png`,
+          { maxDiffPixels: 250 },
+        );
         await client.screenshot({
           path: "test-results/reaction-mobile.png",
           fullPage: true,
         });
+      }
       await advanceTo(round === 10 ? /wins!|tie!/ : "Wait… hands ready!");
     }
     await expect(

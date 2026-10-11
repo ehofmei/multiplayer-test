@@ -5,6 +5,7 @@ import { BUMPER_RADIUS } from "../games/pong-bumpers";
 import { useEffect, useRef, useState } from "react";
 import {
   clampPaddle,
+  raceHitPoints,
   type GameKind,
   type PongState,
   type RaceState,
@@ -483,6 +484,13 @@ export function ReactionGame({
   connected: boolean;
 }) {
   const touchTap = useRef(false);
+  const [attempt, setAttempt] = useState<{
+    round: number;
+    index: number;
+  } | null>(null);
+  useEffect(() => {
+    if (game.phase === "waiting" || game.phase === "ready") setAttempt(null);
+  }, [game.round, game.phase]);
   const me = game.entries.find((e) => e.id === session.me.id);
   const active = game.phase === "active";
   const playable =
@@ -490,7 +498,25 @@ export function ReactionGame({
     me?.result === "pending" &&
     ["waiting", "active"].includes(game.phase);
   const finished = game.phase === "finished";
+  const standings = [...game.entries].sort((a, b) => b.points - a.points);
   const highest = Math.max(...game.entries.map((e) => e.points));
+  const rank = me
+    ? 1 + game.entries.filter((e) => e.points > me.points).length
+    : null;
+  const gain =
+    me?.result === "hit" && me.elapsed !== null
+      ? raceHitPoints(me.elapsed)
+      : null;
+  const scored = me && me.result !== "pending";
+  const tapped = scored && attempt?.round === game.round ? attempt.index : null;
+  const tap = (index: number) => {
+    if (!playable) return;
+    // Measure/send the contact before scheduling decorative local feedback.
+    session.tapTarget(index);
+    setAttempt((previous) =>
+      previous?.round === game.round ? previous : { round: game.round, index },
+    );
+  };
   const winners = game.entries
     .filter((e) => e.points === highest)
     .map((e) => playerName(players, e.id))
@@ -498,7 +524,9 @@ export function ReactionGame({
   const title = !connected
     ? "Host disconnected"
     : finished
-      ? `${winners} ${game.entries.filter((e) => e.points === highest).length > 1 ? "tie!" : "wins!"}`
+      ? game.entries.filter((e) => e.points === highest).length > 1
+        ? "Shared winners tie!"
+        : `${winners} wins!`
       : game.phase === "waiting"
         ? "Wait… hands ready!"
         : active
@@ -521,48 +549,93 @@ export function ReactionGame({
       <p className={`race-cue ${active ? game.rule : ""}`} aria-live="polite">
         {title}
       </p>
-      <GameSurface ratio={3 / 2}>
-        <div className="race-targets">
-          {Array.from({ length: 6 }, (_, i) => (
-            <button
-              key={i}
-              aria-label={`Target ${i + 1}`}
-              aria-pressed={active && game.target === i}
-              className={`race-target ${active && game.target === i ? (game.rule === "hit" ? "lit" : "decoy") : ""}`}
-              disabled={!playable}
-              onPointerDown={(e) => {
-                touchTap.current = e.pointerType === "touch";
-                if (touchTap.current && e.isPrimary && playable) {
-                  e.preventDefault();
-                  session.tapTarget(i);
+      <div className="race-dashboard" aria-label="Your race progress">
+        <span>
+          {me ? (
+            <>
+              Your total <strong>{me.points} pts</strong>
+            </>
+          ) : game.phase === "ready" ? (
+            "Ready to race"
+          ) : (
+            "Spectating"
+          )}
+        </span>
+        <span>
+          {finished && rank ? (
+            <>
+              Your rank <strong>#{rank}</strong>
+            </>
+          ) : (
+            <>
+              Progress <strong>{game.round} / 10</strong>
+            </>
+          )}
+        </span>
+      </div>
+      <div className="race-play-area">
+        <GameSurface ratio={3 / 2}>
+          <div className="race-targets">
+            {Array.from({ length: 6 }, (_, i) => (
+              <button
+                key={i}
+                aria-label={`Target ${i + 1}`}
+                aria-pressed={active && game.target === i}
+                aria-description={
+                  tapped === i
+                    ? me?.result === "hit"
+                      ? "Your correct hit"
+                      : "Your scored tap"
+                    : scored && game.target === i && game.rule === "hit"
+                      ? "Correct target"
+                      : undefined
                 }
-              }}
-              onClick={(e) => {
-                // Touch already scored on contact; keyboard/assistive clicks use detail 0.
-                if (e.detail === 0 || !touchTap.current) session.tapTarget(i);
-              }}
-            >
-              <strong>{i + 1}</strong>
-              <span aria-hidden="true">
-                {active && game.target === i
-                  ? game.rule === "hit"
-                    ? "✦ TAP"
-                    : "✕ HOLD"
-                  : "·"}
-              </span>
-            </button>
-          ))}
-        </div>
-      </GameSurface>
-      <p className="race-feedback" aria-live="polite">
-        {me && me.result !== "pending"
-          ? `${resultText[me.result]}${me.elapsed !== null ? ` · ${me.elapsed} ms` : ""}`
-          : me
-            ? "One attempt each round. Choose carefully."
-            : game.phase !== "ready"
-              ? "You’re watching. Join the next race."
-              : "Hit the marked target when it lights up. Some rounds say Hold!"}
-      </p>
+                className={`race-target ${active && game.target === i ? (game.rule === "hit" ? "lit" : "decoy") : ""} ${scored && game.target === i && game.rule === "hit" ? "intended" : ""} ${tapped === i ? (me?.result === "hit" ? "accepted" : "mistake") : ""}`}
+                disabled={!playable}
+                onPointerDown={(e) => {
+                  touchTap.current = e.pointerType === "touch";
+                  if (touchTap.current && e.isPrimary && playable) {
+                    e.preventDefault();
+                    tap(i);
+                  }
+                }}
+                onClick={(e) => {
+                  // Touch already scored on contact; keyboard/assistive clicks use detail 0.
+                  if (e.detail === 0 || !touchTap.current) tap(i);
+                }}
+              >
+                <strong>{i + 1}</strong>
+                <span aria-hidden="true">
+                  {tapped === i
+                    ? me?.result === "hit"
+                      ? "HIT"
+                      : "TAPPED"
+                    : active && game.target === i
+                      ? game.rule === "hit"
+                        ? "✦ TAP"
+                        : "✕ HOLD"
+                      : scored && game.target === i && game.rule === "hit"
+                        ? "TARGET"
+                        : "READY"}
+                </span>
+              </button>
+            ))}
+          </div>
+        </GameSurface>
+        <p
+          className="race-feedback"
+          data-result={me?.result ?? "spectator"}
+          aria-live="polite"
+        >
+          {me && me.result !== "pending"
+            ? `${resultText[me.result]}${gain !== null ? ` · +${gain} pts` : ""}${me.elapsed !== null ? ` · ${me.elapsed} ms` : ""}${me.result === "wrong" && game.rule === "hold" ? " · Hold means no taps" : me.result === "early" ? " · Wait for TAP or HOLD" : me.result === "miss" ? " · 0 pts" : ""}`
+            : me
+              ? "Ready for your cue"
+              : game.phase !== "ready"
+                ? "You’re watching. Join the next race."
+                : "Hit the marked target when it lights up. Some rounds say Hold!"}
+        </p>
+      </div>
       <GameHelp>
         <p className="muted">
           Faster correct hits earn up to 100 points. Wrong or early taps cost
@@ -571,25 +644,35 @@ export function ReactionGame({
       </GameHelp>
       {!!game.entries.length && (
         <ol className="race-scores" aria-label="Race scores">
-          {[...game.entries]
-            .sort((a, b) => b.points - a.points)
-            .map((e) => (
-              <li key={e.id}>
-                <span>
-                  {playerName(players, e.id)}
-                  {e.id === session.me.id ? " · You" : ""}
-                  {["results", "finished"].includes(game.phase) && (
-                    <small>
-                      {resultText[e.result]}
-                      {e.elapsed !== null ? ` · ${e.elapsed} ms` : ""}
-                    </small>
-                  )}
-                </span>
-                <strong>
-                  {e.points} <small>pts</small>
-                </strong>
-              </li>
-            ))}
+          {standings.map((e) => (
+            <li key={e.id} data-winner={finished && e.points === highest}>
+              <b className="race-rank">
+                #
+                {1 +
+                  game.entries.filter((other) => other.points > e.points)
+                    .length}
+              </b>
+              <span>
+                {playerName(players, e.id)}
+                {e.id === session.me.id ? " · You" : ""}
+                {["results", "finished"].includes(game.phase) && (
+                  <small>
+                    {finished
+                      ? e.points === highest
+                        ? "Winner"
+                        : "Race complete"
+                      : resultText[e.result]}
+                    {!finished && e.elapsed !== null
+                      ? ` · ${e.elapsed} ms`
+                      : ""}
+                  </small>
+                )}
+              </span>
+              <strong>
+                {e.points} <small>pts</small>
+              </strong>
+            </li>
+          ))}
         </ol>
       )}
       {session.role === "host" && (game.phase === "ready" || finished) && (

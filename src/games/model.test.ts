@@ -5,6 +5,7 @@ import {
   newPong,
   newRoom,
   raceRound,
+  raceHitPoints,
   raceTap,
   stepPong,
 } from "./model";
@@ -54,6 +55,29 @@ describe("Pong simulation", () => {
   });
 });
 describe("Reaction Race rules", () => {
+  it("shows the same hit reward as scoring, including boundaries and the floor", () => {
+    for (const [elapsed, points] of [
+      [0, 100],
+      [19, 100],
+      [20, 99],
+      [200, 90],
+      [1800, 10],
+      [2000, 10],
+    ]) {
+      const state = {
+        ...raceRound(
+          [{ id: "a", points: 25, result: "pending", elapsed: null }],
+          1,
+        ),
+        phase: "active" as const,
+        target: 0,
+      };
+      expect(raceHitPoints(elapsed)).toBe(points);
+      expect(raceTap(state, "a", 0, elapsed).entries[0].points).toBe(
+        25 + points,
+      );
+    }
+  });
   const entries = [
     { id: "a", points: 0, result: "pending" as const, elapsed: null },
     { id: "b", points: 0, result: "pending" as const, elapsed: null },

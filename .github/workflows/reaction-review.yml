@@ -1,0 +1,42 @@
+name: Reaction Race review
+on:
+  push:
+    branches: [codex/reaction-polish]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Obtain genuine Linux baselines once
+        run: |
+          if [ ! -f tests/reaction.spec.ts-snapshots/race-results-eight-linux.png ]; then
+            npx playwright test tests/reaction.spec.ts --update-snapshots
+            npx playwright test tests/game.spec.ts --grep 'Reaction Race penalizes' --update-snapshots
+          fi
+      - name: Return Linux renders to the review branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/reaction.spec.ts-snapshots/*-linux.png tests/game.spec.ts-snapshots/race-*-linux.png
+          if ! git diff --cached --quiet; then
+            git commit -m 'Generated Linux Reaction Race baselines'
+            git push origin HEAD:codex/reaction-polish
+          fi
+      - run: npm run verify
+      - name: Save browser evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-failure-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7

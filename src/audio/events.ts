@@ -425,8 +425,8 @@ export function soundEvents(
       race.result !== "pending"
     ) {
       if (race.result === "hit" || race.result === "held") cues.push("success");
-      if (race.result === "early" || race.result === "wrong")
-        cues.push("wrong");
+      if (race.result === "early") cues.push("race-early");
+      if (race.result === "wrong") cues.push("wrong");
       if (race.result === "miss") cues.push("miss");
     }
     return cues;

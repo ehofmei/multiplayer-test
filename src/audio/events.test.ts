@@ -235,8 +235,15 @@ describe("game sound transitions", () => {
       before = frame(s);
       s.room.race.entries[0].result = result;
       expect(soundEvents(before, frame(s))).toEqual([
-        result === "held" ? "success" : result === "miss" ? "miss" : "wrong",
+        result === "held"
+          ? "success"
+          : result === "miss"
+            ? "miss"
+            : result === "early"
+              ? "race-early"
+              : "wrong",
       ]);
+      expect(soundEvents(frame(s), frame(s))).toEqual([]);
     }
     s.room.race = raceRound(s.room.race.entries, 3);
     before = frame(s);

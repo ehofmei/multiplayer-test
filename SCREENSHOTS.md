@@ -87,9 +87,13 @@ four-player pairing test; this is evidence, not a visual comparison baseline.
 
 ## Reaction Race
 
-Targets · shared baseline.
+Arcade pads and personal hit reward · macOS baseline.
 
-![Reaction Race targets](tests/game.spec.ts-snapshots/race-targets.png)
+![Reaction Race hit reward](tests/reaction.spec.ts-snapshots/race-hit-darwin.png)
+
+[Wrong tap and intended target](tests/game.spec.ts-snapshots/race-wrong-darwin.png) ·
+[Hold cue](tests/reaction.spec.ts-snapshots/race-hold-darwin.png) ·
+[Eight shared winners](tests/reaction.spec.ts-snapshots/race-results-eight-darwin.png)
 
 ## Shared Lights
 

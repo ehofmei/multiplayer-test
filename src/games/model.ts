@@ -246,6 +246,9 @@ export function raceRound(entries: RaceEntry[], round: number): RaceState {
     })),
   };
 }
+export function raceHitPoints(elapsed: number): number {
+  return Math.max(10, 100 - Math.floor(elapsed / 20));
+}
 export function raceTap(
   state: RaceState,
   id: string,
@@ -265,8 +268,7 @@ export function raceTap(
       : state.rule === "hold" || index !== state.target
         ? "wrong"
         : "hit";
-  const points =
-    result === "hit" ? Math.max(10, 100 - Math.floor(elapsed / 20)) : -25;
+  const points = result === "hit" ? raceHitPoints(elapsed) : -25;
   return {
     ...state,
     entries: state.entries.map((e) =>

@@ -1133,3 +1133,27 @@ leave/re-enter the court while dragging and confirm comfortable mirrored control
 Check long rallies, bumps, pause/resume, point resets, offline relaunch and
 user-controlled updates. No protocol/storage migration is needed; all devices
 should update for matching controls.
+
+## Reaction Race family polish (Task 4)
+
+- Focused rules tests cover hit reward boundaries (0, 19, 20, 200, 1800 and
+  2000 ms), penalties, successful holds, missed hits and one attempt per round.
+  Audio events distinguish early from wrong attempts and deduplicate outcomes.
+- `tests/reaction.spec.ts` covers immediate target activation, unchanged target
+  bounds, exact keyboard hit reward/total, help, missed hits, stopping, eight real
+  paired players sharing a win, scrollable standings and rematch reset.
+  `tests/game.spec.ts` retains real paired early/wrong/hit/hold play, synthesized
+  sound, the full ten-round flow and touch contact with a slight drag.
+- Layout checks and saved screenshots cover 390×844, 320×700, 320×568, 844×390,
+  768×1024 and 1280×720, including taller serif metrics. Deterministic Darwin
+  and Linux snapshots cover ready pads, hit reward, wrong pad versus intended
+  target, HOLD, successful hold and eight shared winners; reduced motion and
+  muted play are included. The short landscape finale uses side-by-side results.
+- Review workflow: `.github/workflows/reaction-review.yml` on
+  `codex/reaction-polish`, Ubuntu/Node 22, scoped one-time genuine Linux renders
+  returned to that branch, then complete verification without snapshot updates.
+- Physical iPhone/iPad follow-up: installed PWA safe areas and rotation, six-pad
+  thumb reach, single contact scoring, VoiceOver TAP/HOLD and scored-pad
+  descriptions, Safari gesture audio unlock/recovery and eight devices sounding
+  together. Check host background/resume and confirm every outcome is clear
+  muted. Browser timing checks cannot certify hardware cue-to-pixel latency.

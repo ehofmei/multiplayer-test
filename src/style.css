@@ -7345,3 +7345,188 @@ input.golf-power-input {
   position: static;
   padding: 0;
 }
+
+/* Reaction Race: immediate cue changes, stable six-pad geometry. */
+.app-shell .reaction-game-card {
+  background: linear-gradient(150deg, #f6f8ef, #e6eee7);
+}
+.app-shell .reaction-game-card .race-dashboard {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: #143c38;
+  color: #f6ffed;
+  font-size: 12px;
+}
+.race-dashboard strong {
+  display: block;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.app-shell .reaction-game-card .race-targets {
+  padding: 8px;
+  border-radius: 18px;
+  background: #163c38;
+  box-shadow: inset 0 2px 4px #092d2a;
+}
+.app-shell .reaction-game-card .race-target {
+  border: 3px solid #789b91;
+  border-radius: 14px;
+  background: radial-gradient(ellipse at 50% 20%, #f8fff3, #c7dbce);
+  box-shadow: inset 0 -5px 0 #acc6b9;
+  color: #123a33;
+  gap: 3px;
+  /* No transitions: TAP/HOLD must appear on the activation frame. */
+}
+.app-shell .reaction-game-card .race-target strong {
+  font-size: clamp(22px, 4vmin, 40px);
+}
+.app-shell .reaction-game-card .race-target span {
+  font-size: clamp(11px, 2vmin, 16px);
+  font-weight: 800;
+}
+.app-shell .reaction-game-card .race-target.lit,
+.app-shell .reaction-game-card .race-target.intended {
+  background: #d9f29d;
+  border-color: #426721;
+  box-shadow: inset 0 0 0 3px #f4ffda;
+}
+.app-shell .reaction-game-card .race-target.decoy {
+  background: #ffe2c2;
+  border-color: #a65422;
+  box-shadow: inset 0 0 0 3px #fff3e6;
+}
+.app-shell .reaction-game-card .race-target.mistake {
+  background: #fbe0df;
+  border-color: #9a3438;
+  box-shadow: inset 0 0 0 3px #fff2f0;
+}
+.app-shell .reaction-game-card .race-feedback {
+  padding: 8px 12px;
+  border: 2px solid #a9beb1;
+  border-radius: 10px;
+  background: #f5f8f0;
+  font-size: 14px;
+  font-weight: 750;
+  text-align: center;
+}
+.app-shell .race-feedback:is([data-result="hit"], [data-result="held"]) {
+  border-color: #426721;
+  background: #e4f5bc;
+}
+.app-shell .race-feedback:is([data-result="wrong"], [data-result="early"]) {
+  border-color: #9a3438;
+  background: #fbe0df;
+}
+.app-shell
+  .reaction-game-card.games-card:not([data-phase="finished"])
+  .race-scores {
+  display: none;
+}
+.app-shell .reaction-game-card[data-phase="finished"] .race-cue {
+  font-size: 22px;
+  background: #d9f29d;
+}
+.app-shell .reaction-game-card .race-scores li > span {
+  flex: 1;
+}
+.race-rank {
+  font-size: 22px;
+  color: #245650;
+}
+.app-shell .reaction-game-card .race-scores li[data-winner="true"] {
+  background: #e4f5bc;
+  border-radius: 8px;
+  padding-inline: 8px;
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .reaction-game-card.games-card[data-phase="finished"] {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(0, 2fr);
+    grid-template-rows: auto auto 1fr;
+  }
+  .app-shell .reaction-game-card[data-phase="finished"] > * {
+    grid-column: 1;
+  }
+  .app-shell .reaction-game-card[data-phase="finished"] .race-scores {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    overflow: auto;
+  }
+}
+
+/* Keep feedback beside the pads without shifting targets between attempts. */
+.app-shell .reaction-game-card .race-play-area {
+  flex: 1;
+  min-height: 180px;
+  container-type: size;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+.app-shell .reaction-game-card .race-play-area .game-surface {
+  flex: none;
+  height: min(calc(100cqh - 72px), calc(100cqw / 1.5));
+  min-height: 100px;
+  align-items: center;
+}
+.app-shell .reaction-game-card .race-feedback {
+  height: 64px;
+  flex-shrink: 0;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  line-height: 1.35;
+}
+.app-shell .reaction-game-card[data-phase="finished"] .race-play-area {
+  display: none;
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .reaction-game-card .race-play-area {
+    display: contents;
+    container-type: normal;
+  }
+  .app-shell .reaction-game-card .race-feedback {
+    grid-column: 1;
+  }
+  .app-shell .reaction-game-card.games-card[data-phase="finished"] {
+    display: grid;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell
+    .reaction-game-card.games-card:not([data-phase="finished"])
+    .board-heading {
+    display: none;
+  }
+  .app-shell .reaction-game-card.games-card:not([data-phase="finished"]) {
+    display: grid;
+    grid-template-columns: minmax(190px, 1fr) minmax(0, 2fr);
+    grid-template-rows: auto auto 1fr;
+    gap: 4px 12px;
+  }
+  .app-shell
+    .reaction-game-card.games-card:not([data-phase="finished"])
+    .race-play-area
+    .game-surface {
+    height: auto;
+    min-height: 0;
+    grid-column: 2;
+    grid-row: 1 / 4;
+  }
+  .app-shell .reaction-game-card.games-card:not([data-phase="finished"]) > * {
+    grid-column: 1;
+  }
+  .app-shell .reaction-game-card .race-dashboard strong {
+    display: inline;
+    margin-left: 4px;
+  }
+}
+.app-shell
+  .reaction-game-card.games-card:not([data-phase="finished"])
+  .race-cue {
+  height: 56px;
+}

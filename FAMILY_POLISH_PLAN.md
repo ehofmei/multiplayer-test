@@ -2,7 +2,7 @@
 
 This follow-up plan was created as the final deliverable of
 [FAMILY_PLAYTEST_PLAN.md](FAMILY_PLAYTEST_PLAN.md). **Implementation is in progress:**
-Tasks 1–2 are implemented and verified; Task 3 is implemented with live QA pending; Tasks 4–15 remain planned. Read
+Tasks 1–2 are implemented and verified; Task 3 is implemented with live QA pending; Task 4 is implemented with Linux verification pending; Tasks 5–15 remain planned. Read
 [AGENTS.md](AGENTS.md) before implementing. Each remaining numbered task can be
 assigned to a separate Codex session.
 
@@ -13,7 +13,7 @@ assigned to a separate Codex session.
 | 1    | Midnight Bakery          | Implemented; local and Linux verification complete |
 | 2    | Treasure Dive            | Implemented; local and Linux verification complete |
 | 3    | Patchwork Picnic         | Implemented; live QA pending                       |
-| 4    | Reaction Race            | Next                                               |
+| 4    | Reaction Race            | Implemented; Linux verification pending            |
 | 5    | Arena Pong               | Planned                                            |
 | 6    | Light-cycle Arena        | Planned                                            |
 | 7    | Light Seek               | Planned                                            |

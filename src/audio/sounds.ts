@@ -1,4 +1,5 @@
 export type Cue =
+  | "race-early"
   | "picnic-place"
   | "picnic-row"
   | "dive-treasure"
@@ -41,6 +42,10 @@ export type Cue =
   | "finish";
 type Note = [frequency: number, duration: number, delay?: number];
 const notes: Record<Cue, Note[]> = {
+  "race-early": [
+    [300, 0.045],
+    [300, 0.065, 0.075],
+  ],
   "picnic-place": [
     [480, 0.055],
     [720, 0.09, 0.055],
