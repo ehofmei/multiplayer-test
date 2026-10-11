@@ -690,9 +690,9 @@ test("Reaction Race penalizes early/wrong taps, mixes hold rounds, finishes and 
     await client.getByRole("button", { name: "Target 2", exact: true }).click();
     await expect(client.locator(".race-target.mistake")).toHaveCount(1);
     await expect(client.locator(".race-target.intended")).toHaveCount(0);
-    await expect(
-      client.getByText("Too early · −25", { exact: false }),
-    ).toBeVisible();
+    await expect(client.locator(".race-feedback")).toHaveText(
+      "Too early · −25 · Wait for TAP or HOLD",
+    );
     await expect(
       client.getByRole("button", { name: "Target 1", exact: true }),
     ).toBeDisabled();
@@ -713,9 +713,9 @@ test("Reaction Race penalizes early/wrong taps, mixes hold rounds, finishes and 
         await client
           .getByRole("button", { name: "Target 2", exact: true })
           .click();
-        await expect(
-          client.getByText("Wrong target · −25", { exact: true }),
-        ).toBeVisible();
+        await expect(client.locator(".race-feedback")).toHaveText(
+          "Wrong target · −25",
+        );
         await expect(client.locator(".race-target.mistake")).toHaveText(
           /2.*TAPPED/,
         );
