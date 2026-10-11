@@ -18,7 +18,7 @@ jobs:
       - run: npm run build
       - name: Generate deliberate Picnic Linux refresh once
         run: |
-          if [ ! -f tests/picnic.spec.ts-snapshots/picnic-packed-results-linux.png ]; then
+          if [ ! -f tests/picnic.spec.ts-snapshots/picnic-eight-standings-linux.png ]; then
             npx playwright test tests/picnic.spec.ts --update-snapshots=all
           fi
       - name: Return genuine Linux Picnic renders

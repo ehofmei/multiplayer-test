@@ -304,6 +304,9 @@ test("eight long names fit, late arrivals watch, background pauses, and disconne
     ),
   );
   try {
+    await host.addInitScript(() => {
+      Math.random = () => 0;
+    });
     await host.goto("./");
     await host.getByLabel("Your name").fill("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456");
     await host
@@ -342,6 +345,12 @@ test("eight long names fit, late arrivals watch, background pauses, and disconne
     );
     await host.getByRole("button", { name: "Standings", exact: true }).click();
     await expect(host.getByRole("dialog").locator("li")).toHaveCount(8);
+    await expectStableScreenshot(
+      host,
+      ".app-panel[open]",
+      `picnic-eight-standings-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
     await closePanels(host);
     await returnHome(clients[6]);
     await host

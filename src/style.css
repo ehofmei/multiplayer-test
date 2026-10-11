@@ -4388,14 +4388,14 @@ input.golf-power-input {
     width: 100%;
   }
   .picnic-grid {
-    max-width: min(100%, calc(100cqh - 263px));
+    max-width: min(100%, calc(100cqh - 283px));
   }
   .picnic-controls {
     width: 100%;
     gap: 6px;
   }
   .picnic-piece {
-    height: 48px;
+    height: 68px;
   }
   .picnic-options button {
     min-height: 70px;
@@ -7272,14 +7272,14 @@ input.golf-power-input {
 .picnic-final-total {
   font-size: 32px;
   font-weight: 800;
-  color: #bde3ad;
+  color: #28533a;
 }
 .picnic-final-total small {
   font-size: 13px;
 }
 .picnic-game-card[data-phase="finished"] .picnic-status {
   font-size: 20px;
-  color: #e0f1b6;
+  color: #28533a;
 }
 .picnic-game-card[data-phase="finished"] .picnic-mini {
   max-width: min(300px, calc(100cqh - 192px));
@@ -7305,12 +7305,6 @@ input.golf-power-input {
     animation: none;
     box-shadow: inset 0 0 0 2px #265c3b;
   }
-}
-.picnic-final-total {
-  color: #28533a;
-}
-.picnic-game-card[data-phase="finished"] .picnic-status {
-  color: #28533a;
 }
 @media (max-height: 650px) and (min-width: 651px) {
   .picnic-game-card[data-phase="finished"] .picnic-controls {
