@@ -641,6 +641,28 @@ export function ReactionGame({
           Faster correct hits earn up to 100 points. Wrong or early taps cost
           25. Hold rounds earn 75 for leaving every target alone.
         </p>
+        {!finished && standings.length > 0 && (
+          <>
+            <h3>Live standings</h3>
+            <ol className="race-scores" aria-label="Live race scores">
+              {standings.map((entry) => (
+                <li key={entry.id}>
+                  <span>
+                    {playerName(players, entry.id)}
+                    {entry.id === session.me.id ? " · You" : ""}
+                    <small>
+                      {resultText[entry.result]}
+                      {entry.result === "hit" && entry.elapsed !== null
+                        ? ` · +${raceHitPoints(entry.elapsed)} pts · ${entry.elapsed} ms`
+                        : ""}
+                    </small>
+                  </span>
+                  <strong>{entry.points} pts</strong>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
       </GameHelp>
       {!!game.entries.length && (
         <ol className="race-scores" aria-label="Race scores">

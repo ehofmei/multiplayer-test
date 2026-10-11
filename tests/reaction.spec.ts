@@ -19,33 +19,39 @@ const sizes = [
 async function fit(page: Page, label: string) {
   for (const size of sizes) {
     await page.setViewportSize(size);
-    const style = await page.addStyleTag({
-      content: ":root {font-family:serif;line-height:1.6}",
-    });
-    await expectScreenFits(page);
-    const metrics = await page.locator(".reaction-game-card").evaluate((e) => ({
-      h: e.clientHeight,
-      sh: e.scrollHeight,
-      w: e.clientWidth,
-      sw: e.scrollWidth,
-    }));
-    expect(metrics.sh).toBeLessThanOrEqual(metrics.h + 1);
-    expect(metrics.sw).toBeLessThanOrEqual(metrics.w + 1);
-    for (const button of await page
-      .locator(".reaction-game-card")
-      .getByRole("button")
-      .all()) {
-      const b = await button.evaluate((e) =>
-        e.getBoundingClientRect().toJSON(),
-      );
-      expect(b.width).toBeGreaterThanOrEqual(44);
-      expect(b.height).toBeGreaterThanOrEqual(44);
-      expect(b.y + b.height).toBeLessThanOrEqual(size.height);
+    for (const alternate of [false, true]) {
+      const style = alternate
+        ? await page.addStyleTag({
+            content: ":root {font-family:serif;line-height:1.6}",
+          })
+        : null;
+      await expectScreenFits(page);
+      const metrics = await page
+        .locator(".reaction-game-card")
+        .evaluate((e) => ({
+          h: e.clientHeight,
+          sh: e.scrollHeight,
+          w: e.clientWidth,
+          sw: e.scrollWidth,
+        }));
+      expect(metrics.sh).toBeLessThanOrEqual(metrics.h + 1);
+      expect(metrics.sw).toBeLessThanOrEqual(metrics.w + 1);
+      for (const button of await page
+        .locator(".reaction-game-card")
+        .getByRole("button")
+        .all()) {
+        const bounds = await button.evaluate((e) =>
+          e.getBoundingClientRect().toJSON(),
+        );
+        expect(bounds.width).toBeGreaterThanOrEqual(44);
+        expect(bounds.height).toBeGreaterThanOrEqual(44);
+        expect(bounds.bottom).toBeLessThanOrEqual(size.height);
+      }
+      await page.screenshot({
+        path: `test-results/race-${label}-${size.width}x${size.height}-${alternate ? "taller" : "native"}.png`,
+      });
+      await style?.evaluate((e) => e.remove());
     }
-    await page.screenshot({
-      path: `test-results/race-${label}-${size.width}x${size.height}.png`,
-    });
-    await style.evaluate((e) => e.remove());
   }
   await page.setViewportSize(sizes[0]);
 }
@@ -119,6 +125,14 @@ test("Race shows immediate cues, exact hit rewards, keyboard input, misses and s
     { maxDiffPixels: 250 },
   );
   await fit(page, "hit");
+  await showHelp(page);
+  await expect(
+    page.getByRole("list", { name: "Live race scores" }),
+  ).toContainText("100 pts");
+  await expect(
+    page.getByRole("list", { name: "Live race scores" }),
+  ).toContainText("Hit · +100 pts · 0 ms");
+  await closePanels(page);
   await advance(page, "results");
   await advance(page, "waiting");
   await expect(

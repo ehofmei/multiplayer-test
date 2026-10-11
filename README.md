@@ -407,12 +407,15 @@ through waiting, TAP/HOLD and scored feedback. The personal feedback beside the
 pads shows the exact hit reward and response time, hold reward, or penalty/reason;
 a scored wrong/early tap marks the touched pad separately from the intended hit
 target, without revealing the target before activation. A compact strip shows
-your total and round progress. The finale highlights every shared winner, numbered
+your total and round progress; live standings and everyone's latest response
+remain available in Controls & help. The finale highlights every shared winner, numbered
 ranks and final totals; standings scroll within the results on short screens.
 An early attempt has a short double tone distinct from the descending wrong-tap
 cue. Feedback works muted and without motion; cues never animate into visibility.
 Touch still scores on contact, and keyboard/assistive clicks keep the same rules.
-These presentation changes add no network fields or storage migrations.
+These presentation changes add no network fields or storage migrations. Older
+versions still pair and score correctly; devices can update independently to get
+the new visuals and cues.
 
 Reaction response is measured on each device's monotonic clock from receiving the
 active cue to tapping. The host accepts bounded 0–2000 ms reports and gives a

@@ -7536,3 +7536,18 @@ input.golf-power-input {
     display: none;
   }
 }
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .reaction-game-card.games-card:not([data-phase="finished"]) {
+    padding-top: 8px;
+  }
+  .app-shell .reaction-game-card .race-dashboard {
+    padding: 4px 8px;
+    gap: 8px;
+    line-height: 1.2;
+  }
+  .app-shell .reaction-game-card .race-dashboard strong {
+    display: block;
+    margin-left: 0;
+    white-space: nowrap;
+  }
+}
