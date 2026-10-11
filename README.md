@@ -12,6 +12,13 @@ Browse all 14 games in the [screenshot gallery](SCREENSHOTS.md). It links direct
 to the reviewed images in the selected branch, including course variants and
 results. Use GitHub's branch selector to compare `main` with proposed changes.
 
+The [family playtest improvement plan](FAMILY_PLAYTEST_PLAN.md) records the eight
+completed improvements from the October 2026 family session. Its closing audit
+produced the [family game polish plan](FAMILY_POLISH_PLAN.md), which tracks the
+next phase: Midnight Bakery and Treasure Dive are implemented; Patchwork Picnic
+is next. Current behavior is documented here, and [QA.md](QA.md) tracks browser
+coverage and remaining physical-device checks.
+
 For possible future additions, [GAME_IDEAS.md](GAME_IDEAS.md) describes twelve
 family game ideas with rules, controls, scoring, timing, and implementation
 notes. Treasure Dive, Meteor Minigolf, Patchwork Picnic, Light Seek, and Glow Clash are now available; the remaining entries are

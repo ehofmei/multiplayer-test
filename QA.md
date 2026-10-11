@@ -210,6 +210,33 @@ budget and strict dimensions remain unchanged.
 Physical iPhone/iPad checks remain: comfortable steering reach, legible riders
 and trails, safe areas and rotation, especially the shortest phone viewport.
 
+## Verification and CI failure diagnosis
+
+`npm run verify` runs formatting, unit/script tests, the TypeScript/production
+build, Playwright browser tests, and the screenshot-pair presence check in order.
+It stops at the first failed command. A browser failure therefore skips
+`check:snapshots`; the Pages workflow also skips deployment when verification
+fails. Fix the failure and rerun the complete command to reach every check.
+
+In CI, Playwright emits both its normal text output and GitHub check annotations.
+Start with the annotations for the failed test name, source location and assertion.
+For screenshot failures, inspect the actual/diff images and retained trace in that
+run's `browser-failure-results` artifact. Downloading detailed logs or artifacts
+may require GitHub sign-in; check annotations also provide a concise diagnostic
+through the GitHub API. The absence of failure annotations alone does not
+establish success: confirm the complete workflow result for the exact commit.
+
+Negative network tests deliberately inject stale or duplicate inputs and may log
+`Ignored an unexpected client message.` Confirm the associated test passed before
+treating that output as an expected diagnostic. Investigate the same warning
+during normal play. Keep runtime validation and warnings; if cleaner test output
+is needed, explicitly assert and suppress only expected warnings within those tests.
+
+Before comparing dynamic game screenshots, establish a known pose through normal
+controls, flush queued input, and assert the synchronized state on both devices.
+Font normalization and a stable capture do not make incidental live positions
+deterministic. Preserve strict dimensions and existing comparison budgets.
+
 ## Screenshot portability
 
 The persistent [screenshot gallery](SCREENSHOTS.md) uses versioned baseline paths

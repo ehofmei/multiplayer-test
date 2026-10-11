@@ -11,6 +11,7 @@
 - Use `npm run verify` before handoff: formatting, unit tests, production build, and Playwright tests. Cover meaningful game rules and real pairing flows. Preview the production subpath for PWA/cache checks.
 - Follow the Linux verification gate below for code, dependency, build, workflow, and browser-test changes. Local macOS verification alone is insufficient for handoff.
 - For layout checks, retain readable text, touch targets, QR codes at least 240px wide on narrow phones, and generous viewport clearance. Test alternate/taller font metrics; do not loosen fit assertions to hide a layout bug. Use the `playwright-interactive` skill for live UI QA when available and review saved desktop/mobile screenshots.
+- Before capturing dynamic game screenshots, establish a deliberate state through normal controls and assert synchronized state. Do not rely on incidental positions from live play or widen comparison budgets to accommodate them.
 - Record product behavior in README.md and manual/device QA in QA.md. Keep AGENTS.md limited to instructions for future coding agents.
 
 ## Linux verification gate
