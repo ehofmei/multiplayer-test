@@ -366,7 +366,7 @@ it("announces decision locks, launches, scores and results once without replayin
         ? "golf-tap"
         : kind === "picnic"
           ? "point"
-          : "success",
+          : "dive-bank",
     ]);
     if (s.room.minigolf) {
       before = frame(s);
@@ -554,4 +554,55 @@ it("gives Bakery locks, combinations, gremlins, passes and finales one cue witho
   expect(soundEvents(before, frame(s))).toEqual([]);
   s.room.epoch++;
   expect(soundEvents(before, frame(s))).toEqual([]);
+});
+
+it("distinguishes Dive treasure, bank, shield and caught outcomes without old boat/resume effects", async () => {
+  const {
+    newTreasure,
+    stepTreasure,
+    chooseTreasure,
+    pauseTreasure,
+    resumeTreasure,
+  } = await import("../games/treasure");
+  for (const [choice, card, door, cue] of [
+    ["explore", 4, 1, "dive-treasure"],
+    ["return", 0, 1, "dive-bank"],
+    ["shield", 0, 1, "dive-shield"],
+    ["explore", 0, 1, "dive-hazard"],
+    ["shield", 4, 1, "dive-treasure"],
+    ["explore", 4, 6, "dive-bank"],
+    ["shield", 0, 6, "dive-bank"],
+  ] as const) {
+    const s = snapshot();
+    s.room = newRoom("treasure", 1);
+    s.room.treasure = {
+      ...stepTreasure(newTreasure(["a", "b"]), 3000),
+      door,
+      deck: [card],
+      divers: newTreasure(["a", "b"]).divers.map((d) => ({
+        ...d,
+        haul: 7,
+        scores: [5, 0, 0],
+      })),
+    };
+    const before = frame(s);
+    for (const id of ["a", "b"])
+      s.room.treasure = chooseTreasure(s.room.treasure, id, 1, door, choice);
+    const after = frame(s);
+    expect(soundEvents(before, after)).toEqual([cue]);
+    expect(soundEvents(after, after)).toEqual([]);
+    expect(soundEvents(null, after)).toEqual([]);
+    expect(soundEvents({ ...before, key: "old room" }, after)).toEqual([]);
+    s.room.treasure = resumeTreasure(pauseTreasure(s.room.treasure));
+    expect(soundEvents(after, frame(s))).toEqual([]);
+    expect(soundEvents(before, frame(s))).toEqual([]);
+    s.room.treasure = stepTreasure(s.room.treasure, 5000);
+    expect(soundEvents(after, frame(s))).toEqual([]);
+    // A returned diver's old outcome survives later doors. Do not sound it again.
+    if (choice === "return") {
+      const old = frame(s);
+      s.room.treasure = { ...s.room.treasure, phase: "reveal", door: door + 1 };
+      expect(soundEvents(old, frame(s))).toEqual([]);
+    }
+  }
 });

@@ -66,6 +66,23 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
       );
   }
   return {
+    treasure: room.treasure
+      ? (() => {
+          const g = room.treasure,
+            d = g.divers.find((d) => d.id === me);
+          return {
+            phase: g.resumePhase ?? g.phase,
+            suspended: g.phase === "paused" || g.phase === "reorient",
+            turn: g.dive * 10 + g.door,
+            status: d?.status,
+            outcome: d?.outcome,
+            locked: d?.locked ?? false,
+            haul: d?.haul,
+            bank: d ? treasureTotal(d) : 0,
+            shield: d?.shield,
+          };
+        })()
+      : null,
     bakery: room.bakery
       ? (() => {
           const g = room.bakery,
@@ -216,6 +233,38 @@ export function soundEvents(
   if (d && oldDecision) {
     if (d.phase === "finished" && oldDecision.phase !== "finished")
       return [d.winner ? "win" : "finish"];
+    if (after.treasure && before.treasure) {
+      const t = after.treasure,
+        old = before.treasure;
+      if (t.suspended) return [];
+      if (
+        t.phase === "reveal" &&
+        old.status === "exploring" &&
+        t.outcome !== "waiting" &&
+        (t.turn !== old.turn ||
+          t.outcome !== old.outcome ||
+          t.bank !== old.bank ||
+          t.haul !== old.haul ||
+          t.shield !== old.shield)
+      )
+        return [
+          t.outcome === "protected"
+            ? "dive-shield"
+            : t.outcome === "caught"
+              ? "dive-hazard"
+              : t.outcome === "returned" || t.outcome === "auto-bank"
+                ? "dive-bank"
+                : "dive-treasure",
+        ];
+      if (
+        t.turn === old.turn &&
+        t.locked &&
+        !old.locked &&
+        t.phase === "choosing"
+      )
+        return ["success"];
+      return [];
+    }
     if (d.result && d.result !== oldDecision.result)
       return [
         ...golfCues,

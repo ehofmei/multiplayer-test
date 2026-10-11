@@ -545,7 +545,19 @@ A three-second countdown, two-second reveals, and four-second automatic summarie
 pace the action between untimed choices. Empty expeditions skip the remaining
 doors. Everyone rejoins each new dive with a fresh shield. Highest banked total
 wins, with shared wins for ties. Standings shows full names, per-dive scores,
-status, and revealed outcomes; the main screen emphasizes your own haul and choices.
+status, and revealed outcomes. Boat, chest and shield pictures distinguish banked
+points, carried haul and protection. Each action shows the exact haul to bank,
+risk or protect; selection remains local until Lock choice. Numbered rooms lead
+through the underwater wreck. Reveals show treasure joining the haul, returning
+to the bank, shield absorption or a catch that leaves the bank safe. Short,
+distinct synthesized cues accompany these outcomes when sound is enabled;
+muted and reduced-motion play retain the same explicit feedback. Pauses and
+late joins do not replay old effects.
+
+The persistent finale replaces live rooms and odds with the winner/shared
+winners, your bank and rank, all final banked totals and three-dive breakdowns.
+Full names remain available in Standings. Short phones prioritize pictured
+actions and readable inventory over scenic decoration.
 
 The host can Pause, Resume (with a three-second reorientation countdown), Stop to
 setup, rematch, or switch games without re-pairing. Pauses preserve the phase,
@@ -556,7 +568,7 @@ arrivals watch until the rematch. A participant disconnect resets
 to setup; spectator departures preserve play. Games and scores are temporary.
 
 During a dive, Help and Standings stay beside the host controls. Pending updates
-use a short notice; short landscape windows retain the indicator and update
+use a short notice; short phone and landscape windows retain the indicator and update
 action in Menu to keep the play surface clear.
 
 Update the app on **every device** before selecting Treasure Dive, then pair again

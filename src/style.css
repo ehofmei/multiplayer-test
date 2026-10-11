@@ -3455,7 +3455,7 @@ main.app-shell {
 .dive-art {
   display: block;
   width: 100%;
-  max-height: min(220px, max(24px, calc(100cqh - 305px)));
+  max-height: min(220px, max(24px, calc(100cqh - 350px)));
 }
 .dive-path {
   display: flex;
@@ -6740,4 +6740,472 @@ input.golf-power-input {
 }
 .breakout-game-card[data-phase="serve"] .breakout-message > span {
   font-size: 11px;
+}
+
+/* Treasure Dive: the bank lives above water; the carried chest stays at risk. */
+.dive-board {
+  background: radial-gradient(ellipse at top, #235e6f, #102f41 75%);
+  border: 1px solid #4b8392;
+  box-shadow:
+    inset 0 1px 0 #7cc9d133,
+    0 8px 24px #102f411a;
+}
+.dive-picture {
+  width: 56px;
+  height: 44px;
+  flex-shrink: 0;
+}
+.dive-scene {
+  position: relative;
+}
+.dive-room-art {
+  position: absolute;
+  top: 35%;
+  left: 43%;
+  width: 18%;
+}
+.dive-room-art .dive-picture {
+  width: 100%;
+  height: auto;
+}
+.dive-room-label {
+  display: block;
+  text-align: center;
+  font-size: 13px;
+  color: #e5f6ea;
+}
+.dive-stats > span {
+  position: relative;
+  padding-left: 32px;
+}
+.dive-stats .dive-picture {
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 28px;
+  height: 28px;
+}
+.dive-stats .dive-shield-state {
+  font-size: 16px;
+  align-self: center;
+}
+.dive-choices button {
+  gap: 3px;
+}
+.dive-choices small {
+  font-size: 12px;
+  font-weight: 750;
+}
+.dive-outcome {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 20px 12px;
+  text-align: center;
+  border: 2px solid #b38a39;
+  border-radius: 18px;
+  background: #fff3cd;
+}
+.dive-outcome .dive-picture {
+  width: 100px;
+  height: 80px;
+}
+.dive-outcome[data-outcome="caught"] {
+  background: #ffe4df;
+  border-color: #a05562;
+}
+.dive-outcome[data-outcome="protected"] {
+  background: #d5f5ee;
+  border-color: #237774;
+}
+.dive-outcome[data-animate="true"] .dive-picture {
+  animation: dive-pickup 700ms ease-out both;
+}
+.dive-outcome[data-animate="true"][data-outcome="returned"] .dive-picture,
+.dive-outcome[data-animate="true"][data-outcome="auto-bank"] .dive-picture {
+  animation-name: dive-bank;
+}
+.dive-outcome[data-animate="true"][data-outcome="protected"] .dive-picture {
+  animation-name: dive-protect;
+}
+.dive-outcome[data-animate="true"][data-outcome="caught"] .dive-picture {
+  animation-name: dive-catch;
+}
+@keyframes dive-pickup {
+  from {
+    transform: translateY(22px) scale(0.7);
+    opacity: 0.3;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes dive-bank {
+  from {
+    transform: translateX(40px);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes dive-protect {
+  30% {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 10px #237774);
+  }
+}
+@keyframes dive-catch {
+  30% {
+    transform: rotate(-12deg);
+  }
+  60% {
+    transform: rotate(10deg);
+  }
+}
+.dive-finale {
+  text-align: center;
+  padding: 12px 0;
+}
+.dive-finale > .dive-picture {
+  width: 120px;
+  height: 96px;
+}
+.dive-finale h3 {
+  font-size: clamp(22px, 3vw, 32px);
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+.dive-finale p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+.dive-finale > strong {
+  font-size: 36px;
+  color: #ffe598;
+}
+.dive-finale strong small {
+  display: block;
+  font-size: 13px;
+}
+.dive-scores li[data-winner="true"] {
+  background: #fff3cd;
+  box-shadow: inset 3px 0 #b38a39;
+}
+.dive-scores strong {
+  text-align: right;
+}
+.dive-scores strong small {
+  font-size: 10px;
+  font-weight: 400;
+  margin: 0;
+}
+.dive-breakdown {
+  display: block;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.dive-game-card[data-phase="finished"] .dive-status {
+  min-height: 0;
+}
+@media (max-width: 650px) and (min-height: 551px) {
+  .dive-choices .dive-picture {
+    width: 44px;
+    height: 34px;
+  }
+  .dive-finale {
+    padding: 0;
+  }
+  .dive-finale > .dive-picture {
+    width: 80px;
+    height: 64px;
+  }
+  .dive-finale h3 {
+    font-size: 22px;
+  }
+  .dive-finale > strong {
+    font-size: 28px;
+  }
+  .dive-results .dive-scores li {
+    gap: 4px;
+  }
+}
+@media (max-width: 650px) and (min-height: 551px) and (max-height: 740px) {
+  .dive-art {
+    max-height: 52px;
+  }
+  .dive-choices button {
+    min-height: 76px;
+  }
+  .dive-choices .dive-picture {
+    height: 26px;
+  }
+  .dive-room-label {
+    font-size: 11px;
+  }
+  .dive-stats > span {
+    padding-left: 24px;
+    font-size: 12px;
+  }
+  .dive-stats .dive-picture {
+    width: 22px;
+  }
+  .dive-outcome {
+    padding: 12px;
+    gap: 6px;
+  }
+  .dive-outcome .dive-picture {
+    height: 56px;
+  }
+  .dive-finale > .dive-picture {
+    height: 36px;
+  }
+}
+@media (max-height: 550px) {
+  .dive-choices button {
+    flex-direction: column;
+    min-height: 72px;
+  }
+  .dive-choices .dive-picture {
+    width: 30px;
+    height: 22px;
+  }
+  .dive-room-label {
+    font-size: 11px;
+  }
+  .dive-stats > span {
+    padding-left: 0;
+  }
+  .dive-stats .dive-picture {
+    display: none;
+  }
+  .dive-outcome {
+    padding: 8px;
+    gap: 4px;
+    font-size: 13px;
+  }
+  .dive-outcome .dive-picture {
+    width: 64px;
+    height: 44px;
+  }
+  .dive-finale {
+    padding: 0;
+  }
+  .dive-finale > .dive-picture {
+    height: 40px;
+  }
+  .dive-finale h3 {
+    font-size: 20px;
+    margin: 4px 0;
+  }
+  .dive-finale p {
+    font-size: 12px;
+    margin: 4px 0;
+  }
+  .dive-finale > strong {
+    font-size: 26px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dive-outcome[data-animate="true"][data-outcome] .dive-picture {
+    animation: none;
+  }
+}
+@media (max-width: 650px) and (min-height: 551px) and (max-height: 620px) {
+  /* On short phones the pictured actions take priority over scenic decoration. */
+  .dive-scene {
+    display: none;
+  }
+  .dive-choices button {
+    min-height: 60px;
+  }
+  .dive-choices .dive-picture {
+    height: 20px;
+  }
+  .dive-stats {
+    padding-top: 4px;
+  }
+  .dive-status {
+    min-height: 18px;
+    font-size: 13px;
+  }
+  .dive-preview {
+    min-height: 26px;
+  }
+  .dive-outcome {
+    padding: 8px;
+  }
+  .dive-outcome .dive-picture {
+    height: 40px;
+  }
+  .dive-finale p {
+    margin: 4px 0;
+  }
+  .dive-finale > .dive-picture {
+    display: none;
+  }
+}
+.dive-scene[data-underwater="true"] .dive-room-art {
+  top: 25%;
+  left: 38%;
+  width: 24%;
+}
+@media (max-height: 550px) {
+  .dive-scene {
+    display: none;
+  }
+}
+@media (max-width: 650px) and (min-height: 551px) and (max-height: 620px) {
+  .dive-board {
+    padding-block: 6px;
+  }
+  .dive-choices button {
+    min-height: 56px;
+  }
+  .dive-card {
+    margin-block: 2px;
+  }
+}
+.dive-outcome-art {
+  position: relative;
+}
+.dive-moving-haul {
+  position: absolute;
+  right: -12px;
+  bottom: 0;
+}
+.dive-outcome .dive-moving-haul .dive-picture {
+  width: 36px;
+  height: 28px;
+  animation: none;
+}
+.dive-outcome[data-animate="true"][data-outcome="returned"] .dive-moving-haul,
+.dive-outcome[data-animate="true"][data-outcome="auto-bank"] .dive-moving-haul {
+  animation: dive-deposit 850ms ease-out both;
+}
+.dive-outcome[data-animate="true"][data-outcome="caught"] .dive-moving-haul {
+  animation: dive-lost 850ms ease-out both;
+}
+.dive-outcome[data-animate="true"][data-outcome="protected"] .dive-moving-haul {
+  animation: dive-blocked 850ms ease-out both;
+}
+@keyframes dive-deposit {
+  from {
+    transform: translateX(28px);
+  }
+  to {
+    transform: translate(-30px, -10px) scale(0.4);
+    opacity: 0;
+  }
+}
+@keyframes dive-lost {
+  to {
+    transform: translateY(20px) scale(0.5);
+    opacity: 0.15;
+  }
+}
+@keyframes dive-blocked {
+  to {
+    transform: translateX(16px);
+    opacity: 0.2;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dive-outcome[data-animate="true"][data-outcome] .dive-moving-haul {
+    animation: none;
+  }
+}
+@media (max-height: 550px) {
+  .dive-choices button {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    min-height: 48px;
+    gap: 2px;
+  }
+  .dive-choices .dive-picture {
+    grid-row: span 2;
+    width: 28px;
+  }
+  .dive-choices small {
+    grid-column: 2;
+    font-size: 11px;
+  }
+}
+.dive-room-art,
+.dive-scene[data-underwater="true"] .dive-room-art {
+  top: 0;
+  bottom: 18px;
+  left: 0;
+  width: 100%;
+  display: grid;
+  place-items: center;
+}
+.dive-room-art .dive-picture {
+  width: auto;
+  height: 65%;
+  max-width: 24%;
+}
+.dive-results .dive-scores small {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.25;
+}
+.dive-game-card[data-phase="finished"] .dive-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+@media (max-width: 650px) and (min-height: 551px) and (max-height: 740px) {
+  .dive-art {
+    max-height: min(52px, max(0px, calc(100cqh - 480px)));
+  }
+  .dive-finale h3 {
+    margin: 4px 0;
+    line-height: 1.2;
+  }
+  .dive-finale p {
+    margin: 4px 0;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+  .dive-finale > strong {
+    line-height: 1.2;
+  }
+  .dive-finale > .dive-picture {
+    height: 24px;
+  }
+}
+@media (max-height: 550px) {
+  .dive-results .dive-scores li {
+    padding-block: 4px;
+  }
+}
+@media (max-width: 650px) and (max-height: 620px) {
+  .app-shell:has(.dive-game-card) > aside.banner {
+    display: none;
+  }
+}
+@media (max-width: 650px) and (min-height: 551px) and (max-height: 620px) {
+  .dive-finale > p:first-of-type {
+    display: none;
+  }
+}
+@media (max-height: 550px) {
+  .dive-finale > .dive-picture,
+  .dive-finale > p:first-of-type {
+    display: none;
+  }
+  .dive-finale h3 {
+    line-height: 1.2;
+  }
+  .dive-finale p {
+    line-height: 1.25;
+  }
+  .dive-finale > strong {
+    line-height: 1.1;
+  }
 }

@@ -10,6 +10,7 @@ import {
 import { expectStableScreenshot } from "./screenshot";
 const sizes = [
   { width: 320, height: 700 },
+  { width: 320, height: 568 },
   { width: 390, height: 844 },
   { width: 844, height: 390 },
   { width: 768, height: 1024 },
@@ -59,7 +60,7 @@ test("Treasure pairs, secretly locks, banks, waits untimed, pauses, finishes and
     Math.random = () => 0.5;
   });
   const context = await browser.newContext({
-    viewport: sizes[1],
+    viewport: { width: 390, height: 844 },
     hasTouch: true,
   });
   try {
@@ -80,7 +81,7 @@ test("Treasure pairs, secretly locks, banks, waits untimed, pauses, finishes and
     await chooseGame(host, "Treasure Dive");
     await host.clock.install();
     await host.clock.pauseAt(new Date(Date.now() + 1000));
-    await host.setViewportSize(sizes[1]);
+    await host.setViewportSize({ width: 390, height: 844 });
     // The fixture normalizes font metrics, but macOS/Linux rasterize text
     // differently. Keep reviewed OS baselines and the same strict pixel budget.
     await expectStableScreenshot(
@@ -128,6 +129,17 @@ test("Treasure pairs, secretly locks, banks, waits untimed, pauses, finishes and
       .getByRole("button", { name: "Lock choice", exact: true })
       .click();
     await expect(game(client)).toHaveAttribute("data-phase", "reveal");
+    await expect(client.locator(".dive-outcome")).toContainText(
+      "Shield absorbed hazard",
+    );
+    await expect(host.locator(".dive-outcome")).toContainText("bank safe");
+    await expectStableScreenshot(
+      client,
+      ".dive-game-card",
+      `dive-protected-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
+    await fit(client, "protected");
     await host.clock.runFor(2000);
     await expect(game(host)).toHaveAttribute("data-phase", "choosing");
     await fit(host, "play");
@@ -143,7 +155,7 @@ test("Treasure pairs, secretly locks, banks, waits untimed, pauses, finishes and
     await client.evaluate(() =>
       document.querySelector(".dive-update-fixture")!.remove(),
     );
-    await client.setViewportSize(sizes[1]);
+    await client.setViewportSize({ width: 390, height: 844 });
     await expectStableScreenshot(
       client,
       ".dive-board",
@@ -168,15 +180,23 @@ test("Treasure pairs, secretly locks, banks, waits untimed, pauses, finishes and
     // Continue together on treasure; then Return on the following door.
     for (const p of [client, host])
       if (
-        await p
+        (await p
           .getByRole("button", { name: "Explore", exact: true })
-          .isEnabled()
+          .count()) &&
+        (await p
+          .getByRole("button", { name: "Explore", exact: true })
+          .isEnabled())
       )
         await choose(p, "Explore");
     await host.clock.runFor(2000);
     for (const p of [client, host])
       if (
-        await p.getByRole("button", { name: "Return", exact: true }).isEnabled()
+        (await p
+          .getByRole("button", { name: "Return", exact: true })
+          .count()) &&
+        (await p
+          .getByRole("button", { name: "Return", exact: true })
+          .isEnabled())
       )
         await choose(p, "Return");
     await host.clock.runFor(6000);
@@ -190,7 +210,7 @@ test("Treasure pairs, secretly locks, banks, waits untimed, pauses, finishes and
     await expect(host.locator(".dive-status")).toContainText("win");
     await fit(host, "results");
     await fit(client, "results-client");
-    await host.setViewportSize(sizes[1]);
+    await host.setViewportSize({ width: 390, height: 844 });
     await expectStableScreenshot(
       host,
       ".dive-game-card",
@@ -251,6 +271,14 @@ test("eight Treasure divers and long names fit, late arrivals watch, departures 
       await host.clock.runFor(6000);
     }
     await expect(game(host)).toHaveAttribute("data-phase", "finished");
+    await host.emulateMedia({ reducedMotion: "reduce" });
+    await host.setViewportSize({ width: 390, height: 844 });
+    await expectStableScreenshot(
+      host,
+      ".dive-game-card",
+      `dive-eight-results-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
     await fit(host, "eight-results");
     await fit(clients[0], "eight-results-client");
     await host.getByRole("button", { name: "Standings", exact: true }).click();
@@ -281,5 +309,130 @@ test("eight Treasure divers and long names fit, late arrivals watch, departures 
     await expect(game(host)).toHaveAttribute("data-phase", "ready");
   } finally {
     for (const context of contexts) await context.close();
+  }
+});
+
+test("reveals show treasure joining haul, safe banking, a catch and sixth-door automatic banking", async ({
+  page: host,
+  browser,
+}) => {
+  test.setTimeout(120000);
+  await host.addInitScript(() => {
+    Math.random = () => 0.25;
+  });
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    reducedMotion: "reduce",
+    hasTouch: true,
+  });
+  try {
+    const client = await context.newPage();
+    await host.goto("./");
+    await host.getByLabel("Your name").fill("Alex");
+    await host
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await join(host, client, "Emma");
+    await chooseGame(host, "Treasure Dive");
+    await host.clock.install();
+    await host.clock.pauseAt(new Date(Date.now() + 1000));
+    await host.setViewportSize({ width: 390, height: 844 });
+    await host.emulateMedia({ reducedMotion: "reduce" });
+    const shot = async (p: Page, state: string) =>
+      expectStableScreenshot(
+        p,
+        ".dive-game-card",
+        `dive-${state}-${process.platform}.png`,
+        { maxDiffPixels: 180 },
+      );
+    await host.getByRole("button", { name: "Start Dive", exact: true }).click();
+    await host.clock.runFor(3000);
+    await host.getByRole("button", { name: "Explore", exact: true }).click();
+    await expect(host.locator(".dive-preview")).toHaveText(
+      "Risk 0 haul; banked 0 stays safe.",
+    );
+    await shot(host, "selected");
+    await host
+      .getByRole("button", { name: "Lock choice", exact: true })
+      .click();
+    await choose(client, "Explore");
+    await expect(host.locator(".dive-outcome")).toContainText(
+      "+10 joins your haul",
+    );
+    await expect
+      .poll(() =>
+        host
+          .locator(".dive-outcome svg, .dive-moving-haul")
+          .evaluateAll((es) =>
+            es.map((e) => getComputedStyle(e).animationName),
+          ),
+      )
+      .toEqual(["none"]);
+    await shot(host, "treasure");
+    await host.clock.runFor(2000);
+    await host.getByRole("button", { name: "Return", exact: true }).click();
+    await expect(host.locator(".dive-preview")).toHaveText(
+      "Bank 10 points now.",
+    );
+    await expect(host.locator(".dive-choices button").first()).toContainText(
+      "Bank 10",
+    );
+    await host
+      .getByRole("button", { name: "Lock choice", exact: true })
+      .click();
+    await choose(client, "Explore");
+    await expect(host.locator(".dive-outcome")).toContainText("+10 to bank");
+    await shot(host, "bank");
+    await host.getByRole("button", { name: "Pause Dive", exact: true }).click();
+    await host
+      .getByRole("button", { name: "Resume Dive", exact: true })
+      .click();
+    await host.clock.runFor(3000);
+    await expect(host.locator(".dive-outcome")).toHaveAttribute(
+      "data-animate",
+      "false",
+    );
+    await host.clock.runFor(2000);
+    await choose(client, "Explore");
+    await expect(client.locator(".dive-outcome")).toContainText(
+      "−13 haul · bank safe",
+    );
+    await expect(client.locator(".dive-outcome")).toContainText(
+      "Bank 0 · Haul 0",
+    );
+    await shot(client, "caught");
+    await host.clock.runFor(6000);
+    for (let door = 1; door <= 6; door++) {
+      if (door <= 3) await choose(host, "Explore");
+      await choose(client, door === 3 ? "Explore with shield" : "Explore");
+      if (door === 3) {
+        await expect(client.locator(".dive-outcome")).toContainText(
+          "13 haul safe",
+        );
+        await expect
+          .poll(() =>
+            client
+              .locator(".dive-outcome svg, .dive-moving-haul")
+              .evaluateAll((es) =>
+                es.every((e) => getComputedStyle(e).animationName === "none"),
+              ),
+          )
+          .toBe(true);
+        await expect(host.locator(".dive-outcome")).toContainText(
+          "Bank 10 · Haul 0",
+        );
+      }
+      if (door < 6) await host.clock.runFor(2000);
+    }
+    await expect(client.locator(".dive-outcome")).toContainText(
+      "+20 to bank · sixth door",
+    );
+    await expect(client.locator(".dive-outcome")).toContainText(
+      "Bank 20 · Haul 0 · Shield spent",
+    );
+    await shot(client, "auto-bank");
+    await fit(client, "auto-bank");
+  } finally {
+    await context.close();
   }
 });

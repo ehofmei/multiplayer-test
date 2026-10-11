@@ -179,16 +179,20 @@ Mixed course · desktop playing surface.
 
 ## Treasure Dive
 
-Active dive · phone layout.
+Local choice preview · bank, risk or protect the exact carried haul.
 
-![Treasure Dive active screen](tests/treasure.spec.ts-snapshots/dive-active-linux.png)
+![Treasure Dive choice preview](tests/treasure.spec.ts-snapshots/dive-selected-linux.png)
 
 <details>
-<summary>Setup and results</summary>
+<summary>Setup, shield protection and final banks</summary>
 
 ![Treasure Dive setup](tests/treasure.spec.ts-snapshots/dive-ready-linux.png)
 
+![Treasure Dive shield protection](tests/treasure.spec.ts-snapshots/dive-protected-linux.png)
+
 ![Treasure Dive results](tests/treasure.spec.ts-snapshots/dive-results-linux.png)
+
+![Eight shared winners](tests/treasure.spec.ts-snapshots/dive-eight-results-linux.png)
 
 </details>
 

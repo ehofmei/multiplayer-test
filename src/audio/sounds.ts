@@ -1,4 +1,8 @@
 export type Cue =
+  | "dive-treasure"
+  | "dive-bank"
+  | "dive-shield"
+  | "dive-hazard"
   | "bakery-lock"
   | "bakery-reveal"
   | "bakery-pass"
@@ -35,6 +39,23 @@ export type Cue =
   | "finish";
 type Note = [frequency: number, duration: number, delay?: number];
 const notes: Record<Cue, Note[]> = {
+  "dive-treasure": [
+    [720, 0.06],
+    [1080, 0.11, 0.07],
+  ],
+  "dive-bank": [
+    [440, 0.08],
+    [660, 0.08, 0.08],
+    [880, 0.14, 0.16],
+  ],
+  "dive-shield": [
+    [320, 0.06],
+    [960, 0.12, 0.05],
+  ],
+  "dive-hazard": [
+    [220, 0.1],
+    [160, 0.12, 0.1],
+  ],
   "bakery-lock": [
     [390, 0.045],
     [580, 0.06, 0.03],

@@ -495,7 +495,7 @@ QA inventory:
 - Standings and Help open/close/Escape/focus restore; full names and dive-score
   breakdowns remain in scrollable dialogs. Keyboard Tab/Enter and tap controls.
 - Ready, choosing, lock, reveal, boat, summary, and results at 320×700, 390×844,
-  844×390, 768×1024, and 1280×720. Eight long names, taller serif metrics, reduced
+  320×568, 844×390, 768×1024, and 1280×720. Eight long names, taller serif metrics, reduced
   motion, 44px targets, region bounds, readable contrast and no primary overflow.
 - Host background/stall pauses; clients retain unconfirmed choices; stale/duplicate
   epoch/dive/door actions are rejected. Late arrivals spectate and join the next
@@ -510,13 +510,22 @@ waiting and animation overshoot, ties, paused phases, private views,
 stale/duplicate inputs, disposal, and complete maximal eight-player messages
 (including escaped names/IDs). Real WebRTC tests complete a seeded match, test
 rematch/switching, eight long names, spectators, disconnects and background pause.
-Ready/active/results regression snapshots use the bundled font fixture and
-separate reviewed Darwin/Linux baselines, following the Bakery convention. Text
-rasterization differs across these platforms even with identical font metrics;
-keep the 180-pixel budget and strict image dimensions on each platform. Regenerate
-all three states on the corresponding OS with the helper active, then review the
-images before accepting updates. Saved screen checks include taller metrics and
-pending-update notices; their fit and touch-target assertions remain strict.
+Ready/active/selected, treasure, bank, protected, caught, sixth-door auto-bank,
+final and eight-player tied-result regression snapshots use the bundled font
+fixture and separate reviewed Darwin/Linux baselines. Keep the 180-pixel budget
+and strict dimensions. The outcome tests use actual paired players and seeded
+decks; caught feedback checks a previously banked total stays safe. Audio unit
+tests cover all outcome cues, shield spent on treasure, sixth-door protection,
+duplicate/late snapshots, pause/reorientation, old boat outcomes and epoch changes.
+Saved screen checks include taller metrics and pending-update notices; their fit
+and touch-target assertions remain strict.
+
+Physical device checks for the expedition polish: installed iPhone/iPad safe
+areas, rotation and thumb accuracy; explain bank versus haul and shield spending
+from the screen alone; listen to treasure/bank/protection/catch cues with several
+devices, then play muted and reduced motion. Verify Safari gesture audio unlock,
+background recovery and no replay of old outcomes. Desktop Chromium emulation
+cannot establish these physical-device behaviors.
 
 The live production preview paired two players, confirmed a secret shield lock,
 paused/resumed without losing it, revealed shared treasure, and Returned to bank
