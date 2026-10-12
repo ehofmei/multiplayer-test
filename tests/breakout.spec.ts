@@ -285,6 +285,38 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
           vx: Number(e.getAttribute("data-vx")),
           vy: Number(e.getAttribute("data-vy")),
         }));
+      const finalApproach =
+        (await host.locator(".breakout-level small").innerText()).includes(
+          "03 / 03",
+        ) &&
+        (await host.locator(".breakout-brick").count()) === 1 &&
+        ball.x > 0.2 &&
+        ball.x < 0.8 &&
+        ball.y > 0.2 &&
+        ball.y < 0.8 &&
+        (ball.vy <= 0 || ball.y < 0.69) &&
+        (ball.vx <= 0 || ball.x < 0.69);
+      if (finalApproach && targets.some((target) => target !== 0.5)) {
+        // The ball is clear of both occupied paddles. Center them through normal
+        // controls before the last brick can end play and disable those controls.
+        for (const player of [host, client]) {
+          await showHelp(player);
+          await player.getByRole("slider", { name: "Your paddle" }).fill("50");
+          await closePanels(player);
+        }
+        await host.clock.runFor(100);
+        await expect(host.getByTestId("arena-paddle-1")).toHaveAttribute(
+          "y",
+          "380",
+        );
+        await host.clock.runFor(100);
+        await expect(client.getByTestId("arena-paddle-0")).toHaveAttribute(
+          "x",
+          "380",
+        );
+        targets.fill(0.5);
+        continue;
+      }
       const offset = Math.sin(tick / 12) * 0.05;
       const bottom =
         ball.vy > 0 && ball.y > 0.69
@@ -333,7 +365,9 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
           await player.getByRole("slider", { name: "Your paddle" }).fill("50");
           await closePanels(player);
         }
-        await host.clock.runFor(50); // Flush the host's 33ms input queue.
+        // Cover the 33ms input queue and the next 50ms snapshot broadcast.
+        // A 50ms advance can end after local input but before remote delivery.
+        await host.clock.runFor(100);
         await expect(host.getByTestId("arena-paddle-1")).toHaveAttribute(
           "y",
           "380",
@@ -378,6 +412,16 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
       "75 / 75 bricks cleared",
     );
     await expectScreenFits(host);
+    for (const player of [host, client]) {
+      await expect(player.getByTestId("arena-paddle-0")).toHaveAttribute(
+        "x",
+        "380",
+      );
+      await expect(player.getByTestId("arena-paddle-1")).toHaveAttribute(
+        "y",
+        "380",
+      );
+    }
     await expectStableScreenshot(
       host,
       ".breakout-game-card",

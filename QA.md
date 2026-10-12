@@ -108,6 +108,10 @@ unlock, device volume/mute behavior, and foreground recovery need physical testi
   Core-transition snapshots center both paddles with the help sliders, flush
   queued input and confirm remote positions before capture. They retain the
   strict 160-pixel comparison budget; live rally endpoints are not baseline poses.
+  The final victory fixture also centers both paddles through those controls
+  while the last brick approach is clear of the occupied sides, then asserts the
+  shared centered pose before capture. Frozen-clock advances cover both queued
+  input and snapshot delivery; no game state is injected or pixels masked.
 - Review phone, 320×700 short-phone, portrait-tablet, desktop and landscape ready,
   active, destroyed-brick, paused, reinforced-core and result screenshots. Include
   taller font metrics, long names, reduced motion and safe-area clearance. Keep
