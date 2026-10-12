@@ -249,7 +249,10 @@ export function SeekGame({
     }
   }, [cell]);
   const me = game.seats.find((s) => s.id === session.me.id),
-    opponent = game.seats.find((s) => s.id !== session.me.id),
+    // Participants search the opponent; spectators follow the latest public light.
+    opponent = game.seats.find(
+      (s) => s.id !== (me ? me.id : game.last?.player),
+    ),
     setup = game.phase === "setup" || game.resumePhase === "setup",
     ready = game.phase === "ready",
     finished = game.phase === "finished",
@@ -528,7 +531,9 @@ export function SeekGame({
                 : finished
                   ? "Match complete"
                   : "Search board"
-              : "Spectator"}
+              : !setup && !finished && opponent
+                ? `${name(opponent.id)}’s board`
+                : "Spectator"}
         </span>
       </div>
       <p

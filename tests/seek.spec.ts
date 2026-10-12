@@ -503,6 +503,51 @@ test("Light Seek fits eight long names, keeps late arrivals public, and resets o
     await host.clock.runFor(3000);
     await expect(card(clients[6])).toHaveAttribute("data-phase", "playing");
     await expect(clients[6].locator(".seek-status")).toContainText("’s turn");
+    const searching = (
+      await host.locator(".seek-status").innerText()
+    ).startsWith("Your turn")
+      ? host
+      : clients[0];
+    const replying = searching === host ? clients[0] : host;
+    const targetName =
+      searching === host
+        ? "0ABCDEFGHIJKLMNOPQRSTUVWXYZ12345"
+        : "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456";
+    await guess(searching, 0);
+    await expect(
+      clients[6].getByRole("button", { name: "A1, hit", exact: true }),
+    ).toBeVisible();
+    await expect(clients[6].locator(".seek-top span")).toHaveText(
+      `${targetName}’s board`,
+    );
+    await expect(
+      clients[6].locator(".seek-tracker [data-found=true]"),
+    ).toHaveCount(0);
+    await guess(replying, 99);
+    await expect(
+      clients[6].getByRole("button", { name: "J10, miss", exact: true }),
+    ).toBeVisible();
+    await expect(
+      clients[6].getByRole("button", { name: "A1, unsearched", exact: true }),
+    ).toBeVisible();
+    await guess(searching, 1);
+    await expect(
+      clients[6].getByRole("button", { name: "A2, hit", exact: true }),
+    ).toBeVisible();
+    await guess(replying, 98);
+    await guess(searching, 2);
+    await expect(
+      clients[6].getByRole("listitem", {
+        name: "Three-line: found",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      clients[6].getByRole("button", {
+        name: "A3, Three-line found",
+        exact: true,
+      }),
+    ).toBeDisabled();
     await fit(clients[6], "eight-playing-spectator");
     await returnHome(clients[6]);
     await expect(card(host)).toHaveAttribute("data-phase", "playing");

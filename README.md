@@ -812,6 +812,9 @@ finish use optional locally synthesized sounds, muted by default with the existi
 saved preference and gesture unlock. The final discovery prioritizes the finish
 cue. Repeated snapshots, late joining and pause/resume do not replay old cues.
 
+Spectators follow the board receiving the latest confirmed search, with its owner
+labeled above the board and the matching found-piece collection.
+
 The host’s rendered view is filtered just like clients. Only your own committed
 layout is visible before results; spectators see readiness, guesses and found
 pieces. Late arrivals watch until a fresh match. Pause preserves layouts,

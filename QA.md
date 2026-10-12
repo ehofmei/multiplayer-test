@@ -986,6 +986,8 @@ Task 7 polish QA inventory:
   Coordinate status and Illuminate agree; the last confirmed outcome remains
   visible while selecting. Edge and overlap errors differ; invalid moves preserve
   committed pieces. Already-searched cells disable confirmation.
+- Spectators follow the latest public search on its correctly labeled target board,
+  including hit/miss alternation and whole-piece discoveries without secret layouts.
 - Results show owner labels, found counts, gold hit dots and dim remaining tiles.
   Phone board switches preserve readable boards and accessible winner/replay.
   The completed screen retires the active tray and last-turn controls.
@@ -1091,6 +1093,14 @@ and Linux image was visually reviewed. Genuine Ubuntu images came from
 for `2aed986`, downloaded through the read-only baseline artifact route. No
 cross-platform copying, relaxed fit assertions or pixel-budget increases were
 used. The 180-pixel budget and bundled font fixture remain intact.
+
+A three-device persistent follow-up on `20261012T192038Z · local` verified the
+spectator correction: hit/miss alternation and a complete discovery switch to the
+correct receiving board, with its owner label and matching collection. The
+primary host/client origins stayed on 4174; a dedicated 4175 preview provided an
+independent spectator identity. Reviewed the landscape spectator screenshot and
+phone viewport bounds; automated saved phone/font screenshots cover the long-name
+spectator states.
 
 Touch correction/cancellation/off-board release and a complete touch-only setup
 use their own mobile context. Keep low-level touch streams separate from the
