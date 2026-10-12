@@ -75,10 +75,14 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
       .getAttribute("x2");
     expect(Number(trailX)).toBeCloseTo(headX);
     await client.getByRole("button", { name: "Steer up", exact: true }).tap();
-    // Touch arrives over the actual DataChannel before the next grid step.
-    await expect
-      .poll(() => host.locator(".people-card").textContent())
-      .toContain("Emma");
+    // The authoritative queued state acknowledges receipt over the DataChannel.
+    // Roster membership alone cannot establish that this turn arrived.
+    await expect(
+      client.getByRole("button", { name: "Steer up", exact: true }),
+    ).toHaveAttribute("data-turn", "queued");
+    // The interpolation check above exercises smooth motion. Capture the queued
+    // turn at exact confirmed cells: a frozen partial RAF pose varies by runner.
+    await host.emulateMedia({ reducedMotion: "reduce" });
     await host.clock.runFor(300);
     await expect(host.getByTestId("cycle-rider-1")).toHaveAttribute(
       "data-direction",
@@ -106,11 +110,28 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
     await expect(
       host.getByRole("button", { name: "Steer down", exact: true }),
     ).toHaveAttribute("data-turn", "queued");
+    await expect(client.locator(".cycle-court")).toHaveAttribute(
+      "data-tick",
+      (await host.locator(".cycle-court").getAttribute("data-tick"))!,
+    );
+    for (const [index, x, y] of [
+      [0, 7, 8],
+      [1, 26, 21],
+    ]) {
+      const rider = host.getByTestId(`cycle-rider-${index}`);
+      await expect(rider).toHaveAttribute("data-x", String(x));
+      await expect(rider).toHaveAttribute("data-y", String(y));
+      await expect(rider).toHaveAttribute(
+        "transform",
+        `translate(${x * 10 + 5} ${y * 10 + 5})`,
+      );
+    }
     await expectStableScreenshot(
       host,
       ".cycle-game-card",
       `cycle-turn-${process.platform}.png`,
     );
+    await host.emulateMedia({ reducedMotion: "no-preference" });
     await host.clock.runFor(150);
     await expect(client.getByTestId("cycle-rider-0")).toHaveAttribute(
       "data-direction",

@@ -92,6 +92,13 @@ repository access read-only; historical branch workflows retain their baseline
 return mechanism. Historical review branches are excluded from its push trigger to avoid duplicate
 runs; new work should use this reusable workflow.
 
+For an intermediate review-branch commit that still needs Linux images, use
+GitHub's [supported `[skip ci]` commit marker](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/skip-workflow-runs)
+and explicitly dispatch scoped baseline evidence generation. This avoids an
+automatic full run against known incomplete baselines. Use normal verification
+on the final reviewed commit, without the marker or snapshot-update flags; an
+evidence run or skipped push check never satisfies the final gate.
+
 ### Keep expensive verification at the end of iteration
 
 At the start of implementation, locate an available GitHub CLI and run
@@ -1548,6 +1555,15 @@ passed without image updates. The single desktop Darwin/Linux pair was reviewed
 at the existing strict dimensions and 180-pixel budget. Genuine Ubuntu evidence
 came from [the scoped render run](https://github.com/ehofmei/multiplayer-test/actions/runs/38263195758)
 and was returned in `8d3fd96`; unrelated images remain unchanged.
+
+The Cycle queued-turn capture follows the same separation: its earlier assertion
+still proves smooth head/trail interpolation, while the screenshot uses exact
+confirmed cells under reduced motion. Before capture, the fixture checks the
+host-confirmed queued turn, matching host/client ticks, both logical rider
+positions and both rendered transforms. Roster membership is not an input
+acknowledgment. Smooth motion resumes for the remaining controls journey. Keep
+the existing 64-pixel budget and genuine Darwin/Linux references; sampling a
+paused partial animation cannot establish a deterministic pose.
 
 The first two-shard experiment is inconclusive: shard 1 took 300 seconds and
 failed on the prior Golf timing flaw; shard 2 spent 404 seconds installing Chromium
