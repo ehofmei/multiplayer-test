@@ -236,6 +236,15 @@ test("Arena arcade pairs rotated controls, identifies walls and lives, and finis
       `arena-miss-${process.platform}.png`,
       { maxDiffPixels: 160 },
     );
+    // A visibility recovery drops transient effects without replaying the last
+    // confirmed contact on subsequent snapshots. This is a lifecycle signal,
+    // not an injected game outcome.
+    await host.evaluate(() =>
+      document.dispatchEvent(new Event("visibilitychange")),
+    );
+    await expect(host.locator(".arena-contact")).toHaveCount(0);
+    await host.clock.runFor(50);
+    await expect(host.locator(".arena-contact")).toHaveCount(0);
     // One-life match gives deterministic last-life and elimination states.
     await host
       .getByRole("button", { name: "Choose Game", exact: true })

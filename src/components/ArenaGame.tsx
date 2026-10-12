@@ -110,6 +110,7 @@ export function ArenaGame({
     const c = game.arenaContact;
     if (
       !connected ||
+      document.hidden ||
       !before ||
       before.phase === "paused" ||
       before.phase === "ready" ||
@@ -132,7 +133,18 @@ export function ArenaGame({
       );
     }
   }, [game, connected]);
-  useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(() => {
+    const reset = () => {
+      previous.current = null;
+      clearTimeout(timer.current);
+      setEffect(null);
+    };
+    document.addEventListener("visibilitychange", reset);
+    return () => {
+      document.removeEventListener("visibilitychange", reset);
+      clearTimeout(timer.current);
+    };
+  }, []);
   useEffect(() => {
     if (game.phase === "serve" && alive)
       court.current?.focus({ preventScroll: true });
