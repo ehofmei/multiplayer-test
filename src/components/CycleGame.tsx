@@ -1,10 +1,10 @@
-import { GameSurface, GameHelp } from "./AppLayout";
+import { GameSurface, GameHelp, AppPanel } from "./AppLayout";
 import {
   adjacentCyclePoints,
   cycleDrawPoint,
   type CyclePoint,
 } from "../games/cycle-motion";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   CYCLE_SIZE,
   CYCLE_LIMIT,
@@ -16,6 +16,8 @@ import {
 } from "../games/cycle";
 import type { Player } from "../network/protocol";
 import type { Session } from "../network/session";
+
+import { cycleCrashPoint, cycleNewCrashes } from "../games/cycle-feedback";
 
 const arrows = ["↑", "→", "↓", "←"];
 export function CycleGame({
@@ -29,6 +31,25 @@ export function CycleGame({
   session: Session;
   connected: boolean;
 }) {
+  const [resultsOpen, setResultsOpen] = useState(false);
+  const [requested, setRequested] = useState<{
+    direction: CycleDirection;
+    tick: number;
+  } | null>(null);
+  const [crashes, setCrashes] = useState<CycleState["riders"]>([]);
+  const crashBefore = useRef<CycleState | null>(null);
+  useEffect(() => {
+    const fresh = connected ? cycleNewCrashes(crashBefore.current, game) : [];
+    crashBefore.current = game;
+    if (fresh.length) setCrashes(fresh);
+    else if (!connected || !["playing", "finished"].includes(game.phase))
+      setCrashes([]);
+  }, [game.ticks, game.phase, connected]);
+  useEffect(() => {
+    if (!crashes.length) return;
+    const timer = setTimeout(() => setCrashes([]), 420);
+    return () => clearTimeout(timer);
+  }, [crashes]);
   const court = useRef<HTMLDivElement>(null);
   const heads = useRef<(SVGGElement | null)[]>([]);
   const extensions = useRef<(SVGLineElement | null)[]>([]);
@@ -111,12 +132,20 @@ export function CycleGame({
                 : "Time’s up! Survivors share the win."
             : `${survivors.length} riders remain`;
   const movingHeads = new Set(
-    game.phase === "playing"
-      ? game.riders.filter((r) => r.alive).map((r) => r.y * CYCLE_SIZE + r.x)
-      : [],
+    game.riders.filter((r) => r.alive).map((r) => r.y * CYCLE_SIZE + r.x),
   );
+  const pending =
+    active && requested?.tick === game.ticks ? requested.direction : null;
+  const queued = active ? me?.queued : null;
   const steer = (direction: CycleDirection) => {
-    if (active) session.turnCycle(direction);
+    if (!active) return;
+    if (
+      !pending &&
+      cycleDirections.indexOf(direction) % 2 !==
+        cycleDirections.indexOf(me.direction) % 2
+    )
+      setRequested({ direction, tick: game.ticks });
+    session.turnCycle(direction);
   };
   return (
     <section
@@ -146,9 +175,11 @@ export function CycleGame({
         <p className="cycle-status" aria-live="polite">
           {status}
         </p>
-        <span className="cycle-timer" aria-label="Seconds remaining">
-          {Math.ceil(((CYCLE_LIMIT - game.ticks) * CYCLE_STEP_MS) / 1000)}s
-        </span>
+        {game.phase !== "finished" && (
+          <span className="cycle-timer" aria-label="Seconds remaining">
+            {Math.ceil(((CYCLE_LIMIT - game.ticks) * CYCLE_STEP_MS) / 1000)}s
+          </span>
+        )}
       </div>
       <GameSurface>
         <div
@@ -218,7 +249,7 @@ export function CycleGame({
               <path
                 key={color}
                 fill={color}
-                fillOpacity=".72"
+                fillOpacity=".62"
                 d={[...game.cells]
                   .flatMap((cell, n) =>
                     Number(cell) === i + 1 && !movingHeads.has(n)
@@ -239,7 +270,7 @@ export function CycleGame({
                   extensions.current[i] = element;
                 }}
                 stroke={cycleColors[i]}
-                strokeOpacity=".72"
+                strokeOpacity=".62"
                 strokeWidth="10"
                 strokeLinecap="butt"
               />
@@ -250,35 +281,78 @@ export function CycleGame({
                 ref={(element) => {
                   heads.current[i] = element;
                 }}
+                className="cycle-head"
+                data-local={r.id === session.me.id}
                 data-testid={`cycle-rider-${i}`}
                 data-direction={r.direction}
                 data-alive={r.alive}
                 data-x={r.x}
                 data-y={r.y}
               >
-                <rect
-                  x={-6}
-                  y={-6}
-                  width="12"
-                  height="12"
-                  rx="3"
-                  fill={r.alive ? cycleColors[i] : "#122c29"}
-                  stroke={r.alive ? "#fff" : cycleColors[i]}
-                  strokeWidth="1"
-                />
-                <text
-                  x={0}
-                  y={0.5}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize="9"
-                  fontWeight="800"
-                  fill={r.alive ? "#122c29" : cycleColors[i]}
-                >
-                  {r.alive ? i + 1 : "×"}
-                </text>
+                {r.alive ? (
+                  <>
+                    <g
+                      transform={`rotate(${cycleDirections.indexOf(r.direction) * 90})`}
+                    >
+                      <path
+                        className="cycle-local-mark"
+                        d="M-6 3V-2L0-8L6-2V3"
+                        fill="none"
+                        stroke="#fff"
+                        strokeWidth="1.5"
+                      />
+                      <path
+                        d="M-5.5 5V-1L0-7L5.5-1V5Z"
+                        fill={cycleColors[i]}
+                        stroke="#071b22"
+                        strokeWidth="1.2"
+                      />
+                      <path
+                        d="M-2-1L0-3L2-1"
+                        fill="none"
+                        stroke="#fff"
+                        strokeWidth="1"
+                      />
+                    </g>
+                    <text
+                      x="0"
+                      y="2"
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontSize="7"
+                      fontWeight="800"
+                      fill="#071b22"
+                    >
+                      {i + 1}
+                    </text>
+                  </>
+                ) : (
+                  <path
+                    d="M-3-3L3 3M3-3L-3 3"
+                    stroke={cycleColors[i]}
+                    strokeWidth="1.5"
+                  />
+                )}
               </g>
             ))}
+            {crashes.map((r) => {
+              const point = cycleCrashPoint(r);
+              return (
+                <g
+                  className="cycle-crash"
+                  key={r.id}
+                  transform={`translate(${point.x} ${point.y})`}
+                  data-testid={`cycle-crash-${game.riders.indexOf(r)}`}
+                >
+                  <path
+                    d="M-5-5L5 5M5-5L-5 5M0-8V-5M0 5V8M-8 0H-5M5 0H8"
+                    stroke="#fff"
+                    strokeWidth="1.3"
+                    fill="none"
+                  />
+                </g>
+              );
+            })}
             {game.phase === "ready" && (
               <text
                 x="160"
@@ -302,6 +376,18 @@ export function CycleGame({
           <button
             key={direction}
             className={`cycle-${direction}`}
+            data-turn={
+              queued === direction
+                ? "queued"
+                : pending === direction
+                  ? "requested"
+                  : "idle"
+            }
+            data-reversal={
+              !!me &&
+              cycleDirections.indexOf(direction) ===
+                (cycleDirections.indexOf(me.direction) + 2) % 4
+            }
             aria-label={`Steer ${direction}`}
             disabled={!active}
             onPointerDown={(e) => {
@@ -322,38 +408,45 @@ export function CycleGame({
           TURN
         </span>
       </div>
-      <p className="cycle-feedback">
-        {me
-          ? !me.alive
-            ? "You crashed. Watch the remaining riders."
-            : `You are rider ${seat + 1} · ${name(me.id)}`
-          : game.phase === "ready"
-            ? "2–8 players · Everyone here rides."
-            : "You’re watching. Join the next round."}
+      <p className="cycle-feedback" data-testid="cycle-feedback">
+        {me ? (
+          <>
+            <span
+              className="cycle-identity"
+              style={{ color: cycleColors[seat] }}
+            >
+              {seat + 1}
+            </span>
+            {game.phase === "finished" ? (
+              me.alive ? (
+                "You win!"
+              ) : survivors.length ? (
+                "Round over · You’re out"
+              ) : (
+                "Round over · Everyone crashed"
+              )
+            ) : !me.alive ? (
+              "You’re out · Watch the remaining riders"
+            ) : (
+              <>
+                You are rider {seat + 1} ·{" "}
+                {arrows[cycleDirections.indexOf(me.direction)]}{" "}
+                {queued
+                  ? "Turn queued"
+                  : pending
+                    ? "Turn requested"
+                    : name(me.id)}
+              </>
+            )}
+          </>
+        ) : game.phase === "ready" ? (
+          "2–8 players · Everyone here rides."
+        ) : game.phase === "finished" ? (
+          "Round over · You watched this round"
+        ) : (
+          "You’re watching. Join the next round."
+        )}
       </p>
-      {configure && (
-        <>
-          {!!game.riders.length && (
-            <ol className="cycle-riders" aria-label="Riders">
-              {game.riders.map((r, i) => (
-                <li key={r.id} className={r.alive ? "" : "crashed"}>
-                  <span
-                    className="cycle-number"
-                    style={{ background: cycleColors[i] }}
-                  >
-                    {i + 1}
-                  </span>
-                  <span className="cycle-name">
-                    {name(r.id)}
-                    {r.id === session.me.id ? " · You" : ""}
-                  </span>
-                  <small>{r.alive ? "Riding" : "Out"}</small>
-                </li>
-              ))}
-            </ol>
-          )}
-        </>
-      )}
       <div className="cycle-footer">
         <GameHelp>
           <p className="muted cycle-help">
@@ -361,7 +454,7 @@ export function CycleGame({
             arrows, swipe the arena, or focus it and use arrow keys / WASD. One
             turn per step; no reversing. Last survivor wins.
           </p>
-          {!configure && (
+          {!!game.riders.length && (
             <>
               {!!game.riders.length && (
                 <ol className="cycle-riders" aria-label="Riders">
@@ -377,7 +470,13 @@ export function CycleGame({
                         {name(r.id)}
                         {r.id === session.me.id ? " · You" : ""}
                       </span>
-                      <small>{r.alive ? "Riding" : "Out"}</small>
+                      <small>
+                        {r.alive
+                          ? game.phase === "finished"
+                            ? "Winner"
+                            : "Riding"
+                          : "Out"}
+                      </small>
                     </li>
                   ))}
                 </ol>
@@ -385,6 +484,37 @@ export function CycleGame({
             </>
           )}
         </GameHelp>
+        {game.phase === "finished" && (
+          <>
+            <button className="secondary" onClick={() => setResultsOpen(true)}>
+              Results
+            </button>
+            <AppPanel
+              title="Round results"
+              open={resultsOpen}
+              onClose={() => setResultsOpen(false)}
+            >
+              <p>{status}</p>
+              <ol className="cycle-riders" aria-label="Final riders">
+                {game.riders.map((r, i) => (
+                  <li key={r.id}>
+                    <span
+                      className="cycle-number"
+                      style={{ background: cycleColors[i] }}
+                    >
+                      {i + 1}
+                    </span>
+                    <span>
+                      {name(r.id)}
+                      {r.id === session.me.id ? " · You" : ""}
+                    </span>
+                    <small>{r.alive ? "Winner" : "Out"}</small>
+                  </li>
+                ))}
+              </ol>
+            </AppPanel>
+          </>
+        )}
         {session.role === "host" ? (
           configure ? (
             <>

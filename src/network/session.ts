@@ -1522,7 +1522,10 @@ export class Session {
       this.room.kind === "cycle" &&
       this.room.cycle
     ) {
-      this.room.cycle = turnCycle(this.room.cycle, id, input.direction);
+      const before = this.room.cycle;
+      this.room.cycle = turnCycle(before, id, input.direction);
+      // Existing queued state acknowledges accepted turns without predicting motion.
+      if (this.room.cycle !== before) this.broadcast();
     } else if (
       input.kind === "ship-control" &&
       this.room.kind === "ship" &&

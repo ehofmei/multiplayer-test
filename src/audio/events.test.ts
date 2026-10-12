@@ -722,3 +722,25 @@ it("Arena distinguishes all occupied and wall sides, losses and elimination with
   s.room.pong.lives = [1, 0, 0, 0];
   expect(soundEvents(before, frame(s))).toEqual(["win"]);
 });
+
+it("bounds remote cycle crashes to one cue, suppresses recovery, and prioritizes the finale", () => {
+  const s = snapshot();
+  s.room = newRoom("cycle", 1);
+  s.room.cycle = newCycle(["a", "b", "c", "d"]);
+  s.room.cycle.phase = "playing";
+  const before = frame(s);
+  s.room.cycle.riders[1].alive = false;
+  s.room.cycle.riders[2].alive = false;
+  const after = frame(s);
+  expect(soundEvents(before, after)).toEqual(["cycle-crash"]);
+  expect(soundEvents(after, after)).toEqual([]);
+  expect(soundEvents(null, after)).toEqual([]);
+  expect(
+    soundEvents(
+      { ...before, cycle: { ...before.cycle!, phase: "paused" } },
+      after,
+    ),
+  ).toEqual([]);
+  s.room.cycle.phase = "finished";
+  expect(soundEvents(before, frame(s))).toEqual(["win"]);
+});

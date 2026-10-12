@@ -1,4 +1,5 @@
 export type Cue =
+  | "cycle-crash"
   | "arena-miss"
   | "arena-out"
   | "race-early"
@@ -44,6 +45,7 @@ export type Cue =
   | "finish";
 type Note = [frequency: number, duration: number, delay?: number];
 const notes: Record<Cue, Note[]> = {
+  "cycle-crash": [[180, 0.045]],
   "arena-miss": [
     [310, 0.07],
     [220, 0.09, 0.07],

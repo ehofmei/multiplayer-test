@@ -1,5 +1,5 @@
 import { join, chooseGame, expectScreenFits, returnHome } from "./ui";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { expectStableScreenshot } from "./screenshot";
 
 test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, rematches and handles departures", async ({
@@ -45,7 +45,11 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
     expect(startBounds!.y).toBeGreaterThanOrEqual(0);
     expect(startBounds!.y + startBounds!.height).toBeLessThanOrEqual(720);
     expect(startBounds!.width).toBeGreaterThanOrEqual(500);
-    await expectStableScreenshot(host, ".cycle-court", "cycle-court.png");
+    await expectStableScreenshot(
+      host,
+      ".cycle-court",
+      `cycle-court-${process.platform}.png`,
+    );
     await host.clock.runFor(3000);
     await expect(
       client.getByRole("button", { name: "Steer up", exact: true }),
@@ -99,6 +103,14 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
     expect(await host.evaluate(() => window.getSelection()?.toString())).toBe(
       "",
     );
+    await expect(
+      host.getByRole("button", { name: "Steer down", exact: true }),
+    ).toHaveAttribute("data-turn", /requested|queued/);
+    await expectStableScreenshot(
+      host,
+      ".cycle-game-card",
+      `cycle-turn-${process.platform}.png`,
+    );
     await host.clock.runFor(150);
     await expect(client.getByTestId("cycle-rider-0")).toHaveAttribute(
       "data-direction",
@@ -128,6 +140,11 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
     );
     expect(pausedMatrix).toBe(
       Number(await pausedHead.getAttribute("data-x")) * 10 + 5,
+    );
+    await expectStableScreenshot(
+      client,
+      ".cycle-game-card",
+      `cycle-phone-${process.platform}.png`,
     );
     const tick = await host.locator(".cycle-court").getAttribute("data-tick");
     await host.clock.runFor(3000);
@@ -229,6 +246,25 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
     await expect(client.locator(".cycle-status")).toHaveText(
       "Draw! Everyone crashed.",
     );
+    await expect(client.locator(".cycle-court")).toBeVisible();
+    await expect(client.locator(".cycle-timer")).toHaveCount(0);
+    await expect(client.locator(".cycle-feedback")).toContainText(
+      "Round over · Everyone crashed",
+    );
+    await client.setViewportSize({ width: 390, height: 844 });
+    await expectStableScreenshot(
+      client,
+      ".cycle-game-card",
+      `cycle-draw-${process.platform}.png`,
+    );
+    await host.getByRole("button", { name: "Results", exact: true }).click();
+    await expect(
+      host.getByRole("dialog", { name: "Round results", exact: true }),
+    ).toBeVisible();
+    await host
+      .getByRole("dialog", { name: "Round results", exact: true })
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
     await host.getByRole("button", { name: "Ride Again", exact: true }).click();
     await expect(client.getByTestId("cycle-rider-1")).toHaveAttribute(
       "data-alive",
@@ -298,7 +334,16 @@ test("eight Light-cycle riders fit a narrow phone and support swipe, background 
       .getByRole("button", { name: "Start Arena", exact: true })
       .click();
     const client = clients[0];
-    await expect(client.locator(".cycle-riders li")).toHaveCount(8);
+    await expect(client.locator(".cycle-head")).toHaveCount(8);
+    await expect(client.locator('.cycle-head[data-local="true"]')).toHaveCount(
+      1,
+    );
+    await client.emulateMedia({ reducedMotion: "reduce" });
+    await expectStableScreenshot(
+      client,
+      ".cycle-game-card",
+      `cycle-eight-reduced-${process.platform}.png`,
+    );
     await client.addStyleTag({
       content: ":root{font-family:Arial,sans-serif;line-height:1.3}",
     });
@@ -383,5 +428,150 @@ test("eight Light-cycle riders fit a narrow phone and support swipe, background 
     });
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
+  }
+});
+
+test("cycle confirms turns without moving heads early, shows collisions and a champion, and shares the sixty-second win", async ({
+  page: host,
+  browser,
+}) => {
+  test.setTimeout(120_000);
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+  });
+  try {
+    const client = await context.newPage();
+    await host.setViewportSize({ width: 390, height: 844 });
+    await host.goto("./");
+    await host.getByLabel("Your name").fill("Alex");
+    await host
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await join(host, client, "Emma");
+    await chooseGame(host, "Light-cycle Arena");
+    await host.clock.install();
+    await host.clock.pauseAt(new Date(Date.now() + 1000));
+    await host
+      .getByRole("button", { name: "Start Arena", exact: true })
+      .click();
+    await host.clock.runFor(3000);
+    await host.getByRole("button", { name: "Steer down", exact: true }).click();
+    await expect(client.getByTestId("cycle-rider-0")).toHaveAttribute(
+      "data-direction",
+      "right",
+    );
+    await expect(
+      host.getByRole("button", { name: "Steer down", exact: true }),
+    ).toHaveAttribute("data-turn", "queued");
+    await host.getByRole("button", { name: "Steer up", exact: true }).click();
+    await expect(
+      host.getByRole("button", { name: "Steer down", exact: true }),
+    ).toHaveAttribute("data-turn", "queued");
+    await host.clock.runFor(1500);
+    await host
+      .getByRole("button", { name: "Steer right", exact: true })
+      .click();
+    await host.clock.runFor(2700);
+    await expect(client.locator(".cycle-status")).toHaveText("Alex wins!");
+    await expect(host.locator(".cycle-feedback")).toContainText("You win!");
+    await expect(host.getByTestId("cycle-crash-1")).toHaveAttribute(
+      "transform",
+      "translate(0 235)",
+    );
+    await expect(host.locator(".cycle-court")).toBeVisible();
+    await expectStableScreenshot(
+      host,
+      ".cycle-game-card",
+      `cycle-champion-${process.platform}.png`,
+    );
+    for (const size of [
+      { width: 320, height: 568 },
+      { width: 320, height: 700 },
+      { width: 844, height: 390 },
+      { width: 768, height: 1024 },
+      { width: 1280, height: 720 },
+    ]) {
+      await host.setViewportSize(size);
+      const style = await host.addStyleTag({
+        content: ":root{font-family:serif;line-height:1.6}",
+      });
+      await expectScreenFits(host);
+      const metrics = await host
+        .locator(".cycle-game-card")
+        .evaluate((e) => ({ h: e.clientHeight, sh: e.scrollHeight }));
+      expect(metrics.sh).toBeLessThanOrEqual(metrics.h + 1);
+      await host.screenshot({
+        path: `test-results/cycle-finale-${size.width}x${size.height}.png`,
+      });
+      await style.evaluate((e) => e.remove());
+    }
+    await host.setViewportSize({ width: 390, height: 844 });
+    await host.getByRole("button", { name: "Ride Again", exact: true }).click();
+    await host.clock.runFor(3000);
+    // Mirrored routes fill separate halves using actual paired turn buttons.
+    // No synthetic state injection: both riders really survive 400 grid steps.
+    const opposite: Record<string, string> = {
+      up: "down",
+      down: "up",
+      left: "right",
+      right: "left",
+    };
+    async function segment(direction: string, steps: number, turn = true) {
+      if (turn) {
+        await host
+          .getByRole("button", { name: `Steer ${direction}`, exact: true })
+          .click();
+        await client
+          .getByRole("button", {
+            name: `Steer ${opposite[direction]}`,
+            exact: true,
+          })
+          .tap();
+        await expect(
+          client.getByRole("button", {
+            name: `Steer ${opposite[direction]}`,
+            exact: true,
+          }),
+        ).toHaveAttribute("data-turn", "queued");
+      }
+      await host.clock.runFor(steps * 150);
+      await expect(client.locator(".cycle-court")).toHaveAttribute(
+        "data-tick",
+        (await host.locator(".cycle-court").getAttribute("data-tick")) ?? "",
+      );
+    }
+    await segment("right", 27, false);
+    await segment("up", 8);
+    await segment("left", 31);
+    for (let row = 1; row <= 6; row++) {
+      await segment("down", 1);
+      await segment(row % 2 ? "right" : "left", 30);
+    }
+    await segment("down", 9);
+    await segment("right", 31);
+    for (let row = 14; row >= 12; row--) {
+      await segment("up", 1);
+      await segment(row % 2 === 0 ? "left" : "right", 30);
+    }
+    await segment("up", 1);
+    await segment("right", 14);
+    await expect(host.locator(".cycle-court")).toHaveAttribute(
+      "data-tick",
+      "400",
+    );
+    await expect(client.locator(".cycle-status")).toHaveText(
+      "Time’s up! Survivors share the win.",
+    );
+    await expect(client.locator('.cycle-head[data-alive="true"]')).toHaveCount(
+      2,
+    );
+    await expectStableScreenshot(
+      host,
+      ".cycle-game-card",
+      `cycle-shared-win-${process.platform}.png`,
+    );
+  } finally {
+    await context.close();
   }
 });

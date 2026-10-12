@@ -7875,3 +7875,112 @@ input.golf-power-input {
     display: none;
   }
 }
+
+/* Light-cycle: the arena stays visible through elimination and the finale. */
+.app-shell .games-card.cycle-game-card {
+  background: #0c2029;
+  color: #eefaff;
+  border-color: #33535f;
+}
+.app-shell .cycle-game-card .cycle-timer,
+.app-shell .cycle-game-card .cycle-feedback,
+.app-shell .cycle-game-card > .muted {
+  color: #c3d9e2;
+}
+.app-shell .cycle-game-card .cycle-court {
+  background: #10292f;
+  border-color: #52717b;
+  box-shadow:
+    0 0 0 1px #071b22,
+    0 0 24px #82d9ff0a;
+}
+.app-shell .cycle-game-card[data-phase="finished"] > .game-surface {
+  display: flex;
+}
+.app-shell
+  .cycle-game-card[data-phase="finished"]
+  > .cycle-heading
+  .cycle-status {
+  font-size: 18px;
+}
+.app-shell .cycle-game-card .cycle-controls button {
+  background: #1d3e4d;
+  color: #eefaff;
+  border: 2px solid #527684;
+  box-shadow: inset 0 -3px 0 #071b2260;
+}
+.app-shell .cycle-game-card .cycle-controls button:disabled {
+  opacity: 0.55;
+}
+.app-shell
+  .cycle-game-card
+  .cycle-controls
+  button[data-reversal="true"]:not(:disabled) {
+  border-style: dashed;
+}
+.app-shell .cycle-game-card .cycle-controls button:active:not(:disabled),
+.app-shell .cycle-game-card .cycle-controls button[data-turn="requested"] {
+  background: #315869;
+  border-color: #d7f3ff;
+  box-shadow: inset 0 2px 0 #071b22;
+}
+.app-shell .cycle-game-card .cycle-controls button[data-turn="queued"] {
+  border-color: #c9ee87;
+  background: #315747;
+}
+.app-shell .cycle-game-card .cycle-control-center {
+  color: #c3d9e2;
+}
+.app-shell .cycle-game-card .cycle-footer button {
+  color: #eefaff;
+  background: #1d3e4d;
+  border-color: #527684;
+}
+.app-shell .cycle-game-card .cycle-footer button:not(.quiet):not(.secondary) {
+  color: #0c2029;
+  background: #c9ee87;
+}
+.cycle-identity {
+  display: inline-block;
+  min-width: 18px;
+  margin-right: 5px;
+  font-weight: 900;
+  border-bottom: 2px solid currentColor;
+}
+.cycle-head .cycle-local-mark {
+  visibility: hidden;
+}
+.cycle-head[data-local="true"] .cycle-local-mark {
+  visibility: visible;
+}
+.cycle-crash {
+  animation: cycle-impact 420ms ease-out both;
+}
+@keyframes cycle-impact {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cycle-crash {
+    animation: none;
+  }
+}
+@media (min-width: 900px), (max-height: 550px) and (min-width: 500px) {
+  .app-shell .games-card.cycle-game-card[data-phase="finished"] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 350px;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    column-gap: 16px;
+  }
+  .app-shell .cycle-game-card[data-phase="finished"] > * {
+    grid-column: 2;
+  }
+  .app-shell .cycle-game-card[data-phase="finished"] > .game-surface {
+    grid-column: 1;
+    grid-row: 1 / 4;
+  }
+}

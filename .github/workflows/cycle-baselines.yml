@@ -1,0 +1,39 @@
+# One-time, scoped evidence generation; removed after the images are reviewed.
+name: Light-cycle baseline evidence
+on:
+  push:
+    branches: [codex/cycle-polish]
+permissions:
+  contents: read
+jobs:
+  baselines:
+    if: contains(github.event.head_commit.message, '[cycle baselines]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Generate only intended Light-cycle renders
+        run: npm run test:game -- cycle --update-snapshots=all
+      - name: Return actual Ubuntu images to this review branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/cycle-integration.spec.ts-snapshots/*-linux.png
+          if ! git diff --cached --quiet; then
+            git commit -m 'Generated Light-cycle Ubuntu evidence'
+            git push origin HEAD:codex/cycle-polish
+          fi
+      - name: Save browser evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cycle-baseline-evidence
+          path: test-results/

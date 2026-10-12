@@ -170,6 +170,7 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
     cycle: room.cycle
       ? {
           phase: room.cycle.phase,
+          remaining: room.cycle.riders.filter((r) => r.alive).length,
           alive: room.cycle.riders.find((r) => r.id === me)?.alive,
         }
       : null,
@@ -352,7 +353,11 @@ export function soundEvents(
   if (after.cycle && before.cycle) {
     if (after.cycle.phase === "finished" && before.cycle.phase !== "finished")
       return [after.cycle.alive ? "win" : "finish"];
-    if (before.cycle.alive && after.cycle.alive === false) return ["miss"];
+    if (before.cycle.phase === "playing" && after.cycle.phase === "playing") {
+      if (before.cycle.alive && after.cycle.alive === false) return ["miss"];
+      if (after.cycle.remaining < before.cycle.remaining)
+        return ["cycle-crash"];
+    }
     if (after.cycle.phase === "playing" && before.cycle.phase === "countdown")
       return ["go"];
   }
