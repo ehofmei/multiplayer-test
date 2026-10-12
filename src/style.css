@@ -7869,3 +7869,9 @@ input.golf-power-input {
   color: #0c2430;
   margin: 0 auto 12px;
 }
+@media (max-height: 600px) and (max-width: 500px) {
+  /* The ready headline already states the goal; keep room for the court preview. */
+  .app-shell .games-card.arena-polished[data-phase="ready"] > .arena-status {
+    display: none;
+  }
+}
