@@ -1,3 +1,41 @@
+## Household device priorities
+
+Design and polish primarily for the devices the family actually plays on, usually
+as installed home-screen PWAs on household Wi-Fi. Use this inventory in future
+plans instead of inventing a broad device matrix for each task.
+
+| Priority  | Device                                  | Nominal CSS viewport                          |
+| --------- | --------------------------------------- | --------------------------------------------- |
+| Primary   | iPhone 17 Pro                           | 402×874 portrait; 874×402 for rotation checks |
+| Primary   | iPhone 18 Pro Max                       | 440×956 portrait; 956×440 for rotation checks |
+| Primary   | 10.9-inch iPad Air, 5th generation (M1) | 1180×820 landscape                            |
+| Secondary | 10.2-inch iPad, 9th generation (2021)   | 1080×810 landscape                            |
+
+These are nominal full-screen emulation sizes, not measured available gameplay
+areas. The phone sizes use standard 3× scaling of Apple's published display
+resolutions, and both iPads use standard 2× scaling. References:
+[iPhone 17 Pro](https://support.apple.com/en-us/125090),
+[iPhone 18 Pro Max](https://www.apple.com/iphone-18-pro/specs/) and
+[iPad Air (5th generation)](https://support.apple.com/en-us/111887) and
+[iPad (9th generation)](https://support.apple.com/en-us/111898).
+Confirm actual usable viewports on the household devices, including safe areas,
+Safari controls, installed-PWA behavior and any Display Zoom settings.
+
+For focused iteration, prioritize comfortable phone controls and a deliberate
+landscape iPad composition. Use the older iPad for secondary layout/performance
+checks when available. Review household-sized screenshots and exercise normal
+touch controls; emulator dimensions alone do not establish iOS usability.
+Include larger text, reduced motion, muted play, rotation and lifecycle checks
+where relevant to the change.
+
+Keep existing smaller-screen, alternate-font and desktop tests as regression
+coverage. Desktop remains useful for development and automation. Do not expand
+manual QA to unrelated devices by default, hard-code layouts to model names,
+relax fit assertions or sacrifice household board size for speculative coverage.
+The existing complete local and exact-final Ubuntu verification gates remain
+required for implementation changes; this inventory focuses design and manual
+iteration without changing the automated gate.
+
 ## Iteration and review commands
 
 Use `npm run check:fast` for formatting, types, unit and script tests. For a
@@ -936,7 +974,25 @@ need the device pass. No timing, scoring rules or network fields changed.
 
 ## Light Seek
 
-QA inventory:
+Task 7 polish QA inventory (implementation verification in progress):
+
+- Primary layout targets: 402×874 and 440×956 phones; 1180×820 M1 iPad Air and
+  1080×810 ninth-generation iPad in landscape. Phone rotation and the existing
+  small-screen/desktop/alternate-font matrix remain regression coverage.
+- Five miniature tiled pieces match board geometry. Setup buttons show selection,
+  rotation and placement checks. The play collection is noninteractive and lights
+  up only for complete discoveries; an ordinary hit never changes a miniature.
+- Tap/slide correction, gesture cancellation and off-board release never submit.
+  Coordinate status and Illuminate agree; the last confirmed outcome remains
+  visible while selecting. Edge and overlap errors differ; invalid moves preserve
+  committed pieces. Already-searched cells disable confirmation.
+- Results show owner labels, found counts, gold hit dots and dim remaining tiles.
+  Phone board switches preserve readable boards and accessible winner/replay.
+  The completed screen retires the active tray and last-turn controls.
+- Local valid placement, accepted Ready, local turn and prioritized finish audio
+  retain muted defaults and deduplication across lifecycle/view/epoch changes.
+
+Existing rules and lifecycle inventory:
 
 - Exactly two connected players can Start. Select each shape, tap an anchor,
   preview, rotate, place and edit placed pieces. Try overlap, off-board placement,
@@ -960,7 +1016,7 @@ QA inventory:
   metrics, reduced motion, eight long names, waiting and results. Primary content
   must fit with clearance. The full 10×10 board is directly tappable, with no
   region selector or selection dialog. Full-board cells are intentionally compact
-  (at least 20px in these viewports); action buttons and the shape selector retain
+  (at least 20px in these viewports); action buttons and setup piece buttons retain
   44px targets. Verify all 100 cells, highlighted selection, colored previews,
   invalid edge/overlap outlines and explicit confirmation. Tap adjacent cells
   and check their displayed coordinates before confirming. Keyboard movement
@@ -977,7 +1033,8 @@ countdown stalls, disposal and maximum escaped eight-device messages. Sound test
 cover one event/one cue, found replacing hit, and no replay on view/epoch changes.
 The real WebRTC browser flows cover manual setup through a seeded complete match,
 eight connected devices/spectators, lifecycle and game switching. Retain separate
-setup, active, found-piece and results baselines on Darwin/Linux using the bundled
+setup, invalid edge, active, selected phone cell, landscape iPad, found-piece and
+results baselines on Darwin/Linux using the bundled
 font fixture, strict dimensions and the unchanged 180-pixel budget.
 
 Live browser QA pairs two production-preview players and covers direct placement,

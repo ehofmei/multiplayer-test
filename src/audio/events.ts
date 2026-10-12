@@ -129,8 +129,16 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
     key: `${session}/${room.epoch}/${room.kind}`,
     kind: room.kind,
     golf: room.minigolf ? golfMotionFrame(room.minigolf) : null,
-    seek: room.seek?.last
-      ? { event: room.seek.last.event, result: room.seek.last.result }
+    seek: room.seek
+      ? {
+          phase: room.seek.phase,
+          turn: room.seek.turn,
+          current: room.seek.current === me,
+          ready: room.seek.seats.find((s) => s.id === me)?.ready ?? false,
+          winner: room.seek.winner === me,
+          event: room.seek.last?.event,
+          result: room.seek.last?.result,
+        }
       : null,
     revision: grid.revision,
     lit: grid.cells.filter(Boolean).length,
@@ -317,14 +325,31 @@ export function soundEvents(
       return ["success"];
   }
   if (golfCues.length) return golfCues;
-  if (after.seek && after.seek.event !== before.seek?.event)
-    return [
-      after.seek.result === "found"
-        ? "seek-found"
-        : after.seek.result === "hit"
-          ? "seek-hit"
-          : "seek-miss",
-    ];
+  if (after.seek && before.seek) {
+    const next = after.seek,
+      old = before.seek;
+    if (next.phase === "finished" && old.phase !== "finished")
+      return [next.winner ? "win" : "finish"];
+    if (next.ready && !old.ready && old.phase === "setup")
+      return ["seek-ready"];
+    const outcome = next.event !== undefined && next.event !== old.event;
+    const yourTurn =
+      next.phase === "playing" &&
+      next.current &&
+      (old.phase === "countdown" ||
+        (old.phase === "playing" && next.turn !== old.turn && !old.current));
+    const cues: Cue[] = outcome
+      ? [
+          next.result === "found"
+            ? "seek-found"
+            : next.result === "hit"
+              ? "seek-hit"
+              : "seek-miss",
+        ]
+      : [];
+    if (yourTurn) cues.push("seek-turn");
+    return cues;
+  }
   if (after.kind === "lights" && after.revision > before.revision)
     return [after.lit >= before.lit ? "on" : "off"];
   if (after.sumo && before.sumo) {

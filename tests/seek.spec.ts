@@ -15,6 +15,12 @@ const sizes = [
   { width: 844, height: 390 },
   { width: 768, height: 1024 },
   { width: 1280, height: 720 },
+  { width: 402, height: 874 },
+  { width: 440, height: 956 },
+  { width: 1180, height: 820 },
+  { width: 1080, height: 810 },
+  { width: 874, height: 402 },
+  { width: 956, height: 440 },
 ];
 const card = (p: Page) => p.locator(".seek-game-card");
 async function fit(page: Page, label: string) {
@@ -42,6 +48,7 @@ async function fit(page: Page, label: string) {
     }
     const box = (await card(page).boundingBox())!;
     for (const b of await card(page).getByRole("button").all()) {
+      if (!(await b.isVisible())) continue;
       const r = (await b.boundingBox())!;
       if ((await b.getAttribute("class")) === "seek-cell") {
         // A full 10×10 board deliberately uses compact cells. Keep action targets 44px.
@@ -67,13 +74,11 @@ async function fit(page: Page, label: string) {
 const coordinate = (c: number) =>
   `${String.fromCharCode(65 + Math.floor(c / 10))}${(c % 10) + 1}`;
 async function place(page: Page, piece: number, cell: number) {
-  await page
-    .getByRole("combobox", { name: "Shape", exact: true })
-    .selectOption(String(piece));
+  await page.locator(".seek-setup-tray button").nth(piece).click();
   await page
     .getByRole("button", { name: new RegExp(`^${coordinate(cell)},`) })
     .click();
-  await page.getByRole("button", { name: "Place piece", exact: true }).click();
+  await page.getByRole("button", { name: /^(Place|Move) piece$/ }).click();
 }
 async function guess(page: Page, cell: number) {
   await page
@@ -135,6 +140,12 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     await expect(
       host.getByRole("button", { name: "Ready", exact: true }),
     ).toBeDisabled();
+    await expect(host.locator(".seek-setup-tray button")).toHaveCount(5);
+    for (const [i, tiles] of [3, 3, 4, 4, 5].entries()) {
+      await expect(
+        host.locator(".seek-setup-tray button").nth(i).locator("rect"),
+      ).toHaveCount(tiles);
+    }
     await expect(host.locator(".seek-cell")).toHaveCount(100);
     await expect(host.getByRole("group", { name: "Board area" })).toHaveCount(
       0,
@@ -147,6 +158,15 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     await expect(
       host.getByRole("button", { name: "Place piece", exact: true }),
     ).toBeDisabled();
+    await expect(host.locator(".seek-status")).toContainText(
+      "Extends past the edge",
+    );
+    await expectStableScreenshot(
+      host,
+      ".seek-game-card",
+      `seek-invalid-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
     await host.getByRole("button", { name: /^Rotate shape/ }).click();
     await host.getByRole("button", { name: "A1, empty", exact: true }).click();
     await host
@@ -195,6 +215,55 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     await expect(
       client.getByRole("button", { name: "Place piece", exact: true }),
     ).toBeDisabled();
+    // Genuine touch input: sliding corrects the draft, cancellation restores it.
+    const touch = await context.newCDPSession(client);
+    const area = (await client.locator(".seek-grid").boundingBox())!;
+    const point = (column: number, row: number) => ({
+      x: area.x + ((column + 0.5) * area.width) / 10,
+      y: area.y + ((row + 0.5) * area.height) / 10,
+    });
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [point(9, 9)],
+    });
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [point(0, 0)],
+    });
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    await expect(client.locator(".seek-status")).toContainText(
+      "0/5 placed · A1 · Fits",
+    );
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [point(9, 9)],
+    });
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchCancel",
+      touchPoints: [],
+    });
+    await expect(client.locator(".seek-status")).toContainText(
+      "0/5 placed · A1 · Fits",
+    );
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [point(9, 9)],
+    });
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x: area.x - 5, y: area.y + 5 }],
+    });
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    await expect(client.locator(".seek-status")).toContainText(
+      "0/5 placed · A1 · Fits",
+    );
+    await touch.detach();
     // Move the already placed piece to the agreed deterministic layout.
     const anchors = [0, 10, 30, 40, 60];
     for (let i = 0; i < 5; i++) {
@@ -208,8 +277,14 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
       host.locator('.seek-cell[data-invalid="true"]'),
     ).not.toHaveCount(0);
     await expect(
-      host.getByRole("button", { name: "Place piece", exact: true }),
+      host.getByRole("button", { name: "Move piece", exact: true }),
     ).toBeDisabled();
+    await expect(host.locator(".seek-status")).toContainText(
+      "Overlaps another piece",
+    );
+    await expect(
+      host.locator(".seek-setup-tray [data-complete=true]"),
+    ).toHaveCount(5);
     await expect(host.locator(".seek-status")).toContainText("5/5 placed");
     await host.getByRole("button", { name: "Ready", exact: true }).click();
     await expect(host.locator(".seek-status")).toContainText("Ready confirmed");
@@ -227,6 +302,19 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
       `seek-active-${process.platform}.png`,
       { maxDiffPixels: 180 },
     );
+    await expect(
+      host.getByRole("list", { name: "Found pieces" }).getByRole("listitem"),
+    ).toHaveCount(5);
+    await expect(host.locator(".seek-tracker [data-found=true]")).toHaveCount(
+      0,
+    );
+    await host.setViewportSize({ width: 1180, height: 820 });
+    await expectStableScreenshot(
+      host,
+      ".seek-game-card",
+      `seek-ipad-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
     await fit(host, "active");
     await fit(client, "waiting");
     await host.setViewportSize(sizes[0]);
@@ -235,11 +323,18 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
       .getByRole("button", { name: "A1, unsearched", exact: true })
       .click();
     await expect(card(host)).toHaveAttribute("data-phase", "playing");
-    await expect(host.locator(".seek-result")).toHaveText("A1 · unsearched");
+    await expect(host.locator(".seek-selection")).toHaveText("A1 · unsearched");
     await expect(host.locator(".seek-top strong")).toHaveText("Turn 1");
     await expect(
       host.getByRole("dialog", { name: "Illuminate a cell", exact: true }),
     ).toHaveCount(0);
+    await host.setViewportSize({ width: 402, height: 874 });
+    await expectStableScreenshot(
+      host,
+      ".seek-game-card",
+      `seek-selected-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
     await fit(host, "selected");
     await host.setViewportSize(sizes[0]);
     await host.screenshot({ path: "test-results/seek-full-board-320.png" });
@@ -254,10 +349,18 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     ];
     for (const [i, c] of targets.entries()) {
       await guess(host, c);
-      await expect(host.locator(".seek-result")).toContainText(
-        [2, 5, 9, 13, 18].includes(i) ? "found!" : "Hit!",
-      );
+      if (i < 18)
+        await expect(host.locator(".seek-result")).toContainText(
+          [2, 5, 9, 13].includes(i) ? "found!" : "Hit!",
+        );
+      else await expect(host.locator(".seek-status")).toHaveText("You win!");
       if (i === 0) {
+        await expect(
+          host.locator(".seek-tracker [data-found=true]"),
+        ).toHaveCount(0);
+        await expect(
+          host.getByRole("button", { name: "A1, hit", exact: true }),
+        ).toBeVisible();
         await client
           .getByRole("button", { name: "My board", exact: true })
           .click();
@@ -269,6 +372,15 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
         await closePanels(client);
       }
       if (i === 2) {
+        await expect(
+          host.locator(".seek-tracker [data-found=true]"),
+        ).toHaveCount(1);
+        await expect(
+          host.getByRole("listitem", {
+            name: "Three-line: found",
+            exact: true,
+          }),
+        ).toBeVisible();
         await host.setViewportSize(sizes[2]);
         await expectStableScreenshot(
           host,
@@ -282,6 +394,19 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
         await expect(client.locator(".seek-cell").first()).toBeEnabled();
         await guess(client, 99 - i);
         await expect(host.locator(".seek-result")).toContainText("Miss");
+        if (i === 0) {
+          await host
+            .getByRole("button", { name: "A1, hit", exact: true })
+            .click();
+          await expect(
+            host.getByRole("button", {
+              name: "A1 · Already searched",
+              exact: true,
+            }),
+          ).toBeDisabled();
+          await expect(host.locator(".seek-result")).toContainText("Miss");
+          await expect(host.locator(".seek-top strong")).toHaveText("Turn 3");
+        }
       }
     }
     await expect(card(client)).toHaveAttribute("data-phase", "finished");
@@ -294,6 +419,32 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
       { maxDiffPixels: 180 },
     );
     await fit(host, "results");
+    await host.setViewportSize({ width: 402, height: 874 });
+    await expect(host.locator(".seek-tracker")).toHaveCount(0);
+    await host
+      .getByRole("group", { name: "Revealed board" })
+      .getByRole("button", { name: "Emma’s board", exact: true })
+      .click();
+    await expect(
+      host.getByRole("img", { name: "Emma complete board", exact: true }),
+    ).toBeVisible();
+    await expect(
+      host.getByRole("img", { name: "Alex complete board", exact: true }),
+    ).not.toBeVisible();
+    await expect(
+      host.locator(
+        ".seek-final-boards [data-selected=true] [data-unsearched=true]",
+      ),
+    ).toHaveCount(0);
+    await host
+      .getByRole("group", { name: "Revealed board" })
+      .getByRole("button", { name: "Your board", exact: true })
+      .click();
+    await expect(
+      host.locator(
+        ".seek-final-boards [data-selected=true] [data-unsearched=true]",
+      ),
+    ).not.toHaveCount(0);
     await host.getByRole("button", { name: "My board", exact: true }).click();
     await expect(
       host.getByRole("dialog").getByRole("img", {

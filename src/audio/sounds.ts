@@ -25,6 +25,9 @@ export type Cue =
   | "golf-knock"
   | "golf-spring"
   | "golf-meteor"
+  | "seek-place"
+  | "seek-ready"
+  | "seek-turn"
   | "seek-miss"
   | "seek-hit"
   | "seek-found"
@@ -146,6 +149,15 @@ const notes: Record<Cue, Note[]> = {
     [90, 0.22],
     [145, 0.1, 0.04],
   ],
+  "seek-place": [
+    [470, 0.04],
+    [620, 0.06, 0.04],
+  ],
+  "seek-ready": [
+    [620, 0.06],
+    [830, 0.09, 0.06],
+  ],
+  "seek-turn": [[740, 0.06]],
   "seek-miss": [
     [180, 0.16],
     [360, 0.08],

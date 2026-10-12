@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Snapshot } from "../network/session";
-import { Sounds } from "./sounds";
+import { Sounds, type Cue } from "./sounds";
 import { soundEvents, soundFrame, type SoundFrame } from "./events";
 const storageKey = "p2p-game-lab-sound-v1";
 export function useGameSounds(
@@ -73,5 +73,8 @@ export function useGameSounds(
       }
     }
   };
-  return { enabled, unavailable, toggle };
+  const play = (cue: Cue) => {
+    if (visible && !document.hidden) audio.current?.play(cue);
+  };
+  return { enabled, unavailable, toggle, play };
 }

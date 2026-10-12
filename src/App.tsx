@@ -411,6 +411,7 @@ export function App() {
                   {snapshot?.room.kind === "seek" && snapshot.room.seek && (
                     <SeekGame
                       key={snapshot.room.epoch}
+                      playSound={sound.play}
                       game={snapshot.room.seek}
                       players={snapshot.players}
                       session={session}

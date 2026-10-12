@@ -785,17 +785,32 @@ every valid guess, including hits. Find all five first to win immediately, witho
 an extra reply turn. Results reveal both boards; there are no scores or ties.
 
 The primary screen has one directly tappable 10×10 board with row letters and
-column numbers. A compact shape selector leaves more room for the board. Tapping
-only previews a placement or search; Place piece and Illuminate explicitly
-confirm it. The selected coordinate and placement validity appear in the
-status area before confirmation, and a highlighted outline marks the selected cell. Arrow
-keys navigate without wrapping at the board edges, R rotates during setup and
-Enter confirms. My board shows incoming guesses; changing views preserves the
-turn. Short landscape screens put controls beside the board. Help and secondary
-views scroll when necessary. Full-board cells are smaller than action buttons on
-narrow phones; check the coordinate before confirming and tap another cell to
-adjust. Miss, hit and found use distinct locally synthesized
-sounds, with the existing muted-by-default preference and gesture unlock.
+column numbers. Setup uses five pictured piece buttons made from miniature board
+tiles; checkmarks show placed pieces. Select a placed piece to move it, preview
+its new footprint, then confirm Move piece. Edge and overlap errors are distinct;
+an invalid draft leaves its previous position intact. Rotate, Place/Move and Ready
+stay explicit. Ready waits for host confirmation.
+
+During play the miniature collection lights up only when a whole piece is found;
+ordinary hits reveal no identity or partial piece progress. Turn status, selected
+coordinates and the last confirmed result remain separate. Tap a cell or slide a
+finger across the board to adjust the preview; release never submits a search.
+Cancelling a gesture or releasing outside the board restores the prior selection.
+Illuminate names the selected coordinate; already-searched cells cannot be
+submitted. Arrow keys navigate without wrapping, R rotates during setup and Enter
+confirms. Cell contents remain readable through inset selection marks and brief
+confirmed-light feedback. My board shows incoming guesses. Landscape tablets and
+short landscape phones keep controls beside the board; portrait phones keep the
+tray below it. Secondary views scroll when necessary.
+
+Results promote the winner and reveal both boards, with found counts, dim tiles
+that were still hidden and gold dots on illuminated tiles. Portrait phones have
+labeled board switches so each revealed board remains large; both are displayed
+side by side on wider screens. The host can Seek Again; other players see replay
+waiting. Placement, accepted Ready, a new local turn, miss/hit/found and match
+finish use optional locally synthesized sounds, muted by default with the existing
+saved preference and gesture unlock. The final discovery prioritizes the finish
+cue. Repeated snapshots, late joining and pause/resume do not replay old cues.
 
 The host’s rendered view is filtered just like clients. Only your own committed
 layout is visible before results; spectators see readiness, guesses and found

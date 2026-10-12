@@ -744,3 +744,56 @@ it("bounds remote cycle crashes to one cue, suppresses recovery, and prioritizes
   s.room.cycle.phase = "finished";
   expect(soundEvents(before, frame(s))).toEqual(["win"]);
 });
+
+it("confirms Seek readiness, announces a new local turn, and prioritizes victory", async () => {
+  const { newSeek, readySeek, guessSeek, pauseSeek, resumeSeek, stepSeek } =
+    await import("../games/seek");
+  const layout = [
+    { piece: 0, x: 0, y: 0, rotation: 0 },
+    { piece: 1, x: 0, y: 1, rotation: 0 },
+    { piece: 2, x: 0, y: 3, rotation: 0 },
+    { piece: 3, x: 0, y: 4, rotation: 0 },
+    { piece: 4, x: 0, y: 6, rotation: 0 },
+  ];
+  const s = snapshot();
+  s.room = newRoom("seek", 1);
+  s.room.seek = newSeek(["a", "b"], () => 0);
+  let before = frame(s);
+  s.room.seek = readySeek(s.room.seek, "a", []);
+  expect(soundEvents(before, frame(s))).toEqual([]);
+  s.room.seek = readySeek(s.room.seek, "a", layout);
+  expect(soundEvents(before, frame(s))).toEqual(["seek-ready"]);
+  before = frame(s);
+  s.room.seek = readySeek(s.room.seek, "b", layout);
+  expect(soundEvents(before, frame(s))).toEqual([]);
+  before = frame(s);
+  s.room.seek = stepSeek(s.room.seek, 3000);
+  expect(soundEvents(before, frame(s))).toEqual(["seek-turn"]);
+  before = frame(s);
+  s.room.seek = guessSeek(s.room.seek, "a", 1, 99);
+  expect(soundEvents(before, frame(s))).toEqual(["seek-miss"]);
+  before = frame(s);
+  s.room.seek = guessSeek(s.room.seek, "b", 2, 98);
+  expect(soundEvents(before, frame(s))).toEqual(["seek-miss", "seek-turn"]);
+  before = frame(s);
+  s.room.seek = pauseSeek(s.room.seek);
+  expect(soundEvents(before, frame(s))).toEqual([]);
+  s.room.seek = resumeSeek(s.room.seek);
+  before = frame(s);
+  s.room.seek = stepSeek(s.room.seek, 3000);
+  expect(soundEvents(before, frame(s))).toEqual([]);
+  before = frame(s);
+  s.room.seek = {
+    ...s.room.seek,
+    phase: "finished",
+    winner: "a",
+    last: { event: 3, player: "a", cell: 81, result: "found", piece: 4 },
+  };
+  const after = frame(s);
+  expect(soundEvents(before, after)).toEqual(["win"]);
+  expect(soundEvents(after, after)).toEqual([]);
+  expect(soundEvents(null, after)).toEqual([]);
+  expect(soundEvents({ ...before, key: "other epoch" }, after)).toEqual([]);
+  s.room.seek.winner = "b";
+  expect(soundEvents(before, frame(s))).toEqual(["finish"]);
+});
