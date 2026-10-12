@@ -427,6 +427,15 @@ export function validRoom(v: unknown): v is Room {
         : p.lives === undefined) &&
       (p.startingLives === undefined ||
         (arena && integer(p.startingLives, 1, 7))) &&
+      (p.arenaContact === undefined ||
+        (v.kind === "arena" &&
+          record(p.arenaContact) &&
+          integer(p.arenaContact.sequence, 1, 1_000_000) &&
+          integer(p.arenaContact.side, 0, 3) &&
+          number(p.arenaContact.position, 0.065, 0.935) &&
+          ["paddle", "wall", "miss", "out"].includes(
+            String(p.arenaContact.kind),
+          ))) &&
       (p.rallySeconds === undefined || number(p.rallySeconds, 0, 86400)) &&
       (p.bumpers === undefined ||
         (!arena &&

@@ -1,8 +1,7 @@
-import { GameSurface, GameHelp } from "./AppLayout";
-import { brickBounds } from "../games/breakout";
+import { GameSurface, GameHelp, AppPanel } from "./AppLayout";
 import { useEffect, useRef, useState } from "react";
 import { arenaWinner, sideNames, viewPosition } from "../games/arena";
-import { clampPaddle, type PongState } from "../games/model";
+import { clampPaddle, type PongState, type ArenaContact } from "../games/model";
 import { paddleColors, paddleHex } from "../games/colors";
 import type { Player } from "../network/protocol";
 import type { Session } from "../network/session";
@@ -43,43 +42,95 @@ export function ArenaGame({
   players,
   session,
   connected,
-  cooperative = false,
 }: {
   game: PongState;
   players: Player[];
   session: Session;
   connected: boolean;
-  cooperative?: boolean;
 }) {
-  const title = cooperative ? "Co-op Breakout" : "Arena Pong";
-  const team = game.breakout;
   const [seats, setSeats] = useState(
     [0, 1, 2, 3].map((i) => players[i]?.id ?? ""),
   );
-  const [local, setLocal] = useState(0.5);
   const [startingLives, setStartingLives] = useState(game.startingLives ?? 5);
+  const [settings, setSettings] = useState(false);
+  const [local, setLocal] = useState(0.5);
+  const localRef = useRef(local);
+  const [effect, setEffect] = useState<ArenaContact | null>(null);
+  const previous = useRef<PongState | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const court = useRef<HTMLDivElement>(null);
+  const ball = useRef<SVGCircleElement>(null);
+  const drawn = useRef({ x: game.ball.x, y: game.ball.y });
   const side = game.seats.indexOf(session.me.id);
   const rotation = side < 0 ? 0 : side * 90;
-  const alive =
-    side >= 0 && (cooperative ? !!team?.lives : !!game.lives?.[side]);
+  const alive = side >= 0 && !!game.lives?.[side];
   const controllable =
     connected && alive && ["playing", "serve"].includes(game.phase);
   const configure = ["ready", "finished"].includes(game.phase);
   const selected = seats.filter(Boolean);
   const valid =
-    (cooperative
-      ? !!seats[0] && seats.every((id, i) => !!id === i < selected.length)
-      : seats.slice(0, 3).every(Boolean)) &&
+    seats.slice(0, 3).every(Boolean) &&
     new Set(selected).size === selected.length &&
     selected.every((id) => players.some((p) => p.id === id));
   const name = (id?: string) =>
     players.find((p) => p.id === id)?.name ?? "Waiting";
-  const ball = useRef<SVGCircleElement>(null);
-  const drawn = useRef({ x: 0.5, y: 0.5 });
+  const color = (i: number) =>
+    paddleHex(players.find((p) => p.id === game.seats[i])?.color, i);
+  const viewSide = (i: number) => (i - Math.max(0, side) + 4) % 4;
+  const status = !connected
+    ? "Host disconnected"
+    : game.phase === "finished"
+      ? `${name(arenaWinner(game))} wins!`
+      : game.phase === "paused"
+        ? "Arena paused"
+        : game.phase === "serve"
+          ? "Get ready…"
+          : game.phase === "ready"
+            ? "Defend your side. Last paddle standing wins."
+            : side < 0
+              ? "You’re watching. The host picks the players."
+              : !alive
+                ? "You’re out. Your side is now a wall."
+                : "";
   useEffect(() => {
-    if (!controllable && side >= 0)
-      setLocal(viewPosition(side, game.paddles[side]));
+    if (!controllable && side >= 0) {
+      const next = viewPosition(side, game.paddles[side]);
+      localRef.current = next;
+      setLocal(next);
+    }
   }, [controllable, side, game.paddles]);
+  useEffect(() => {
+    const before = previous.current;
+    previous.current = game;
+    const c = game.arenaContact;
+    if (
+      !connected ||
+      !before ||
+      before.phase === "paused" ||
+      before.phase === "ready" ||
+      game.phase === "paused" ||
+      game.phase === "ready"
+    ) {
+      clearTimeout(timer.current);
+      setEffect(null);
+    } else if (
+      before.phase === "playing" &&
+      c &&
+      c.sequence > (before.arenaContact?.sequence ?? 0)
+    ) {
+      clearTimeout(timer.current);
+      setEffect(c);
+      timer.current = setTimeout(
+        () => setEffect(null),
+        c.kind === "miss" || c.kind === "out" ? 650 : 140,
+      );
+    }
+  }, [game, connected]);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(() => {
+    if (game.phase === "serve" && alive)
+      court.current?.focus({ preventScroll: true });
+  }, [game.phase, alive]);
   useEffect(() => {
     const from = drawn.current;
     const start = performance.now();
@@ -103,270 +154,382 @@ export function ArenaGame({
   const move = (position: number) => {
     if (!controllable) return;
     const next = clampPaddle(position);
+    localRef.current = next;
     setLocal(next);
     session.move(viewPosition(side, next));
   };
-  const drag = (e: React.PointerEvent<HTMLDivElement>) => {
+  const pointer = (e: React.PointerEvent<HTMLElement>) => {
     const box = e.currentTarget.getBoundingClientRect();
     move((e.clientX - box.left) / box.width);
   };
+  const dragProps = {
+    onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!controllable) return;
+      e.currentTarget.setPointerCapture(e.pointerId);
+      pointer(e);
+    },
+    onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) pointer(e);
+    },
+    onPointerUp: (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.currentTarget.hasPointerCapture(e.pointerId))
+        e.currentTarget.releasePointerCapture(e.pointerId);
+    },
+    onPointerCancel: (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.currentTarget.hasPointerCapture(e.pointerId))
+        e.currentTarget.releasePointerCapture(e.pointerId);
+    },
+    onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (controllable && ["ArrowLeft", "ArrowRight"].includes(e.key)) {
+        e.preventDefault();
+        move(localRef.current + (e.key === "ArrowLeft" ? -0.06 : 0.06));
+      }
+    },
+  };
+  const markerPositions = [
+    [500, 980],
+    [980, 500],
+    [500, 20],
+    [20, 500],
+  ];
+  const miss = effect && ["miss", "out"].includes(effect.kind);
   return (
     <section
-      className={`games-card arena-game-card ${cooperative ? "breakout-game-card" : ""}`}
+      className="games-card arena-game-card arena-polished"
       data-phase={game.phase}
-      aria-label={`${title} game`}
+      aria-label="Arena Pong game"
     >
-      <div className="board-heading">
-        <h2>{title}</h2>
-        <span>{cooperative ? "1–4 teammates" : "3–4 players"}</span>
+      <div className="arena-hud">
+        {game.seats.length ? (
+          <ul className="arena-lives" aria-label="Arena lives">
+            {game.seats.map((id, i) => (
+              <li
+                key={id}
+                data-local={id === session.me.id}
+                data-lives={game.lives?.[i]}
+                style={{ borderColor: color(i) }}
+                title={`${name(id)} · ${sideNames[viewSide(i)]} · ${game.lives?.[i]} lives`}
+              >
+                <span className="arena-player">
+                  <b>{i + 1}</b>
+                  <span>{id === session.me.id ? "You" : name(id)}</span>
+                  <small>{["↓", "→", "↑", "←"][viewSide(i)]}</small>
+                </span>
+                <strong
+                  data-testid={`arena-lives-${i}`}
+                  aria-label={`${name(id)}: ${game.lives?.[i]} lives${game.lives?.[i] === 1 ? ", last life" : ""}`}
+                >
+                  <span className="arena-pips" aria-hidden="true">
+                    {Array.from({ length: game.startingLives ?? 5 }, (_, n) => (
+                      <i key={n} data-filled={n < (game.lives?.[i] ?? 0)} />
+                    ))}
+                  </span>
+                  <span className="arena-life-count">
+                    {game.lives?.[i]
+                      ? `${game.lives[i]} ${game.lives[i] === 1 ? "life" : "lives"}`
+                      : "· Out"}
+                  </span>
+                </strong>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="arena-intro">
+            <small>ARENA PONG</small>
+            <strong>Last paddle standing</strong>
+            <span>3–4 players · {startingLives} lives each</span>
+          </div>
+        )}
       </div>
-      <p className="game-status" aria-live="polite">
-        {!connected
-          ? "Host disconnected"
-          : game.phase === "finished"
-            ? cooperative
-              ? team?.lives
-                ? "Team victory! All three levels cleared."
-                : "Out of lives. Try again together!"
-              : `${name(arenaWinner(game))} wins!`
-            : game.phase === "paused"
-              ? cooperative
-                ? "Co-op Breakout paused"
-                : "Arena paused"
-              : game.phase === "serve"
-                ? cooperative
-                  ? `Level ${team?.level} · Get ready…`
-                  : "Get ready…"
-                : game.phase === "ready"
-                  ? cooperative
-                    ? "Choose your team. Fill seats in order; unused sides are walls."
-                    : "Choose three or four players."
-                  : cooperative
-                    ? "Clear the bricks. Protect every teammate’s side!"
-                    : "Last paddle standing"}
+      <p className="game-status arena-status" aria-live="polite">
+        {(miss && game.phase === "serve"
+          ? `${name(game.seats[effect.side])}${effect.kind === "out" ? " is out · side becomes a wall" : " lost a life"}`
+          : status) ||
+          (miss
+            ? `${name(game.seats[effect.side])}${effect.kind === "out" ? " is out · side becomes a wall" : " lost a life"}`
+            : "Your paddle is at the bottom")}
       </p>
-      {cooperative && (
-        <p className="breakout-progress" aria-label="Team progress">
-          <strong>{team?.lives} shared lives</strong>
-          <span>Level {team?.level} / 3</span>
-          <span>{team?.bricks.filter((n) => n > 0).length} bricks left</span>
-        </p>
-      )}
-      {!!game.seats.length && (
-        <ul
-          className="arena-lives"
-          aria-label={cooperative ? "Team paddles" : "Arena lives"}
-        >
-          {game.seats.map((id, i) => (
-            <li
-              key={id}
-              title={cooperative ? `${name(id)} · ${sideNames[i]}` : undefined}
-              style={{
-                borderColor: paddleHex(
-                  players.find((p) => p.id === id)?.color,
-                  i,
-                ),
-              }}
-            >
-              <span>
-                {name(id)}
-                {id === session.me.id ? " · You" : ""}
-              </span>
-              <strong data-testid={`arena-lives-${i}`}>
-                {cooperative
-                  ? sideNames[i]
-                  : `${game.lives?.[i]} ${game.lives?.[i] ? "lives" : "· Out"}`}
-              </strong>
-            </li>
-          ))}
-        </ul>
-      )}
       <GameSurface>
         <div
+          ref={court}
           className="pong-court arena-court"
           role="group"
-          aria-label={cooperative ? "Breakout court" : "Arena court"}
+          aria-label="Arena court"
           style={{ touchAction: controllable ? "none" : "auto" }}
           tabIndex={controllable ? 0 : -1}
-          onKeyDown={(e) => {
-            if (["ArrowLeft", "ArrowRight"].includes(e.key)) {
-              e.preventDefault();
-              move(local + (e.key === "ArrowLeft" ? -0.06 : 0.06));
-            }
-          }}
-          onPointerDown={(e) => {
-            if (controllable) {
-              e.currentTarget.setPointerCapture(e.pointerId);
-              drag(e);
-            }
-          }}
-          onPointerMove={(e) => {
-            if (e.currentTarget.hasPointerCapture(e.pointerId)) drag(e);
-          }}
+          {...dragProps}
         >
           <svg viewBox="0 0 1000 1000" aria-hidden="true">
+            <defs>
+              <pattern
+                id="arena-grid"
+                width="70"
+                height="70"
+                patternUnits="userSpaceOnUse"
+              >
+                <path
+                  d="M70 0H0V70"
+                  fill="none"
+                  stroke="#7cabbc"
+                  strokeOpacity=".07"
+                  strokeWidth="2"
+                />
+              </pattern>
+            </defs>
+            <rect
+              x="55"
+              y="55"
+              width="890"
+              height="890"
+              rx="10"
+              fill="url(#arena-grid)"
+              stroke="#4b7589"
+              strokeWidth="4"
+            />
             <g transform={`rotate(${rotation} 500 500)`}>
-              <rect
-                x="55"
-                y="55"
-                width="890"
-                height="890"
-                rx="10"
-                fill="none"
-                stroke="#63837a"
-                strokeWidth="3"
-                strokeDasharray="10 16"
-              />
               {[0, 1, 2, 3].map((i) => {
-                const active = cooperative
-                  ? i < game.seats.length
-                  : !!game.lives?.[i];
+                const active = !!game.lives?.[i];
+                const preview = game.phase === "ready" && !!seats[i];
+                const enabled = active || preview;
                 const pos =
                   (i === side ? viewPosition(side, local) : game.paddles[i]) *
                   1000;
                 const horizontal = i === 0 || i === 2;
+                const x = horizontal
+                  ? enabled
+                    ? pos - 120
+                    : 55
+                  : i === 1
+                    ? 935
+                    : 45;
+                const y = horizontal
+                  ? i === 0
+                    ? 935
+                    : 45
+                  : enabled
+                    ? pos - 120
+                    : 55;
                 return (
-                  <rect
-                    key={i}
-                    data-testid={`arena-paddle-${i}`}
-                    data-side={sideNames[i]}
-                    data-active={active}
-                    x={
-                      horizontal
-                        ? active
-                          ? pos - 120
-                          : 55
-                        : i === 1
-                          ? 935
-                          : 45
-                    }
-                    y={
-                      horizontal
-                        ? i === 0
-                          ? 935
-                          : 45
-                        : active
-                          ? pos - 120
-                          : 55
-                    }
-                    width={horizontal ? (active ? 240 : 890) : 20}
-                    height={horizontal ? 20 : active ? 240 : 890}
-                    rx="8"
-                    fill={
-                      active
-                        ? paddleHex(
-                            players.find((p) => p.id === game.seats[i])?.color,
-                            i,
-                          )
-                        : "#63837a"
-                    }
-                  />
+                  <g key={i}>
+                    <rect
+                      data-testid={`arena-paddle-${i}`}
+                      data-side={sideNames[i]}
+                      data-active={active}
+                      x={x}
+                      y={y}
+                      width={horizontal ? (enabled ? 240 : 890) : 20}
+                      height={horizontal ? 20 : enabled ? 240 : 890}
+                      rx={enabled ? 8 : 3}
+                      fill={enabled ? color(i) : "#476477"}
+                      stroke={enabled ? "#ffffff66" : "#8eafba55"}
+                      strokeWidth="3"
+                    />
+                    {i === side && active && (
+                      <rect
+                        x={horizontal ? pos - 24 : x + 5}
+                        y={horizontal ? y + 5 : pos - 24}
+                        width={horizontal ? 48 : 10}
+                        height={horizontal ? 10 : 48}
+                        rx="4"
+                        fill="#fff"
+                      />
+                    )}
+                  </g>
                 );
               })}
-              {cooperative &&
-                team?.bricks.map((hp, i) => {
-                  if (!hp) return null;
-                  const b = brickBounds(i);
-                  return (
-                    <g key={i} data-testid={`brick-${i}`} data-hp={hp}>
-                      <rect
-                        x={b.x * 1000}
-                        y={b.y * 1000}
-                        width={b.width * 1000}
-                        height={b.height * 1000}
-                        rx="8"
-                        fill={hp === 2 ? "#f4b66c" : "#d9f29d"}
-                        stroke="#122c29"
-                        strokeWidth="4"
-                      />
-                      {hp === 2 && (
-                        <path
-                          d={`M${(b.x + 0.022) * 1000} ${(b.y + 0.038) * 1000}h31`}
-                          stroke="#122c29"
-                          strokeWidth="8"
-                        />
-                      )}
-                    </g>
-                  );
-                })}
-              <circle ref={ball} cx="500" cy="500" r="18" fill="#f5f4ee" />
+              {effect && (
+                <rect
+                  className="arena-contact"
+                  data-kind={effect.kind}
+                  x={
+                    effect.side % 2 === 0
+                      ? effect.position * 1000 - 40
+                      : effect.side === 1
+                        ? 958
+                        : 30
+                  }
+                  y={
+                    effect.side % 2
+                      ? effect.position * 1000 - 40
+                      : effect.side === 0
+                        ? 958
+                        : 30
+                  }
+                  width={effect.side % 2 === 0 ? 80 : 12}
+                  height={effect.side % 2 ? 80 : 12}
+                  rx="6"
+                  fill={miss ? "#ffbd83" : "#fff"}
+                />
+              )}
+              <circle
+                ref={ball}
+                cx={drawn.current.x * 1000}
+                cy={drawn.current.y * 1000}
+                r="18"
+                fill="#fffef5"
+                stroke="#b4f5ff"
+                strokeWidth="3"
+              />
             </g>
+            {game.seats.map((id, i) => {
+              const [x, y] = markerPositions[viewSide(i)];
+              return (
+                <text
+                  key={id}
+                  x={x}
+                  y={y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill={id === session.me.id ? "#fff" : "#a4bdc8"}
+                  fontSize="28"
+                  fontWeight="700"
+                >
+                  {i + 1}
+                </text>
+              );
+            })}
           </svg>
         </div>
       </GameSurface>
-      {!configure && (side < 0 || !alive) && (
-        <p className="spectator-status">
-          {side < 0
-            ? "You’re watching. The host picks the players."
-            : "You’re out. Your side is now a wall."}
-        </p>
+      {game.phase === "finished" && (
+        <div className="arena-finale" aria-label="Arena results">
+          <span
+            className="arena-champion"
+            aria-hidden="true"
+            style={{
+              background: color(game.seats.indexOf(arenaWinner(game)!)),
+            }}
+          >
+            {game.seats.indexOf(arenaWinner(game)!) + 1}
+          </span>
+          <small>LAST PADDLE STANDING</small>
+          <strong>{name(arenaWinner(game))}</strong>
+          <span>
+            {arenaWinner(game) === session.me.id
+              ? "You won the arena!"
+              : side < 0
+                ? "Arena champion"
+                : "Good game. Ready for another?"}
+          </span>
+        </div>
       )}
-      <GameHelp>
-        {side >= 0 && (
-          <p className="muted">
-            Your paddle is at the bottom. Drag left/right, use the slider, or
-            press ← / →.
+      {!configure && side >= 0 && alive && (
+        <div
+          className="arena-steering"
+          role="group"
+          aria-label="Paddle steering strip"
+          tabIndex={controllable ? 0 : -1}
+          aria-disabled={!controllable}
+          style={{ touchAction: controllable ? "none" : "auto" }}
+          {...dragProps}
+        >
+          <span className="arena-steering-track">
+            <i style={{ left: `${local * 100}%`, background: color(side) }} />
+          </span>
+          <small>Drag here or on the court to steer</small>
+        </div>
+      )}
+      <div className="arena-footer">
+        <GameHelp label="How to play">
+          {side >= 0 && (
+            <>
+              <p>
+                Your paddle is at the bottom. Drag left/right, use the slider,
+                or press ← / →.
+              </p>
+              <label htmlFor="arena-paddle">Your paddle</label>
+              <input
+                id="arena-paddle"
+                type="range"
+                min="12"
+                max="88"
+                value={Math.round(local * 100)}
+                disabled={!controllable}
+                onChange={(e) => move(Number(e.target.value) / 100)}
+              />
+            </>
+          )}
+          <p>
+            {game.startingLives ?? startingLives} lives each. Miss your side and
+            lose a life. Empty and eliminated sides become walls. Last player
+            remaining wins.
           </p>
-        )}
-        {side >= 0 && (
+          <ul>
+            {game.seats.map((id, i) => (
+              <li key={id}>
+                Paddle {i + 1} · {sideNames[viewSide(i)]} · {name(id)}
+                {id === session.me.id ? " · You" : ""}
+              </li>
+            ))}
+          </ul>
+          <PaddleColors
+            session={session}
+            players={players}
+            fallback={paddleColors[Math.max(0, side)].name}
+          />
+        </GameHelp>
+        {session.role === "host" && configure && (
           <>
-            <label htmlFor="arena-paddle">Your paddle</label>
-            <input
-              id="arena-paddle"
-              type="range"
-              min="12"
-              max="88"
-              value={Math.round(local * 100)}
-              disabled={!controllable}
-              onChange={(e) => move(Number(e.target.value) / 100)}
-            />
+            <button
+              className="quiet arena-settings-button"
+              onClick={() => setSettings(true)}
+            >
+              Players & lives
+            </button>
+            <button
+              disabled={!valid}
+              onClick={() => session.startPong(selected, startingLives)}
+            >
+              {game.phase === "finished"
+                ? "Play Arena Again"
+                : "Start Arena Pong"}
+            </button>
           </>
         )}
-        <PaddleColors
-          session={session}
-          players={players}
-          fallback={paddleColors[Math.max(0, side)].name}
-        />
-        {!cooperative && (
-          <p className="muted">
-            {configure && session.role === "host"
-              ? startingLives
-              : (game.startingLives ?? 5)}{" "}
-            lives each. Miss the ball and lose a life. Empty and eliminated
-            sides become walls. Last player remaining wins.
+        {session.role !== "host" && configure && (
+          <p className="arena-waiting">
+            {game.phase === "finished"
+              ? "The host can start another match."
+              : "The host picks the players and starts."}
           </p>
         )}
-        {cooperative && (
-          <p className="muted">
-            Clear all three levels with five shared lives. A miss costs everyone
-            one life; nobody is eliminated. Marked bricks take two hits. Late
-            arrivals watch until the next match.
-          </p>
+        {session.role === "host" && !configure && (
+          <button
+            className="secondary"
+            onClick={() =>
+              game.phase === "paused"
+                ? session.resumePong()
+                : session.pauseGames()
+            }
+          >
+            {game.phase === "paused" ? "Resume Arena" : "Pause Arena"}
+          </button>
         )}
-      </GameHelp>
+      </div>
       {session.role === "host" && configure && (
-        <>
-          {!cooperative && (
-            <label>
-              Lives per player
-              <select
-                aria-label="Lives per player"
-                value={startingLives}
-                onChange={(e) => setStartingLives(Number(e.target.value))}
-              >
-                {[1, 3, 5, 7].map((lives) => (
-                  <option key={lives} value={lives}>
-                    {lives} {lives === 1 ? "life" : "lives"}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
+        <AppPanel
+          title="Players & lives"
+          open={settings}
+          onClose={() => setSettings(false)}
+        >
+          <label>
+            Lives per player
+            <select
+              aria-label="Lives per player"
+              value={startingLives}
+              onChange={(e) => setStartingLives(Number(e.target.value))}
+            >
+              {[1, 3, 5, 7].map((n) => (
+                <option key={n} value={n}>
+                  {n} {n === 1 ? "life" : "lives"}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="seat-picker">
             {sideNames.map((label, i) => (
               <label key={label}>
-                {label} player
-                {(cooperative ? i > 0 : i === 3) ? " (optional)" : ""}
+                {label} player{i === 3 ? " (optional)" : ""}
                 <select
                   aria-label={`${label} player`}
                   value={seats[i]}
@@ -377,9 +540,7 @@ export function ArenaGame({
                   }
                 >
                   <option value="">
-                    {(cooperative ? i > 0 : i === 3)
-                      ? "Wall"
-                      : "Choose a player"}
+                    {i === 3 ? "Wall" : "Choose a player"}
                   </option>
                   {players.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -390,44 +551,13 @@ export function ArenaGame({
               </label>
             ))}
           </div>
-          {!cooperative && players.length < 3 && (
-            <p className="muted">
-              Add at least two other players to play Arena Pong.
-            </p>
-          )}
-          <button
-            disabled={!valid}
-            onClick={() => session.startPong(selected, startingLives)}
-          >
-            {game.phase === "finished"
-              ? cooperative
-                ? "Play Breakout Again"
-                : "Play Arena Again"
-              : cooperative
-                ? "Start Co-op Breakout"
-                : "Start Arena Pong"}
-          </button>
-        </>
+          {!valid && <p>Choose three or four different connected players.</p>}
+          <p>
+            Directions here are the host’s seat assignments. Each player sees
+            their own paddle at the bottom.
+          </p>
+        </AppPanel>
       )}
-      {session.role === "host" &&
-        ["playing", "serve", "paused"].includes(game.phase) && (
-          <button
-            className="secondary"
-            onClick={() =>
-              game.phase === "paused"
-                ? session.resumePong()
-                : session.pauseGames()
-            }
-          >
-            {game.phase === "paused"
-              ? cooperative
-                ? "Resume Breakout"
-                : "Resume Arena"
-              : cooperative
-                ? "Pause Breakout"
-                : "Pause Arena"}
-          </button>
-        )}
     </section>
   );
 }

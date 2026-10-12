@@ -937,7 +937,7 @@ test("Arena Pong synchronizes four players, rotated controls, colors, pause and 
       [sam, 180],
       [lee, 270],
     ] as const)
-      await expect(page.locator(".arena-court svg g")).toHaveAttribute(
+      await expect(page.locator(".arena-court svg > g")).toHaveAttribute(
         "transform",
         `rotate(${rotation} 500 500)`,
       );
@@ -986,10 +986,14 @@ test("Arena Pong synchronizes four players, rotated controls, colors, pause and 
       .getByRole("button", { name: "Choose Game", exact: true })
       .click();
     await chooseGame(host, "Arena Pong");
+    await host
+      .getByRole("button", { name: "Players & lives", exact: true })
+      .click();
     await host.getByLabel("Left player", { exact: true }).selectOption("");
     await host
       .getByLabel("Lives per player", { exact: true })
       .selectOption("3");
+    await closePanels(host);
     await host
       .getByRole("button", { name: "Start Arena Pong", exact: true })
       .click();

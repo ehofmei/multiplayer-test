@@ -675,3 +675,50 @@ it("prioritizes Picnic rows, ignores skips/spectators and deduplicates paused re
   );
   expect(soundEvents(choosing, frame(s))).toEqual([]);
 });
+
+it("Arena distinguishes all occupied and wall sides, losses and elimination without celebrating misses", () => {
+  const s = snapshot();
+  s.room = newRoom("arena", 1);
+  s.room.pong = {
+    ...newPong(["a", "b"]),
+    seats: ["a", "b", "c", "d"],
+    paddles: [0.5, 0.5, 0.5, 0.5],
+    lives: [5, 5, 5, 5],
+    score: [0, 0, 0, 0],
+    phase: "playing",
+  };
+  for (let side = 0; side < 4; side++) {
+    for (const kind of ["paddle", "wall"] as const) {
+      s.room.pong.arenaContact = { sequence: 1, side, position: 0.5, kind };
+      const before = frame(s);
+      s.room.pong.arenaContact = { ...s.room.pong.arenaContact, sequence: 2 };
+      const after = frame(s);
+      expect(soundEvents(before, after)).toEqual([kind]);
+      expect(soundEvents(after, after)).toEqual([]);
+      expect(soundEvents(null, after)).toEqual([]);
+      expect(soundEvents({ ...before, key: "other epoch" }, after)).toEqual([]);
+      expect(
+        soundEvents(
+          { ...before, pong: { ...before.pong!, phase: "paused" } },
+          after,
+        ),
+      ).toEqual([]);
+      expect(soundEvents(after, before)).toEqual([]);
+    }
+    const before = frame(s);
+    s.room.pong.lives = [5, 5, 5, 5];
+    s.room.pong.lives[side] = 4;
+    s.room.pong.score[side]++;
+    s.room.pong.phase = "serve";
+    expect(soundEvents(before, frame(s))).toEqual(["arena-miss"]);
+    const old = frame(s);
+    s.room.pong.lives = s.room.pong.lives.map((n, i) => (i === side ? 0 : n));
+    expect(soundEvents(old, frame(s))).toEqual(["arena-out"]);
+    s.room.pong.phase = "playing";
+    s.room.pong.lives = [5, 5, 5, 5];
+  }
+  const before = frame(s);
+  s.room.pong.phase = "finished";
+  s.room.pong.lives = [1, 0, 0, 0];
+  expect(soundEvents(before, frame(s))).toEqual(["win"]);
+});

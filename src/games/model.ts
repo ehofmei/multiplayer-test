@@ -31,7 +31,14 @@ export type GameKind =
   | "picnic"
   | "seek"
   | "glow";
+export interface ArenaContact {
+  sequence: number;
+  side: number;
+  position: number;
+  kind: "paddle" | "wall" | "miss" | "out";
+}
 export interface PongState {
+  arenaContact?: ArenaContact;
   phase: "ready" | "serve" | "playing" | "paused" | "finished";
   seats: string[];
   paddles: number[];

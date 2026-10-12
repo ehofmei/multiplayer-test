@@ -7,6 +7,7 @@ import {
   viewPosition,
 } from "./arena";
 import { newRoom } from "./model";
+import { newBreakout, stepBreakout } from "./breakout";
 import { validRoom } from "./validate";
 import { parseMessage } from "../network/protocol";
 
@@ -129,4 +130,89 @@ describe("Arena Pong", () => {
       ),
     ).toBeNull();
   });
+});
+
+it("records confirmed contact side, position and kind without changing Breakout state", () => {
+  for (const [side, x, y, vx, vy] of [
+    [0, 0.5, 0.933, 0, 0.4],
+    [1, 0.933, 0.5, 0.4, 0],
+    [2, 0.5, 0.067, 0, -0.4],
+    [3, 0.067, 0.5, -0.4, 0],
+  ]) {
+    const state = {
+      ...newArena(["a", "b", "c", "d"]),
+      phase: "playing" as const,
+      ball: { x, y, vx, vy },
+    };
+    const hit = stepArena(state, 1 / 120);
+    expect(hit.arenaContact).toEqual({
+      sequence: 1,
+      side,
+      position: 0.5,
+      kind: "paddle",
+    });
+    expect(validRoom({ ...newRoom("arena", 1), pong: hit })).toBe(true);
+    const wall = stepArena({ ...state, lives: [0, 0, 0, 0] }, 1 / 120);
+    expect(wall.arenaContact?.kind).toBe("wall");
+    const missState = { ...state, paddles: [0.15, 0.15, 0.15, 0.15] };
+    expect(stepArena(missState, 1 / 120).arenaContact?.kind).toBe("miss");
+    expect(
+      stepArena({ ...missState, lives: [1, 1, 1, 1] }, 1 / 120).arenaContact
+        ?.kind,
+    ).toBe("out");
+    const second = stepArena(
+      { ...state, arenaContact: hit.arenaContact },
+      1 / 120,
+    );
+    expect(second.arenaContact?.sequence).toBe(2);
+    expect(stepArena({ ...hit, phase: "paused" }, 1)).toEqual({
+      ...hit,
+      phase: "paused",
+    });
+  }
+  const room = { ...newRoom("arena", 1), pong: newArena(["a", "b", "c"]) };
+  const contact = { sequence: 1, side: 0, position: 0.5, kind: "paddle" };
+  expect(
+    parseMessage(
+      JSON.stringify({
+        v: 2,
+        type: "state",
+        room: { ...room, pong: { ...room.pong, arenaContact: contact } },
+        grid: { revision: 0, cells: Array(16).fill(false) },
+        players: [],
+      }),
+    )?.type,
+  ).toBe("state");
+  expect(
+    stepBreakout(
+      {
+        ...newBreakout(["a"]),
+        phase: "playing",
+        ball: { x: 0.5, y: 0.933, vx: 0, vy: 0.4 },
+      },
+      1 / 120,
+    ).arenaContact,
+  ).toBeUndefined();
+  for (const invalid of [
+    { ...contact, sequence: 0 },
+    { ...contact, sequence: 1_000_001 },
+    { ...contact, side: 4 },
+    { ...contact, position: 2 },
+    { ...contact, kind: "point" },
+  ]) {
+    expect(
+      validRoom({ ...room, pong: { ...room.pong, arenaContact: invalid } }),
+    ).toBe(false);
+    expect(
+      parseMessage(
+        JSON.stringify({
+          v: 2,
+          type: "state",
+          room: { ...room, pong: { ...room.pong, arenaContact: invalid } },
+          grid: { revision: 0, cells: Array(16).fill(false) },
+          players: [],
+        }),
+      ),
+    ).toBeNull();
+  }
 });

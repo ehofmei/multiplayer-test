@@ -3,7 +3,7 @@
 This follow-up plan was created as the final deliverable of
 [FAMILY_PLAYTEST_PLAN.md](FAMILY_PLAYTEST_PLAN.md). **Implementation is in progress:**
 Tasks 1–2 and 4 are implemented; Task 3 is implemented with live QA pending;
-Tasks 5–15 remain planned. Read
+Task 5 is implemented with verification pending; Tasks 6–15 remain planned. Read
 [AGENTS.md](AGENTS.md) before implementing. Each remaining numbered task can be
 assigned to a separate Codex session.
 
@@ -15,7 +15,7 @@ assigned to a separate Codex session.
 | 2    | Treasure Dive            | Implemented; local and Linux verification complete |
 | 3    | Patchwork Picnic         | Implemented; live QA pending                       |
 | 4    | Reaction Race            | Implemented; physical-device QA pending            |
-| 5    | Arena Pong               | Planned                                            |
+| 5    | Arena Pong               | Implemented; verification pending                  |
 | 6    | Light-cycle Arena        | Planned                                            |
 | 7    | Light Seek               | Planned                                            |
 | 8    | Shared Lights            | Planned                                            |

@@ -71,12 +71,28 @@ unlock, device volume/mute behavior, and foreground recovery need physical testi
 
 ## Arena Pong and paddle colors
 
-- Host-only game selection and three/four distinct player assignments; fourth empty seat is a wall.
-- Four simultaneous paddles, own paddle at bottom on every side, left/right pointer/keyboard/slider controls and spectator restrictions.
-- Five lives, paddle/wall/corner collisions, elimination turns sides into walls, winner and rematch.
-- Palette names/selection indicators, synchronized colors, reload persistence, regular Pong reuse.
-- Pause/resume, background handling, participant disconnect reset, switching games preserves peers.
-- Desktop/tablet/320px phone: court proportions, long names, 44px controls, focus, contrast and no horizontal overflow.
+- Real four-player pairing covers seat assignment, all rotated views, duplicate
+  colors, synchronized lives, court/steering-strip pointer and keyboard input,
+  accessible slider, pause/resume, spectators and participant disconnect cleanup.
+  Three-player play keeps the unused side a wall. Rematch retains selected lives.
+- Arena unit/audio tests cover every occupied/empty/eliminated collision side,
+  confirmed miss location, wall conversion, bounded optional contact validation
+  through the protocol parser, deduplication, stale/initial/paused frames, epoch
+  reset and final-cue priority. Breakout retains its own contact representation.
+- Deterministic paired screenshots cover ready, rotated active play, desktop,
+  short phone, landscape, miss, last life/reduced motion, elimination and finale.
+  The host clock establishes actual simulated outcomes and clients must receive
+  the matching state before assertions/capture. No live-state injection or physics
+  retuning. Darwin and genuine Ubuntu baselines require visual review.
+- Strict fit checks cover 390×844, 320×700, 320×568, 844×390, 768×1024 and
+  1280×720 with native and taller serif metrics. Check court squareness, actual
+  card overflow, 44px controls and footer clearance. Short landscape uses counts
+  instead of tiny pips, with controls beside the court. Results retire the court.
+- Physical iPhone/iPad follow-up: compare court dragging and the steering strip
+  with real thumbs, especially reach, release/cancel and fast reversals; confirm
+  ball visibility, installed safe areas, rotation and background/resume. Listen
+  to the short loss/elimination cues with several devices and family conversation,
+  including Safari gesture unlock and audio recovery. Keep sound muted by default.
 
 ## Family play feedback
 
@@ -247,10 +263,9 @@ The persistent [screenshot gallery](SCREENSHOTS.md) uses versioned baseline path
 instead of temporary `test-results/` files or expiring Actions artifacts. After a
 game's visual change, review its gallery entry as well as its baseline diff. Keep
 the entry's representative image and links current when renaming or adding states.
-Arena Pong currently uses `docs/screenshots/arena-pong-desktop.png`, a saved macOS
-capture from the four-player pairing test. When changing Arena Pong's appearance,
-refresh it from that test's `test-results/arena-desktop.png` and visually review
-the complete result; it is documentation evidence, not a comparison baseline.
+Arena Pong's gallery now uses the paired, deterministic `tests/arena.spec.ts`
+baselines, with separate Darwin/Linux renders. The old saved desktop capture
+remains as historical evidence; new visual comparisons use the new states.
 
 For tests that include `process.platform` in screenshot names, retain reviewed
 `-darwin.png` and `-linux.png` files for every captured state in

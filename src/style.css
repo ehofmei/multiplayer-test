@@ -7551,3 +7551,321 @@ input.golf-power-input {
     white-space: nowrap;
   }
 }
+
+/* Arena Pong keeps identity on the rails and feedback outside the ball's path. */
+.app-shell .arena-polished {
+  color: #d9edf5;
+  background: radial-gradient(ellipse at 50% 25%, #173949, #091c28 75%);
+  border-color: #3c6174;
+  gap: 8px;
+  padding: 12px;
+}
+.arena-polished .arena-hud {
+  flex: none;
+}
+.app-shell .arena-polished .arena-lives {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.app-shell .arena-polished .arena-lives li {
+  background: #102a38;
+  border: 1px solid;
+  border-top-width: 3px;
+  border-radius: 9px;
+  padding: 6px;
+}
+.app-shell .arena-polished .arena-player {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.app-shell .arena-polished .arena-player b {
+  font-size: 13px;
+}
+.app-shell .arena-polished .arena-player span {
+  font-size: 12px;
+  flex: 1;
+}
+.arena-player small {
+  color: #b6cfdb;
+  font-size: 14px;
+}
+.app-shell .arena-polished .arena-lives strong {
+  margin-top: 4px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.app-shell .arena-polished .arena-pips {
+  display: flex;
+  gap: 3px;
+}
+.arena-pips i {
+  width: 5px;
+  height: 7px;
+  border-radius: 2px;
+  background: #46606e;
+}
+.arena-pips i[data-filled="true"] {
+  background: #d6eff6;
+}
+.app-shell .arena-polished .arena-life-count {
+  font-size: 11px;
+}
+.arena-polished .arena-lives li[data-lives="1"] {
+  box-shadow: inset 0 -2px #ffbd83;
+}
+.arena-polished
+  .arena-lives
+  li[data-lives="1"]
+  .arena-pips
+  i[data-filled="true"] {
+  background: #ffbd83;
+}
+.arena-polished .arena-lives li[data-local="true"] .arena-player b {
+  border-bottom: 2px solid white;
+}
+.arena-polished .arena-lives li[data-lives="0"] {
+  opacity: 0.65;
+}
+.arena-polished .arena-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+.arena-intro small,
+.arena-finale small {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: #a9cfdf;
+}
+.arena-intro strong {
+  font-size: 24px;
+}
+.arena-intro span {
+  font-size: 13px;
+}
+.app-shell .arena-polished .arena-status {
+  margin: 0;
+  color: #b8d2df;
+  font-size: 12px;
+  line-height: 1.25;
+  min-height: 15px;
+  text-align: center;
+}
+.app-shell .arena-polished .arena-court {
+  background: radial-gradient(circle at 50% 50%, #143342, #091b28);
+  border: 1px solid #527c92;
+  border-radius: 16px;
+  box-shadow:
+    inset 0 0 24px #020d1799,
+    0 8px 20px #0003;
+}
+.arena-polished .arena-steering {
+  min-height: 48px;
+  flex: none;
+  border: 1px solid #466b80;
+  border-radius: 12px;
+  padding: 10px 16px 6px;
+  cursor: ew-resize;
+}
+.arena-steering-track {
+  display: block;
+  height: 4px;
+  margin-bottom: 7px;
+  position: relative;
+  background: #365568;
+  border-radius: 5px;
+}
+.arena-steering-track i {
+  position: absolute;
+  top: -5px;
+  width: 36px;
+  height: 13px;
+  transform: translateX(-50%);
+  border: 2px solid white;
+  border-radius: 8px;
+}
+.arena-steering small {
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  color: #c0dce8;
+}
+.arena-polished .arena-steering[aria-disabled="true"] {
+  opacity: 0.55;
+}
+.arena-polished .arena-finale {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px;
+  background: #173b4d;
+  border: 1px solid #84bdce;
+  border-radius: 12px;
+}
+.arena-finale strong {
+  font-size: clamp(30px, 5vw, 48px);
+  overflow-wrap: anywhere;
+}
+.arena-finale span,
+.arena-waiting {
+  font-size: 13px;
+  color: #c0dce8;
+  margin: 0;
+}
+.arena-polished :focus-visible {
+  outline: 3px solid #fff0ad;
+  outline-offset: 3px;
+}
+@media (max-width: 360px) {
+  .app-shell .arena-polished {
+    padding: 8px;
+    gap: 6px;
+  }
+  .app-shell .arena-polished .arena-lives li {
+    padding: 4px;
+  }
+  .app-shell .arena-polished .arena-player {
+    gap: 3px;
+  }
+  .app-shell .arena-polished .arena-player span {
+    font-size: 11px;
+  }
+}
+.app-shell .games-card.arena-polished:not(.game-library) {
+  display: flex;
+  padding-bottom: 12px;
+}
+.app-shell .games-card.arena-polished > .game-surface {
+  display: flex;
+  max-height: none;
+  background: transparent;
+  border: 0;
+}
+.app-shell .games-card.arena-polished > .arena-status {
+  display: block;
+  font-size: 12px;
+}
+.arena-footer {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.app-shell .arena-footer > button {
+  order: 0;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #d7eff8;
+  background: #193b4e;
+  border-color: #587f93;
+}
+.app-shell .arena-footer > button:not(.quiet):not(.secondary) {
+  background: #c8f3e4;
+  color: #12312e;
+  font-weight: 700;
+  flex: 1;
+  min-width: 104px;
+}
+.arena-footer .arena-waiting {
+  flex: 1;
+  text-align: right;
+}
+.app-shell .arena-footer > .secondary {
+  margin-left: auto;
+}
+.app-shell .games-card.arena-polished[data-phase="finished"] > .game-surface {
+  display: none;
+}
+.app-shell .arena-polished[data-phase="finished"] .arena-finale {
+  flex: 1;
+  justify-content: center;
+  padding: 16px;
+}
+.arena-champion {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 44px;
+  color: #0c2430;
+  border: 3px solid #f0fbff;
+  border-radius: 14px;
+  margin: 0 auto 12px;
+  font-size: 26px !important;
+  font-weight: 800;
+}
+@media (max-width: 360px) {
+  .app-shell .arena-footer > button {
+    padding: 8px 7px;
+    font-size: 11px;
+  }
+}
+@media (max-height: 450px) and (min-width: 600px) {
+  .app-shell .games-card.arena-polished:not(.game-library) {
+    display: grid;
+    padding: 12px;
+    grid-template-columns: minmax(0, 1fr) 210px;
+    grid-template-rows: auto 1fr auto;
+    gap: 8px;
+  }
+  .app-shell .arena-polished .arena-hud {
+    grid-area: 1 / 2;
+  }
+  .app-shell .arena-polished .arena-lives {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app-shell .arena-polished .arena-lives .arena-pips {
+    display: none;
+  }
+  .app-shell .games-card.arena-polished > .game-surface {
+    grid-area: 1 / 1 / 4 / 2;
+    padding-top: 22px;
+    min-height: 0;
+  }
+  .app-shell .games-card.arena-polished > .arena-status {
+    grid-area: auto;
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 238px;
+  }
+  .app-shell .arena-polished .arena-steering {
+    grid-area: 2 / 2;
+    align-self: center;
+  }
+  .app-shell .arena-polished .arena-footer {
+    grid-area: 3 / 2;
+  }
+  .app-shell .arena-footer > button {
+    padding: 6px;
+    font-size: 11px;
+  }
+  .app-shell .arena-polished[data-phase="finished"] .arena-finale {
+    grid-area: 1 / 1 / 4 / 2;
+    padding: 8px;
+  }
+  .app-shell .arena-polished[data-phase="finished"] .arena-status {
+    display: none;
+  }
+  .arena-polished .arena-intro strong {
+    font-size: 20px;
+  }
+}
+@media (max-height: 450px) and (min-width: 600px) {
+  .app-shell .arena-polished .arena-lives li {
+    padding: 4px;
+  }
+  .app-shell .arena-polished .arena-lives strong {
+    margin-top: 2px;
+  }
+}
+.arena-finale .arena-champion {
+  color: #0c2430;
+  margin: 0 auto 12px;
+}

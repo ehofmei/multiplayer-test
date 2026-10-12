@@ -137,6 +137,8 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
     pong: pong
       ? {
           phase: pong.phase,
+          arenaContact: room.kind === "arena" ? pong.arenaContact : undefined,
+          lives: room.kind === "arena" ? pong.lives : undefined,
           bumperHits: pong.bumpers?.reduce((sum, b) => sum + b.hits, 0) ?? 0,
           x: pong.ball.x,
           y: pong.ball.y,
@@ -365,6 +367,33 @@ export function soundEvents(
   const a = after.pong,
     b = before.pong;
   if (a && b) {
+    if (after.kind === "arena") {
+      if (a.phase === "paused" || b.phase === "paused" || b.phase === "ready")
+        return [];
+      if (a.phase === "finished" && b.phase !== "finished")
+        return [a.winner ? "win" : "finish"];
+      if (a.lives?.some((n, i) => n < (b.lives?.[i] ?? n)))
+        return [
+          a.lives.some((n, i) => n === 0 && (b.lives?.[i] ?? 0) > 0)
+            ? "arena-out"
+            : "arena-miss",
+        ];
+      const c = a.arenaContact;
+      if (
+        b.phase === "playing" &&
+        c &&
+        c.sequence > (b.arenaContact?.sequence ?? 0)
+      )
+        return [
+          c.kind === "out"
+            ? "arena-out"
+            : c.kind === "miss"
+              ? "arena-miss"
+              : c.kind,
+        ];
+      if (a.phase === "playing" && b.phase === "serve") return ["serve"];
+      return [];
+    }
     if (a.phase === "finished" && b.phase !== "finished")
       return [a.winner ? "win" : "finish"];
     if (a.level !== undefined && (a.phase === "paused" || b.phase === "paused"))

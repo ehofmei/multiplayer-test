@@ -9,7 +9,7 @@ On GitHub, the branch selector controls which version you see: `main` shows the
 published source, while a review branch shows its proposed changes. These are
 desktop Chromium captures, including simulated phone layouts, rather than
 photographs from physical iPhones or iPads. Linux baselines are shown where
-available; shared baselines and the saved Arena Pong capture are identified below.
+available; shared baselines are identified below.
 
 [Sumo Bumpers](#sumo-bumpers) · [Light-cycle Arena](#light-cycle-arena) ·
 [Spaceship Panic](#spaceship-panic) · [Co-op Breakout](#co-op-breakout) ·
@@ -80,10 +80,19 @@ Bumper warning · phone layout.
 
 ## Arena Pong
 
-Four-player match, paused · desktop layout. Saved macOS capture from the existing
-four-player pairing test; this is evidence, not a visual comparison baseline.
+Rotated four-player court · phone layout. Numbered rails, local paddle notch,
+life pips and separate steering strip keep the playing area clear.
 
-![Arena Pong four-player match](docs/screenshots/arena-pong-desktop.png)
+![Arena Pong rotated court](tests/arena.spec.ts-snapshots/arena-rotated-linux.png)
+
+[Ready](tests/arena.spec.ts-snapshots/arena-ready-linux.png) ·
+[Desktop](tests/arena.spec.ts-snapshots/arena-desktop-linux.png) ·
+[Short phone](tests/arena.spec.ts-snapshots/arena-short-phone-linux.png) ·
+[Landscape](tests/arena.spec.ts-snapshots/arena-landscape-linux.png) ·
+[Life loss](tests/arena.spec.ts-snapshots/arena-miss-linux.png) ·
+[Last life, reduced motion](tests/arena.spec.ts-snapshots/arena-last-life-reduced-linux.png) ·
+[Eliminated side becomes a wall](tests/arena.spec.ts-snapshots/arena-eliminated-linux.png) ·
+[Champion](tests/arena.spec.ts-snapshots/arena-results-linux.png).
 
 ## Reaction Race
 

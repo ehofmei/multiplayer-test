@@ -70,6 +70,22 @@ export function stepArena(
     ? old.y + vy * seconds * hit.t
     : old.x + vx * seconds * hit.t;
   const active = state.lives[hit.side] > 0;
+  // One bounded confirmed contact survives coalesced client snapshots. Breakout
+  // reuses this physics but retains its own feedback and wire representation.
+  const contact = (kind: "paddle" | "wall" | "miss" | "out") =>
+    state.breakout
+      ? {}
+      : {
+          arenaContact: {
+            sequence: Math.min(
+              1_000_000,
+              (state.arenaContact?.sequence ?? 0) + 1,
+            ),
+            side: hit.side,
+            position: Math.max(0.065, Math.min(0.935, along)),
+            kind,
+          },
+        };
   if (active && Math.abs(along - state.paddles[hit.side]) > 0.14) {
     const lives = [...state.lives];
     const score = [...state.score];
@@ -86,6 +102,7 @@ export function stepArena(
     ][target];
     return {
       ...state,
+      ...contact(lives[hit.side] === 0 ? "out" : "miss"),
       lives,
       score,
       phase: alive.length <= 1 ? "finished" : "serve",
@@ -113,6 +130,7 @@ export function stepArena(
   else vy = -vy;
   return {
     ...state,
+    ...contact(active ? "paddle" : "wall"),
     rallySeconds,
     ball: { x: clampPaddleEdge(x), y: clampPaddleEdge(y), vx, vy },
   };

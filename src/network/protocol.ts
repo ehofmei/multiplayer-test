@@ -194,7 +194,8 @@ export function parseMessage(raw: unknown): Message | null {
       return m as Message;
     if (
       m.type === "state" &&
-      // Includes bounded optional Sumo contact ticks; older snapshots may omit them.
+      // Includes optional bounded Arena confirmed contacts and Sumo contact ticks;
+      // older snapshots may omit them. No new input action or protocol version.
       validRoom(m.room) &&
       (m.ack === undefined || integer(m.ack)) &&
       record(m.grid) &&

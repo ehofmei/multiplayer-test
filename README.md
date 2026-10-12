@@ -224,10 +224,28 @@ late arrivals join the next match. A participant leaving resets the match while
 keeping other connections open. Pause/resume and host background handling match
 regular Pong. Simulation and client smoothing use the same rates as Pong.
 
+Arena's illuminated square court keeps the ball above all feedback. A white notch
+marks your paddle; rail numbers match the compact life display, and direction
+arrows follow your rotated view. Life pips/counts show remaining lives, with a
+steady amber last-life treatment. Misses briefly mark the actual rail location
+and decrement lives; an eliminated paddle becomes a solid wall and its controls
+turn off. Sound distinguishes confirmed paddle/wall contact, loss and elimination
+without celebrating misses. Effects remain outside the ball's path and work muted
+or with reduced motion. A steering strip below the court (beside it in short
+landscape) complements court dragging, arrow keys and the Help slider.
+
+**Players & lives** opens the host's seat/lives dialog; setup directions refer to
+the host's assignments. Full names, viewed sides and color choices remain in
+**How to play**. The match finale replaces the stopped court with the champion's
+name/number and an immediate replay action; changing settings is separate.
+Arena snapshots now optionally include one bounded confirmed contact; older
+snapshots remain accepted, but update all devices for consistent feedback. This
+adds no input action, server or rule change.
+
 Both Pong games offer six named paddle color presets. Players choose their own;
 colors are shared with all devices and saved with the local player identity.
-Duplicate colors are allowed; name/life labels identify Arena players without
-relying on color. Update all devices before pairing to use Arena Pong.
+Duplicate colors are allowed; numbered rail markers and matching HUD entries
+identify Arena players without relying on color. Update all devices before pairing to use Arena Pong.
 
 Both Pong games keep the original gentle serve, then ramp ball speed after two
 seconds of each rally even without paddle hits. Paddle hits also give a stronger speed boost,
