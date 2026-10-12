@@ -94,6 +94,10 @@ life pips and separate steering strip keep the playing area clear.
 [Eliminated side becomes a wall](tests/arena.spec.ts-snapshots/arena-eliminated-linux.png) ·
 [Champion](tests/arena.spec.ts-snapshots/arena-results-linux.png).
 
+Full-screen Ubuntu fit evidence with taller font metrics:
+[Short-phone setup](docs/screenshots/arena-ready-320x568-taller-linux.png) ·
+[Landscape play](docs/screenshots/arena-active-844x390-taller-linux.png).
+
 ## Reaction Race
 
 Arcade pads and personal hit reward · macOS baseline.

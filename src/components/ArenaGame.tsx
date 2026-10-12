@@ -75,7 +75,12 @@ export function ArenaGame({
   const name = (id?: string) =>
     players.find((p) => p.id === id)?.name ?? "Waiting";
   const color = (i: number) =>
-    paddleHex(players.find((p) => p.id === game.seats[i])?.color, i);
+    paddleHex(
+      players.find(
+        (p) => p.id === (game.phase === "ready" ? seats[i] : game.seats[i]),
+      )?.color,
+      i,
+    );
   const viewSide = (i: number) => (i - Math.max(0, side) + 4) % 4;
   const status = !connected
     ? "Host disconnected"
@@ -108,6 +113,7 @@ export function ArenaGame({
       !before ||
       before.phase === "paused" ||
       before.phase === "ready" ||
+      before.phase === "finished" ||
       game.phase === "paused" ||
       game.phase === "ready"
     ) {

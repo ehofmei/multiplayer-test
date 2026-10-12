@@ -3,7 +3,7 @@
 This follow-up plan was created as the final deliverable of
 [FAMILY_PLAYTEST_PLAN.md](FAMILY_PLAYTEST_PLAN.md). **Implementation is in progress:**
 Tasks 1–2 and 4 are implemented; Task 3 is implemented with live QA pending;
-Task 5 is implemented with verification pending; Tasks 6–15 remain planned. Read
+Task 5 is implemented with physical-device QA pending; Tasks 6–15 remain planned. Read
 [AGENTS.md](AGENTS.md) before implementing. Each remaining numbered task can be
 assigned to a separate Codex session.
 
@@ -15,7 +15,7 @@ assigned to a separate Codex session.
 | 2    | Treasure Dive            | Implemented; local and Linux verification complete |
 | 3    | Patchwork Picnic         | Implemented; live QA pending                       |
 | 4    | Reaction Race            | Implemented; physical-device QA pending            |
-| 5    | Arena Pong               | Implemented; verification pending                  |
+| 5    | Arena Pong               | Implemented; physical-device QA pending            |
 | 6    | Light-cycle Arena        | Planned                                            |
 | 7    | Light Seek               | Planned                                            |
 | 8    | Shared Lights            | Planned                                            |
@@ -35,12 +35,11 @@ checks. Keep this table current as each remaining task is completed.
 
 ## Where the biggest gains are
 
-Continue with **Task 5: Arena Pong**, after completing Task 3’s pending
-live/device checks for Patchwork Picnic and the physical-device checks for
-Reaction Race in QA.md.
-Midnight Bakery, Treasure Dive and Reaction Race now have their planned polish. These five
-games were identified as having the clearest gaps in action feedback, sound,
-score communication or results. Then do **tasks 6–10** for control
+Before moving to Task 6, complete the remaining live/device checks for Tasks 3–5
+in QA.md and run the short family playtest described below. Midnight Bakery,
+Treasure Dive, Patchwork Picnic, Reaction Race and Arena Pong now have their
+implemented polish. These five games were identified as having the clearest gaps
+in action feedback, sound, score communication or results. Then do **tasks 6–10** for control
 clarity, atmosphere and navigation. **Tasks 11–15** are smaller refinements to
 games that already received substantial polish.
 

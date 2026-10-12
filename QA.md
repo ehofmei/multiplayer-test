@@ -88,6 +88,11 @@ unlock, device volume/mute behavior, and foreground recovery need physical testi
   1280×720 with native and taller serif metrics. Check court squareness, actual
   card overflow, 44px controls and footer clearance. Short landscape uses counts
   instead of tiny pips, with controls beside the court. Results retire the court.
+- Persistent live in-app browser QA also exercised a real three-player text-paired
+  room, natural finish, replay, rotated court/strip keyboard input, Help slider
+  clamping, shared color changes and synchronized pause/resume. Automated touch
+  emulation and saved phone/tablet/desktop screenshots complement that pass;
+  neither establishes physical thumb comfort or Safari behavior.
 - Physical iPhone/iPad follow-up: compare court dragging and the steering strip
   with real thumbs, especially reach, release/cancel and fast reversals; confirm
   ball visibility, installed safe areas, rotation and background/resume. Listen

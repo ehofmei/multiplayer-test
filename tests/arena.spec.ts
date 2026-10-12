@@ -301,6 +301,7 @@ test("Arena arcade pairs rotated controls, identifies walls and lives, and finis
       .click();
     await expect(host.getByTestId("arena-lives-0")).toContainText("1 life");
     await expect(host.locator(".arena-finale")).toHaveCount(0);
+    await expect(host.locator(".arena-contact")).toHaveCount(0);
     await host.clock.resume();
   } finally {
     await Promise.all(contexts.map((c) => c.close()));

@@ -5,8 +5,9 @@
 Make Arena Pong feel like a finished local multiplayer arcade game: immediate
 steering, an unmistakable ball, a useful court, and clear consequences when a
 player misses. Control comfort and uninterrupted play take priority over artwork,
-identity labels, life feedback and celebration. This is a proposed implementation
-plan, not an implemented feature.
+identity labels, life feedback and celebration. This document records the implementation
+direction; README describes the resulting behavior and QA records remaining
+device checks.
 
 Keep the rules, paddle geometry, speed ramp/caps, fixed 120 Hz host simulation,
 client prediction/smoothing, one-second serve delay, rotation and 1/3/5/7 lives.
