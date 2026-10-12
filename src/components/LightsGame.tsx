@@ -62,7 +62,11 @@ export function LightsGame({
   }, [grid, connected]);
 
   return (
-    <section className="board-card lights-board" aria-label="Shared grid">
+    <section
+      className="board-card lights-board"
+      aria-label="Shared grid"
+      data-connected={connected}
+    >
       <div className="board-heading">
         <h2>Light board</h2>
       </div>

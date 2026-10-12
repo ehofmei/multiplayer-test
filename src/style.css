@@ -2327,9 +2327,33 @@ main.app-shell {
   opacity: 1;
   border-style: dashed;
 }
+/* Leave room for the disconnect guidance without shrinking the last-known lamps. */
+.app-shell:has(.lights-board) .app-content > .error {
+  margin: 0;
+  padding: 8px 12px;
+  line-height: 1.35;
+}
+@media (max-height: 600px) {
+  .app-shell .lights-board[data-connected="false"] .board-heading {
+    display: none;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .app-shell .lights-board .cell:active:not(:disabled) .light {
     transform: none;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell .lights-board {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    column-gap: 16px;
+    align-items: center;
+  }
+  .app-shell .lights-board > .grid {
+    grid-column: 1 / -1;
+    align-self: stretch;
   }
 }
 @media (max-width: 360px), (max-height: 550px) {

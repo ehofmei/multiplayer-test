@@ -198,6 +198,9 @@ no observable cell change remain silent. The technical revision count is in
 Menu → Connection details, including when hosting alone. Disconnected switches
 preserve their last-known states and disable input. No rules or network fields
 changed; this polish does not require a coordinated protocol update.
+Short landscape places the title beside the instruction to leave larger lenses.
+On short disconnected screens, the app title and disconnect warning stay visible
+while the duplicate board title is omitted to preserve readable lamps.
 
 **Pong** plays to seven points. The host chooses any two connected players (they
 can be two clients); other players watch. The court is vertical and each player

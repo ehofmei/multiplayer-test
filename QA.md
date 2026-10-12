@@ -272,6 +272,8 @@ device. Revision assertions open Connection details explicitly; ordinary play
 asserts button states. A delayed-client-send test checks press depression before
 host confirmation, then matching host/client states and confirmed visual feedback.
 An isolated mobile touch context checks cancellation followed by ordinary taps.
+Disconnected 320×568 and 844×390 client boards retain lens/label clearance,
+last-known states and disabled controls alongside the connection warning.
 Animation checks verify an accepted change produces feedback, same-cell effects
 remain bounded and all effects clear. No scoring or spectator restrictions apply.
 

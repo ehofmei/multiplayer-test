@@ -5,6 +5,7 @@ import {
   connectionDetails,
   expectScreenFits,
   join,
+  returnHome,
 } from "./ui";
 import { expectStableScreenshot } from "./screenshot";
 import { audioStarts, monitorAudio } from "./audio";
@@ -68,7 +69,10 @@ async function fit(page: Page) {
     expect(b.left).toBeGreaterThanOrEqual(0);
     expect(b.right).toBeGreaterThanOrEqual(0);
     expect(b.bottom).toBeGreaterThanOrEqual(0);
-    expect(b.lens).toBeGreaterThanOrEqual(24);
+    expect(
+      b.lens,
+      `lens at ${JSON.stringify(page.viewportSize())}`,
+    ).toBeGreaterThanOrEqual(24);
     expect(b.roundness).toBeLessThanOrEqual(1);
     expect(b.clearance).toBeGreaterThanOrEqual(4);
     expect(b.labelBottom).toBeGreaterThanOrEqual(4);
@@ -82,6 +86,9 @@ test("lamp states, keyboard focus and diagnostics have deliberate compositions",
   await page.setViewportSize({ width: 390, height: 844 });
   await create(page);
   await expect(page.locator(".lights-board")).not.toContainText("Revision");
+  await expect(
+    page.locator('.lights-board [aria-pressed="false"]'),
+  ).toHaveCount(16);
   await fit(page);
   await expectStableScreenshot(
     page,
@@ -116,6 +123,9 @@ test("lamp states, keyboard focus and diagnostics have deliberate compositions",
   await closePanels(page);
   for (const number of [3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15])
     await cell(page, number).click();
+  await expect(page.locator('.lights-board [aria-pressed="true"]')).toHaveCount(
+    16,
+  );
   await settled(page);
   await page.setViewportSize({ width: 1180, height: 820 });
   await fit(page);
@@ -268,6 +278,20 @@ test("client pressing responds locally while ON/OFF waits for host confirmation"
         .evaluate((lens) => lens.getAnimations().length),
     ).toBe(1);
     await settled(client);
+    await returnHome(host);
+    await expect(client.getByRole("status")).toHaveText("Host disconnected");
+    for (const size of [
+      { width: 320, height: 568 },
+      { width: 844, height: 390 },
+    ]) {
+      await client.setViewportSize(size);
+      await client.screenshot({
+        path: `test-results/lights-disconnected-${size.width}.png`,
+      });
+      await fit(client);
+      await expect(button).toBeDisabled();
+      await expect(button).toHaveAttribute("aria-pressed", "true");
+    }
   } finally {
     await context.close();
   }
@@ -333,6 +357,22 @@ test("eight players share the same board and late joins never replay old lamp ef
       );
     }
     await expect(host.getByText("8/8", { exact: true })).toBeVisible();
+    const expected = Array.from({ length: 16 }, (_, index) =>
+      String(index < 8),
+    );
+    for (const page of [
+      host,
+      ...contexts.flatMap((context) => context.pages()),
+    ])
+      await expect
+        .poll(() =>
+          page
+            .locator(".lights-board button")
+            .evaluateAll((buttons) =>
+              buttons.map((button) => button.getAttribute("aria-pressed")),
+            ),
+        )
+        .toEqual(expected);
     await settled(host);
     await fit(host);
     await expectStableScreenshot(
