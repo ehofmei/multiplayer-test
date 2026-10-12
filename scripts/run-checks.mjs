@@ -65,7 +65,9 @@ export async function acquireLock(root, label) {
         await rm(lock, { recursive: true });
         return await claim();
       }
-      throw error;
+      if (error.code !== "EPERM") throw error;
+      // A sandbox may deny inspection of an owner launched with browser access.
+      // Treat that owner as alive rather than exposing a raw kill error.
     }
     throw new Error(
       `QA already running: ${owner.label} (PID ${owner.pid}). Wait for it to finish; no processes were stopped.`,

@@ -1,0 +1,51 @@
+name: Testing streamline scoped Golf render
+on:
+  push:
+    branches: [codex/testing-streamlining]
+permissions:
+  contents: read
+jobs:
+  render:
+    if: contains(github.event.head_commit.message, '[golf-baseline]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:e2e -- tests/minigolf-motion.spec.ts --grep smooth --update-snapshots=all
+      - uses: actions/upload-artifact@v7
+        with:
+          name: settled-golf-linux
+          path: tests/minigolf-motion.spec.ts-snapshots/golf-rolling-desktop-linux.png
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: scoped-golf-failure
+          path: test-results/
+  return:
+    needs: render
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: codex/testing-streamlining
+      - uses: actions/download-artifact@v8
+        with:
+          name: settled-golf-linux
+          path: tests/minigolf-motion.spec.ts-snapshots/
+      - name: Return only the deliberately changed desktop pose
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/minigolf-motion.spec.ts-snapshots/golf-rolling-desktop-linux.png
+          if ! git diff --cached --quiet; then
+            git commit -m 'Generated settled Golf Linux baseline'
+            git push origin HEAD:codex/testing-streamlining
+          fi

@@ -102,6 +102,15 @@ for (const reduced of [false, true])
         expect(await b.getAttribute("transform")).not.toBe(
           `translate(${await b.getAttribute("data-target-x")} ${await b.getAttribute("data-target-y")})`,
         );
+        // Prove interpolation above, then let the client finish that cosmetic
+        // path while host simulation remains paused. A partial RAF frame depends
+        // on snapshot arrival timing even when both devices share the same tick.
+        await client.clock.runFor(500);
+        await exactPositions(client);
+        await expect(motion(client)).toHaveAttribute(
+          "data-ticks",
+          (await motion(host).getAttribute("data-ticks")) as string,
+        );
         await expectStableScreenshot(
           client,
           ".golf-game-card",
