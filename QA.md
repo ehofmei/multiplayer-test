@@ -5,6 +5,8 @@ single rule change, `npx vitest run src/games/breakout.test.ts` is faster still.
 Build once with `npm run build` before focused production-browser checks:
 
 - `npm run test:game -- breakout` selects Breakout and its extracted integration coverage.
+  For a bounded control/layout iteration, append `--grep "fits|controls|pause"`;
+  this excludes the full victory journey, which stays in final verification.
   Other names: pong, arena, reaction, cycle, sumo, bakery, minigolf, seek, ship,
   picnic, treasure and glow. Append normal Playwright options for narrower checks.
 - `npm run test:network` exercises real multi-browser pairing, concurrent inputs
@@ -38,7 +40,11 @@ required regardless of the focused selection.
 
 `.github/workflows/review.yml` runs non-deploying Ubuntu/Node 22 verification on
 `codex/` pushes, and supports explicit dispatch on the review branch. Superseded
-runs cancel within the same branch and mode. Select `baselines` only with explicit
+runs cancel within the same branch and mode. Optional `benchmark` dispatch adds
+two browser shards alongside the ordinary full gate; before dispatch is available
+on the default branch, a review commit containing `[benchmark]` requests the same
+experiment. Each shard saves separate timing/failure evidence in the matching run.
+Sharding is not the default final gate. Select `baselines` only with explicit
 existing spec paths; enable refresh only after reviewing an intended mismatch.
 Download `linux-baseline-evidence-<sha>`, copy only the requested actual Ubuntu
 images into their matching test snapshot directories, visually inspect every
@@ -1277,3 +1283,38 @@ should update for matching controls.
   descriptions, Safari gesture audio unlock/recovery and eight devices sounding
   together. Check host background/resume and confirm every outcome is clear
   muted. Browser timing checks cannot certify hardware cue-to-pixel latency.
+
+## Fixture timing and screenshot stability
+
+The Breakout full-victory fixture keeps real host/client pairing and normal
+pointer/touch/slider controls. It reads level, ball and HUD in one DOM observation
+per step instead of making a second level read. Per-phase profile attachments are
+included in the timing report. Two serial Darwin samples took 96.2/100.9 seconds;
+clock advancement used 79.6/84.9 seconds, DOM reads 8.1/8.2 seconds, input delivery
+2.8/1.8 seconds and pairing 0.8 seconds. The two stage screenshots used about
+0.3 seconds; final assertions/controls and the victory screenshot are outside
+those phase totals. Simulation still dominates, so this is a modest optimization,
+not a demonstrated dramatic speedup. Do not replace it with injected game state.
+
+Game integration flows are split from `game.spec.ts` into explicit per-game files
+for selection and file-level scheduling. All 64 tests remain. Seventeen existing
+baseline files moved with their tests and retain identical image bytes.
+
+Golf smooth-motion screenshots previously sampled a partial interpolation frame.
+Real snapshot arrival timing can change that frame even when simulation ticks
+match. The fixture still asserts non-exact interpolation, then advances only the
+client clock, confirms exact received ball positions and matching host/client
+ticks, and captures the settled rolling scene. Three two-worker repetitions
+passed without image updates. The single desktop Darwin/Linux pair was reviewed
+at the existing strict dimensions and 180-pixel budget. Genuine Ubuntu evidence
+came from [the scoped render run](https://github.com/ehofmei/multiplayer-test/actions/runs/38263195758)
+and was returned in `8d3fd96`; unrelated images remain unchanged.
+
+The first two-shard experiment is inconclusive: shard 1 took 300 seconds and
+failed on the prior Golf timing flaw; shard 2 spent 404 seconds installing Chromium
+and was superseded during its browser run. The ordinary run was also superseded,
+so none is a passing before/after comparison. Retain normal full verification;
+measure another explicit benchmark after stability is established rather than
+adopting sharding or more workers from this sample. Timing records distinguish
+failed/canceled attempts from passing measurements. No retries/timeouts/visual
+budgets were increased and no coverage moved to a later suite.

@@ -1,0 +1,85 @@
+{
+  "date": "2026-10-12",
+  "historicalPlanSamples": {
+    "localBrowserSeconds": 426,
+    "breakoutSeconds": 102,
+    "note": "Reported individual runs in TESTING_STREAMLINING_PLAN.md, not benchmark averages."
+  },
+  "firstLocalFullAttempt": {
+    "status": "failed",
+    "browserSeconds": 422.074,
+    "passed": 63,
+    "failed": 1,
+    "slowest": [
+      {
+        "title": "paired Breakout teammates clear three cores and keep a shared victory",
+        "seconds": 96.579
+      },
+      {
+        "title": "eight bakers fit, late arrivals spectate, and losing the host disables picks",
+        "seconds": 74.264
+      },
+      {
+        "title": "Pong pairs, warns, adds four bumpers, flashes impacts, pauses, resets each point and handles background/disconnect",
+        "seconds": 50.005
+      },
+      {
+        "title": "Golf pairs, drags and cancels, locks privately, pauses, scores five holes, rematches and switches",
+        "seconds": 47.636
+      },
+      {
+        "title": "Bakery pairs, previews, secretly locks, passes, scores two batches and rematches",
+        "seconds": 35.209
+      }
+    ],
+    "note": "Golf partial-interpolation snapshot failed. Fixed by synchronized settled capture; this attempt is not a passing speed comparison."
+  },
+  "ubuntuExperiment": {
+    "run": "https://github.com/ehofmei/multiplayer-test/actions/runs/38262053117",
+    "status": "inconclusive",
+    "jobs": [
+      {
+        "name": "verify",
+        "conclusion": "cancelled",
+        "elapsedSeconds": 617.0,
+        "steps": [
+          {
+            "name": "Run npx playwright install --with-deps chromium",
+            "conclusion": "success",
+            "seconds": 20.0
+          }
+        ]
+      },
+      {
+        "name": "benchmark (1)",
+        "conclusion": "failure",
+        "elapsedSeconds": 385.0,
+        "steps": [
+          {
+            "name": "Run npx playwright install --with-deps chromium",
+            "conclusion": "success",
+            "seconds": 38.0
+          }
+        ]
+      },
+      {
+        "name": "benchmark (2)",
+        "conclusion": "cancelled",
+        "elapsedSeconds": 616.0,
+        "steps": [
+          {
+            "name": "Run npx playwright install --with-deps chromium",
+            "conclusion": "success",
+            "seconds": 404.0
+          }
+        ]
+      }
+    ]
+  },
+  "liveSetup": {
+    "permissionWaitObservedSeconds": 0,
+    "setupRecoveryBudgetSeconds": 300,
+    "budgetMet": true,
+    "note": "Persistent in-app browser, stable port 4174, normal waiting-worker update, no trust/restart popup observed."
+  }
+}
