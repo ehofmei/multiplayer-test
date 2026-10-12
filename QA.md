@@ -1,3 +1,90 @@
+## Iteration and review commands
+
+Use `npm run check:fast` for formatting, types, unit and script tests. For a
+single rule change, `npx vitest run src/games/breakout.test.ts` is faster still.
+Build once with `npm run build` before focused production-browser checks:
+
+- `npm run test:game -- breakout` selects Breakout and its extracted integration coverage.
+  Other names: pong, arena, reaction, cycle, sumo, bakery, minigolf, seek, ship,
+  picnic, treasure and glow. Append normal Playwright options for narrower checks.
+- `npm run test:network` exercises real multi-browser pairing, concurrent inputs
+  and disconnect cleanup. Add it for network/session changes.
+- `npm run test:e2e -- tests/updates.spec.ts` checks waiting-worker/update behavior.
+- `npm run verify` remains the complete final local gate, with snapshot updates
+  explicitly disabled. Run it after focused and live findings are resolved.
+
+The checkout guard serializes all scripted browser/full checks and diagnoses a
+live owner without stopping it. A dead PID is recovered automatically only after its child process group has also
+exited; an invalid
+or missing owner requires inspection of `.qa-run.lock/owner.json` before manual
+cleanup. Avoid raw `npx playwright test` during guarded runs: it bypasses the guard.
+Use separate checkouts for intentionally concurrent work, with distinct `QA_PORT`
+and `QA_OUTPUT_DIR` values, and never rebuild a shared `dist` during a test.
+The preview uses a strict port and never reuses an existing process. Stop only
+your own preview, or choose an explicit QA port. Default regression origin:
+`http://127.0.0.1:4173/multiplayer-test/`.
+
+`test-results/checks-timing.json` records step and total elapsed times;
+`browser-timing.json` records individual tests, status and retries. Compare the
+same machine/worker count and report failures separately from passing timings.
+Setup and permissions before runner startup are manual measurements, not included
+in those files. Retain before/after reports outside the disposable output folder.
+
+Shared protocol/session changes need network smoke plus affected multiplayer
+specs; storage/audio/lifecycle changes need the matching shared-file tests and
+`updates.spec.ts`; global CSS needs `app-layout.spec.ts` and affected game/layout
+specs across the existing viewport/font matrix. Complete local/Ubuntu gates remain
+required regardless of the focused selection.
+
+`.github/workflows/review.yml` runs non-deploying Ubuntu/Node 22 verification on
+`codex/` pushes, and supports explicit dispatch on the review branch. Superseded
+runs cancel within the same branch and mode. Select `baselines` only with explicit
+existing spec paths; enable refresh only after reviewing an intended mismatch.
+Download `linux-baseline-evidence-<sha>`, copy only the requested actual Ubuntu
+images into their matching test snapshot directories, visually inspect every
+changed image, then commit/push and wait for ordinary **verify** success for that
+exact commit. Generation success is not the final gate. This artifact route keeps
+repository access read-only; historical branch workflows retain their baseline
+return mechanism. Historical review branches are excluded from its push trigger to avoid duplicate
+runs; new work should use this reusable workflow.
+
+## Repeatable live-browser setup and popup diagnosis
+
+Inventory for testing-tool changes: current build identity, Create/Return Home,
+game selection, Help/Escape/focus, pause/resume, desktop/phone screenshots; explore
+invalid pairing and a narrow viewport. Full multiplayer/PWA behavior remains
+covered by the production-browser suite and deliberate PWA passes.
+
+Use the `playwright-interactive` skill with the persistent in-app browser through
+`mcp__cua_repl`, basic controls, and a dedicated production preview at
+`http://127.0.0.1:4174/multiplayer-test/`. Keep that origin stable. Check Menu's
+build identifier against the current build before acting. A fresh tab alone does
+not prove fresh storage or a cleared worker. If identity is wrong, stop gameplay
+QA and use only a supported scoped reset for that origin; preserve real progress
+and unrelated browser data. Reserve offline/update/reload checks for deliberate
+PWA QA. Production active-game updates still require a user action and confirmation.
+
+Budget five minutes for setup/recovery; if blocked, record it and continue
+independent checks without claiming live QA passed. Record permission wait separately
+from execution. Do not switch ports/origins repeatedly to escape permissions.
+
+Reported restart/reload and Firefox/Chrome trust popups remain unclassified until
+observed: record exact title/text, originating app and version, action that triggered
+it, and elapsed wait. The game's in-session update confirmation should occur only
+when Update is selected. Browser/site permission, full CDP approval, desktop-app
+restart and OS permission are separate sources. Do not alter permissions or restart
+Codex automatically; only investigate narrowly scoped saved permissions after the
+owner approves. Repository changes cannot establish the source of an unseen popup.
+
+The live setup pass on October 12, 2026 used this supported route without CDP or
+permission changes. A previous worker initially served build `20261012T013632Z`;
+the normal home-screen Update app action loaded `20261012T140348Z` and preserved
+the saved name. The pass exercised creation, Breakout selection, Help/Escape,
+pause/resume, Return Home and invalid text pairing, and reviewed 390×844 phone
+and 1280×720 desktop views. Setup/recovery stayed below five minutes; no browser
+trust or desktop restart popup appeared, and no permission wait was observed.
+Physical iOS installation/touch/lifecycle checks remain manual.
+
 # Browser QA inventory
 
 Checkpoint: app shell, QR/text pairing, game picker, Pong, Arena Pong, Reaction Race, shared grid and latency.

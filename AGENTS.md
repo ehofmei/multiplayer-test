@@ -25,10 +25,10 @@ code, dependencies, build configuration, workflows, tests, or baselines change.
 1. Before adding screenshot states, establish how genuine Linux renders will be
    obtained. Prefer the GitHub Actions review-branch process below when the local
    workspace is macOS. Do not defer missing Linux images until after handoff.
-2. Inspect `.github/workflows/light-seek-review.yml` as the working reference.
-   Its trigger and baseline-return destination are currently specific to
-   `codex/light-seek`: for a different task, adapt or copy it with the actual
-   review branch, appropriate workflow name, and only the affected test files.
+2. Use `.github/workflows/review.yml` for new review branches; it supports
+   complete verification and explicitly scoped baseline evidence generation.
+   Prefer its read-only artifact route described in QA.md; historical branch
+   workflows can still return baseline commits to their own branch.
    Keep the Ubuntu runner, Node 22, `npm ci`, Playwright Chromium installation,
    production build, complete `npm run verify`, and browser evidence upload.
    The review workflow must have no Pages deployment job. Verification needs
@@ -69,3 +69,19 @@ code, dependencies, build configuration, workflows, tests, or baselines change.
    be obtained, continue independent work but explicitly mark the feature
    incomplete. Do not describe it as ready to merge or push with a known
    missing baseline, failing Linux check, or unverified final implementation.
+
+## Efficient iteration
+
+- Run `npm run check:fast`, relevant unit tests and `npm run test:game -- <name>`
+  while editing; build the production preview before focused browser runs.
+- For shared protocol/session changes, add `npm run test:network` and affected
+  games. Storage/audio/lifecycle changes need relevant shared-file/PWA tests;
+  global CSS needs app-layout and affected game viewport/font coverage.
+- Complete live QA and resolve findings before the complete local final gate.
+  Repeat focused checks during fixes; repeat full verification after the last
+  substantive fix. Both full local and exact-final Ubuntu gates remain required.
+- Use guarded package commands; do not bypass the guard with raw Playwright while
+  another suite runs. Use separate checkouts, ports and output paths for deliberate
+  concurrency. Never stop another session's processes or rebuild its shared dist.
+- Use the stable live-QA origin and popup classification procedure in QA.md.
+  Treat missing live QA or Linux execution as an explicit incomplete check.

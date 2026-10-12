@@ -15,7 +15,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm run build
+      - name: Build only if baseline generation is needed
+        run: |
+          if [ ! -f tests/seek.spec.ts-snapshots/seek-results-linux.png ]; then npm run build; fi
       - name: Obtain genuine Linux baselines once
         run: |
           if [ ! -f tests/seek.spec.ts-snapshots/seek-results-linux.png ]; then

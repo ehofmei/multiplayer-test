@@ -237,8 +237,24 @@ test("Breakout naturally loses as a team, retains results, rematches and starts 
 test("paired Breakout teammates clear three cores and keep a shared victory", async ({
   page: host,
   browser,
-}) => {
+}, testInfo) => {
   test.setTimeout(180_000);
+  const profile: Record<string, { calls: number; durationMs: number }> = {};
+  async function measure<T>(
+    name: string,
+    action: () => Promise<T>,
+  ): Promise<T> {
+    const start = performance.now();
+    try {
+      return await action();
+    } finally {
+      const entry = (profile[name] ??= { calls: 0, durationMs: 0 });
+      entry.calls++;
+      entry.durationMs += performance.now() - start;
+    }
+  }
+  const advance = (ms: number) =>
+    measure("simulation", () => host.clock.runFor(ms));
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
     hasTouch: true,
@@ -250,14 +266,14 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
     await host
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
-    await join(host, client, "Emma");
+    await measure("pairing", () => join(host, client, "Emma"));
     await chooseGame(host, "Co-op Breakout");
     await host.clock.install();
     await host.clock.pauseAt(new Date(Date.now() + 1000));
     await host
       .getByRole("button", { name: "Start Co-op Breakout", exact: true })
       .click();
-    await host.clock.runFor(1150);
+    await advance(1150);
     const courts = [
       host.locator(".breakout-court"),
       client.locator(".breakout-court"),
@@ -270,27 +286,84 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
     for (let tick = 0; tick < 4000; tick++) {
       // Read the visible frame together so paired runs spend their time playing,
       // rather than making separate browser round trips for each HUD field.
-      const frame = await host.locator(".breakout-game-card").evaluate((e) => {
-        const ball = Array.from(
-          e.querySelectorAll(".breakout-court svg circle"),
-        ).at(-1)!;
-        return {
-          phase: e.getAttribute("data-phase"),
-          finalCore: e
-            .querySelector(".breakout-level small")!
-            .textContent!.includes("03 / 03"),
-          remaining: e.querySelectorAll(".breakout-brick").length,
-          ball: {
-            x: Number(ball.getAttribute("cx")) / 1000,
-            y: Number(ball.getAttribute("cy")) / 1000,
-            vx: Number(ball.getAttribute("data-vx")),
-            vy: Number(ball.getAttribute("data-vy")),
-          },
-        };
-      });
+      const frame = await measure("observations", () =>
+        host.locator(".breakout-game-card").evaluate((e) => {
+          const ball = Array.from(
+            e.querySelectorAll(".breakout-court svg circle"),
+          ).at(-1)!;
+          return {
+            phase: e.getAttribute("data-phase"),
+            finalCore: e
+              .querySelector(".breakout-level small")!
+              .textContent!.includes("03 / 03"),
+            remaining: e.querySelectorAll(".breakout-brick").length,
+            level: Number(
+              e
+                .querySelector(".breakout-level small")!
+                .textContent!.match(/CORE (\d+)/)![1],
+            ),
+            ball: {
+              x: Number(ball.getAttribute("cx")) / 1000,
+              y: Number(ball.getAttribute("cy")) / 1000,
+              vx: Number(ball.getAttribute("data-vx")),
+              vy: Number(ball.getAttribute("data-vy")),
+            },
+          };
+        }),
+      );
+      const level = frame.level;
+      if (level > 1 && !captured.has(level)) {
+        captured.add(level);
+        await expect(client.locator(".breakout-level small")).toContainText(
+          `0${level} / 03`,
+        );
+        // Core transitions retain the last live paddle input, which depends on
+        // WebRTC timing. Establish a deliberate pose through the real sliders
+        // and confirm the remote paddle before comparing the entire screen.
+        for (const player of [host, client]) {
+          await showHelp(player);
+          await player.getByRole("slider", { name: "Your paddle" }).fill("50");
+          await closePanels(player);
+        }
+        // Cover the 33ms input queue and the next 50ms snapshot broadcast.
+        // A 50ms advance can end after local input but before remote delivery.
+        await advance(100);
+        await expect(host.getByTestId("arena-paddle-1")).toHaveAttribute(
+          "y",
+          "380",
+        );
+        await expect(client.getByTestId("arena-paddle-0")).toHaveAttribute(
+          "x",
+          "380",
+        );
+        await advance(300); // Let the last contact feedback expire.
+        for (const player of [host, client]) {
+          await expect(player.locator(".breakout-game-card")).toHaveAttribute(
+            "data-phase",
+            "serve",
+          );
+          await expect(player.getByTestId("arena-paddle-0")).toHaveAttribute(
+            "x",
+            "380",
+          );
+          await expect(player.getByTestId("arena-paddle-1")).toHaveAttribute(
+            "y",
+            "380",
+          );
+        }
+        targets.fill(0.5);
+        await measure("screenshots", () =>
+          expectStableScreenshot(
+            host,
+            ".breakout-game-card",
+            `breakout-core-${level}-phone-${process.platform}.png`,
+            { maxDiffPixels: 160 },
+          ),
+        );
+      }
       if (frame.phase === "finished") break;
       if (frame.phase === "serve") {
-        await host.clock.runFor(1150);
+        await advance(1150);
         continue;
       }
       const ball = frame.ball;
@@ -311,12 +384,12 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
           await player.getByRole("slider", { name: "Your paddle" }).fill("50");
           await closePanels(player);
         }
-        await host.clock.runFor(100);
+        await advance(100);
         await expect(host.getByTestId("arena-paddle-1")).toHaveAttribute(
           "y",
           "380",
         );
-        await host.clock.runFor(100);
+        await advance(100);
         await expect(client.getByTestId("arena-paddle-0")).toHaveAttribute(
           "x",
           "380",
@@ -350,62 +423,10 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
         // avoids locator stability waits on the deliberately paused host clock.
         const x = bounds[i]!.x + target * bounds[i]!.width;
         const y = bounds[i]!.y + bounds[i]!.height - 30;
-        if (i === 0) await host.mouse.click(x, y);
-        else await client.touchscreen.tap(x, y);
+        if (i === 0) await measure("inputs", () => host.mouse.click(x, y));
+        else await measure("inputs", () => client.touchscreen.tap(x, y));
       }
-      await host.clock.runFor(200);
-      const level = Number(
-        (await host.locator(".breakout-level small").innerText()).match(
-          /CORE (\d+)/,
-        )![1],
-      );
-      if (level > 1 && !captured.has(level)) {
-        captured.add(level);
-        await expect(client.locator(".breakout-level small")).toContainText(
-          `0${level} / 03`,
-        );
-        // Core transitions retain the last live paddle input, which depends on
-        // WebRTC timing. Establish a deliberate pose through the real sliders
-        // and confirm the remote paddle before comparing the entire screen.
-        for (const player of [host, client]) {
-          await showHelp(player);
-          await player.getByRole("slider", { name: "Your paddle" }).fill("50");
-          await closePanels(player);
-        }
-        // Cover the 33ms input queue and the next 50ms snapshot broadcast.
-        // A 50ms advance can end after local input but before remote delivery.
-        await host.clock.runFor(100);
-        await expect(host.getByTestId("arena-paddle-1")).toHaveAttribute(
-          "y",
-          "380",
-        );
-        await expect(client.getByTestId("arena-paddle-0")).toHaveAttribute(
-          "x",
-          "380",
-        );
-        await host.clock.runFor(300); // Let the last contact feedback expire.
-        for (const player of [host, client]) {
-          await expect(player.locator(".breakout-game-card")).toHaveAttribute(
-            "data-phase",
-            "serve",
-          );
-          await expect(player.getByTestId("arena-paddle-0")).toHaveAttribute(
-            "x",
-            "380",
-          );
-          await expect(player.getByTestId("arena-paddle-1")).toHaveAttribute(
-            "y",
-            "380",
-          );
-        }
-        targets.fill(0.5);
-        await expectStableScreenshot(
-          host,
-          ".breakout-game-card",
-          `breakout-core-${level}-phone-${process.platform}.png`,
-          { maxDiffPixels: 160 },
-        );
-      }
+      await advance(200);
     }
     await expect(host.locator(".breakout-overlay")).toHaveAttribute(
       "data-result",
@@ -435,7 +456,7 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
       `breakout-victory-phone-${process.platform}.png`,
       { maxDiffPixels: 160 },
     );
-    await host.clock.runFor(5000);
+    await advance(5000);
     await expect(client.locator(".breakout-message strong")).toHaveText(
       "Brilliant together!",
     );
@@ -447,6 +468,10 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
       "5 shared lives",
     );
   } finally {
+    await testInfo.attach("breakout-profile", {
+      body: JSON.stringify(profile),
+      contentType: "application/json",
+    });
     await context.close();
   }
 });

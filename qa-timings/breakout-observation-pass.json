@@ -1,0 +1,70 @@
+{
+  "platform": "darwin",
+  "status": "passed",
+  "durationMs": 198079,
+  "tests": [
+    {
+      "title": " / chromium / breakout.spec.ts / paired Breakout teammates clear three cores and keep a shared victory",
+      "file": "tests/breakout.spec.ts",
+      "durationMs": 96240,
+      "status": "passed",
+      "retry": 0,
+      "profiles": [
+        {
+          "pairing": {
+            "calls": 1,
+            "durationMs": 783.6646249999999
+          },
+          "simulation": {
+            "calls": 2374,
+            "durationMs": 79606.71175800005
+          },
+          "observations": {
+            "calls": 2363,
+            "durationMs": 8106.781290999906
+          },
+          "inputs": {
+            "calls": 225,
+            "durationMs": 2825.0471220000854
+          },
+          "screenshots": {
+            "calls": 2,
+            "durationMs": 292.88745899999776
+          }
+        }
+      ]
+    },
+    {
+      "title": " / chromium / breakout.spec.ts / paired Breakout teammates clear three cores and keep a shared victory",
+      "file": "tests/breakout.spec.ts",
+      "durationMs": 100890,
+      "status": "passed",
+      "retry": 0,
+      "profiles": [
+        {
+          "pairing": {
+            "calls": 1,
+            "durationMs": 838.820708
+          },
+          "simulation": {
+            "calls": 2374,
+            "durationMs": 84884.29895000004
+          },
+          "observations": {
+            "calls": 2363,
+            "durationMs": 8215.469608999752
+          },
+          "inputs": {
+            "calls": 225,
+            "durationMs": 1809.5018309999505
+          },
+          "screenshots": {
+            "calls": 2,
+            "durationMs": 301.1236669999944
+          }
+        }
+      ]
+    }
+  ],
+  "note": "Two serial macOS samples after redundant level-read removal, before file scheduling changes. Not an original-code passing benchmark."
+}

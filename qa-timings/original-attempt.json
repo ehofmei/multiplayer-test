@@ -1,0 +1,6 @@
+{
+  "platform": "darwin",
+  "status": "failed",
+  "durationMs": 102104.21699999999,
+  "note": "Initial original fixture ended with browser file-stream error; not a passing performance baseline. Historical plan reported 102s for this test and 7.1min for the full local browser suite."
+}

@@ -8,11 +8,14 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run && node --test scripts/*.test.mjs",
-    "test:e2e": "playwright test",
+    "test:e2e": "node scripts/run-checks.mjs browser",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:snapshots": "node scripts/check-screenshot-baselines.mjs",
-    "verify": "npm run format:check && npm run test && npm run build && npm run test:e2e && npm run check:snapshots"
+    "verify": "node scripts/run-checks.mjs verify",
+    "check:fast": "npm run format:check && tsc --noEmit && npm run test",
+    "test:game": "node scripts/run-checks.mjs game",
+    "test:network": "node scripts/run-checks.mjs network"
   },
   "dependencies": {
     "qr-scanner": "^1.4.2",
