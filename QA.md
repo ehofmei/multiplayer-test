@@ -60,6 +60,8 @@ or missing owner requires inspection of `.qa-run.lock/owner.json` before manual
 cleanup. Avoid raw `npx playwright test` during guarded runs: it bypasses the guard.
 Use separate checkouts for intentionally concurrent work, with distinct `QA_PORT`
 and `QA_OUTPUT_DIR` values, and never rebuild a shared `dist` during a test.
+The camera fixture's independently launched browser inherits Playwright's
+configured base URL too; changing `QA_PORT` must not send it to the default port.
 The preview uses a strict port and never reuses an existing process. Stop only
 your own preview, or choose an explicit QA port. Default regression origin:
 `http://127.0.0.1:4173/multiplayer-test/`.

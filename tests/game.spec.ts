@@ -127,7 +127,9 @@ test("camera denial and unrelated QR images preserve the text fallback", async (
   await expect(page.getByLabel("Paste host invite code")).toBeVisible();
 });
 
-test("scanner modal fills the viewport, traps focus and releases the stream on close or Escape", async () => {
+test("scanner modal fills the viewport, traps focus and releases the stream on close or Escape", async ({
+  baseURL,
+}) => {
   const browser = await chromium.launch({
     args: [
       "--use-fake-device-for-media-stream",
@@ -136,7 +138,7 @@ test("scanner modal fills the viewport, traps focus and releases the stream on c
   });
   try {
     const page = await browser.newPage({
-      baseURL: "http://127.0.0.1:4173/multiplayer-test/",
+      baseURL,
       viewport: { width: 390, height: 844 },
     });
     await page.goto("./");
