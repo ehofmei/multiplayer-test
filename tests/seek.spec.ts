@@ -47,11 +47,19 @@ async function fit(page: Page, label: string) {
       expect(m.sw, `${label} horizontal`).toBeLessThanOrEqual(m.w + 1);
     }
     const box = (await card(page).boundingBox())!;
-    for (const b of await card(page).getByRole("button").all()) {
-      if (!(await b.isVisible())) continue;
-      const r = (await b.boundingBox())!;
-      if ((await b.getAttribute("class")) === "seek-cell") {
-        // A full 10×10 board deliberately uses compact cells. Keep action targets 44px.
+    // Measure all targets in one browser call; retain every size/clearance assertion.
+    const targets = await card(page)
+      .getByRole("button")
+      .evaluateAll((buttons) =>
+        buttons.map((button) => ({
+          kind: button.className,
+          visible: button.getClientRects().length > 0,
+          ...button.getBoundingClientRect().toJSON(),
+        })),
+      );
+    for (const r of targets) {
+      if (!r.visible) continue;
+      if (r.kind === "seek-cell") {
         expect(
           r.width,
           `${label} ${size.width} cell width`,
@@ -109,6 +117,34 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     reducedMotion: "reduce",
   });
   try {
+    await context.addInitScript(() => {
+      const events: { type: string; target: string | null }[] = [];
+      Reflect.set(window, "seekInputEvidence", events);
+      for (const type of [
+        "pointerdown",
+        "pointerup",
+        "pointercancel",
+        "touchstart",
+        "touchend",
+        "click",
+      ]) {
+        document.addEventListener(
+          type,
+          (e) => {
+            const target = e.target as HTMLElement;
+            events.push({
+              type,
+              target:
+                target.getAttribute("aria-label") ??
+                target.textContent?.slice(0, 40) ??
+                null,
+            });
+            if (events.length > 30) events.shift();
+          },
+          true,
+        );
+      }
+    });
     const client = await context.newPage();
     await host.goto("./");
     await host.getByLabel("Your name").fill("Alex");
@@ -302,7 +338,16 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     await expect(card(host)).toHaveAttribute("data-phase", "setup");
     await expect(client.locator(".seek-status")).toContainText("5/5 placed");
     await client.getByRole("button", { name: "Ready", exact: true }).tap();
-    await expect(card(host)).toHaveAttribute("data-phase", "countdown");
+    try {
+      await expect(card(host)).toHaveAttribute("data-phase", "countdown");
+    } catch (error) {
+      console.log(
+        "Ready touch evidence",
+        await client.evaluate(() => Reflect.get(window, "seekInputEvidence")),
+        await client.locator(".seek-status").innerText(),
+      );
+      throw error;
+    }
     await host.clock.runFor(3000);
     await expect(card(client)).toHaveAttribute("data-phase", "playing");
     await host.setViewportSize(sizes[2]);
