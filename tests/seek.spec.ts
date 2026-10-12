@@ -263,7 +263,7 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     await expect(client.locator(".seek-status")).toContainText(
       "0/5 placed · A1 · Fits",
     );
-    await touch.detach();
+    // Keep this input session alive through the context lifetime and subsequent taps.
     // Move the already placed piece to the agreed deterministic layout.
     const anchors = [0, 10, 30, 40, 60];
     for (let i = 0; i < 5; i++) {
@@ -286,6 +286,16 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
       host.locator(".seek-setup-tray [data-complete=true]"),
     ).toHaveCount(5);
     await expect(host.locator(".seek-status")).toContainText("5/5 placed");
+    await host.getByRole("button", { name: "Pause", exact: true }).click();
+    await expect(host.locator(".seek-setup-tray button")).toHaveCount(5);
+    await expect(
+      host.getByRole("button", { name: "Ready", exact: true }),
+    ).toBeDisabled();
+    await expect(
+      host.getByRole("button", { name: "A1, Three-line", exact: true }),
+    ).toBeDisabled();
+    await host.getByRole("button", { name: "Resume", exact: true }).click();
+    await host.clock.runFor(3000);
     await host.getByRole("button", { name: "Ready", exact: true }).click();
     await expect(host.locator(".seek-status")).toContainText("Ready confirmed");
     await host.clock.runFor(90000);
@@ -421,6 +431,9 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     await fit(host, "results");
     await host.setViewportSize({ width: 402, height: 874 });
     await expect(host.locator(".seek-tracker")).toHaveCount(0);
+    await expect(
+      host.getByRole("img", { name: "Emma complete board", exact: true }),
+    ).toBeVisible();
     await host
       .getByRole("group", { name: "Revealed board" })
       .getByRole("button", { name: "Emma’s board", exact: true })
@@ -521,8 +534,19 @@ test("Light Seek fits eight long names, keeps late arrivals public, and resets o
     await closePanels(clients[6]);
     await fit(host, "eight-host");
     await fit(clients[6], "eight-spectator");
+    for (const [i, c] of [0, 10, 30, 40, 60].entries()) {
+      await place(host, i, c);
+      await place(clients[0], i, c);
+    }
+    await host.getByRole("button", { name: "Ready", exact: true }).click();
+    await clients[0].getByRole("button", { name: "Ready", exact: true }).tap();
+    await expect(card(host)).toHaveAttribute("data-phase", "countdown");
+    await host.clock.runFor(3000);
+    await expect(card(clients[6])).toHaveAttribute("data-phase", "playing");
+    await expect(clients[6].locator(".seek-status")).toContainText("’s turn");
+    await fit(clients[6], "eight-playing-spectator");
     await returnHome(clients[6]);
-    await expect(card(host)).toHaveAttribute("data-phase", "setup");
+    await expect(card(host)).toHaveAttribute("data-phase", "playing");
     await host.evaluate(() => {
       Object.defineProperty(document, "hidden", {
         configurable: true,

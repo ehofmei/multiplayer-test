@@ -21,6 +21,39 @@ function previewCells(p: SeekPlacement): number[] {
     .filter(([x, y]) => x + p.x < 10 && y + p.y < 10)
     .map(([x, y]) => (y + p.y) * 10 + x + p.x);
 }
+function Tile({
+  color,
+  stroke = "#3b536e",
+  strokeWidth = 1,
+}: {
+  color: string;
+  stroke?: string;
+  strokeWidth?: number;
+}) {
+  return (
+    <>
+      <rect
+        className="seek-tile"
+        x="1"
+        y="1"
+        width="27"
+        height="27"
+        rx="3"
+        fill={color}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+      />
+      <path
+        className="seek-sheen"
+        d="M4 3H25"
+        fill="none"
+        stroke="#fff"
+        strokeOpacity="0.18"
+      />
+      <path d="M4 26H25" fill="none" stroke="#081422" strokeOpacity="0.3" />
+    </>
+  );
+}
 // Use the same tile geometry and identity marks as the full board.
 function PiecePicture({
   piece,
@@ -39,16 +72,9 @@ function PiecePicture({
           key={`${x}-${y}`}
           transform={`translate(${(120 - width * 24) / 2 + x * 24} ${(90 - height * 24) / 2 + y * 24})`}
         >
-          <rect
-            className="seek-tile"
-            x="1"
-            y="1"
-            width="21"
-            height="21"
-            rx="3"
-            fill={seekPieces[piece].color}
-            stroke="#e6f5ff"
-          />
+          <g transform="scale(0.8)">
+            <Tile color={seekPieces[piece].color} stroke="#e6f5ff" />
+          </g>
           <text
             x="11.5"
             y="16"
@@ -142,19 +168,16 @@ function Board({
           <g
             key={c}
             className={pulse === c ? "seek-light-pulse" : undefined}
+            data-moving={
+              (preview && piece === preview.piece && !shown.has(c)) || undefined
+            }
             data-unsearched={
               (reveal && piece !== undefined && mark === "0") || undefined
             }
             transform={`translate(${16 + (c % 10) * 30} ${16 + Math.floor(c / 10) * 30})`}
           >
-            <rect
-              className="seek-tile"
-              x="1"
-              y="1"
-              width="27"
-              height="27"
-              rx="3"
-              fill={color}
+            <Tile
+              color={color}
               stroke={
                 shown.has(c) || found
                   ? "#ffffff"
@@ -227,10 +250,10 @@ export function SeekGame({
   }, [cell]);
   const me = game.seats.find((s) => s.id === session.me.id),
     opponent = game.seats.find((s) => s.id !== session.me.id),
-    setup = game.phase === "setup",
+    setup = game.phase === "setup" || game.resumePhase === "setup",
     ready = game.phase === "ready",
     finished = game.phase === "finished",
-    canPlace = connected && setup && !!me && !me.ready,
+    canPlace = connected && game.phase === "setup" && !!me && !me.ready,
     canGuess =
       connected &&
       game.phase === "playing" &&
@@ -276,11 +299,20 @@ export function SeekGame({
     gesture.current = null;
     setPulse(null);
   }, [game.phase, connected]);
+  useEffect(() => {
+    if (game.phase === "finished")
+      setFinalSeat(
+        Math.max(
+          0,
+          game.seats.findIndex((s) => s.id !== game.winner),
+        ),
+      );
+  }, [game.phase, game.winner]);
   const ownLayout = me?.layout ?? layout;
   const last = game.last;
   const result = last
-    ? `${last.player === session.me.id ? "You" : name(last.player)} · ${seekCoordinate(last.cell)} · ${last.result === "found" ? `${seekPieces[last.piece!].name} found!` : last.result === "hit" ? "Hit!" : "Miss"}`
-    : "Find all five hidden pieces.";
+    ? `${seekCoordinate(last.cell)} · ${last.result === "found" ? `${seekPieces[last.piece!].name} found!` : last.result === "hit" ? "Hit!" : "Miss"} · ${last.player === session.me.id ? "You" : name(last.player)}`
+    : "";
   const status = !connected
     ? "Host disconnected"
     : ready
@@ -292,11 +324,15 @@ export function SeekGame({
           : game.phase === "countdown" || game.phase === "reorient"
             ? `Get ready · ${Math.ceil(game.remaining / 1000)}`
             : !me
-              ? "Watching · join the next match."
+              ? setup
+                ? "Watching secret setup"
+                : `Watching · ${name(game.current)}’s turn`
               : setup
                 ? me.ready
                   ? `Ready confirmed · ${opponent?.ready ? "both ready" : "waiting for opponent"}`
-                  : `${layout.length}/5 placed · ${cell === null ? "tap a square" : `${seekCoordinate(cell)} · ${placementStatus}`}`
+                  : pending
+                    ? "Sending layout · waiting for host"
+                    : `${layout.length}/5 placed · ${cell === null ? "tap a square" : `${seekCoordinate(cell)} · ${placementStatus}`}`
                 : pending
                   ? "Sending · waiting for host"
                   : canGuess
@@ -491,7 +527,7 @@ export function SeekGame({
                 ? `Opponent ${opponent?.ready ? "ready" : "placing"}`
                 : finished
                   ? "Match complete"
-                  : `${opponent?.found.length ?? 0} / 5 found`
+                  : "Search board"
               : "Spectator"}
         </span>
       </div>
@@ -679,7 +715,7 @@ export function SeekGame({
                   );
                 })}
               </div>
-              <p className="seek-result" aria-live="polite">
+              <p className="seek-result" title={result} aria-live="polite">
                 {result}
               </p>
               <p className="seek-selection seek-accessible" aria-live="polite">

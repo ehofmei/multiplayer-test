@@ -4459,7 +4459,7 @@ input.golf-power-input {
   flex-direction: column;
   padding: 12px;
   gap: 8px;
-  background: #0e2034;
+  background: radial-gradient(ellipse at 45% 45%, #172e47, #0e2034 75%);
   color: #eef5ff;
 }
 .seek-top {
@@ -4566,21 +4566,6 @@ input.golf-power-input {
   min-height: 44px;
   padding: 6px 8px;
 }
-.seek-piece-controls {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.app-shell .seek-piece-controls select {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  min-height: 44px;
-  padding: 6px;
-  background: #233b55;
-  color: #eef5ff;
-  border-color: #8099b0;
-}
 .seek-footer {
   display: flex;
   justify-content: center;
@@ -4658,12 +4643,11 @@ input.golf-power-input {
 .seek-tile {
   paint-order: stroke fill;
 }
+.seek-board [data-moving="true"] {
+  opacity: 0.35;
+}
 .seek-board [data-unsearched="true"] {
   opacity: 0.45;
-}
-.seek-piece-name {
-  flex: 1;
-  font-size: 13px;
 }
 .seek-grid[data-interactive="true"] {
   touch-action: none;
@@ -4678,6 +4662,11 @@ input.golf-power-input {
 }
 .seek-status {
   overflow-wrap: anywhere;
+}
+.seek-game-card[data-phase="playing"] .seek-status {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .seek-top > span {
   min-width: 0;
@@ -4716,6 +4705,9 @@ input.golf-power-input {
   }
 }
 .seek-result {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-size: 13px;
   min-height: 18px;
 }
