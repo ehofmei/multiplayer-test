@@ -437,8 +437,18 @@ describe("Light-cycle sessions", () => {
     host.startCycle();
     await vi.advanceTimersByTimeAsync(3_020);
     expect(client.snapshot().room.cycle?.phase).toBe("playing");
+    const riderBefore = structuredClone(
+      client.snapshot().room.cycle!.riders[1],
+    );
     client.turnCycle("up");
-    await vi.advanceTimersByTimeAsync(150);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(client.snapshot().room.cycle!.riders[1]).toMatchObject({
+      x: riderBefore.x,
+      y: riderBefore.y,
+      direction: riderBefore.direction,
+      queued: "up",
+    });
+    await vi.advanceTimersByTimeAsync(130);
     expect(client.snapshot().room.cycle?.riders[1].direction).toBe("up");
     const epoch = host.snapshot().room.epoch;
     const inject = (epoch: number, sequence: number, direction: string) =>

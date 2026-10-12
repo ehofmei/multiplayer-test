@@ -7984,3 +7984,14 @@ input.golf-power-input {
     grid-row: 1 / 4;
   }
 }
+.app-panel .cycle-help + .cycle-riders,
+.app-panel .cycle-final-riders {
+  grid-template-columns: 1fr;
+}
+.app-panel .cycle-help + .cycle-riders .cycle-name,
+.app-panel .cycle-final-riders li > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

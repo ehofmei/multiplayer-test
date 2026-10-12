@@ -37,6 +37,10 @@ export function CycleGame({
     tick: number;
   } | null>(null);
   const [crashes, setCrashes] = useState<CycleState["riders"]>([]);
+  useEffect(() => {
+    if (!connected || game.phase !== "playing") setRequested(null);
+    if (game.phase !== "finished") setResultsOpen(false);
+  }, [connected, game.phase]);
   const crashBefore = useRef<CycleState | null>(null);
   useEffect(() => {
     const fresh = connected ? cycleNewCrashes(crashBefore.current, game) : [];
@@ -495,7 +499,10 @@ export function CycleGame({
               onClose={() => setResultsOpen(false)}
             >
               <p>{status}</p>
-              <ol className="cycle-riders" aria-label="Final riders">
+              <ol
+                className="cycle-riders cycle-final-riders"
+                aria-label="Final riders"
+              >
                 {game.riders.map((r, i) => (
                   <li key={r.id}>
                     <span

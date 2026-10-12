@@ -105,7 +105,7 @@ test("Light-cycle Arena pairs riders, steers by touch and keyboard, draws, remat
     );
     await expect(
       host.getByRole("button", { name: "Steer down", exact: true }),
-    ).toHaveAttribute("data-turn", /requested|queued/);
+    ).toHaveAttribute("data-turn", "queued");
     await expectStableScreenshot(
       host,
       ".cycle-game-card",
@@ -415,6 +415,37 @@ test("eight Light-cycle riders fit a narrow phone and support swipe, background 
       .getByRole("button", { name: "Resume Arena", exact: true })
       .click();
     await expect(client.locator(".cycle-status")).toHaveText("Get ready… 3");
+    await host.clock.runFor(9000);
+    await expect(
+      client.locator('.cycle-game-card[data-phase="finished"]'),
+    ).toBeVisible();
+    await client.getByRole("button", { name: "Results", exact: true }).click();
+    const results = client.getByRole("dialog", {
+      name: "Round results",
+      exact: true,
+    });
+    await expect(results.locator(".cycle-final-riders li")).toHaveCount(8);
+    for (const name of await results
+      .locator(".cycle-final-riders li > span:nth-child(2)")
+      .all()) {
+      expect(
+        await name.evaluate((e) => e.scrollWidth <= e.clientWidth + 1),
+      ).toBe(true);
+    }
+    await expectStableScreenshot(
+      client,
+      ".app-panel[open]",
+      `cycle-eight-results-${process.platform}.png`,
+    );
+    await results
+      .getByRole("button", { name: "Close", exact: true })
+      .press("Escape");
+    // Preserve host-loss coverage during active play rather than the hidden finale controls.
+    await host.getByRole("button", { name: "Ride Again", exact: true }).click();
+    await host.clock.runFor(3000);
+    await expect(
+      client.locator('.cycle-game-card[data-phase="playing"]'),
+    ).toBeVisible();
     await returnHome(host);
     await expect(client.locator(".cycle-status")).toHaveText(
       "Host disconnected",
@@ -472,6 +503,7 @@ test("cycle confirms turns without moving heads early, shows collisions and a ch
     await host
       .getByRole("button", { name: "Steer right", exact: true })
       .click();
+    await host.emulateMedia({ reducedMotion: "reduce" });
     await host.clock.runFor(2700);
     await expect(client.locator(".cycle-status")).toHaveText("Alex wins!");
     await expect(host.locator(".cycle-feedback")).toContainText("You win!");
@@ -480,6 +512,14 @@ test("cycle confirms turns without moving heads early, shows collisions and a ch
       "translate(0 235)",
     );
     await expect(host.locator(".cycle-court")).toBeVisible();
+    await expectStableScreenshot(
+      host,
+      ".cycle-game-card",
+      `cycle-crash-reduced-${process.platform}.png`,
+    );
+    await host.clock.runFor(450);
+    await expect(host.locator(".cycle-crash")).toHaveCount(0);
+    await host.emulateMedia({ reducedMotion: "no-preference" });
     await expectStableScreenshot(
       host,
       ".cycle-game-card",

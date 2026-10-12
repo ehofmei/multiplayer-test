@@ -27,9 +27,19 @@ Arena · shared baseline.
 
 ## Light-cycle Arena
 
-Arena · shared baseline.
+Directional riders and confirmed turn feedback · desktop.
 
-![Light-cycle Arena](tests/game.spec.ts-snapshots/cycle-court.png)
+![Light-cycle Arena](tests/cycle-integration.spec.ts-snapshots/cycle-turn-linux.png)
+
+[Phone](tests/cycle-integration.spec.ts-snapshots/cycle-phone-linux.png) ·
+[Eight riders, reduced motion](tests/cycle-integration.spec.ts-snapshots/cycle-eight-reduced-linux.png) ·
+[Crash at the wall, reduced motion](tests/cycle-integration.spec.ts-snapshots/cycle-crash-reduced-linux.png) ·
+[Eight full names in Results](tests/cycle-integration.spec.ts-snapshots/cycle-eight-results-linux.png) ·
+[Champion](tests/cycle-integration.spec.ts-snapshots/cycle-champion-linux.png) ·
+[Draw](tests/cycle-integration.spec.ts-snapshots/cycle-draw-linux.png) ·
+[Sixty-second shared win](tests/cycle-integration.spec.ts-snapshots/cycle-shared-win-linux.png).
+
+The final arena stays visible, with results and rematch outside the playing surface.
 
 ## Spaceship Panic
 

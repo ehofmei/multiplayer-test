@@ -68,7 +68,23 @@ build identifier against the current build before acting. A fresh tab alone does
 not prove fresh storage or a cleared worker. If identity is wrong, stop gameplay
 QA and use only a supported scoped reset for that origin; preserve real progress
 and unrelated browser data. Reserve offline/update/reload checks for deliberate
-PWA QA. Production active-game updates still require a user action and confirmation.
+PWA QA. **Before Create Game or Join Game on every QA device/tab, check the
+build and apply any waiting update from Home.** If a QA tab is already in host/join
+mode, use Menu → Return Home first, then update and pair again. Join mode counts
+as a session even before a peer connects; updating there triggers the game's
+confirmation and can block a tool's click until the dialog is answered.
+
+The observed dialog is titled `<origin> says` and reads “Updating reloads the app
+and ends your connection to this game. Update now?” It is the app's JavaScript
+confirmation, not a browser trust or Codex restart prompt. Avoid it through the
+Home-first workflow; do not remove the production safeguard. If encountered during
+an intentional QA update, use the supported `tab.getJsDialog()` API, confirm the
+expected text/source from the current observation, and accept or dismiss the
+`confirm` dialog according to the intended QA action, then verify the new build.
+When the click waits on the dialog, retain its pending promise and handle the
+dialog in the next REPL call rather than waiting for the user or blindly clicking
+again. Do not update a real user-owned session during QA. Production active-game
+updates still require a user action and confirmation.
 
 Budget five minutes for setup/recovery; if blocked, record it and continue
 independent checks without claiming live QA passed. Record permission wait separately
@@ -300,6 +316,13 @@ QA inventory for this game:
   between court and controls, and no page/card scrolling or horizontal overflow.
   Long identity text truncates on the primary screen; complete rider names remain
   in Help. Check active-surface gesture handling and scrollable secondary content.
+- Feedback: directional numbered heads, local outline, requested versus confirmed
+  queued turns, quiet reversal treatment, collision-cell/edge marks, and bounded
+  remote crash sounds. No turn prediction or extra buffering. Check stale/duplicate
+  snapshots and reduced motion without replaying historical effects.
+- Finale: retain the frozen arena, distinguish last survivor/draw/time-limit shared
+  win, remove the running timer, and keep Results/Help/rematch reachable. Results
+  lists full names and winners, including eight long names.
 - Motion: continuous head/trail movement between confirmed cells, corners without
   diagonal shortcuts, no extrapolation, exact paused/crashed positions, reduced-motion
   grid steps and recovery after delayed/skipped snapshots.
@@ -308,19 +331,30 @@ QA inventory for this game:
 
 Automated coverage includes rules/protocol/session tests, actual two- and
 eight-player WebRTC rooms, touch-button and swipe input, keyboard steering,
+confirmed queue feedback without early movement, collision-cell/wall-edge marks,
 countdown focus, pause/resume, draws/rematches, late arrivals, departures and
-host loss. The live browser pass manually paired two players, steered both,
-paused/resumed, observed a winner, rematched, and checked a rider leaving.
-Desktop and mobile screenshots were reviewed; responsive checks include taller
-Arial metrics and all eight long names. Existing production-subpath offline,
-manifest, identity, and service-worker update tests remain part of `npm run verify`.
+host loss. A deliberate paired route survives all 400 steps to verify the actual
+sixty-second shared win without state injection. Screenshot coverage includes
+queued turns, phone play, eight riders with reduced motion, a wall crash, champion,
+draw and the dense final shared-win board. Keep both genuine platform renders
+and strict dimensions/pixel budgets.
+
+The live browser pass paired two independent local identities through manual
+text, exercised Help/Escape, host/client turning, pause/resume, natural victory,
+Results with full names, rematch and player departure. Reviewed live 390×844
+client and 1280×720 host views and client bounds. Scripted layout coverage adds
+short phones, landscape, tablet, taller fonts and safe areas. Cached preview
+builds were updated with normal app controls before gameplay QA; use the
+Home-first update process above to prevent modal interruptions. These are
+browser checks, not physical iOS claims. Existing production-subpath offline,
+manifest, identity and service-worker update tests remain in `npm run verify`.
 
 Physical-device follow-up: pair two iPhones/iPads on Wi-Fi, then try a larger room.
 Check touch steering and swipe feel, numbered heads on small displays, optional
 sound, Safari/installed PWA background-and-resume, and all-device updates. Browser
 emulation does not establish physical-device latency or iOS behavior.
 
-The enlarged arena’s shared `cycle-court.png` baseline was rendered on Darwin
+The earlier enlarged arena’s shared `cycle-court.png` baseline was rendered on Darwin
 and Ubuntu. The genuine Ubuntu image came from
 [the family-playtest review run](https://github.com/ehofmei/multiplayer-test/actions/runs/37865516178)
 and returned in `dbbdcf8`. Both renders were visually reviewed; the 64-pixel

@@ -391,14 +391,22 @@ on desktop and short landscape screens. The timer shares the status row. During
 play, long rider names stay in Help so they cannot squeeze the arena. Touch
 buttons turn on contact.
 Only one perpendicular turn is accepted per step; reversing is forbidden. Each
-rider has a distinct color and number, with names and elimination status in
-Controls & help.
+rider has a distinct color and number, a directional nose, and a persistent white
+outline on your head. Your identity and facing arrow stay beside the controls;
+names and elimination status remain in Controls & help. Pressed arrows respond
+immediately; a requested turn has a light border, and a host-confirmed queued
+turn has a green border. The forbidden reverse direction has a dashed border.
+These indicators do not move a rider early or buffer another turn.
 
 Walls and all trails—including your own and eliminated riders’ trails—are lethal.
 Collisions resolve simultaneously: riders entering the same cell or swapping
 positions both crash. The last survivor wins; if everyone crashes on the final
 step, the round draws. At sixty seconds of movement, remaining riders share the
-win. Ride Again starts a fresh round with everyone currently connected.
+win. Crashes briefly mark the attempted collision cell (or wall edge), while
+wrecks remain at their last safe cell and all trails stay visible. Reduced motion
+uses a static impact mark. The frozen arena remains visible at the finish;
+Results lists full rider names and winners. Ride Again starts a fresh round with
+everyone currently connected.
 
 The host simulates fixed grid steps and shares compact, bounded full-board
 snapshots. Heads and continuous trails animate between confirmed cells over 150 ms,
@@ -409,9 +417,12 @@ turn received before a step is applied. There is no client prediction or rollbac
 so steer early on slower Wi-Fi. Pause, host backgrounding, pairing, or a scheduling
 stall freezes play; Resume Arena gives another three-second countdown. A rider
 leaving resets the round; a spectator leaving preserves it. Optional local sounds
-announce movement starting, your crash, and the result; sound remains muted by
+announce movement starting, your crash, a quiet shared crash cue, and the result;
+simultaneous remote crashes produce one cue and the finale takes priority. Sound remains muted by
 default. Update every device before selecting Light-cycle Arena: older builds do
-not understand its state or turn input. Pairing and saved preferences are unchanged.
+not understand its state or turn input. This presentation polish adds no wire fields;
+older Light-cycle builds remain compatible but need updating to see the new feedback.
+Pairing and saved preferences are unchanged.
 
 **Reaction Race** has six targets and ten rounds for everyone present at the start
 (or solo practice). After a random 1.2–3 second wait, hit the marked target within
