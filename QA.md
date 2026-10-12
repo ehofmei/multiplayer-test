@@ -92,6 +92,37 @@ repository access read-only; historical branch workflows retain their baseline
 return mechanism. Historical review branches are excluded from its push trigger to avoid duplicate
 runs; new work should use this reusable workflow.
 
+### Keep expensive verification at the end of iteration
+
+At the start of implementation, locate an available GitHub CLI and run
+`gh auth status`; confirm the repository remote and review workflow/artifact
+access. Establish the genuine Ubuntu screenshot route before adding states.
+Resolve access early while continuing independent local work.
+
+Before final baseline generation, review the diff and exercise the supported
+roles: host, client and spectator. Check whose board is displayed, which action
+the feedback describes, and which information each role may see. Include setup,
+waiting/paused states and both players' result perspectives where relevant.
+Settle control behavior and intended pixels through focused tests and live QA,
+then generate/review baselines and run the complete gates. Optional visual
+refinements belong before this point. A later substantive fix still requires
+complete local and exact-final Ubuntu verification again.
+
+For layout checks, collect visibility, classes and bounding rectangles for all
+targets in one read-only browser evaluation per state/viewport, then assert the
+same target sizes, overflow and clearance in the test. See `fit()` in
+`tests/seek.spec.ts`. Avoid separate browser round trips for each property of
+each tile. Keep user actions as normal input and preserve all assertions.
+
+Keep low-level touch slide/cancel/release tests in a separate context with
+`isMobile: true` and `hasTouch: true`, using touch input for the subsequent
+placement and Ready controls too. Retain the mouse/keyboard journey separately.
+During Light Seek QA, mixed low-level touch and mouse streams in desktop
+emulation delivered pointer/touch events on Ubuntu without the expected Ready
+click; the isolated mobile flow passed. If a control stalls, inspect current
+state and input events before changing product behavior or repeatedly rerunning
+CI. Do not compensate by relaxing screenshots, timeouts or fit assertions.
+
 ## Repeatable live-browser setup and popup diagnosis
 
 Inventory for testing-tool changes: current build identity, Create/Return Home,
@@ -111,6 +142,14 @@ build and apply any waiting update from Home.** If a QA tab is already in host/j
 mode, use Menu → Return Home first, then update and pair again. Join mode counts
 as a session even before a peer connects; updating there triggers the game's
 confirmation and can block a tool's click until the dialog is answered.
+
+Choose independent QA identities before pairing: use the stable
+`127.0.0.1:4174` host, `localhost:4174` client, and, when a spectator is needed,
+a dedicated `127.0.0.1:4175` preview, all under `/multiplayer-test/`. Confirm
+matching build identifiers on every tab. These distinct origins provide separate
+storage identities; keep them stable throughout the pass. Avoid guessing other
+loopback addresses. After resizing, verify the intended tab's actual
+`innerWidth`/`innerHeight` before judging layout or capturing screenshots.
 
 The observed dialog is titled `<origin> says` and reads “Updating reloads the app
 and ends your connection to this game. Update now?” It is the app's JavaScript
@@ -1112,8 +1151,11 @@ in one browser call without reducing viewport, target-size or clearance coverage
 Focused checks passed: `npm run check:fast`, Seek/audio unit tests,
 `npm run test:game -- seek` with snapshot updates disabled, and
 `npm run test:e2e -- tests/app-layout.spec.ts tests/updates.spec.ts` (8 tests).
-Complete local verification and ordinary exact-final Ubuntu verification form
-the final gate after baseline review; generation alone is not the final gate.
+Complete local `npm run verify` passed with 210 unit tests, 10 script tests and
+66 browser tests. Ordinary exact-final
+[Ubuntu verification](https://github.com/ehofmei/multiplayer-test/actions/runs/38297978937)
+passed for `b3988b8e009268bc8df1cef3c875b1392ad79cd6`, with snapshot updates
+disabled. Generation alone was not used as the final gate.
 
 Physical acceptance remains on the household devices: real-thumb corners/edges,
 installed-PWA safe areas, larger text/VoiceOver, rotation, audio listening/unlock,

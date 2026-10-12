@@ -73,17 +73,28 @@ code, dependencies, build configuration, workflows, tests, or baselines change.
 
 ## Efficient iteration
 
+- Check GitHub CLI authentication and the review workflow/artifact route at the
+  start of implementation, before adding platform-specific screenshot states.
+  Continue independent local work while resolving missing Linux access.
 - Run `npm run check:fast`, relevant unit tests and `npm run test:game -- <name>`
   while editing; build the production preview before focused browser runs.
 - For shared protocol/session changes, add `npm run test:network` and affected
   games. Storage/audio/lifecycle changes need relevant shared-file/PWA tests;
   global CSS needs app-layout and affected game viewport/font coverage.
+- Include host, client and spectator perspectives in the QA inventory when
+  supported, especially board ownership and public/private information. Review
+  the implementation diff and settle controls/layout before generating final
+  baselines or starting complete verification.
+- Batch read-only layout measurements per state/viewport while retaining every
+  assertion. Keep low-level touch gesture tests in a separate mobile touch
+  context from mouse/keyboard journeys; exercise ordinary controls after gestures.
 - Complete live QA and resolve findings before the complete local final gate.
   Repeat focused checks during fixes; repeat full verification after the last
   substantive fix. Both full local and exact-final Ubuntu gates remain required.
 - Use guarded package commands; do not bypass the guard with raw Playwright while
   another suite runs. Use separate checkouts, ports and output paths for deliberate
-  concurrency. Never stop another session's processes or rebuild its shared dist.
+  concurrency. Never stop another session's processes, edit files used by an
+  active suite, or rebuild its shared dist.
 - Use the stable live-QA origin and popup classification procedure in QA.md.
   Check every QA tab's build and apply waiting updates from Home before pairing.
   If already hosting or joining, Return Home before updating; Join mode also
