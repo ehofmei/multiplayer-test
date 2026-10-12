@@ -2199,6 +2199,150 @@ main.app-shell {
     grid-template-rows: repeat(2, minmax(0, 1fr));
   }
 }
+/* Shared Lights: each native switch contains a lens and a stable state label. */
+.app-shell .lights-board {
+  background: linear-gradient(145deg, #344841, #1c302c);
+  border: 1px solid #546858;
+  color: #f5efda;
+  overflow: hidden;
+}
+.app-shell .lights-board .board-heading h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.app-shell .lights-board .board-note {
+  color: #e0e5d7;
+  font-size: 13px;
+}
+.app-shell .lights-board > .grid {
+  padding: 8px;
+  gap: 8px;
+  border: 1px solid #78816a;
+  border-radius: 18px;
+  background: #142721;
+  box-shadow: inset 0 2px 5px #0005;
+}
+.app-shell .lights-board .cell {
+  container-type: size;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: stretch;
+  justify-items: center;
+  align-items: center;
+  padding: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 14px;
+  border: 1px solid #637263;
+  background: linear-gradient(150deg, #3e5148, #2a3c34);
+  color: #edf0df;
+  box-shadow:
+    inset 0 1px 0 #ffffff18,
+    0 2px 2px #0005;
+  transform: none;
+}
+.app-shell .lights-board .cell .light {
+  float: none;
+  width: min(calc(100cqw - 12px), calc(100cqh - 28px), 160px);
+  height: min(calc(100cqw - 12px), calc(100cqh - 28px), 160px);
+  border: 3px solid #132820;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 35% 25%,
+    #b4bda4 0%,
+    #6e8270 28%,
+    #3a5344 65%,
+    #233b2e 100%
+  );
+  box-shadow:
+    0 0 0 2px #74856b,
+    0 3px 5px #0008,
+    inset 0 2px 3px #d4e4bf55;
+  outline: 3px solid transparent;
+  outline-offset: 3px;
+  position: relative;
+}
+.app-shell .lights-board .light::after {
+  content: "";
+  position: absolute;
+  inset: 20%;
+  border-radius: 50%;
+  border: 1px solid #e6f0ce38;
+  box-shadow: inset 0 1px 2px #192e2366;
+}
+.app-shell .lights-board .cell.on {
+  background: linear-gradient(150deg, #535642, #354434);
+  border-color: #b6ac73;
+  color: #fff5cf;
+}
+.app-shell .lights-board .cell.on .light {
+  border-color: #463d1e;
+  background: radial-gradient(
+    ellipse at 35% 25%,
+    #fffde5 0%,
+    #fff1a3 25%,
+    #f7ca5c 65%,
+    #bf852d 100%
+  );
+  box-shadow:
+    0 0 0 2px #d7b969,
+    0 0 12px #ffd56a55,
+    inset 0 2px 4px #fffbd0;
+}
+.app-shell .lights-board .cell.on .light::after {
+  border: 2px solid #fff7c8bb;
+  box-shadow: inset 0 0 6px #fff6c4aa;
+}
+.app-shell .lights-board .lamp-label {
+  float: none;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 3px;
+  width: 100%;
+  line-height: 1.25;
+}
+.app-shell .lights-board .lamp-number {
+  float: none;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.app-shell .lights-board .cell-state {
+  float: none;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.app-shell .lights-board .cell:active:not(:disabled) {
+  box-shadow: inset 0 2px 5px #0008;
+}
+.app-shell .lights-board .cell:active:not(:disabled) .light {
+  transform: translateY(2px);
+}
+.app-shell .lights-board .cell:focus-visible {
+  outline: 3px solid #fff3b4;
+  outline-offset: 1px;
+}
+.app-shell .lights-board .cell:disabled {
+  opacity: 1;
+  border-style: dashed;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .lights-board .cell:active:not(:disabled) .light {
+    transform: none;
+  }
+}
+@media (max-width: 360px), (max-height: 550px) {
+  .app-shell .lights-board > .grid {
+    padding: 6px;
+    gap: 6px;
+    border-radius: 12px;
+  }
+  .app-shell .lights-board .cell {
+    padding: 6px;
+    border-radius: 10px;
+  }
+}
 main.app-shell {
   height: min(var(--app-height, 100dvh), 100dvh);
 }

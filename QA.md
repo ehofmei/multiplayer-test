@@ -247,6 +247,54 @@ voices; unavailable audio preserves gameplay; offline effects. Check the header
 at 320px and desktop, visible toggle focus, and comfortable volume. Real iOS sound
 unlock, device volume/mute behavior, and foreground recovery need physical testing.
 
+## Shared Lights family polish (Task 8)
+
+Inventory: lone host; host/client input; all-off, mixed and all-on boards;
+keyboard focus/Space/Enter; cancelled touch; delayed authoritative acceptance;
+rapid and simultaneous toggles; revision diagnostics; eight connected players;
+disconnect/rejoin; switching away/back; muted sound and reduced motion;
+background/page recovery; saved sound and cached offline startup.
+
+`tests/lights.spec.ts` checks lens/label clearance, circular lenses, minimum 44px
+targets and actual content bounds with normal and taller font metrics throughout
+the household viewport inventory plus 390×844, 320×700, 320×568, 844×390,
+768×1024 and 1280×720. Deterministic snapshots cover all-off phone, mixed phone
+with visible keyboard focus, all-on landscape iPad, short landscape reduced
+motion, and an eight-player phone shell. Every state has separate Darwin/Linux
+renders. The pairing suite also compares the confirmed four-device board using
+platform-specific images; the earlier shared image remains as historical evidence.
+Keep the existing font fixture, dimensions and pixel budgets.
+
+Real WebRTC coverage retains concurrent different-cell input, twenty rapid
+toggles, rejoin/disconnect, offline QR-image pairing and latency diagnostics. It
+adds four simultaneous same-cell toggles and checks exact revision/parity on every
+device. Revision assertions open Connection details explicitly; ordinary play
+asserts button states. A delayed-client-send test checks press depression before
+host confirmation, then matching host/client states and confirmed visual feedback.
+An isolated mobile touch context checks cancellation followed by ordinary taps.
+Animation checks verify an accepted change produces feedback, same-cell effects
+remain bounded and all effects clear. No scoring or spectator restrictions apply.
+
+Audio tests cover copied cell state, on-only/off-only/mixed transitions, duplicate
+and stale snapshots, skipped net-zero toggles, first state and epoch/session
+changes. Production-browser checks cover mute, gesture unlock, saved preference,
+offline cues, recovery suppression and switching. Shared layout and user-controlled
+PWA update regressions remain part of complete verification.
+
+The persistent live-browser pass exercised Home updates/build identity on both
+QA origins before real text pairing, local/remote toggles, keyboard activation,
+revision diagnostics without peers, sound switching, all-on muted desktop play
+and host disconnect. Reviewed phone, short-phone, short-landscape, landscape iPad
+and desktop views and confirmed matching sixteen-cell states across paired tabs.
+This is Chromium emulation, not installed iOS acceptance or family sound tuning.
+
+Physical follow-up: use the household phones and landscape iPads over Wi-Fi;
+check real-thumb cancellation/rapid tapping, comfortable reach to all sixteen
+lamps, installed safe areas/rotation, larger text/VoiceOver, Safari sound unlock
+and recovery, several devices sounding together, host background/resume, saved
+preferences and offline startup after updating. Verify volume/timbre by listening
+with the family. These checks remain pending.
+
 ## App updates
 
 - Menu build identifier and 44px update control on desktop and narrow phone.

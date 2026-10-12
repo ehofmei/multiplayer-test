@@ -187,6 +187,18 @@ in short landscape windows. Every device can toggle cells; the host serializes
 actions and shares state. Selecting it starts a fresh board. It remains a
 cooperative experiment rather than a scored game.
 
+The board uses raised lamp lenses, warm on lighting and stable numbered ON/OFF
+labels. Pressing gives immediate local feedback; a client's light changes only
+when the host confirms it. Confirmed changes briefly accent each affected lens,
+including remote changes. Feedback coalesces during rapid tapping, and reduced
+motion uses a static accent. First snapshots, late joins and background recovery
+do not replay earlier effects. Optional quiet on/off clicks and a neutral cue for
+mixed changes use the existing muted-by-default synthesizer; skipped toggles with
+no observable cell change remain silent. The technical revision count is in
+Menu → Connection details, including when hosting alone. Disconnected switches
+preserve their last-known states and disable input. No rules or network fields
+changed; this polish does not require a coordinated protocol update.
+
 **Pong** plays to seven points. The host chooses any two connected players (they
 can be two clients); other players watch. The court is vertical and each player
 sees their own paddle at the bottom. Drag horizontally anywhere on the visible

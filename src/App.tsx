@@ -1,4 +1,5 @@
 import { GlowGame } from "./components/GlowGame";
+import { LightsGame } from "./components/LightsGame";
 import { SeekGame } from "./components/SeekGame";
 import { PicnicGame } from "./components/PicnicGame";
 import { MinigolfGame } from "./components/MinigolfGame";
@@ -472,35 +473,12 @@ export function App() {
                     />
                   )}
                   {snapshot?.room.kind === "lights" && (
-                    <section className="board-card" aria-label="Shared grid">
-                      <div className="board-heading">
-                        <h2>Light board</h2>
-                        <span>Revision {snapshot?.grid.revision ?? 0}</span>
-                      </div>
-                      <div className="grid">
-                        {snapshot?.grid.cells.map((on, i) => (
-                          <button
-                            key={i}
-                            className={on ? "cell on" : "cell"}
-                            aria-label={"Cell " + (i + 1)}
-                            aria-pressed={on}
-                            disabled={!connected}
-                            onClick={() => session.toggle(i)}
-                          >
-                            <span className="light" aria-hidden="true" />
-                            <span>{i + 1}</span>
-                            <span className="cell-state">
-                              {on ? "ON" : "OFF"}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                      <p className="board-note">
-                        {connected
-                          ? "Tap any light. The host shares every change."
-                          : "Pair with a host to activate the board."}
-                      </p>
-                    </section>
+                    <LightsGame
+                      key={snapshot.room.epoch}
+                      grid={snapshot.grid}
+                      connected={connected}
+                      session={session}
+                    />
                   )}
                 </div>
               </>
@@ -707,6 +685,9 @@ export function App() {
               <summary>
                 Connection details · {snapshot?.links.length ?? 0} peer(s)
               </summary>
+              {snapshot?.room.kind === "lights" && (
+                <p>Revision {snapshot.grid.revision}</p>
+              )}
               <p className="footnote">
                 Round-trip time includes both directions and peer processing.
                 Samples update once per second; median and p95 use the latest 60

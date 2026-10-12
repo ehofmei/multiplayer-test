@@ -28,15 +28,18 @@ export function useGameSounds(
       if (preference.current) void sounds.unlock();
     };
     const visibility = () => {
+      if (previous.current?.kind === "lights") previous.current = null;
       if (document.hidden) sounds.suspend();
     };
     document.addEventListener("pointerdown", unlock, true);
     document.addEventListener("keydown", unlock, true);
     document.addEventListener("visibilitychange", visibility);
+    window.addEventListener("pageshow", visibility);
     return () => {
       document.removeEventListener("pointerdown", unlock, true);
       document.removeEventListener("keydown", unlock, true);
       document.removeEventListener("visibilitychange", visibility);
+      window.removeEventListener("pageshow", visibility);
       sounds.dispose();
       audio.current = null;
     };

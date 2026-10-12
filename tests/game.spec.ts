@@ -76,7 +76,9 @@ test("compressed QR images pair offline and expose live latency on a phone", asy
     });
     await expect(host.getByText("2/8", { exact: true })).toBeVisible();
     await client.getByRole("button", { name: "Cell 1", exact: true }).click();
-    await expect(host.getByText("Revision 1", { exact: true })).toBeVisible();
+    await expect(
+      host.getByRole("button", { name: "Cell 1", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
     await connectionDetails(client);
     await expect(client.getByTestId("rtt")).toContainText("ms", {
       timeout: 10_000,
@@ -204,6 +206,18 @@ test("scanner modal fills the viewport, traps focus and releases the stream on c
   }
 });
 
+async function expectRevision(page: Page, revision: number) {
+  await openMenu(page);
+  const details = page.locator(".debug");
+  if (!(await page.locator(".debug[open]").count()))
+    await details.locator("summary").click();
+  await expect(
+    details.getByText(`Revision ${revision}`, { exact: true }),
+  ).toBeVisible();
+  await details.locator("summary").click();
+  await closePanels(page);
+}
+
 async function createLights(page: Page) {
   await page.getByRole("button", { name: "Create Game", exact: true }).click();
   await chooseGame(page, "Shared Lights");
@@ -243,8 +257,8 @@ for (const missed of ["hello", "state"] as const)
       await client.getByRole("button", { name: "Cell 1", exact: true }).click();
       for (const page of [host, client])
         await expect(
-          page.getByText("Revision 1", { exact: true }),
-        ).toBeVisible();
+          page.getByRole("button", { name: "Cell 1", exact: true }),
+        ).toHaveAttribute("aria-pressed", "true");
       await connectionDetails(client);
       const helloCount = () =>
         client.evaluate(
@@ -284,7 +298,7 @@ test("host and three clients pair, synchronize concurrent taps, and disconnect c
     clients[2].getByRole("button", { name: "Cell 4", exact: true }).click(),
   ]);
   for (const p of [host, ...clients]) {
-    await expect(p.getByText("Revision 4", { exact: true })).toBeVisible();
+    await expectRevision(p, 4);
     for (let i = 1; i <= 4; i++)
       await expect(
         p.getByRole("button", { name: "Cell " + i, exact: true }),
@@ -295,7 +309,7 @@ test("host and three clients pair, synchronize concurrent taps, and disconnect c
       .getByRole("button", { name: "Cell 7", exact: true })
       .click();
   for (const p of [host, ...clients]) {
-    await expect(p.getByText("Revision 24", { exact: true })).toBeVisible();
+    await expectRevision(p, 24);
     await expect(
       p.getByRole("button", { name: "Cell 7", exact: true }),
     ).toHaveAttribute("aria-pressed", "false");
@@ -314,9 +328,25 @@ test("host and three clients pair, synchronize concurrent taps, and disconnect c
     .screenshot({ path: "test-results/connected-details.png" });
   await closePanels(host);
   await closePanels(clients[0]);
-  await expectStableScreenshot(host, ".grid", "shared-grid.png", {
-    maxDiffPixels: 512,
-  });
+  await expectStableScreenshot(
+    host,
+    ".grid",
+    `shared-grid-${process.platform}.png`,
+    {
+      maxDiffPixels: 512,
+    },
+  );
+  await Promise.all(
+    [host, ...clients].map((p) =>
+      p.getByRole("button", { name: "Cell 8", exact: true }).click(),
+    ),
+  );
+  for (const p of [host, ...clients]) {
+    await expectRevision(p, 28);
+    await expect(
+      p.getByRole("button", { name: "Cell 8", exact: true }),
+    ).toHaveAttribute("aria-pressed", "false");
+  }
   await returnHome(clients[2]);
   await expect(host.getByText("3/8", { exact: true })).toBeVisible();
   await host.getByRole("button", { name: "Cell 16", exact: true }).click();
@@ -324,9 +354,7 @@ test("host and three clients pair, synchronize concurrent taps, and disconnect c
     clients[0].getByRole("button", { name: "Cell 16", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await join(host, clients[2], "Sam");
-  await expect(
-    clients[2].getByText("Revision 25", { exact: true }),
-  ).toBeVisible();
+  await expectRevision(clients[2], 29);
   await returnHome(host);
   for (const p of clients) {
     await expect(p.getByRole("status")).toHaveText("Host disconnected");

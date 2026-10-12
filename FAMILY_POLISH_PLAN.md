@@ -3,7 +3,7 @@
 This follow-up plan was created as the final deliverable of
 [FAMILY_PLAYTEST_PLAN.md](FAMILY_PLAYTEST_PLAN.md). **Implementation is in progress:**
 Tasks 1–2 and 4 are implemented; Task 3 is implemented with live QA pending;
-Tasks 5–7 are implemented with physical-device QA pending; Tasks 8–15 remain planned. Read
+Tasks 5–8 are implemented with physical-device QA pending; Tasks 9–15 remain planned. Read
 [AGENTS.md](AGENTS.md) before implementing. Each remaining numbered task can be
 assigned to a separate Codex session.
 
@@ -18,7 +18,7 @@ assigned to a separate Codex session.
 | 5    | Arena Pong               | Implemented; physical-device QA pending            |
 | 6    | Light-cycle Arena        | Implemented; physical-device QA pending            |
 | 7    | Light Seek               | Implemented; physical-device QA pending            |
-| 8    | Shared Lights            | Planned                                            |
+| 8    | Shared Lights            | Implemented; physical-device QA pending            |
 | 9    | Library and shared shell | Planned                                            |
 | 10   | Pong                     | Planned                                            |
 | 11   | Spaceship Panic          | Planned                                            |
@@ -301,6 +301,9 @@ Do not restore region selectors or add automatic placement.
 `tests/seek.spec.ts`.
 
 ### 8. Shared Lights: make a simple toy satisfying
+
+Implemented using [the refined Shared Lights plan](SHARED_LIGHTS_POLISH_PLAN.md).
+See README for current behavior and QA for coverage and physical-device follow-up.
 
 **Observed gap:** the enormous rectangular switches look like a diagnostic
 panel, with a small dot and prominent revision count. On/off sound is already wired.

@@ -120,9 +120,15 @@ Arcade pads and personal hit reward · macOS baseline.
 
 ## Shared Lights
 
-Shared board · shared baseline.
+Warm lenses and visible keyboard focus · phone layout.
 
-![Shared Lights board](tests/game.spec.ts-snapshots/shared-grid.png)
+![Shared Lights board](tests/lights.spec.ts-snapshots/lights-mixed-focus-phone-linux.png)
+
+[All off](tests/lights.spec.ts-snapshots/lights-off-phone-linux.png) ·
+[All on, landscape iPad](tests/lights.spec.ts-snapshots/lights-on-ipad-linux.png) ·
+[Short landscape, reduced motion](tests/lights.spec.ts-snapshots/lights-landscape-reduced-linux.png) ·
+[Eight connected players](tests/lights.spec.ts-snapshots/lights-eight-phone-linux.png) ·
+[Four-device synchronized board](tests/game.spec.ts-snapshots/shared-grid-linux.png).
 
 ## Midnight Bakery
 

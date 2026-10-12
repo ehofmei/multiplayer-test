@@ -88,6 +88,29 @@ it("gives confirmed Golf contacts distinct cues, deduplicates the shared shot, a
   );
 });
 describe("game sound transitions", () => {
+  it("coalesces mixed Lights changes and never guesses unobserved toggles", () => {
+    const s = snapshot();
+    s.grid.cells[0] = true;
+    const before = frame(s);
+    // Mutate in place to check the captured frame owns its cell values.
+    s.grid.cells[0] = false;
+    s.grid.cells[1] = true;
+    s.grid.revision += 2;
+    const mixed = frame(s);
+    expect(soundEvents(before, mixed)).toEqual(["lights-switch"]);
+    expect(soundEvents(mixed, mixed)).toEqual([]);
+    s.grid.revision += 2; // An on/off pair skipped by a received snapshot.
+    expect(soundEvents(mixed, frame(s))).toEqual([]);
+    expect(soundEvents(frame(s), mixed)).toEqual([]); // Stale revision.
+    s.grid.cells[2] = true;
+    s.grid.cells[3] = true;
+    s.grid.revision += 2;
+    expect(soundEvents(mixed, frame(s))).toEqual(["on"]);
+    const on = frame(s);
+    s.grid.cells.fill(false);
+    s.grid.revision += 3;
+    expect(soundEvents(on, frame(s))).toEqual(["off"]);
+  });
   it("copies host state, plays toggles once, and stays silent on first state or game switches", () => {
     const s = snapshot(),
       before = frame(s);

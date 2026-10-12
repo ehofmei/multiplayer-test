@@ -34,6 +34,7 @@ export type Cue =
   | "enable"
   | "on"
   | "off"
+  | "lights-switch"
   | "paddle"
   | "bumper"
   | "wall"
@@ -173,8 +174,9 @@ const notes: Record<Cue, Note[]> = {
     [1046, 0.25, 0.24],
   ],
   enable: [[740, 0.08]],
-  on: [[700, 0.06]],
-  off: [[420, 0.06]],
+  on: [[740, 0.075]],
+  off: [[370, 0.045]],
+  "lights-switch": [[520, 0.045]],
   paddle: [[620, 0.045]],
   bumper: [
     [940, 0.07],
@@ -259,7 +261,12 @@ export class Sounds {
           oscillator.frequency.exponentialRampToValueAtTime(100, at + duration);
         }
         gain.gain.setValueAtTime(0, at);
-        gain.gain.linearRampToValueAtTime(0.09, at + 0.006);
+        const quietSwitch =
+          cue === "on" || cue === "off" || cue === "lights-switch";
+        gain.gain.linearRampToValueAtTime(
+          quietSwitch ? 0.045 : 0.09,
+          at + 0.006,
+        );
         gain.gain.exponentialRampToValueAtTime(0.001, at + duration);
         oscillator.connect(gain);
         gain.connect(context.destination);

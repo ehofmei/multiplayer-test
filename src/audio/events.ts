@@ -1,4 +1,5 @@
 import { bakeryScore } from "../games/bakery";
+import { changedLights } from "../game/lights-feedback";
 import { bakeryReward } from "../games/bakery-feedback";
 import { glowTotal } from "../games/glow";
 import { golfContacts, golfMotionFrame } from "../games/golf-motion";
@@ -141,7 +142,7 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
         }
       : null,
     revision: grid.revision,
-    lit: grid.cells.filter(Boolean).length,
+    cells: [...grid.cells],
     pong: pong
       ? {
           phase: pong.phase,
@@ -350,8 +351,13 @@ export function soundEvents(
     if (yourTurn) cues.push("seek-turn");
     return cues;
   }
-  if (after.kind === "lights" && after.revision > before.revision)
-    return [after.lit >= before.lit ? "on" : "off"];
+  if (after.kind === "lights") {
+    const changed = changedLights(before, after);
+    if (!changed.length) return [];
+    const on = changed.some((index) => after.cells[index]);
+    const off = changed.some((index) => !after.cells[index]);
+    return [on && off ? "lights-switch" : on ? "on" : "off"];
+  }
   if (after.sumo && before.sumo) {
     if (after.sumo.phase === "finished" && before.sumo.phase !== "finished")
       return [
