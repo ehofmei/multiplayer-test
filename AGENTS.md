@@ -84,4 +84,9 @@ code, dependencies, build configuration, workflows, tests, or baselines change.
   another suite runs. Use separate checkouts, ports and output paths for deliberate
   concurrency. Never stop another session's processes or rebuild its shared dist.
 - Use the stable live-QA origin and popup classification procedure in QA.md.
+  Check every QA tab's build and apply waiting updates from Home before pairing.
+  If already hosting or joining, Return Home before updating; Join mode also
+  triggers the app's update confirmation. Use QA.md's supported dialog handling
+  if an intentional update encounters that confirmation; do not wait for the owner
+  or remove the production safeguard to unblock automation.
   Treat missing live QA or Linux execution as an explicit incomplete check.

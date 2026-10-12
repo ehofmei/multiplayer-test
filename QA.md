@@ -359,6 +359,14 @@ and Ubuntu. The genuine Ubuntu image came from
 [the family-playtest review run](https://github.com/ehofmei/multiplayer-test/actions/runs/37865516178)
 and returned in `dbbdcf8`. Both renders were visually reviewed; the 64-pixel
 budget and strict dimensions remain unchanged.
+Task 6's nine platform-specific states have genuine Darwin and Ubuntu renders,
+reviewed visually with unchanged 64-pixel comparison budgets and strict dimensions.
+Ubuntu evidence was generated only for `tests/cycle-integration.spec.ts` in
+[the scoped review run](https://github.com/ehofmei/multiplayer-test/actions/runs/38270400330)
+and returned in `8264954` (the earlier seven images came from `73cd2be`). The
+one-time write-enabled generation workflow is removed after review; ordinary
+review verification remains read-only and uses no snapshot update flags.
+
 Physical iPhone/iPad checks remain: comfortable steering reach, legible riders
 and trails, safe areas and rotation, especially the shortest phone viewport.
 
