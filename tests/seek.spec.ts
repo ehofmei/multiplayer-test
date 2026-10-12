@@ -251,55 +251,6 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     await expect(
       client.getByRole("button", { name: "Place piece", exact: true }),
     ).toBeDisabled();
-    // Genuine touch input: sliding corrects the draft, cancellation restores it.
-    const touch = await context.newCDPSession(client);
-    const area = (await client.locator(".seek-grid").boundingBox())!;
-    const point = (column: number, row: number) => ({
-      x: area.x + ((column + 0.5) * area.width) / 10,
-      y: area.y + ((row + 0.5) * area.height) / 10,
-    });
-    await touch.send("Input.dispatchTouchEvent", {
-      type: "touchStart",
-      touchPoints: [point(9, 9)],
-    });
-    await touch.send("Input.dispatchTouchEvent", {
-      type: "touchMove",
-      touchPoints: [point(0, 0)],
-    });
-    await touch.send("Input.dispatchTouchEvent", {
-      type: "touchEnd",
-      touchPoints: [],
-    });
-    await expect(client.locator(".seek-status")).toContainText(
-      "0/5 placed · A1 · Fits",
-    );
-    await touch.send("Input.dispatchTouchEvent", {
-      type: "touchStart",
-      touchPoints: [point(9, 9)],
-    });
-    await touch.send("Input.dispatchTouchEvent", {
-      type: "touchCancel",
-      touchPoints: [],
-    });
-    await expect(client.locator(".seek-status")).toContainText(
-      "0/5 placed · A1 · Fits",
-    );
-    await touch.send("Input.dispatchTouchEvent", {
-      type: "touchStart",
-      touchPoints: [point(9, 9)],
-    });
-    await touch.send("Input.dispatchTouchEvent", {
-      type: "touchMove",
-      touchPoints: [{ x: area.x - 5, y: area.y + 5 }],
-    });
-    await touch.send("Input.dispatchTouchEvent", {
-      type: "touchEnd",
-      touchPoints: [],
-    });
-    await expect(client.locator(".seek-status")).toContainText(
-      "0/5 placed · A1 · Fits",
-    );
-    // Keep this input session alive through the context lifetime and subsequent taps.
     // Move the already placed piece to the agreed deterministic layout.
     const anchors = [0, 10, 30, 40, 60];
     for (let i = 0; i < 5; i++) {
@@ -607,5 +558,101 @@ test("Light Seek fits eight long names, keeps late arrivals public, and resets o
     ).toBeDisabled();
   } finally {
     for (const c of contexts) await c.close();
+  }
+});
+
+test("Light Seek touch placement corrects, cancels and confirms Ready on a phone", async ({
+  page: host,
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 402, height: 874 },
+    hasTouch: true,
+    isMobile: true,
+    reducedMotion: "reduce",
+  });
+  try {
+    const client = await context.newPage();
+    await host.goto("./");
+    await host
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await join(host, client, "Touch player");
+    await chooseGame(host, "Light Seek");
+    await host.getByRole("button", { name: "Start Seek", exact: true }).click();
+    await expect(card(client)).toHaveAttribute("data-phase", "setup");
+    // Genuine touch input: sliding corrects the draft, cancellation restores it.
+    const touch = await context.newCDPSession(client);
+    const area = (await client.locator(".seek-grid").boundingBox())!;
+    const point = (column: number, row: number) => ({
+      x: area.x + ((column + 0.5) * area.width) / 10,
+      y: area.y + ((row + 0.5) * area.height) / 10,
+    });
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [point(9, 9)],
+    });
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [point(0, 0)],
+    });
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    await expect(client.locator(".seek-status")).toContainText(
+      "0/5 placed · A1 · Fits",
+    );
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [point(9, 9)],
+    });
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchCancel",
+      touchPoints: [],
+    });
+    await expect(client.locator(".seek-status")).toContainText(
+      "0/5 placed · A1 · Fits",
+    );
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [point(9, 9)],
+    });
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x: area.x - 5, y: area.y + 5 }],
+    });
+    await touch.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    await expect(client.locator(".seek-status")).toContainText(
+      "0/5 placed · A1 · Fits",
+    );
+    // Keep this input session alive through the context lifetime and subsequent taps.
+
+    for (const [i, c] of [0, 10, 30, 40, 60].entries()) {
+      await place(host, i, c);
+      await client.locator(".seek-setup-tray button").nth(i).tap();
+      await client
+        .getByRole("button", { name: new RegExp(`^${coordinate(c)},`) })
+        .tap();
+      await client.getByRole("button", { name: /^(Place|Move) piece$/ }).tap();
+      await expect(client.locator(".seek-status")).toContainText(
+        `${i + 1}/5 placed`,
+      );
+    }
+    await client.getByRole("button", { name: "Ready", exact: true }).tap();
+    await expect(client.locator(".seek-status")).toContainText(
+      "Ready confirmed",
+    );
+    await expect(
+      client.locator(".seek-setup-tray button").first(),
+    ).toBeDisabled();
+    await host.getByRole("button", { name: "Ready", exact: true }).click();
+    await expect(card(client)).toHaveAttribute("data-phase", "countdown");
+    await expect(card(client)).toHaveAttribute("data-phase", "playing");
+  } finally {
+    await context.close();
   }
 });
