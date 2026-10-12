@@ -268,28 +268,35 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
     // Normal pointer/touch input follows the incoming ball and varies paddle contact.
     // Predict only in the clear outer lanes, where no brick can change its path.
     for (let tick = 0; tick < 4000; tick++) {
-      const phase = await host
-        .locator(".breakout-game-card")
-        .getAttribute("data-phase");
-      if (phase === "finished") break;
-      if (phase === "serve") {
+      // Read the visible frame together so paired runs spend their time playing,
+      // rather than making separate browser round trips for each HUD field.
+      const frame = await host.locator(".breakout-game-card").evaluate((e) => {
+        const ball = Array.from(
+          e.querySelectorAll(".breakout-court svg circle"),
+        ).at(-1)!;
+        return {
+          phase: e.getAttribute("data-phase"),
+          finalCore: e
+            .querySelector(".breakout-level small")!
+            .textContent!.includes("03 / 03"),
+          remaining: e.querySelectorAll(".breakout-brick").length,
+          ball: {
+            x: Number(ball.getAttribute("cx")) / 1000,
+            y: Number(ball.getAttribute("cy")) / 1000,
+            vx: Number(ball.getAttribute("data-vx")),
+            vy: Number(ball.getAttribute("data-vy")),
+          },
+        };
+      });
+      if (frame.phase === "finished") break;
+      if (frame.phase === "serve") {
         await host.clock.runFor(1150);
         continue;
       }
-      const ball = await host
-        .locator(".breakout-court svg circle")
-        .last()
-        .evaluate((e) => ({
-          x: Number(e.getAttribute("cx")) / 1000,
-          y: Number(e.getAttribute("cy")) / 1000,
-          vx: Number(e.getAttribute("data-vx")),
-          vy: Number(e.getAttribute("data-vy")),
-        }));
+      const ball = frame.ball;
       const finalApproach =
-        (await host.locator(".breakout-level small").innerText()).includes(
-          "03 / 03",
-        ) &&
-        (await host.locator(".breakout-brick").count()) === 1 &&
+        frame.finalCore &&
+        frame.remaining === 1 &&
         ball.x > 0.2 &&
         ball.x < 0.8 &&
         ball.y > 0.2 &&

@@ -3,7 +3,7 @@ on:
   push:
     branches: [codex/reaction-polish]
 permissions:
-  contents: write
+  contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -16,17 +16,6 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - name: Refresh deliberately centered Linux Breakout victory pose
-        run: npx playwright test tests/breakout.spec.ts --grep 'paired Breakout teammates' --update-snapshots=all
-      - name: Return reviewed-state Linux renders
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tests/breakout.spec.ts-snapshots/*-linux.png
-          if ! git diff --cached --quiet; then
-            git commit -m 'Centered Linux Breakout victory baseline'
-            git push origin HEAD:codex/reaction-polish
-          fi
       - run: npm run verify
       - name: Save browser evidence
         if: always()
