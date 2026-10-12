@@ -117,34 +117,6 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     reducedMotion: "reduce",
   });
   try {
-    await context.addInitScript(() => {
-      const events: { type: string; target: string | null }[] = [];
-      Reflect.set(window, "seekInputEvidence", events);
-      for (const type of [
-        "pointerdown",
-        "pointerup",
-        "pointercancel",
-        "touchstart",
-        "touchend",
-        "click",
-      ]) {
-        document.addEventListener(
-          type,
-          (e) => {
-            const target = e.target as HTMLElement;
-            events.push({
-              type,
-              target:
-                target.getAttribute("aria-label") ??
-                target.textContent?.slice(0, 40) ??
-                null,
-            });
-            if (events.length > 30) events.shift();
-          },
-          true,
-        );
-      }
-    });
     const client = await context.newPage();
     await host.goto("./");
     await host.getByLabel("Your name").fill("Alex");
@@ -289,16 +261,7 @@ test("Light Seek pairs, places, waits, alternates, finds all pieces, reveals, re
     await expect(card(host)).toHaveAttribute("data-phase", "setup");
     await expect(client.locator(".seek-status")).toContainText("5/5 placed");
     await client.getByRole("button", { name: "Ready", exact: true }).tap();
-    try {
-      await expect(card(host)).toHaveAttribute("data-phase", "countdown");
-    } catch (error) {
-      console.log(
-        "Ready touch evidence",
-        await client.evaluate(() => Reflect.get(window, "seekInputEvidence")),
-        await client.locator(".seek-status").innerText(),
-      );
-      throw error;
-    }
+    await expect(card(host)).toHaveAttribute("data-phase", "countdown");
     await host.clock.runFor(3000);
     await expect(card(client)).toHaveAttribute("data-phase", "playing");
     await host.setViewportSize(sizes[2]);

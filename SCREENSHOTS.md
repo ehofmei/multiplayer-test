@@ -256,12 +256,20 @@ Score forecast and completed-row feedback:
 
 ## Light Seek
 
-Active board · phone layout.
+Full search board and a tiled collection that lights up only for completed pieces.
 
 ![Light Seek active screen](tests/seek.spec.ts-snapshots/seek-active-linux.png)
 
 <details>
-<summary>Found piece and results</summary>
+<summary>Setup, selected cell, landscape iPad, discovery and results</summary>
+
+![Light Seek setup tray](tests/seek.spec.ts-snapshots/seek-setup-linux.png)
+
+![Light Seek invalid edge preview](tests/seek.spec.ts-snapshots/seek-invalid-linux.png)
+
+![Light Seek selected phone cell](tests/seek.spec.ts-snapshots/seek-selected-linux.png)
+
+![Light Seek landscape iPad](tests/seek.spec.ts-snapshots/seek-ipad-linux.png)
 
 ![Light Seek found piece](tests/seek.spec.ts-snapshots/seek-found-linux.png)
 

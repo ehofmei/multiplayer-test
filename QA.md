@@ -15,7 +15,7 @@ These are nominal full-screen emulation sizes, not measured available gameplay
 areas. The phone sizes use standard 3× scaling of Apple's published display
 resolutions, and both iPads use standard 2× scaling. References:
 [iPhone 17 Pro](https://support.apple.com/en-us/125090),
-[iPhone 18 Pro Max](https://www.apple.com/iphone-18-pro/specs/) and
+[iPhone 18 Pro Max](https://www.apple.com/iphone-18-pro/specs/),
 [iPad Air (5th generation)](https://support.apple.com/en-us/111887) and
 [iPad (9th generation)](https://support.apple.com/en-us/111898).
 Confirm actual usable viewports on the household devices, including safe areas,
@@ -974,7 +974,7 @@ need the device pass. No timing, scoring rules or network fields changed.
 
 ## Light Seek
 
-Task 7 polish QA inventory (implementation verification in progress):
+Task 7 polish QA inventory:
 
 - Primary layout targets: 402×874 and 440×956 phones; 1180×820 M1 iPad Air and
   1080×810 ninth-generation iPad in landscape. Phone rotation and the existing
@@ -1071,6 +1071,44 @@ and returned in `dbbdcf8`; the bundled font, strict dimensions and 180-pixel
 budget remain unchanged. The non-deploying family-playtest workflow compares
 committed images with snapshot updates disabled. Real iPhone/iPad thumb accuracy
 remains an acceptance check.
+
+### Task 7 polish evidence
+
+The persistent production-preview pass used matching build
+`20261012T183658Z · local` at QA.md's stable origin and its independent localhost
+client origin. Normal controls covered manual pairing, all five placements,
+rotation, keyboard correction, invalid corner/overlap edits, Ready waiting,
+Help/My board and Escape, paused setup, play pause/resume, repeated-cell rejection,
+ordinary-hit privacy, discoveries, complete host and client victories, phone
+board switching, dim remaining tiles, replay and Stop. Reviewed phone screens at
+402×874/440×956, landscape tablets at 1180×820/1080×810 and the desktop host.
+The final live pass found no clipping or page scrolling on those household sizes.
+
+The focused Seek suite compares seven deterministic states: setup, invalid edge,
+active, selected phone cell, landscape iPad, discovery and results. Every Darwin
+and Linux image was visually reviewed. Genuine Ubuntu images came from
+[the scoped review run](https://github.com/ehofmei/multiplayer-test/actions/runs/38293301198)
+for `2aed986`, downloaded through the read-only baseline artifact route. No
+cross-platform copying, relaxed fit assertions or pixel-budget increases were
+used. The 180-pixel budget and bundled font fixture remain intact.
+
+Touch correction/cancellation/off-board release and a complete touch-only setup
+use their own mobile context. Keep low-level touch streams separate from the
+mouse/keyboard journey: mixed streams in desktop emulation produced pointer
+and touch events without a compatibility click on Ubuntu. The isolated mobile
+flow and ordinary Ready taps passed there. Layout assertions measure all targets
+in one browser call without reducing viewport, target-size or clearance coverage.
+
+Focused checks passed: `npm run check:fast`, Seek/audio unit tests,
+`npm run test:game -- seek` with snapshot updates disabled, and
+`npm run test:e2e -- tests/app-layout.spec.ts tests/updates.spec.ts` (8 tests).
+Complete local verification and ordinary exact-final Ubuntu verification form
+the final gate after baseline review; generation alone is not the final gate.
+
+Physical acceptance remains on the household devices: real-thumb corners/edges,
+installed-PWA safe areas, larger text/VoiceOver, rotation, audio listening/unlock,
+Wi-Fi play, background recovery and offline startup with updated apps on both
+players. Desktop Chromium touch emulation does not certify Safari/iPadOS behavior.
 
 ## Glow Clash
 

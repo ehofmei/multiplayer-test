@@ -3,7 +3,7 @@
 This follow-up plan was created as the final deliverable of
 [FAMILY_PLAYTEST_PLAN.md](FAMILY_PLAYTEST_PLAN.md). **Implementation is in progress:**
 Tasks 1–2 and 4 are implemented; Task 3 is implemented with live QA pending;
-Tasks 5–6 are implemented with physical-device QA pending; Tasks 7–15 remain planned. Read
+Tasks 5–7 are implemented with physical-device QA pending; Tasks 8–15 remain planned. Read
 [AGENTS.md](AGENTS.md) before implementing. Each remaining numbered task can be
 assigned to a separate Codex session.
 
@@ -17,7 +17,7 @@ assigned to a separate Codex session.
 | 4    | Reaction Race            | Implemented; physical-device QA pending            |
 | 5    | Arena Pong               | Implemented; physical-device QA pending            |
 | 6    | Light-cycle Arena        | Implemented; physical-device QA pending            |
-| 7    | Light Seek               | Planned                                            |
+| 7    | Light Seek               | Implemented; physical-device QA pending            |
 | 8    | Shared Lights            | Planned                                            |
 | 9    | Library and shared shell | Planned                                            |
 | 10   | Pong                     | Planned                                            |
@@ -273,6 +273,9 @@ Keep the existing sixty-second shared-win rule; this task changes presentation.
 `src/audio/events.ts`, cycle unit tests and `tests/game.spec.ts`.
 
 ### 7. Light Seek: improve selection confidence and turn feedback
+
+Implemented using [the refined Light Seek plan](LIGHT_SEEK_POLISH_PLAN.md). See
+README for current behavior and QA for verification and physical-device follow-up.
 
 **Observed gap:** the full board is much better than region selection, but a
 10×10 grid still means small phone cells. Setup uses a text shape selector, and

@@ -1,7 +1,7 @@
 # Light Seek polish plan — Task 7
 
-Status: implementation in progress; verification and physical-device acceptance
-remain to be completed. This refines
+Status: implemented; physical-device acceptance remains. See README.md for
+current behavior and QA.md for verification evidence and device follow-up. This refines
 [Task 7 of the family polish plan](FAMILY_POLISH_PLAN.md#7-light-seek-improve-selection-confidence-and-turn-feedback)
 around the owner's priorities: reliable controls, useful feedback and a finished
 game presentation. The original brief is guidance, not a checklist of effects
