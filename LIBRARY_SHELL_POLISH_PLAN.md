@@ -1,69 +1,47 @@
 # Library and shared shell polish plan — Task 9
 
-Status: implementation in progress; verification and device acceptance pending. This refines
+Status: implementation and visual review complete; physical-device acceptance
+remains. Automated acceptance uses the final review-branch verification described
+below. This refines
 [Task 9 of the family polish plan](FAMILY_POLISH_PLAN.md#9-library-and-shared-shell-make-the-collection-feel-intentional).
 
-## Resume checklist
+## Completion and acceptance
 
-Work is on `codex/library-shell-polish`; latest pushed checkpoint is `c86b18a`.
-Preserve the working tree. The authenticated GitHub CLI is
+Task 9 is implemented on `codex/library-shell-polish`: catalog and fourteen SVG
+marks, badges and roster requirements, page/focus restoration, setup/rematch seat
+and spectator guidance, consistent Help, gallery repairs and regression coverage.
+Existing game action rows, themes and replay wording remain. Breakout guidance
+uses its existing status area, preserving the original court baseline.
+
+Complete local `npm run verify` passed: formatting, TypeScript, 216 unit tests,
+10 script tests, production build, all 76 browser tests and screenshot-pair checks.
+Every changed/new Darwin and genuine Linux baseline was visually reviewed;
+dimensions, budgets and fit assertions remain strict. Linux evidence runs
+38329979084, 38331222373 and 38331877161 supplied the reviewed renders. Evidence
+runs do not replace the ordinary final verification gate.
+
+Before handoff, require a successful ordinary Ubuntu `npm run verify` for the
+exact final review-branch commit, with snapshot updates disabled. The current
+run is available in
+[the branch's workflow checks](https://github.com/ehofmei/multiplayer-test/actions?query=branch%3Acodex%2Flibrary-shell-polish).
+If resuming before that gate completes, inspect its result and fix any failure;
+do not merge or deploy for testing. The authenticated CLI is
 `/private/tmp/shared-lights-gh/gh_2.102.0_macOS_arm64/bin/gh` (not on PATH).
-Use the existing non-deploying review workflow and QA.md's read-only artifact route.
+The complete local log is `/private/tmp/task9-verify-final.log`.
 
-- [x] Catalog, fourteen local SVG marks, badges and reactive roster requirements.
-- [x] Page/index restoration, breakpoint handling, keyboard focus and Next games.
-- [x] Ready/rematch requirements, seat-conflict and spectator guidance, consistent
-      visible Help labels; existing game action rows and playful replay retained.
-- [x] Catalog/seat unit tests; household/taller-font library checks; real pairing,
-      resize/focus and eight-player reduced-motion browser regression journeys.
-- [x] Sumo gallery repair, target audit, reviewed Linux library gallery, README/QA.
-- [x] Live host/client pairing, disabled cards, Help/Escape/focus, watching host,
-      pause/resume, switching, diagnostics, synchronization and disconnects.
-      Solo Race natural finish/replay passed on build `20261013T005710Z · local`.
-- [x] Correct short-phone/taller-font and landscape clipping. Move Breakout setup
-      guidance into its existing status to preserve court size; the original
-      court baseline and pairing/control test passed without updates.
-- [x] Review/integrate seven genuine Linux library images and three changed
-      app-layout images from successful evidence run 38329979084.
-- [ ] Finish scoped Darwin refresh and Ubuntu evidence for the ten examined
-      Help/setup specs. Local log: `/private/tmp/task9-help-refresh.log`.
-      Ubuntu: https://github.com/ehofmei/multiplayer-test/actions/runs/38330611762
-      Artifact uses the full `c86b18a` SHA. These runs are evidence, not final gates.
-- [ ] Visually review every changed Darwin/Linux image and the final baseline diff.
-- [x] Final live Breakout check on build `20261013T010647Z · local`, at short
-      phone and landscape iPad; duplicate-seat correction and restored space pass.
-- [ ] Complete local `npm run verify` after the last substantive fix.
-- [ ] Push reviewed baselines/code and obtain ordinary Ubuntu `npm run verify`
-      success for that exact final commit, with update flags disabled.
-- [ ] Final status/diff, documentation/plan completion and physical-device handoff.
-- [ ] Physical iPhone/iPad acceptance (owner follow-up).
+Live production QA covered library/card/control layouts, Help/Escape/focus,
+independent host/client text pairing, disabled client browsing, duplicate seats,
+watching host, pause/resume, switching, diagnostics, synchronized Lights,
+disconnects and a natural solo Race finish/replay. The corrected Breakout setup
+was reviewed on the short phone and landscape iPad. Final executable live build:
+`20261013T010647Z · local`. README describes behavior; QA.md and SCREENSHOTS.md
+record coverage, evidence and household-device acceptance.
 
-Darwin scoped refresh finished with 34 passes and one stale disconnect-copy
-assertion; every requested image was rendered. Bakery is being rerun without
-updates at `/private/tmp/task9-bakery-current.log`. The failed Ubuntu generation
-must be repeated after pushing this assertion correction.
-
-The scoped refresh uncovered one stale behavioral assertion:
-`tests/bakery.spec.ts:269` still expects “The ovens are ready. Are you?” after
-the other baker leaves. Update it to “Needs 1 more player” and assert Open Bakery
-is disabled, (now updated with both assertions). This is the intended new roster
-copy, not a rules change. Rerun Bakery locally and the affected Ubuntu generation;
-a failed generation does not provide accepted final evidence.
-
-Fast checks/build passed after the court fix: 216 unit tests and 10 script tests.
-All four library journeys passed without updates. The complete browser audit
-finished with 52 passes and 24 screenshot-only failures; actual/original images
-were inspected, confirming intended Help/setup changes except the rejected and
-fixed court shrink. Logs: `/private/tmp/task9-browser-audit.log`; comparison map:
-`/private/tmp/task9-actual-pairs.json`. Keep code/tests/dist unchanged while the
-current guarded suite runs. Do not accept the shrunk Breakout court actual.
-The original court baseline stays unchanged. No complete final gate has run.
-
-The first library/layout artifact remains in `/private/tmp/task9-linux-library`.
-The dedicated production preview uses port 4174. Check the build and apply waiting
-updates from Home before any new live room. Match actual viewport dimensions;
-browser viewport overrides target the selected tab. Physical safe areas, reach,
-rotation, VoiceOver and household Wi-Fi/lifecycle acceptance remain pending.
+Physical acceptance remains: installed iPhone/iPad safe areas and usable viewport,
+rotation, real-thumb reach, larger text/VoiceOver, household Wi-Fi and background
+recovery. Ask the family to choose suitable games for one, two, three and larger
+rosters and explain who plays versus watches. These checks stay pending until
+performed. The task has not been merged or deployed by this implementation.
 
 ## Direction
 

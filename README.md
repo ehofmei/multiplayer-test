@@ -260,7 +260,7 @@ landscape) complements court dragging, arrow keys and the Help slider.
 
 **Players & lives** opens the host's seat/lives dialog; setup directions refer to
 the host's assignments. Full names, viewed sides and color choices remain in
-**How to play**. The match finale replaces the stopped court with the champion's
+**Help**. The match finale replaces the stopped court with the champion's
 name/number and an immediate replay action; changing settings is separate.
 Arena snapshots now optionally include one bounded confirmed contact; older
 snapshots remain accepted, but update all devices for consistent feedback. This
@@ -280,7 +280,7 @@ Update all devices before using the new Arena lives settings.
 and spectators. Its luminous court has a compact, symmetric 5×5 core of 25 bricks,
 with broad clear lanes toward all four paddles. Each teammate sees their paddle
 at the bottom; drag on the court or the steering strip, use ←/→, or open
-**How to play** for the slider, paddle colors and full team roster. Local paddle
+**Help** for the slider, paddle colors and full team roster. Local paddle
 response is immediate and clients smooth confirmed ball snapshots. The host
 fills bottom/right/top/left seats in order; unused sides become walls.
 
@@ -317,7 +317,7 @@ chevron mark your bumper; the illuminated cyan ring is the actual elimination
 boundary, and striped amber flooring marks the area outside it. The compact HUD,
 thumb deck and footer leave the square arena as much viewport space as possible.
 Ready screens preview the connected players; countdown and pause messages appear
-on the arena. **Help & players** opens the instructions and full player roster,
+on the arena. **Help** opens the instructions and full player roster,
 including names truncated in the HUD. The surrounding room controls share the
 arena's dark palette. Artwork is bundled SVG and needs no external assets.
 
@@ -357,7 +357,7 @@ expires without replaying on pause/resume or rematch. Reduced motion keeps the
 flashes static and skips the result entrance animation. The arena result card
 shows the winning bumper and name, or a distinct simultaneous draw. Inactive
 thumb controls disappear; Bump Again stays available to the host and the full
-roster remains in Help & players.
+roster remains in Help.
 Update **every device** before selecting Sumo Bumpers: older builds cannot validate
 its state or inputs. Update every device for the continued-pressure rules too:
 older Sumo builds reject snapshots beyond sixty seconds. Snapshots now include an optional, bounded last-contact tick per bumper; older

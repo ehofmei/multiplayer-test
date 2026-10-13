@@ -3,7 +3,7 @@
 This follow-up plan was created as the final deliverable of
 [FAMILY_PLAYTEST_PLAN.md](FAMILY_PLAYTEST_PLAN.md). **Implementation is in progress:**
 Tasks 1–2 and 4 are implemented; Task 3 is implemented with live QA pending;
-Tasks 5–8 are implemented with physical-device QA pending; Task 9 is in progress; Tasks 10–15 remain planned. Read
+Tasks 5–8 are implemented with physical-device QA pending; Task 9 is implemented with physical-device QA pending; Tasks 10–15 remain planned. Read
 [AGENTS.md](AGENTS.md) before implementing. Each remaining numbered task can be
 assigned to a separate Codex session.
 
@@ -19,7 +19,7 @@ assigned to a separate Codex session.
 | 6    | Light-cycle Arena        | Implemented; physical-device QA pending            |
 | 7    | Light Seek               | Implemented; physical-device QA pending            |
 | 8    | Shared Lights            | Implemented; physical-device QA pending            |
-| 9    | Library and shared shell | In progress; verification pending                  |
+| 9    | Library and shared shell | Implemented; physical-device QA pending            |
 | 10   | Pong                     | Planned                                            |
 | 11   | Spaceship Panic          | Planned                                            |
 | 12   | Meteor Minigolf          | Planned                                            |
@@ -325,7 +325,7 @@ toy, without scoring, puzzles, additional modes or a new audio architecture.
 ### 9. Library and shared shell: make the collection feel intentional
 
 Implementation plan: [Library and shared shell polish plan](LIBRARY_SHELL_POLISH_PLAN.md).
-Status: implementation in progress; verification pending.
+Status: implemented; physical-device acceptance remains. See the refined plan for automated verification gates.
 
 **Observed gap:** game cards use generic Unicode marks, and several descriptions
 leave practical player/solo requirements to setup. The neutral room chrome feels

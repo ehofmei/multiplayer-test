@@ -11,7 +11,7 @@ desktop Chromium captures, including simulated phone layouts, rather than
 photographs from physical iPhones or iPads. Linux baselines are shown where
 available; shared baselines are identified below.
 
-[Sumo Bumpers](#sumo-bumpers) · [Light-cycle Arena](#light-cycle-arena) ·
+[Family library](#family-library) · [Sumo Bumpers](#sumo-bumpers) · [Light-cycle Arena](#light-cycle-arena) ·
 [Spaceship Panic](#spaceship-panic) · [Co-op Breakout](#co-op-breakout) ·
 [Pong](#pong) · [Arena Pong](#arena-pong) · [Reaction Race](#reaction-race) ·
 [Shared Lights](#shared-lights) · [Midnight Bakery](#midnight-bakery) ·
@@ -127,7 +127,7 @@ Arcade pads and personal hit reward · Linux baseline.
 
 ![Reaction Race hit reward](tests/reaction.spec.ts-snapshots/race-hit-linux.png)
 
-[Wrong tap and intended target (macOS)](tests/game.spec.ts-snapshots/race-wrong-darwin.png) ·
+[Wrong tap and intended target](tests/reaction-integration.spec.ts-snapshots/race-wrong-linux.png) ·
 [Hold cue](tests/reaction.spec.ts-snapshots/race-hold-linux.png) ·
 [Eight shared winners](tests/reaction.spec.ts-snapshots/race-results-eight-linux.png)
 

@@ -670,7 +670,7 @@ Artwork and composition QA:
   simulation radius. Confirm the danger zone expands as the ring shrinks.
 - Ready screens preview connected players and hide the inactive thumb deck.
   Start requires two players. Countdown, pause and host loss appear on the arena;
-  active play clears the overlay. Help & players contains the full roster and
+  active play clears the overlay. Help contains the full roster and
   names; Escape/Close returns focus to its opener. Finished rounds show the
   arena result card and host rematch control. Controls, dash and arena pressure use the
   pass-two behavior above.
@@ -1578,22 +1578,35 @@ budgets were increased and no coverage moved to a later suite.
 
 ## Library and shared shell polish (Task 9)
 
-Implementation and verification are in progress; see
-[the Task 9 plan](LIBRARY_SHELL_POLISH_PLAN.md) for the current resume checklist.
-The catalog/unit tests cover all fourteen games, solo eligibility, exact-two
-connected requirements, selected-seat spectator policy, page clamping and seat
-conflict guidance. tests/library.spec.ts adds household phone/landscape iPad card
-bounds, taller fonts, page/focus restoration across resize and real paired roster
-changes. Existing app-layout, pairing, update and game tests remain required.
+Implementation and visual review are complete. Local `npm run verify` passed
+formatting, TypeScript, 216 unit tests, 10 script tests, production build, all
+76 browser tests and screenshot-pair checks. Require ordinary Ubuntu verification
+for the exact final review-branch commit, with updates disabled; use
+[the branch's checks](https://github.com/ehofmei/multiplayer-test/actions?query=branch%3Acodex%2Flibrary-shell-polish)
+and [the Task 9 plan](LIBRARY_SHELL_POLISH_PLAN.md). Physical acceptance remains pending. Catalog/unit tests cover all fourteen games, solo eligibility,
+exact-two connected requirements, selected-seat spectators, page clamping and
+seat conflict guidance. tests/library.spec.ts checks all cards at household phone
+and landscape iPad sizes, plus 320×568 and short landscape, strict content bounds,
+taller fonts, page/focus restoration through resize, actual paired roster changes,
+disabled client browsing and eight-player reduced-motion keyboard focus.
 
-Live QA inventory: all pages and fourteen marks; short phone and landscape;
-primary household phones and landscape iPad; missing-player setup; Help/Escape
-and focus return; solo play/replay; host/client/spectator roles; duplicate seats;
-join/leave guidance; long names; dense eight-person shell; connection/update access.
-Initial live short-phone checks exposed inherited nested-grid styling and a
-short-landscape seat-guidance overflow; both are being resolved through strict
-bounds tests. Local fast checks passed; complete local and final Ubuntu gates,
-final screenshot review and the rest of live QA remain pending.
+Live production QA reviewed all fourteen marks and pagination, missing-player
+setup, Help/Escape/focus return, host/client text pairing, duplicate paddle seats,
+a watching host, pause/resume, switching without re-pairing, synchronized Lights,
+diagnostics/update access and host departure cleanup. A solo Race finished
+naturally and replayed; the final corrected Breakout setup was checked on the
+short phone and landscape iPad. Phone (402×874, 440×956, 320×568), short landscape
+(844×390) and iPad (1180×820) screenshots and actual bounds were inspected.
+Final executable live build: `20261013T010647Z · local`.
+
+Reviewed platform pairs cover all four phone library pages, six-card landscape
+iPad, disabled client choices and eight connected players with reduced-motion
+keyboard focus. Shared Help/setup changes refresh existing full-screen states;
+original court geometry, font fixtures, dimensions and pixel budgets remain.
+Ubuntu evidence runs 38329979084, 38331222373 and 38331877161 supplied genuine
+Linux renders. Evidence-generation success does not replace ordinary final
+verification with snapshot updates disabled. Keep app-layout, all games, real
+pairing, audio, offline/update and snapshot-presence checks in the full gate.
 
 Physical follow-up: installed household iPhone/iPad viewport, safe areas and
 rotation, real-thumb card/control reach, larger text/VoiceOver, household Wi-Fi
