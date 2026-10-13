@@ -79,7 +79,11 @@ export async function acquireLock(root, label) {
 
 export const games = {
   breakout: ["tests/breakout.spec.ts", "tests/breakout-integration.spec.ts"],
-  pong: ["tests/pong.spec.ts", "tests/pong-integration.spec.ts"],
+  pong: [
+    "tests/pong.spec.ts",
+    "tests/pong-integration.spec.ts",
+    "tests/pong-polish.spec.ts",
+  ],
   arena: ["tests/arena.spec.ts", "tests/arena-integration.spec.ts"],
   reaction: ["tests/reaction.spec.ts", "tests/reaction-integration.spec.ts"],
   cycle: ["tests/cycle-integration.spec.ts"],

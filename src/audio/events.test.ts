@@ -18,6 +18,39 @@ const snapshot = (): Snapshot => ({
   error: "",
 });
 const frame = (s: Snapshot) => soundFrame(s, "a", "session");
+it("uses confirmed Pong contacts once without velocity guessing, and prioritizes point/finish/bumper", () => {
+  const s = snapshot();
+  s.room = newRoom("pong", 1);
+  s.room.pong = { ...newPong(["a", "b"]), phase: "playing" };
+  let before = frame(s);
+  s.room.pong.pongContact = { sequence: 3, kind: "wall", x: 0.5, y: 0.025 };
+  expect(soundEvents(before, frame(s))).toEqual(["wall"]);
+  before = frame(s);
+  s.room.pong.ball.vx *= -1;
+  expect(soundEvents(before, frame(s))).toEqual([]);
+  s.room.pong.pongContact = { sequence: 4, kind: "paddle", x: 0.065, y: 0.5 };
+  expect(soundEvents(before, frame(s))).toEqual(["paddle"]);
+  const next = frame(s);
+  expect(soundEvents(next, next)).toEqual([]);
+  expect(soundEvents(null, next)).toEqual([]);
+  expect(
+    soundEvents(
+      { ...before, pong: { ...before.pong!, phase: "paused" } },
+      next,
+    ),
+  ).toEqual([]);
+  s.room.pong.bumpers = [{ x: 0.5, y: 0.5, warning: 0, flash: 0.2, hits: 1 }];
+  expect(soundEvents(before, frame(s))).toEqual(["bumper"]);
+  s.room.pong.score[0] = 1;
+  s.room.pong.phase = "serve";
+  expect(soundEvents(before, frame(s))).toEqual(["point"]);
+  s.room.pong.score[0] = 7;
+  s.room.pong.phase = "finished";
+  expect(soundEvents(before, frame(s))).toEqual(["win"]);
+  expect(soundEvents({ ...before, key: "another-epoch" }, frame(s))).toEqual(
+    [],
+  );
+});
 it("gives confirmed Golf contacts distinct cues, deduplicates the shared shot, and stays silent on resume", () => {
   const s = snapshot();
   s.room = newRoom("minigolf", 1);
@@ -173,7 +206,7 @@ describe("game sound transitions", () => {
     s.room.pong.phase = "serve";
     s.room.pong.bumpers = [];
     s.room.pong.score[0]++;
-    expect(soundEvents(paused, frame(s))).toEqual(["point"]);
+    expect(soundEvents(paused, frame(s))).toEqual([]);
   });
   it("plays shared brick, miss and team victory cues without repeats", () => {
     const s = snapshot();

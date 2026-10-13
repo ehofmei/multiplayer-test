@@ -1612,3 +1612,57 @@ Physical follow-up: installed household iPhone/iPad viewport, safe areas and
 rotation, real-thumb card/control reach, larger text/VoiceOver, household Wi-Fi
 pairing and background recovery. Ask family members to choose a suitable game
 for one, two, three and larger rosters and identify who plays versus watches.
+
+## Ordinary Pong rally and finale polish — Task 10
+
+Inventory: confirmed paddle/both-wall contacts and bumper priority; both bottom
+views and local notches; court drag/capture/release, arrows, Help slider and taller
+phone steering; point/serve progress/direction, both match points at 6–6, paused
+and persistent results, selected-seat replay; watching host and five late arrivals
+for eight connected devices; long names, muted/reduced motion, safe areas/taller
+fonts, background/disconnect, switching and updates.
+
+Unit coverage verifies boundary contacts, missed paddles and bumper-only rebounds,
+simultaneous paddle priority, sequence retention through points, score priority,
+coalesced/repeated/older snapshots, first frame, pause/serve suppression and optional
+metadata validation. Audio tests verify confirmed cues, fallback, deduplication
+and bumper/point/finish priority. `test:game -- pong` includes the new polish spec;
+its 6–6 and 6–7 states use real independent pairing and ordinary pointer controls
+with the host clock, never score/state injection. Clients wait for a subsequent
+20 Hz broadcast before synchronized point assertions. Late spectators receive
+current standings without old contact/point effects; replay retains the two
+selected client seats when the host watches.
+
+Reviewed visual states cover confirmed contact, mirrored client identity, warning,
+bumper impact/four bumpers, scorer/next serve, mirrored match point, phone/iPad
+finale and setup/insets. Keep separate genuine Darwin/Linux images, bundled fonts,
+strict dimensions and existing budgets. The contact/rally states use deliberate
+fixed steps; comparison states use Reduce Motion to remove time-dependent trails.
+A separate normal-motion assertion verifies trail presence and pause cleanup.
+
+Live QA uses production `/multiplayer-test/` at the stable 4174 host and independent
+localhost client, with both builds checked and Home-first waiting updates applied.
+It exercises real text pairing, both keyboard orientations, steering limits,
+Help/Escape/focus, pause/resume, natural points/finish/replay, game switching and
+viewport screenshots/bounds. Include current-build phone (402×874, 440×956,
+320×568), short landscape (844×390), landscape iPad (1180×820/1080×810) and desktop
+inspection; CDP device metrics must be checked against actual inner dimensions.
+Use full-viewport captures rather than cropped native Retina surfaces.
+
+The new review branch uses `review.yml`'s read-only, explicitly scoped Linux
+baseline artifact route. Review every changed Darwin and genuine Ubuntu image,
+then run complete local `npm run verify` and ordinary Ubuntu verification for the
+exact final handoff commit with snapshot updates disabled. Report the matching
+run URL/commit at handoff; generation success does not satisfy final acceptance.
+Production/offline, saved preferences and user-controlled updates stay covered by
+the complete browser gate. Physical device acceptance remains separate.
+
+Physical follow-up: update every household iPhone/iPad, then play in Safari and
+installed PWAs on Wi-Fi with either seat/host and spectators. Confirm safe areas,
+rotation, larger text/VoiceOver, thumb reach and whether taller-phone steering
+reduces court obscuration. Check contact/point/match-point ownership muted, ball
+and warning readability during a busy four-bumper rally, sound unlock/recovery,
+multiple devices sounding together, background/resume and offline startup after
+an online visit. Ask players to identify their paddle, scorer and final winner.
+The short/landscape/iPad control choice preserves court space; browser fit does
+not certify physical comfort. Keep these checks pending until performed.

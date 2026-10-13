@@ -101,6 +101,18 @@ Bumper warning · phone layout.
 
 [All Pong states](tests/pong.spec.ts-snapshots/)
 
+Ordinary rally feedback, mirrored match point and persistent results:
+
+![Confirmed Pong contact, watching host](tests/pong-polish.spec.ts-snapshots/pong-contact-spectator-linux.png)
+
+![Pong next serve](tests/pong-polish.spec.ts-snapshots/pong-point-serve-linux.png)
+
+![Pong match point, bottom client](tests/pong-polish.spec.ts-snapshots/pong-match-point-client-linux.png)
+
+![Pong finale on phone](tests/pong-polish.spec.ts-snapshots/pong-finale-phone-linux.png)
+
+![Pong finale on landscape iPad](tests/pong-polish.spec.ts-snapshots/pong-finale-ipad-linux.png)
+
 ## Arena Pong
 
 Rotated four-player court · phone layout. Numbered rails, local paddle notch,

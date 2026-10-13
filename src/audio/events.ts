@@ -146,6 +146,10 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
     pong: pong
       ? {
           phase: pong.phase,
+          pongContact:
+            room.kind === "pong" && pong.pongContact
+              ? { ...pong.pongContact }
+              : undefined,
           arenaContact: room.kind === "arena" ? pong.arenaContact : undefined,
           lives: room.kind === "arena" ? pong.lives : undefined,
           bumperHits: pong.bumpers?.reduce((sum, b) => sum + b.hits, 0) ?? 0,
@@ -430,6 +434,11 @@ export function soundEvents(
       if (a.phase === "playing" && b.phase === "serve") return ["serve"];
       return [];
     }
+    if (
+      after.kind === "pong" &&
+      (a.phase === "paused" || b.phase === "paused" || b.phase === "ready")
+    )
+      return [];
     if (a.phase === "finished" && b.phase !== "finished")
       return [a.winner ? "win" : "finish"];
     if (a.level !== undefined && (a.phase === "paused" || b.phase === "paused"))
@@ -469,6 +478,10 @@ export function soundEvents(
           : [side < a.occupiedSides ? "paddle" : "wall"];
       }
       if (a.bumperHits > b.bumperHits) return ["bumper"];
+      if (a.pongContact)
+        return a.pongContact.sequence > (b.pongContact?.sequence ?? 0)
+          ? [a.pongContact.kind]
+          : [];
       if (a.vx * b.vx < 0) return ["paddle"];
       if (a.vy * b.vy < 0) return ["wall"];
     }

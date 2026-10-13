@@ -352,6 +352,8 @@ short phones and long names work; header changes preserve safe areas and update 
 
 ### 10. Pong: finish the ordinary rally presentation
 
+Implementation plan: [Pong polish plan](PONG_POLISH_PLAN.md). Status: planned.
+
 **Observed gap:** escalating bumpers already have warnings, flashes and sound.
 Ordinary paddle/wall contact remains visually sparse; the local paddle is mainly
 identified by color. The final winner is a status message rather than a finale.

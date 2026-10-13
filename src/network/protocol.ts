@@ -19,6 +19,10 @@ import type { GridState } from "../game/grid";
 // Optional regular-Pong bumpers carry bounded positions, warning/flash timers and
 // impact counts, checked by validRoom for every state. No new client action.
 // Older hosts can omit bumpers; update every device to see the same obstacles.
+// Optional pongContact reports the latest confirmed ordinary Pong impact, with
+// bounded sequence/kind/canonical coordinates checked by validRoom. Older hosts
+// may omit it; update every device for confirmed visual and audio feedback.
+// No input changes or protocol version change. Older validators allow extra keys.
 // Ship rules 2 require all devices to update: typed settings and team scores
 // are validated by validRoom; old hull snapshots are rejected.
 // Glow settling is a bounded, private 1500ms phase validated by validRoom.
