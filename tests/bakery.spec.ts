@@ -266,8 +266,11 @@ test("Bakery pairs, previews, secretly locks, passes, scores two batches and rem
     await expect(client.locator(".bakery-treat")).toHaveCount(6);
     await returnHome(client);
     await expect(host.locator(".bakery-status")).toHaveText(
-      "The ovens are ready. Are you?",
+      "Needs 1 more player",
     );
+    await expect(
+      host.getByRole("button", { name: "Open Bakery", exact: true }),
+    ).toBeDisabled();
   } finally {
     await context.close();
   }

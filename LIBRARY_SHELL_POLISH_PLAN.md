@@ -5,76 +5,65 @@ Status: implementation in progress; verification and device acceptance pending. 
 
 ## Resume checklist
 
-Work is on `codex/library-shell-polish`. Preserve the working tree; do not reset
-it. GitHub CLI is available at
-`/private/tmp/shared-lights-gh/gh_2.102.0_macOS_arm64/bin/gh`; authentication and
-`review.yml` access were confirmed. The normal shell PATH does not include gh.
-Use QA.md's read-only Ubuntu baseline artifact route before final verification.
+Work is on `codex/library-shell-polish`; latest pushed checkpoint is `c86b18a`.
+Preserve the working tree. The authenticated GitHub CLI is
+`/private/tmp/shared-lights-gh/gh_2.102.0_macOS_arm64/bin/gh` (not on PATH).
+Use the existing non-deploying review workflow and QA.md's read-only artifact route.
 
-- [x] Inspect current code, tests, docs and repository status; establish Linux route.
-- [x] First implementation of catalog, fourteen local SVG marks, badges and live
-      roster guidance; page/index restoration; visible Help labels; Next games.
-- [x] Add ready-screen requirements and paddle seat validation guidance; retain
-      existing themed action rows and playful replay labels.
-- [x] Add catalog/seat unit tests and library browser journeys, including real
-      pairing, resize/focus restoration and eight-player reduced motion.
-- [x] Resolve taller-font card-content bounds, including 320×568 and short
-      landscape, while retaining requirements and seat guidance.
-- [x] Repair Sumo gallery and audit relative targets; document current behavior
-      and pending acceptance in README/QA.
-- [x] Live collection/shell QA, pairing roles, disconnects, solo Race finish and
-      replay; reviewed final phone/iPad library states.
-- [x] Move Breakout guidance into its existing status line. The original court
-      baseline and its pairing/control test passed unchanged after this fix.
-- [ ] Refresh only the examined, affected Help/setup screenshot specs on Darwin
-      and Ubuntu, review every changed image and rerun without update flags.
-- [ ] Review Darwin and genuine Linux baselines; complete local verification.
-- [ ] Push and obtain ordinary Ubuntu verification for the exact final commit.
+- [x] Catalog, fourteen local SVG marks, badges and reactive roster requirements.
+- [x] Page/index restoration, breakpoint handling, keyboard focus and Next games.
+- [x] Ready/rematch requirements, seat-conflict and spectator guidance, consistent
+      visible Help labels; existing game action rows and playful replay retained.
+- [x] Catalog/seat unit tests; household/taller-font library checks; real pairing,
+      resize/focus and eight-player reduced-motion browser regression journeys.
+- [x] Sumo gallery repair, target audit, reviewed Linux library gallery, README/QA.
+- [x] Live host/client pairing, disabled cards, Help/Escape/focus, watching host,
+      pause/resume, switching, diagnostics, synchronization and disconnects.
+      Solo Race natural finish/replay passed on build `20261013T005710Z · local`.
+- [x] Correct short-phone/taller-font and landscape clipping. Move Breakout setup
+      guidance into its existing status to preserve court size; the original
+      court baseline and pairing/control test passed without updates.
+- [x] Review/integrate seven genuine Linux library images and three changed
+      app-layout images from successful evidence run 38329979084.
+- [ ] Finish scoped Darwin refresh and Ubuntu evidence for the ten examined
+      Help/setup specs. Local log: `/private/tmp/task9-help-refresh.log`.
+      Ubuntu: https://github.com/ehofmei/multiplayer-test/actions/runs/38330611762
+      Artifact uses the full `c86b18a` SHA. These runs are evidence, not final gates.
+- [ ] Visually review every changed Darwin/Linux image and the final baseline diff.
+- [x] Final live Breakout check on build `20261013T010647Z · local`, at short
+      phone and landscape iPad; duplicate-seat correction and restored space pass.
+- [ ] Complete local `npm run verify` after the last substantive fix.
+- [ ] Push reviewed baselines/code and obtain ordinary Ubuntu `npm run verify`
+      success for that exact final commit, with update flags disabled.
+- [ ] Final status/diff, documentation/plan completion and physical-device handoff.
 - [ ] Physical iPhone/iPad acceptance (owner follow-up).
 
-Initial TypeScript check and production build passed. A Task 9 preview was
-started on port 4174; the live browser had the prior cached app and its waiting
-update was applied from Home before QA. No final QA or baseline signoff yet. Fast checks passed (216 unit tests and
-10 script tests). New tests cover catalog/seat guidance and library/pairing flows.
-Navigation restoration and real pairing journeys passed, with missing initial
-screenshots generated for review. Strict card-content bounds exposed short-
-landscape clipping on paddle cards; a compact guidance row fix is under test.
-Do not refresh snapshots blindly. Existing full-screen game baselines may change
-because visible Help labels are now consistent; inspect each actual mismatch.
-The six app-layout journeys passed after inspecting and refreshing only the three
-changed Darwin images (library, Pong setup, Pong safe area). All new library
-journeys pass apart from a stricter added taller-font content assertion; diagnostic
-run is `/private/tmp/task9-taller.log`. Eight-player focus passed its functional
-checks and wrote a new missing Darwin baseline, still requiring review/rerun.
-Live host/client QA used build `20261013T005028Z · local`, independent stable
-origins, ordinary text pairing, disabled client cards, Breakout duplicate seats,
-watching host, pause/resume, Choose Game focus, Shared Lights synchronization,
-Menu diagnostics and host departure. Phone/iPad screenshots were reviewed.
-Normal and taller-font library bounds now pass across every target in
-`tests/library.spec.ts`. The eight-player reduced-motion keyboard image was
-reviewed. Pong setup now names the selected players, and disabled rematches retain
-result information while explaining unmet requirements. All four library journeys passed with no updates. The current app-layout run
-passed all behavior except two intended Pong setup images; their differences
-(selected names, removal of redundant missing-player text) were inspected and
-refreshed in a scoped two-test run, which passed. The complete browser audit finished: 52 passed, 24 failed, all failures screenshot
-comparisons (`/private/tmp/task9-browser-audit.log`). The actual-versus-original
-images were reviewed; differences were intended Help/setup text except Breakout
-court shrink, which was rejected and fixed. Comparison sheets and the file map
-are in `/private/tmp/task9-actuals-*.png` and `/private/tmp/task9-actual-pairs.json`.
-Do not accept the shrunk Breakout court actual. Its original baseline is retained.
-The subsequent Breakout focused test passed without updates. Checkpoint `c5bb99f` was pushed with [skip ci]. Genuine Ubuntu baseline evidence
-is running for only library.spec.ts and app-layout.spec.ts:
-https://github.com/ehofmei/multiplayer-test/actions/runs/38329979084
-Run 38329979084 succeeded. Its artifact is downloaded to
-`/private/tmp/task9-linux-library`; all seven new library Linux images and the
-three changed app-layout Linux images were visually reviewed. They have been copied into the matching snapshot directories; the unchanged
-app-home image was left alone.
+Darwin scoped refresh finished with 34 passes and one stale disconnect-copy
+assertion; every requested image was rendered. Bakery is being rerun without
+updates at `/private/tmp/task9-bakery-current.log`. The failed Ubuntu generation
+must be repeated after pushing this assertion correction.
 
-Download its `linux-baseline-evidence-c5bb99fc105a7794231c4a59e22430f17a216071`
-artifact when complete, copy only changed/new Linux images, and visually review
-every one. This is baseline evidence, not final verification.
-Remaining live inventory: brief final pass after the font fix, solo/replay and
-final current-build screenshots. No final local or Linux gate has run.
+The scoped refresh uncovered one stale behavioral assertion:
+`tests/bakery.spec.ts:269` still expects “The ovens are ready. Are you?” after
+the other baker leaves. Update it to “Needs 1 more player” and assert Open Bakery
+is disabled, (now updated with both assertions). This is the intended new roster
+copy, not a rules change. Rerun Bakery locally and the affected Ubuntu generation;
+a failed generation does not provide accepted final evidence.
+
+Fast checks/build passed after the court fix: 216 unit tests and 10 script tests.
+All four library journeys passed without updates. The complete browser audit
+finished with 52 passes and 24 screenshot-only failures; actual/original images
+were inspected, confirming intended Help/setup changes except the rejected and
+fixed court shrink. Logs: `/private/tmp/task9-browser-audit.log`; comparison map:
+`/private/tmp/task9-actual-pairs.json`. Keep code/tests/dist unchanged while the
+current guarded suite runs. Do not accept the shrunk Breakout court actual.
+The original court baseline stays unchanged. No complete final gate has run.
+
+The first library/layout artifact remains in `/private/tmp/task9-linux-library`.
+The dedicated production preview uses port 4174. Check the build and apply waiting
+updates from Home before any new live room. Match actual viewport dimensions;
+browser viewport overrides target the selected tab. Physical safe areas, reach,
+rotation, VoiceOver and household Wi-Fi/lifecycle acceptance remain pending.
 
 ## Direction
 
