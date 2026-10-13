@@ -20,12 +20,15 @@ dimensions, budgets and fit assertions remain strict. Linux evidence runs
 38329979084, 38331222373 and 38331877161 supplied the reviewed renders. Evidence
 runs do not replace the ordinary final verification gate.
 
-Before handoff, require a successful ordinary Ubuntu `npm run verify` for the
-exact final review-branch commit, with snapshot updates disabled. The current
-run is available in
-[the branch's workflow checks](https://github.com/ehofmei/multiplayer-test/actions?query=branch%3Acodex%2Flibrary-shell-polish).
-If resuming before that gate completes, inspect its result and fix any failure;
-do not merge or deploy for testing. The authenticated CLI is
+Ordinary Ubuntu `npm run verify` passed for implementation commit
+`6973b87a97c17b46d77a51a70ee055cd321fb043`, with snapshot updates disabled:
+[final implementation verification](https://github.com/ehofmei/multiplayer-test/actions/runs/38335898739).
+The owner authorized merging to `main` after these checks passed. Any final
+review-branch checks must pass before merging; the main workflow then verifies
+and deploys Pages. Merge and deployment results are available in
+[the repository's pull requests](https://github.com/ehofmei/multiplayer-test/pulls?q=is%3Apr+head%3Acodex%2Flibrary-shell-polish)
+and [Pages workflow](https://github.com/ehofmei/multiplayer-test/actions/workflows/pages.yml).
+The authenticated CLI is
 `/private/tmp/shared-lights-gh/gh_2.102.0_macOS_arm64/bin/gh` (not on PATH).
 The complete local log is `/private/tmp/task9-verify-final.log`.
 
@@ -41,7 +44,7 @@ Physical acceptance remains: installed iPhone/iPad safe areas and usable viewpor
 rotation, real-thumb reach, larger text/VoiceOver, household Wi-Fi and background
 recovery. Ask the family to choose suitable games for one, two, three and larger
 rosters and explain who plays versus watches. These checks stay pending until
-performed. The task has not been merged or deployed by this implementation.
+performed; automated verification does not replace physical-device acceptance.
 
 ## Direction
 
