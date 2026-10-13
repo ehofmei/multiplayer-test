@@ -60,7 +60,7 @@ export function BreakoutGame({
   const remaining = team.bricks.filter(Boolean).length;
   const cleared =
     (team.level - 1) * BREAKOUT_BRICKS + BREAKOUT_BRICKS - remaining;
-  const status = !connected
+  const gameStatus = !connected
     ? "Host disconnected"
     : game.phase === "paused"
       ? "Co-op Breakout paused"
@@ -69,10 +69,16 @@ export function BreakoutGame({
           ? "Team victory! All three levels cleared."
           : "Out of lives. Try again together!"
         : game.phase === "ready"
-          ? "One team. Every side. Clear the core together."
+          ? session.role === "host"
+            ? seatGuidance(players, seats, 1, session.me.id)
+            : "The host picks 1–4 players; others watch."
           : game.phase === "serve"
             ? `Level ${team.level} · Get ready…`
             : "Clear the core. Save the next rebound.";
+  const status =
+    connected && session.role === "host" && game.phase === "finished" && !valid
+      ? `${gameStatus} · ${seatGuidance(players, seats, 1, session.me.id)}`
+      : gameStatus;
   useEffect(() => {
     if (!controllable && side >= 0) {
       const next = viewPosition(side, game.paddles[side]);
@@ -183,7 +189,11 @@ export function BreakoutGame({
           <small>bricks left</small>
         </div>
       </div>
-      <p className="game-status breakout-status" aria-live="polite">
+      <p
+        id="breakout-start-guidance"
+        className="game-status breakout-status"
+        aria-live="polite"
+      >
         {status}
       </p>
       <GameSurface>
@@ -538,11 +548,6 @@ export function BreakoutGame({
               </label>
             ))}
           </div>
-          <p id="breakout-start-guidance" className="breakout-setup-hint">
-            {!connected
-              ? "Host disconnected"
-              : seatGuidance(players, seats, 1, session.me.id)}
-          </p>
         </div>
       )}
       <div className="breakout-footer">

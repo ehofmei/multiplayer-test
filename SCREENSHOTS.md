@@ -19,6 +19,19 @@ available; shared baselines are identified below.
 [Patchwork Picnic](#patchwork-picnic) · [Light Seek](#light-seek) ·
 [Glow Clash](#glow-clash)
 
+## Family library
+
+Illustrated cards, roster guidance and selected-seat spectators · Linux baselines.
+
+![Family game library](tests/library.spec.ts-snapshots/library-page-1-phone-linux.png)
+
+[More games](tests/library.spec.ts-snapshots/library-page-2-phone-linux.png) ·
+[Food and expedition games](tests/library.spec.ts-snapshots/library-page-3-phone-linux.png) ·
+[Final page](tests/library.spec.ts-snapshots/library-page-4-phone-linux.png) ·
+[Landscape iPad](tests/library.spec.ts-snapshots/library-ipad-linux.png) ·
+[Client library](tests/library.spec.ts-snapshots/library-client-phone-linux.png) ·
+[Eight players and reduced-motion focus](tests/library.spec.ts-snapshots/library-eight-focus-reduced-linux.png).
+
 ## Sumo Bumpers
 
 Arena · Linux baseline.

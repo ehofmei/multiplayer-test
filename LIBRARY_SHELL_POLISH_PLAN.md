@@ -22,7 +22,12 @@ Use QA.md's read-only Ubuntu baseline artifact route before final verification.
       landscape, while retaining requirements and seat guidance.
 - [x] Repair Sumo gallery and audit relative targets; document current behavior
       and pending acceptance in README/QA.
-- [ ] Complete persistent live QA inventory and review screenshots.
+- [x] Live collection/shell QA, pairing roles, disconnects, solo Race finish and
+      replay; reviewed final phone/iPad library states.
+- [x] Move Breakout guidance into its existing status line. The original court
+      baseline and its pairing/control test passed unchanged after this fix.
+- [ ] Refresh only the examined, affected Help/setup screenshot specs on Darwin
+      and Ubuntu, review every changed image and rerun without update flags.
 - [ ] Review Darwin and genuine Linux baselines; complete local verification.
 - [ ] Push and obtain ordinary Ubuntu verification for the exact final commit.
 - [ ] Physical iPhone/iPad acceptance (owner follow-up).
@@ -51,10 +56,23 @@ reviewed. Pong setup now names the selected players, and disabled rematches reta
 result information while explaining unmet requirements. All four library journeys passed with no updates. The current app-layout run
 passed all behavior except two intended Pong setup images; their differences
 (selected names, removal of redundant missing-player text) were inspected and
-refreshed in a scoped two-test run, which passed. The complete browser audit is
-running without updates; output is `/private/tmp/task9-browser-audit.log`. Keep
-code, tests and dist unchanged while that guarded suite runs. The first Ubuntu
-evidence generation will scope only library.spec.ts and app-layout.spec.ts.
+refreshed in a scoped two-test run, which passed. The complete browser audit finished: 52 passed, 24 failed, all failures screenshot
+comparisons (`/private/tmp/task9-browser-audit.log`). The actual-versus-original
+images were reviewed; differences were intended Help/setup text except Breakout
+court shrink, which was rejected and fixed. Comparison sheets and the file map
+are in `/private/tmp/task9-actuals-*.png` and `/private/tmp/task9-actual-pairs.json`.
+Do not accept the shrunk Breakout court actual. Its original baseline is retained.
+The subsequent Breakout focused test passed without updates. Checkpoint `c5bb99f` was pushed with [skip ci]. Genuine Ubuntu baseline evidence
+is running for only library.spec.ts and app-layout.spec.ts:
+https://github.com/ehofmei/multiplayer-test/actions/runs/38329979084
+Run 38329979084 succeeded. Its artifact is downloaded to
+`/private/tmp/task9-linux-library`; all seven new library Linux images and the
+three changed app-layout Linux images were visually reviewed. They have been copied into the matching snapshot directories; the unchanged
+app-home image was left alone.
+
+Download its `linux-baseline-evidence-c5bb99fc105a7794231c4a59e22430f17a216071`
+artifact when complete, copy only changed/new Linux images, and visually review
+every one. This is baseline evidence, not final verification.
 Remaining live inventory: brief final pass after the font fix, solo/replay and
 final current-build screenshots. No final local or Linux gate has run.
 
