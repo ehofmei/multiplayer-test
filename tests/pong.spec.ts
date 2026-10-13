@@ -27,10 +27,12 @@ test("both Pong players control a bottom paddle horizontally, including captured
   const context = await browser.newContext({
     viewport: sizes[2],
     hasTouch: true,
+    reducedMotion: "reduce",
   });
   try {
     const client = await context.newPage();
     await host.setViewportSize(sizes[2]);
+    await host.emulateMedia({ reducedMotion: "reduce" });
     await host.goto("./");
     await host.getByLabel("Your name").fill("Alex");
     await host
@@ -105,14 +107,38 @@ test("both Pong players control a bottom paddle horizontally, including captured
     await expect
       .poll(() => host.getByTestId("paddle-1").getAttribute("y"))
       .toBe("0");
+    await expect(client.getByTestId("pong-local-mark")).toHaveCount(1);
+    await client
+      .getByRole("slider", { name: "Paddle steering", exact: true })
+      .press("Home");
+    await host.clock.runFor(100);
+    await expect
+      .poll(() => host.getByTestId("paddle-1").getAttribute("y"))
+      .toBe("494");
+    await client
+      .getByRole("slider", { name: "Paddle steering", exact: true })
+      .press("End");
+    await host.clock.runFor(100);
+    await expect
+      .poll(() => host.getByTestId("paddle-1").getAttribute("y"))
+      .toBe("0");
     await expectStableScreenshot(
       client,
       ".pong-game-card",
       `pong-bottom-client-${process.platform}.png`,
       { maxDiffPixels: 180 },
     );
+    await host.emulateMedia({ reducedMotion: "no-preference" });
+    await host.clock.runFor(100);
+    await expect
+      .poll(() => host.locator(".pong-trail").getAttribute("points"))
+      .not.toBe("");
     await host.getByRole("button", { name: "Pause Pong", exact: true }).click();
+    await expect(host.locator(".pong-trail")).toHaveAttribute("points", "");
     await expect(card(client)).toHaveAttribute("data-phase", "paused");
+    await expect(
+      client.getByRole("slider", { name: "Paddle steering" }),
+    ).toBeDisabled();
     const paused = await client.getByTestId("paddle-1").getAttribute("y");
     await client.mouse.click(court.x + 10, court.y + court.height * 0.8);
     expect(await client.getByTestId("paddle-1").getAttribute("y")).toBe(paused);
@@ -158,6 +184,7 @@ test("Pong pairs, warns, adds four bumpers, flashes impacts, pauses, resets each
   });
   try {
     const client = await context.newPage();
+    await host.emulateMedia({ reducedMotion: "reduce" });
     await host.goto("./");
     await host.getByLabel("Your name").fill("Alex");
     await host

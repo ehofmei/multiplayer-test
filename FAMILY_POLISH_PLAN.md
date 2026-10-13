@@ -3,7 +3,7 @@
 This follow-up plan was created as the final deliverable of
 [FAMILY_PLAYTEST_PLAN.md](FAMILY_PLAYTEST_PLAN.md). **Implementation is in progress:**
 Tasks 1–2 and 4 are implemented; Task 3 is implemented with live QA pending;
-Tasks 5–8 are implemented with physical-device QA pending; Task 9 is implemented with physical-device QA pending; Tasks 10–15 remain planned. Read
+Tasks 5–8 are implemented with physical-device QA pending; Tasks 9–10 are implemented with physical-device QA pending; Tasks 11–15 remain planned. Read
 [AGENTS.md](AGENTS.md) before implementing. Each remaining numbered task can be
 assigned to a separate Codex session.
 
@@ -20,7 +20,7 @@ assigned to a separate Codex session.
 | 7    | Light Seek               | Implemented; physical-device QA pending            |
 | 8    | Shared Lights            | Implemented; physical-device QA pending            |
 | 9    | Library and shared shell | Implemented; physical-device QA pending            |
-| 10   | Pong                     | Planned                                            |
+| 10   | Pong                     | Implemented; physical-device QA pending            |
 | 11   | Spaceship Panic          | Planned                                            |
 | 12   | Meteor Minigolf          | Planned                                            |
 | 13   | Glow Clash               | Planned                                            |
@@ -351,6 +351,10 @@ short phones and long names work; header changes preserve safe areas and update 
 `src/App.tsx`, shared styles, `tests/app-layout.spec.ts`, `SCREENSHOTS.md`.
 
 ### 10. Pong: finish the ordinary rally presentation
+
+Implementation plan: [Pong polish plan](PONG_POLISH_PLAN.md).
+Status: implemented; physical-device acceptance remains. See README and QA for
+behavior, regression coverage and verification requirements.
 
 **Observed gap:** escalating bumpers already have warnings, flashes and sound.
 Ordinary paddle/wall contact remains visually sparse; the local paddle is mainly

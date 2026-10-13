@@ -222,6 +222,24 @@ in fixed 120 Hz steps, renders at about 60 Hz, and sends state at about 20 Hz.
 Clients smooth the ball between updates. Paddle hits increase speed and change
 angle according to the impact position. A one-second serve delay follows each
 point. The host can pause/resume and choose new players after a match.
+Your paddle has a double notch as well as its color; the scoreboard labels your
+bottom side and the opponent's top side. Taller portrait phones (at least 700px
+high, up to 650px wide) show a 44px paddle-steering slider below the court.
+Short phones and landscape/tablet layouts retain court dragging, arrows and the
+Help slider to preserve court space. Ordinary contacts show a brief confirmed
+paddle ring or dashed wall ring, behind the solid ball. A faint, bounded trail
+follows the displayed ball; Reduce Motion removes it and keeps static contact
+feedback. Points identify the scorer and gain during the existing next-serve
+delay, with progress and direction. Delayed score updates show each observed gain
+briefly beside the rally status, including both players when both totals changed.
+Six points marks match point, including both
+players at 6–6. The persistent finale shows the winner, final score and your
+result (or spectator wording); the host starts Play Again with selected seats.
+Update all devices for confirmed contact feedback. The optional bounded contact
+field is additive; older hosts can omit it and new clients omit exact visual
+impacts while retaining legacy sound inference. Late joining, repeated snapshots,
+pause and background recovery do not replay old effects. A delayed update shows
+only the newest confirmed contact, rather than reconstructing missing collisions.
 Setup and rematch leave at least 12px above the Start/Play Again and Controls &
 help buttons, separating them from the player selectors on phones and landscape.
 Paddle sizes stay fixed. Long rallies introduce a small central bumper after
@@ -515,8 +533,9 @@ No samples, new dependencies, or external downloads are needed, so effects work
 offline. Muting stops active tones immediately; hiding the app stops/suspends audio.
 After returning, a tap/key gesture resumes enabled sound. No old events replay on
 joining, switching games, enabling sound or reconnecting. Rapid cues are bounded.
-Pong sounds follow observed state changes; a delayed client update may omit a very
-brief bounce. Physical iPhone/iPad audibility and background/resume need device testing.
+Ordinary Pong paddle/wall sounds use confirmed host contacts when available;
+bumper, point and finish outcomes take priority. A delayed client update may omit
+a very brief bounce. Physical iPhone/iPad audibility and background/resume need device testing.
 
 ## Inspect and test
 

@@ -37,7 +37,14 @@ export interface ArenaContact {
   position: number;
   kind: "paddle" | "wall" | "miss" | "out";
 }
+export interface PongContact {
+  sequence: number;
+  kind: "paddle" | "wall";
+  x: number;
+  y: number;
+}
 export interface PongState {
+  pongContact?: PongContact;
   arenaContact?: ArenaContact;
   phase: "ready" | "serve" | "playing" | "paused" | "finished";
   seats: string[];
@@ -194,11 +201,28 @@ export function stepPong(state: PongState, seconds: number): PongState {
       vy = Math.sign(vy) * Math.sqrt(speed * speed - vx * vx);
     }
   }
+  let pongContact = state.pongContact;
+  const contact = (kind: PongContact["kind"], x: number, y: number) => ({
+    sequence: Math.min(1_000_000, (state.pongContact?.sequence ?? 0) + 1),
+    kind,
+    x: Math.max(0, Math.min(1, x)),
+    y: Math.max(0, Math.min(1, y)),
+  });
   if (y < 0.025) {
+    pongContact = contact(
+      "wall",
+      vy === 0 ? x : x - ((y - 0.025) * vx) / vy,
+      0.025,
+    );
     y = 0.05 - y;
     vy = Math.abs(vy);
   }
   if (y > 0.975) {
+    pongContact = contact(
+      "wall",
+      vy === 0 ? x : x - ((y - 0.975) * vx) / vy,
+      0.975,
+    );
     y = 1.95 - y;
     vy = -Math.abs(vy);
   }
@@ -209,6 +233,7 @@ export function stepPong(state: PongState, seconds: number): PongState {
         ? vx < 0 && previousX >= face && x <= face
         : vx > 0 && previousX <= face && x >= face;
     if (crossed && Math.abs(y - state.paddles[side]) <= 0.145) {
+      pongContact = contact("paddle", face, y);
       x = face;
       vx = (side === 0 ? 1 : -1) * Math.min(0.85, Math.abs(vx) * 1.12);
       vy = (y - state.paddles[side]) * 2.3;
@@ -237,6 +262,7 @@ export function stepPong(state: PongState, seconds: number): PongState {
     ...state,
     rallySeconds,
     bumpers,
+    pongContact,
     ball: { x, y, ...rallyBall({ vx, vy }, rallySeconds, 0.95) },
   };
 }

@@ -10,6 +10,7 @@ import { GameMark } from "./GameMark";
 import { GameSurface, GameHelp } from "./AppLayout";
 import { PaddleColors } from "./ArenaGame";
 import { paddleHex } from "../games/colors";
+import { pongFrame, pongFeedback } from "../games/pong-feedback";
 import { BUMPER_RADIUS } from "../games/pong-bumpers";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -149,10 +150,11 @@ export function PongGame({
   session: Session;
   connected: boolean;
 }) {
-  const [seats, setSeats] = useState([
-    players[0]?.id ?? "",
-    players[1]?.id ?? "",
-  ]);
+  const [seats, setSeats] = useState(() =>
+    game.seats.length === 2
+      ? [...game.seats]
+      : [players[0]?.id ?? "", players[1]?.id ?? ""],
+  );
   const [local, setLocal] = useState(0.5);
   const seat = game.seats.indexOf(session.me.id);
   // Keep the host's original court coordinates; only each device's view rotates.
@@ -164,12 +166,61 @@ export function PongGame({
   const controllable =
     connected && seat >= 0 && ["playing", "serve"].includes(game.phase);
   const ball = useRef<SVGCircleElement>(null);
+  const trail = useRef<SVGPolylineElement>(null);
+  const samples = useRef<{ x: number; y: number; time: number }[]>([]);
+  const previous = useRef<{
+    epoch: number;
+    frame: ReturnType<typeof pongFrame>;
+  } | null>(null);
+  const [impact, setImpact] = useState<PongState["pongContact"] | null>(null);
+  const [point, setPoint] = useState<{ seat: number; gain: number }[] | null>(
+    null,
+  );
+  useEffect(() => {
+    const clear = () => {
+      previous.current = null;
+      samples.current = [];
+      trail.current?.setAttribute("points", "");
+      setImpact(null);
+      setPoint(null);
+    };
+    document.addEventListener("visibilitychange", clear);
+    if (!connected) clear();
+    return () => document.removeEventListener("visibilitychange", clear);
+  }, [connected, epoch]);
+  useEffect(() => {
+    const frame = pongFrame(game);
+    const feedback = pongFeedback(
+      previous.current?.epoch === epoch ? previous.current.frame : null,
+      frame,
+    );
+    previous.current = { epoch, frame };
+    if (feedback.contact) setImpact(feedback.contact);
+    if (feedback.point) setPoint(feedback.point);
+    if (game.phase !== "playing") setImpact(null);
+    if (game.phase === "ready" || game.phase === "paused") setPoint(null);
+  }, [game, epoch]);
+  useEffect(() => {
+    if (!point) return;
+    const timer = setTimeout(() => setPoint(null), 1200);
+    return () => clearTimeout(timer);
+  }, [point]);
+  useEffect(() => {
+    if (!impact) return;
+    const timer = setTimeout(() => setImpact(null), 180);
+    return () => clearTimeout(timer);
+  }, [impact]);
   const drawn = useRef({ x: 0.5, y: 0.5 });
   useEffect(() => setLocal(0.5), [epoch]);
   useEffect(() => {
     if (!controllable && seat >= 0) setLocal(game.paddles[seat]);
   }, [controllable, seat, game.paddles]);
   useEffect(() => {
+    if (game.phase !== "playing" || !connected) {
+      samples.current = [];
+      trail.current?.setAttribute("points", "");
+    }
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const from = drawn.current;
     const target = game.ball;
     const start = performance.now();
@@ -183,13 +234,29 @@ export function PongGame({
         x: from.x + (target.x - from.x) * fraction,
         y: from.y + (target.y - from.y) * fraction,
       };
+      if (
+        game.phase === "playing" &&
+        connected &&
+        !document.hidden &&
+        !reduced
+      ) {
+        const now = performance.now();
+        samples.current = [
+          ...samples.current.filter((p) => now - p.time < 90),
+          { ...drawn.current, time: now },
+        ].slice(-6);
+        trail.current?.setAttribute(
+          "points",
+          samples.current.map((p) => `${p.x * 1000},${p.y * 650}`).join(" "),
+        );
+      }
       ball.current?.setAttribute("cx", String(drawn.current.x * 1000));
       ball.current?.setAttribute("cy", String(drawn.current.y * 650));
       if (fraction < 1) frame = requestAnimationFrame(draw);
     };
     draw();
     return () => cancelAnimationFrame(frame);
-  }, [game.ball, game.phase, session]);
+  }, [game.ball, game.phase, session, epoch, connected]);
   const move = (position: number) => {
     if (!controllable) return;
     const next = clampPaddle(reversed ? 1 - position : position);
@@ -201,6 +268,12 @@ export function PongGame({
     seats.length === 2 &&
     seats[0] !== seats[1] &&
     seats.every((id) => players.some((p) => p.id === id));
+  const pointLabel = point
+    ?.map(
+      ({ seat: scorer, gain }) =>
+        `${playerName(players, game.seats[scorer])} +${gain}`,
+    )
+    .join(" · ");
   const status = !connected
     ? "Host disconnected"
     : game.phase === "ready"
@@ -218,7 +291,7 @@ export function PongGame({
       data-phase={game.phase}
       aria-label="Pong game"
     >
-      <div className="game-score" aria-label="Pong score">
+      <div className="game-score pong-scoreboard" aria-label="Pong score">
         {[0, 1].map((i) => (
           <div key={i}>
             <span>
@@ -227,9 +300,24 @@ export function PongGame({
                 game.phase === "ready" ? seats[i] : game.seats[i],
               )}
             </span>
+            <small className="pong-seat-label">
+              {game.phase === "ready"
+                ? `Player ${i + 1}`
+                : i === seat
+                  ? "You · bottom"
+                  : i === (reversed ? 1 : 0)
+                    ? "Bottom"
+                    : "Top"}
+              {game.score[i] === 6 && game.phase !== "finished"
+                ? " · Match point"
+                : ""}
+            </small>
             <strong
-              key={game.score[i]}
-              className={game.score[i] > 0 ? "pong-point" : undefined}
+              className={
+                point?.some((gain) => gain.seat === i)
+                  ? "pong-point"
+                  : undefined
+              }
               data-testid={`pong-score-${i}`}
             >
               {game.score[i]}
@@ -238,11 +326,62 @@ export function PongGame({
         ))}
       </div>
       <p id="pong-start-guidance" className="game-status" aria-live="polite">
-        {status}
+        {connected && game.phase === "serve" ? (
+          <>
+            <span>
+              {pointLabel ? `${pointLabel} · ` : ""}
+              Get ready{" "}
+              <span aria-hidden="true">
+                {(reversed ? -game.ball.vx : game.ball.vx) > 0 ? "↑" : "↓"}
+              </span>
+            </span>
+            <progress
+              aria-label="Serve progress"
+              aria-live="off"
+              max="1"
+              value={1 - game.serveIn}
+            />
+          </>
+        ) : (
+          <>
+            {connected && game.phase === "playing" && point && (
+              <span>{pointLabel} · </span>
+            )}
+            {status}
+          </>
+        )}
       </p>
+      {game.phase === "finished" && (
+        <div className="pong-finale" role="status" aria-label="Match result">
+          <span className="pong-trophy" aria-hidden="true">
+            ✦
+          </span>
+          <div>
+            <p className="eyebrow">MATCH WINNER</p>
+            <h2>
+              {playerName(players, game.seats[game.score[0] === 7 ? 0 : 1])}
+            </h2>
+            <p>
+              <strong>
+                {game.score[0]} – {game.score[1]}
+              </strong>{" "}
+              ·{" "}
+              {seat < 0
+                ? "Thanks for watching"
+                : game.score[seat] === 7
+                  ? "You won!"
+                  : "Good match!"}
+            </p>
+            {session.role !== "host" && (
+              <p className="muted">The host starts the next match.</p>
+            )}
+          </div>
+        </div>
+      )}
       <GameSurface ratio={650 / 1000}>
         <div
           className="pong-court"
+          data-contact-sequence={game.pongContact?.sequence ?? 0}
           role="group"
           aria-label="Pong court"
           aria-description={`${seat >= 0 ? "Your paddle is at the bottom. Drag left or right." : "Player 1 is at the bottom."} Dashed bumpers are warnings. Filled bumpers bounce the ball.`}
@@ -260,6 +399,14 @@ export function PongGame({
               const bounds = e.currentTarget.getBoundingClientRect();
               move((e.clientX - bounds.left) / bounds.width);
             }
+          }}
+          onPointerUp={(e) => {
+            if (e.currentTarget.hasPointerCapture(e.pointerId))
+              e.currentTarget.releasePointerCapture(e.pointerId);
+          }}
+          onPointerCancel={(e) => {
+            if (e.currentTarget.hasPointerCapture(e.pointerId))
+              e.currentTarget.releasePointerCapture(e.pointerId);
           }}
           onPointerMove={(e) => {
             if (e.currentTarget.hasPointerCapture(e.pointerId)) {
@@ -303,26 +450,48 @@ export function PongGame({
                   )}
                 </g>
               ))}
+              {impact && (
+                <g
+                  key={impact.sequence}
+                  className={`pong-contact ${impact.kind}`}
+                  data-testid="pong-contact"
+                  data-kind={impact.kind}
+                  transform={`translate(${impact.x * 1000} ${impact.y * 650})`}
+                >
+                  <circle r={impact.kind === "paddle" ? 30 : 23} />
+                  <circle r="10" />
+                </g>
+              )}
+              <polyline ref={trail} className="pong-trail" points="" />
               {[0, 1].map((i) => (
-                <rect
-                  key={i}
-                  data-testid={`paddle-${i}`}
-                  x={i === 0 ? 35 : 945}
-                  y={((i === seat ? local : game.paddles[i]) - 0.12) * 650}
-                  width="20"
-                  height="156"
-                  rx="8"
-                  fill={
-                    players.find((p) => p.id === game.seats[i])?.color
-                      ? paddleHex(
-                          players.find((p) => p.id === game.seats[i])?.color,
-                          i,
-                        )
-                      : i === seat
-                        ? "#d9f29d"
-                        : "#f5f4ee"
-                  }
-                />
+                <g key={i}>
+                  <rect
+                    key={i}
+                    data-testid={`paddle-${i}`}
+                    x={i === 0 ? 35 : 945}
+                    y={((i === seat ? local : game.paddles[i]) - 0.12) * 650}
+                    width="20"
+                    height="156"
+                    rx="8"
+                    fill={
+                      players.find((p) => p.id === game.seats[i])?.color
+                        ? paddleHex(
+                            players.find((p) => p.id === game.seats[i])?.color,
+                            i,
+                          )
+                        : i === seat
+                          ? "#d9f29d"
+                          : "#f5f4ee"
+                    }
+                  />
+                  {i === seat && (
+                    <path
+                      className="pong-local-mark"
+                      data-testid="pong-local-mark"
+                      d={`M${i === 0 ? 40 : 950} ${(local - 0.025) * 650}h10 M${i === 0 ? 40 : 950} ${(local + 0.025) * 650}h10`}
+                    />
+                  )}
+                </g>
               ))}
               <circle
                 ref={ball}
@@ -338,16 +507,38 @@ export function PongGame({
           </svg>
         </div>
       </GameSurface>
-      {game.seats.length === 2 && seat < 0 && (
-        <p className="spectator-status">
-          You’re watching this match. The host can choose you for the next one.
-        </p>
+      {seat >= 0 && ["serve", "playing", "paused"].includes(game.phase) && (
+        <label className="pong-steer">
+          <span>Paddle steering</span>
+          <input
+            aria-label="Paddle steering"
+            type="range"
+            min="12"
+            max="88"
+            value={Math.round(viewLocal * 100)}
+            disabled={!controllable}
+            onChange={(e) => move(Number(e.target.value) / 100)}
+          />
+        </label>
       )}
+      {game.seats.length === 2 &&
+        seat < 0 &&
+        !(
+          session.role === "host" &&
+          game.phase === "finished" &&
+          !validSeats
+        ) && (
+          <p className="spectator-status">
+            You’re watching this match. The host can choose you for the next
+            one.
+          </p>
+        )}
       <GameHelp>
         {game.seats.length === 2 && seat >= 0 && (
           <p className="muted">
-            Your paddle is always at the bottom. Drag left/right anywhere on the
-            court, use the slider, or press ← / →.
+            Your paddle has a double notch and is always at the bottom. Drag
+            left/right anywhere on the court, use the steering strip when shown,
+            use the slider, or press ← / →.
           </p>
         )}
         {seat >= 0 && (
@@ -430,7 +621,7 @@ export function PongGame({
             {game.phase === "paused" ? "Resume Pong" : "Pause Pong"}
           </button>
         )}
-      {session.role !== "host" && configure && (
+      {session.role !== "host" && game.phase === "ready" && (
         <p className="muted">
           The host chooses the players and starts the match.
         </p>

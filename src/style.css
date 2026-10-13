@@ -2498,6 +2498,166 @@ main.app-shell {
 .pong-game-card .pong-court svg {
   aspect-ratio: 650 / 1000;
 }
+.app-shell .pong-scoreboard > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 8px;
+  text-align: left;
+}
+.app-shell .pong-scoreboard > div > span {
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
+.pong-scoreboard strong {
+  grid-column: 2;
+  grid-row: 1 / 3;
+}
+.pong-scoreboard .pong-seat-label {
+  grid-column: 1;
+  grid-row: 2;
+}
+.pong-scoreboard .pong-seat-label {
+  display: block;
+  font-size: 11px;
+  color: #35584b;
+}
+.pong-local-mark {
+  stroke: #122c29;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.pong-trail {
+  fill: none;
+  stroke: #f5f4ee;
+  stroke-width: 16;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.16;
+  pointer-events: none;
+}
+.pong-contact {
+  fill: none;
+  stroke: #daf3bd;
+  stroke-width: 5;
+  pointer-events: none;
+}
+.pong-contact.wall {
+  stroke: #9dd3e3;
+  stroke-dasharray: 6 5;
+}
+.pong-game-card .game-status progress {
+  width: 48px;
+  height: 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+  accent-color: #416425;
+}
+.pong-steer {
+  display: none;
+}
+.pong-finale {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 16px;
+  background: radial-gradient(circle at 50% 40%, #254c3b, #122c29 80%);
+  color: #f5f4ee;
+  flex: 1;
+}
+.pong-finale > div {
+  min-width: 0;
+}
+.pong-finale .eyebrow {
+  color: #d9f29d;
+}
+.pong-finale h2 {
+  font-size: clamp(18px, 2.2vw, 26px);
+  overflow-wrap: anywhere;
+}
+.pong-finale p {
+  margin: 4px 0;
+}
+.pong-finale .muted {
+  color: #cedbd4;
+}
+.pong-trophy {
+  color: #e1efa2;
+  font-size: 48px;
+}
+.app-shell .pong-game-card[data-phase="finished"] > .game-status {
+  display: none;
+}
+@media (max-width: 650px) and (min-height: 700px) {
+  .pong-steer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+  }
+  .pong-steer input {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    margin: 0;
+    touch-action: none;
+    accent-color: #416425;
+  }
+  .pong-steer input:disabled {
+    touch-action: auto;
+  }
+  .pong-steer input:focus-visible {
+    outline-offset: -3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pong-trail {
+    display: none;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .app-shell
+    .games-card.pong-game-card[data-phase="finished"]:not(.game-library) {
+    display: grid;
+    grid-template-rows: auto auto 44px 44px;
+  }
+  .app-shell .games-card.pong-game-card[data-phase="finished"] > button {
+    position: static;
+    max-width: none;
+    align-self: stretch;
+    order: initial;
+  }
+  .app-shell .pong-game-card[data-phase="finished"] > .pong-scoreboard {
+    display: none;
+  }
+  .pong-game-card[data-phase="finished"] > .pong-finale {
+    grid-column: 1;
+    grid-row: 1 / 5;
+    align-self: center;
+    padding: 12px;
+  }
+  .pong-game-card[data-phase="finished"] > .seat-picker {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .pong-game-card[data-phase="finished"] > .spectator-status,
+  .pong-game-card[data-phase="finished"] > .muted {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .pong-game-card[data-phase="finished"] > .game-help-button {
+    grid-column: 2;
+    grid-row: 3;
+  }
+  .pong-game-card[data-phase="finished"] > button:not(.game-help-button) {
+    grid-column: 2;
+    grid-row: 4;
+  }
+}
 .app-shell .games-card.pong-game-card:not(.game-library) {
   padding: 8px 12px 56px;
   gap: 6px;
