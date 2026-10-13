@@ -173,7 +173,7 @@ export function PongGame({
     frame: ReturnType<typeof pongFrame>;
   } | null>(null);
   const [impact, setImpact] = useState<PongState["pongContact"] | null>(null);
-  const [point, setPoint] = useState<{ seat: number; gain: number } | null>(
+  const [point, setPoint] = useState<{ seat: number; gain: number }[] | null>(
     null,
   );
   useEffect(() => {
@@ -198,9 +198,13 @@ export function PongGame({
     if (feedback.contact) setImpact(feedback.contact);
     if (feedback.point) setPoint(feedback.point);
     if (game.phase !== "playing") setImpact(null);
-    if (game.phase !== "serve" && game.phase !== "finished") setPoint(null);
-    if (game.phase === "ready") setPoint(null);
+    if (game.phase === "ready" || game.phase === "paused") setPoint(null);
   }, [game, epoch]);
+  useEffect(() => {
+    if (!point) return;
+    const timer = setTimeout(() => setPoint(null), 1200);
+    return () => clearTimeout(timer);
+  }, [point]);
   useEffect(() => {
     if (!impact) return;
     const timer = setTimeout(() => setImpact(null), 180);
@@ -264,6 +268,12 @@ export function PongGame({
     seats.length === 2 &&
     seats[0] !== seats[1] &&
     seats.every((id) => players.some((p) => p.id === id));
+  const pointLabel = point
+    ?.map(
+      ({ seat: scorer, gain }) =>
+        `${playerName(players, game.seats[scorer])} +${gain}`,
+    )
+    .join(" · ");
   const status = !connected
     ? "Host disconnected"
     : game.phase === "ready"
@@ -303,7 +313,11 @@ export function PongGame({
                 : ""}
             </small>
             <strong
-              className={point?.seat === i ? "pong-point" : undefined}
+              className={
+                point?.some((gain) => gain.seat === i)
+                  ? "pong-point"
+                  : undefined
+              }
               data-testid={`pong-score-${i}`}
             >
               {game.score[i]}
@@ -315,9 +329,7 @@ export function PongGame({
         {connected && game.phase === "serve" ? (
           <>
             <span>
-              {point
-                ? `${playerName(players, game.seats[point.seat])} +${point.gain} · `
-                : ""}
+              {pointLabel ? `${pointLabel} · ` : ""}
               Get ready{" "}
               <span aria-hidden="true">
                 {(reversed ? -game.ball.vx : game.ball.vx) > 0 ? "↑" : "↓"}
@@ -331,7 +343,12 @@ export function PongGame({
             />
           </>
         ) : (
-          status
+          <>
+            {connected && game.phase === "playing" && point && (
+              <span>{pointLabel} · </span>
+            )}
+            {status}
+          </>
         )}
       </p>
       {game.phase === "finished" && (

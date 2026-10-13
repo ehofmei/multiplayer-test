@@ -1,7 +1,7 @@
 # Pong polish plan — Task 10
 
-Status: implemented; automated verification is being completed and physical-device
-acceptance remains. This
+Status: implemented; physical-device acceptance remains. Automated acceptance uses
+the complete local and exact-final Ubuntu review gates below. This
 refines [Task 10 of the family polish plan](FAMILY_POLISH_PLAN.md#10-pong-finish-the-ordinary-rally-presentation).
 
 ## Implementation decisions
@@ -10,6 +10,8 @@ Confirmed ordinary contacts use the optional latest `pongContact` record with a
 bounded sequence, kind and canonical coordinates. Wire records survive points
 for monotonic sequencing; visual effects clear on point/pause/recovery and fresh
 matches reset the record. Existing bumper, point, serve and finish sounds remain.
+Observed score deltas stay visible for 1200ms, including a delayed update during
+play or gains for both players; the presentation does not guess the last scorer.
 
 The steering-strip trial retained a native 44px range control on taller portrait
 phones only (width up to 650px, height at least 700px). Short phones, landscape and

@@ -1625,7 +1625,10 @@ fonts, background/disconnect, switching and updates.
 Unit coverage verifies boundary contacts, missed paddles and bumper-only rebounds,
 simultaneous paddle priority, sequence retention through points, score priority,
 coalesced/repeated/older snapshots, first frame, pause/serve suppression and optional
-metadata validation. Audio tests verify confirmed cues, fallback, deduplication
+metadata validation. Delayed score updates work even when a client missed the
+serve/rally; both observed gains are shown when both totals changed, without
+guessing the last scorer. The browser journey checks the gain persists briefly
+into play and then clears. Audio tests verify confirmed cues, fallback, deduplication
 and bumper/point/finish priority. `test:game -- pong` includes the new polish spec;
 its 6–6 and 6–7 states use real independent pairing and ordinary pointer controls
 with the host clock, never score/state injection. Clients wait for a subsequent
@@ -1644,9 +1647,10 @@ Live QA uses production `/multiplayer-test/` at the stable 4174 host and indepen
 localhost client, with both builds checked and Home-first waiting updates applied.
 It exercises real text pairing, both keyboard orientations, steering limits,
 Help/Escape/focus, pause/resume, natural points/finish/replay, game switching and
-viewport screenshots/bounds. Include current-build phone (402×874, 440×956,
-320×568), short landscape (844×390), landscape iPad (1180×820/1080×810) and desktop
-inspection; CDP device metrics must be checked against actual inner dimensions.
+viewport screenshots/bounds. Live screenshots/bounds covered 402×874, 440×956 and 320×568 phones, 844×390
+landscape, 1180×820 iPad and 1280×720 desktop; the 1080×810 finale and full
+taller-font matrix are automated coverage. Final live executable build:
+`20261013T202414Z · local`. Device metrics were checked against actual inner dimensions.
 Use full-viewport captures rather than cropped native Retina surfaces.
 The final live pass uses ordinary controls and `screenshot({fullPage:true})`;
 raw CDP can request full-DevTools permission separately for each origin. Prefer
@@ -1656,8 +1660,10 @@ Do not count that wait as game execution or bypass the permission safeguard.
 
 The first genuine Ubuntu images came from
 [scoped Pong evidence](https://github.com/ehofmei/multiplayer-test/actions/runs/38401283773)
-for `f13f62f`; every changed image was visually reviewed. An additional scoped
-run supplies the short-landscape result added after live overlap discovery.
+for `f13f62f`; every changed image was visually reviewed. [Additional scoped evidence](https://github.com/ehofmei/multiplayer-test/actions/runs/38461092192)
+for `a339e2e` supplied the reviewed short-landscape result and invalid rematch.
+Only these two new Linux images changed; the five existing polish states were
+unchanged. All fourteen affected Darwin/Linux state pairs were visually reviewed.
 
 The new review branch uses `review.yml`'s read-only, explicitly scoped Linux
 baseline artifact route. Review every changed Darwin and genuine Ubuntu image,

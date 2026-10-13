@@ -230,7 +230,9 @@ Help slider to preserve court space. Ordinary contacts show a brief confirmed
 paddle ring or dashed wall ring, behind the solid ball. A faint, bounded trail
 follows the displayed ball; Reduce Motion removes it and keeps static contact
 feedback. Points identify the scorer and gain during the existing next-serve
-delay, with progress and direction. Six points marks match point, including both
+delay, with progress and direction. Delayed score updates show each observed gain
+briefly beside the rally status, including both players when both totals changed.
+Six points marks match point, including both
 players at 6–6. The persistent finale shows the winner, final score and your
 result (or spectator wording); the host starts Play Again with selected seats.
 Update all devices for confirmed contact feedback. The optional bounded contact

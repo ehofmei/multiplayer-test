@@ -94,10 +94,47 @@ describe("confirmed ordinary Pong feedback", () => {
     });
     expect(
       pongFeedback(before, { ...after, phase: "serve", score: [0, 2] }),
-    ).toEqual({ contact: null, point: { seat: 1, gain: 2 } });
+    ).toEqual({ contact: null, point: [{ seat: 1, gain: 2 }] });
     expect(
       pongFeedback(before, { ...after, phase: "finished", score: [7, 0] }),
-    ).toEqual({ contact: null, point: { seat: 0, gain: 7 } });
+    ).toEqual({ contact: null, point: [{ seat: 0, gain: 7 }] });
+  });
+  it("reports coalesced point gains even when the client missed the entire serve or rally", () => {
+    const before = pongFrame({ ...playing(), phase: "serve", score: [2, 1] });
+    for (const phase of ["serve", "playing", "finished"] as const) {
+      const after = {
+        ...before,
+        phase,
+        score: [phase === "finished" ? 7 : 4, 1],
+      };
+      expect(pongFeedback(before, after)).toEqual({
+        contact: null,
+        point: [{ seat: 0, gain: phase === "finished" ? 5 : 2 }],
+      });
+      expect(pongFeedback(after, after)).toEqual({
+        contact: null,
+        point: null,
+      });
+      expect(pongFeedback(null, after)).toEqual({ contact: null, point: null });
+      expect(pongFeedback({ ...before, phase: "paused" }, after)).toEqual({
+        contact: null,
+        point: null,
+      });
+    }
+  });
+  it("reports both score gains without guessing the last scorer from a delayed snapshot", () => {
+    expect(
+      pongFeedback(
+        pongFrame({ ...playing(), score: [2, 1] }),
+        pongFrame({ ...playing(), score: [3, 3] }),
+      ),
+    ).toEqual({
+      contact: null,
+      point: [
+        { seat: 0, gain: 1 },
+        { seat: 1, gain: 2 },
+      ],
+    });
   });
   it("validates optional bounded regular-Pong metadata and rejects it for other games", () => {
     const room = newRoom("pong", 1);

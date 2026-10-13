@@ -14,18 +14,17 @@ export function pongFeedback(
 ) {
   if (
     !before ||
-    before.phase !== "playing" ||
+    !["playing", "serve"].includes(before.phase) ||
     after.phase === "paused" ||
     after.phase === "ready"
   )
     return { contact: null, point: null };
-  const scorer = after.score.findIndex((n, i) => n > before.score[i]);
-  if (scorer >= 0)
-    return {
-      contact: null,
-      point: { seat: scorer, gain: after.score[scorer] - before.score[scorer] },
-    };
+  const gains = after.score.flatMap((n, seat) =>
+    n > before.score[seat] ? [{ seat, gain: n - before.score[seat] }] : [],
+  );
+  if (gains.length) return { contact: null, point: gains };
   const contact =
+    before.phase === "playing" &&
     after.phase === "playing" &&
     after.contact &&
     after.contact.sequence > (before.contact?.sequence ?? 0)

@@ -165,6 +165,13 @@ test("Pong confirms contacts, labels points and both match points, finishes and 
       `pong-point-serve-${process.platform}.png`,
       { maxDiffPixels: 180 },
     );
+    await host.clock.runFor(1050);
+    await expect(card(host)).toHaveAttribute("data-phase", "playing");
+    await expect(host.locator(".game-status")).toContainText(
+      "Alexandra the Champion +1",
+    );
+    await host.clock.runFor(200);
+    await expect(host.locator(".game-status")).toHaveText("First to seven");
     for (let point = 1; point < 12; point++) await earnPoint(point % 2);
     await expect(host.getByTestId("pong-score-0")).toHaveText("6");
     await expect(host.getByTestId("pong-score-1")).toHaveText("6");

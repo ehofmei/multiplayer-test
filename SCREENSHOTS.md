@@ -113,6 +113,10 @@ Ordinary rally feedback, mirrored match point and persistent results:
 
 ![Pong finale on landscape iPad](tests/pong-polish.spec.ts-snapshots/pong-finale-ipad-linux.png)
 
+![Pong finale on short landscape phone](tests/pong-polish.spec.ts-snapshots/pong-finale-landscape-linux.png)
+
+![Pong duplicate rematch seats](tests/pong-polish.spec.ts-snapshots/pong-invalid-rematch-landscape-linux.png)
+
 ## Arena Pong
 
 Rotated four-player court · phone layout. Numbered rails, local paddle notch,
