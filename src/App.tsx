@@ -1,3 +1,4 @@
+import { gameCatalog, type LibraryGame } from "./components/gameCatalog";
 import { GlowGame } from "./components/GlowGame";
 import { LightsGame } from "./components/LightsGame";
 import { SeekGame } from "./components/SeekGame";
@@ -44,6 +45,10 @@ export function App() {
   const [output, setOutput] = useState("");
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [libraryPosition, setLibraryPosition] = useState(0);
+  const [libraryReturnTo, setLibraryReturnTo] = useState<LibraryGame | null>(
+    null,
+  );
   const [menu, setMenu] = useState(false);
   const [transfer, setTransfer] = useState(false);
   const [pairing, setPairing] = useState(false);
@@ -112,6 +117,8 @@ export function App() {
     setMenu(false);
     setTransfer(false);
     setPairing(role === "client");
+    setLibraryPosition(0);
+    setLibraryReturnTo(null);
   };
   const home = () => {
     window.scrollTo(0, 0);
@@ -347,7 +354,20 @@ export function App() {
                 )}
                 <div className="session-layout">
                   {snapshot?.room.kind === "lobby" && (
-                    <GamePicker session={session} />
+                    <GamePicker
+                      session={session}
+                      players={snapshot.players}
+                      position={libraryPosition}
+                      onPosition={setLibraryPosition}
+                      returnTo={libraryReturnTo}
+                      onSelect={(kind) => {
+                        setLibraryPosition(
+                          gameCatalog.findIndex((game) => game.kind === kind),
+                        );
+                        setLibraryReturnTo(kind);
+                        session.selectGame(kind);
+                      }}
+                    />
                   )}
                   {snapshot?.room.kind === "arena" && snapshot.room.pong && (
                     <ArenaGame

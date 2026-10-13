@@ -1,3 +1,4 @@
+import { startRequirement } from "./gameCatalog";
 import { GameSurface, GameHelp, AppPanel } from "./AppLayout";
 import {
   adjacentCyclePoints,
@@ -120,10 +121,10 @@ export function CycleGame({
   const survivors = game.riders.filter((r) => r.alive);
   const name = (id: string) =>
     players.find((p) => p.id === id)?.name ?? "Player";
-  const status = !connected
+  const gameStatus = !connected
     ? "Host disconnected"
     : game.phase === "ready"
-      ? "Ready to ride?"
+      ? startRequirement("cycle", players.length) || "Ready to ride?"
       : game.phase === "paused"
         ? "Arena paused"
         : game.phase === "countdown"
@@ -135,6 +136,13 @@ export function CycleGame({
                 ? `${name(survivors[0].id)} wins!`
                 : "Time’s up! Survivors share the win."
             : `${survivors.length} riders remain`;
+  const rematchRequirement =
+    game.phase === "finished" && connected
+      ? startRequirement("cycle", players.length)
+      : "";
+  const status = rematchRequirement
+    ? `${gameStatus} · ${rematchRequirement}`
+    : gameStatus;
   const movingHeads = new Set(
     game.riders.filter((r) => r.alive).map((r) => r.y * CYCLE_SIZE + r.x),
   );
@@ -176,7 +184,11 @@ export function CycleGame({
       }}
     >
       <div className="cycle-heading">
-        <p className="cycle-status" aria-live="polite">
+        <p
+          id="cycle-start-guidance"
+          className="cycle-status"
+          aria-live="polite"
+        >
           {status}
         </p>
         {game.phase !== "finished" && (
@@ -526,7 +538,8 @@ export function CycleGame({
           configure ? (
             <>
               <button
-                disabled={players.length < 2}
+                aria-describedby="cycle-start-guidance"
+                disabled={!connected || players.length < 2}
                 onClick={() => session.startCycle()}
               >
                 {game.phase === "finished" ? "Ride Again" : "Start Arena"}

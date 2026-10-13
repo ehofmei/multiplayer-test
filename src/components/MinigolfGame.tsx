@@ -1,3 +1,4 @@
+import { startRequirement } from "./gameCatalog";
 import {
   useEffect,
   useRef,
@@ -118,10 +119,11 @@ export function MinigolfGame({
     players.find((p) => p.id === id)?.name ?? "Golfer";
   const highest = Math.max(0, ...game.balls.map(golfTotal));
   const winners = game.balls.filter((b) => golfTotal(b) === highest);
-  const status = !connected
+  const gameStatus = !connected
     ? "Host disconnected"
     : ready
-      ? "Five greens. One shot per hole. Aim together."
+      ? startRequirement("minigolf", players.length) ||
+        "Five greens. One shot per hole. Aim together."
       : game.phase === "paused"
         ? "Paused · shots and conditions are saved."
         : game.phase === "countdown" || game.phase === "reorient"
@@ -147,6 +149,13 @@ export function MinigolfGame({
                       : aim.power === 0
                         ? "Set power above 0% to Ready."
                         : "Preview your shot, then tap Ready.";
+  const rematchRequirement =
+    game.phase === "finished" && connected
+      ? startRequirement("minigolf", players.length)
+      : "";
+  const status = rematchRequirement
+    ? `${gameStatus} · ${rematchRequirement}`
+    : gameStatus;
   const point = (event: PointerEvent<SVGSVGElement>) =>
     new DOMPoint(event.clientX, event.clientY).matrixTransform(
       courseLayer.current!.getScreenCTM()!.inverse(),
@@ -462,6 +471,7 @@ export function MinigolfGame({
             </span>
           </div>
           <p
+            id="minigolf-start-guidance"
             className={finished ? "golf-workspace-status" : "golf-status"}
             aria-live={finished ? "off" : "polite"}
           >
@@ -533,7 +543,8 @@ export function MinigolfGame({
           <>
             {ready || finished ? (
               <button
-                disabled={players.length < 2}
+                aria-describedby="minigolf-start-guidance"
+                disabled={!connected || players.length < 2}
                 onClick={() => session.startGolf()}
               >
                 {finished ? "Play Again" : "Start Golf"}
@@ -567,7 +578,7 @@ export function MinigolfGame({
         >
           Standings
         </button>
-        <GameHelp label="Help">
+        <GameHelp>
           <p>
             Drag from your ball toward the travel direction. Longer drags mean
             more power, with the same drag distance on every screen. Release to

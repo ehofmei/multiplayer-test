@@ -1575,3 +1575,27 @@ measure another explicit benchmark after stability is established rather than
 adopting sharding or more workers from this sample. Timing records distinguish
 failed/canceled attempts from passing measurements. No retries/timeouts/visual
 budgets were increased and no coverage moved to a later suite.
+
+## Library and shared shell polish (Task 9)
+
+Implementation and verification are in progress; see
+[the Task 9 plan](LIBRARY_SHELL_POLISH_PLAN.md) for the current resume checklist.
+The catalog/unit tests cover all fourteen games, solo eligibility, exact-two
+connected requirements, selected-seat spectator policy, page clamping and seat
+conflict guidance. tests/library.spec.ts adds household phone/landscape iPad card
+bounds, taller fonts, page/focus restoration across resize and real paired roster
+changes. Existing app-layout, pairing, update and game tests remain required.
+
+Live QA inventory: all pages and fourteen marks; short phone and landscape;
+primary household phones and landscape iPad; missing-player setup; Help/Escape
+and focus return; solo play/replay; host/client/spectator roles; duplicate seats;
+join/leave guidance; long names; dense eight-person shell; connection/update access.
+Initial live short-phone checks exposed inherited nested-grid styling and a
+short-landscape seat-guidance overflow; both are being resolved through strict
+bounds tests. Local fast checks passed; complete local and final Ubuntu gates,
+final screenshot review and the rest of live QA remain pending.
+
+Physical follow-up: installed household iPhone/iPad viewport, safe areas and
+rotation, real-thumb card/control reach, larger text/VoiceOver, household Wi-Fi
+pairing and background recovery. Ask family members to choose a suitable game
+for one, two, three and larger rosters and identify who plays versus watches.

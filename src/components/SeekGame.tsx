@@ -1,3 +1,4 @@
+import { startRequirement } from "./gameCatalog";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AppPanel, GameHelp } from "./AppLayout";
 import {
@@ -316,10 +317,11 @@ export function SeekGame({
   const result = last
     ? `${seekCoordinate(last.cell)} · ${last.result === "found" ? `${seekPieces[last.piece!].name} found!` : last.result === "hit" ? "Hit!" : "Miss"} · ${last.player === session.me.id ? "You" : name(last.player)}`
     : "";
-  const status = !connected
+  const gameStatus = !connected
     ? "Host disconnected"
     : ready
-      ? "Hide five shapes. Find every glowing tile."
+      ? startRequirement("seek", players.length) ||
+        "Hide five shapes. Find every glowing tile."
       : finished
         ? `${game.winner === session.me.id ? "You win!" : `${name(game.winner)} wins!`}`
         : game.phase === "paused"
@@ -341,6 +343,13 @@ export function SeekGame({
                   : canGuess
                     ? `Your turn${cell !== null ? ` · ${seekCoordinate(cell)}` : ""}`
                     : `${name(game.current)}’s turn`;
+  const rematchRequirement =
+    game.phase === "finished" && connected
+      ? startRequirement("seek", players.length)
+      : "";
+  const status = rematchRequirement
+    ? `${gameStatus} · ${rematchRequirement}`
+    : gameStatus;
   const selectPiece = (i: number) => {
     setPiece(i);
     const p = layout.find((p) => p.piece === i);
@@ -537,6 +546,7 @@ export function SeekGame({
         </span>
       </div>
       <p
+        id="seek-start-guidance"
         className="seek-status"
         data-your-turn={canGuess || undefined}
         aria-live="polite"
@@ -741,7 +751,7 @@ export function SeekGame({
         </div>
       </div>
       <div className="seek-footer">
-        <GameHelp label="Help">
+        <GameHelp>
           <p>
             Exactly two players. Start opens manual setup; there are no time
             limits and no automatic placements or guesses. Select a shape, tap a
@@ -782,7 +792,8 @@ export function SeekGame({
         {session.role === "host" &&
           (ready || finished ? (
             <button
-              disabled={players.length !== 2}
+              aria-describedby="seek-start-guidance"
+              disabled={!connected || players.length !== 2}
               onClick={() => session.startSeek()}
             >
               {finished ? "Seek Again" : "Start Seek"}

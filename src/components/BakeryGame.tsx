@@ -1,3 +1,4 @@
+import { startRequirement } from "./gameCatalog";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { AppPanel, GameHelp } from "./AppLayout";
 import {
@@ -179,10 +180,11 @@ export function BakeryGame({
     );
     previousReveal.current = { round: game.round, count: revealedCount };
   }, [game.round, revealedCount]);
-  const status = !connected
+  const gameStatus = !connected
     ? "Host disconnected"
     : game.phase === "ready"
-      ? "The ovens are ready. Are you?"
+      ? startRequirement("bakery", players.length) ||
+        "The ovens are ready. Are you?"
       : finished
         ? winners.length > 1
           ? `${winners.length} bakers share the win!`
@@ -204,6 +206,13 @@ export function BakeryGame({
                 : me.locked
                   ? `Your pick is locked · ${ready}/${game.bakers.length} ready`
                   : "Choose one treat.";
+  const rematchRequirement =
+    game.phase === "finished" && connected
+      ? startRequirement("bakery", players.length)
+      : "";
+  const status = rematchRequirement
+    ? `${gameStatus} · ${rematchRequirement}`
+    : gameStatus;
   const scoreboard = (
     <ol className="bakery-scores" aria-label="Bakery scores">
       {[...game.bakers]
@@ -249,7 +258,11 @@ export function BakeryGame({
             : "2–8 bakers · ~3–5 min"}
         </span>
       </div>
-      <p className="bakery-status" aria-live="polite">
+      <p
+        id="bakery-start-guidance"
+        className="bakery-status"
+        aria-live="polite"
+      >
         {status}
       </p>
       <div className="bakery-workspace">
@@ -512,7 +525,8 @@ export function BakeryGame({
       {session.role === "host" ? (
         game.phase === "ready" || finished ? (
           <button
-            disabled={players.length < 2}
+            aria-describedby="bakery-start-guidance"
+            disabled={!connected || players.length < 2}
             onClick={() => session.startBakery()}
           >
             {finished ? "Bake Again" : "Open Bakery"}

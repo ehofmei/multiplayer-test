@@ -250,6 +250,7 @@ export function SumoGame({
           {status}
         </p>
         <p
+          id="sumo-start-guidance"
           className="sumo-feedback"
           title={me ? `You are bumper ${seat + 1} · ${name(me.id)}` : undefined}
         >
@@ -534,7 +535,7 @@ export function SumoGame({
         </div>
       </div>
       <div className="sumo-footer">
-        <GameHelp label="Help & players">
+        <GameHelp>
           <p className="muted sumo-help">
             Drag the thumb pad to move; release to brake. Move and tap Dash to
             burst forward (2s recharge). The light around Dash fills as it
@@ -548,7 +549,8 @@ export function SumoGame({
           configure ? (
             <>
               <button
-                disabled={players.length < 2}
+                aria-describedby="sumo-start-guidance"
+                disabled={!connected || players.length < 2}
                 onClick={() => session.startSumo()}
               >
                 {game.phase === "finished" ? "Bump Again" : "Start Bumpers"}

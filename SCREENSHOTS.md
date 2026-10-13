@@ -21,9 +21,9 @@ available; shared baselines are identified below.
 
 ## Sumo Bumpers
 
-Arena · shared baseline.
+Arena · Linux baseline.
 
-![Sumo Bumpers arena](tests/game.spec.ts-snapshots/sumo-court.png)
+![Sumo Bumpers arena](tests/sumo-integration.spec.ts-snapshots/sumo-court-linux.png)
 
 ## Light-cycle Arena
 
@@ -60,16 +60,16 @@ Active mission · phone layout.
 
 ## Co-op Breakout
 
-Active phone · macOS baseline. Broad reaction lanes around the compact core.
+Active phone · Linux baseline. Broad reaction lanes around the compact core.
 
-![Co-op Breakout](tests/breakout.spec.ts-snapshots/breakout-active-phone-darwin.png)
+![Co-op Breakout](tests/breakout.spec.ts-snapshots/breakout-active-phone-linux.png)
 
-[Ready](tests/breakout.spec.ts-snapshots/breakout-ready-phone-darwin.png) ·
-[Tablet](tests/breakout.spec.ts-snapshots/breakout-active-tablet-darwin.png) ·
-[Landscape](tests/breakout.spec.ts-snapshots/breakout-active-landscape-darwin.png) ·
-[Short phone paused](tests/breakout.spec.ts-snapshots/breakout-paused-short-phone-darwin.png) ·
-[Team results](tests/breakout.spec.ts-snapshots/breakout-results-phone-darwin.png) ·
-[Team victory](tests/breakout.spec.ts-snapshots/breakout-victory-phone-darwin.png).
+[Ready](tests/breakout.spec.ts-snapshots/breakout-ready-phone-linux.png) ·
+[Tablet](tests/breakout.spec.ts-snapshots/breakout-active-tablet-linux.png) ·
+[Landscape](tests/breakout.spec.ts-snapshots/breakout-active-landscape-linux.png) ·
+[Short phone paused](tests/breakout.spec.ts-snapshots/breakout-paused-short-phone-linux.png) ·
+[Team results](tests/breakout.spec.ts-snapshots/breakout-results-phone-linux.png) ·
+[Team victory](tests/breakout.spec.ts-snapshots/breakout-victory-phone-linux.png).
 
 ## Pong
 
@@ -110,13 +110,13 @@ Full-screen Ubuntu fit evidence with taller font metrics:
 
 ## Reaction Race
 
-Arcade pads and personal hit reward · macOS baseline.
+Arcade pads and personal hit reward · Linux baseline.
 
-![Reaction Race hit reward](tests/reaction.spec.ts-snapshots/race-hit-darwin.png)
+![Reaction Race hit reward](tests/reaction.spec.ts-snapshots/race-hit-linux.png)
 
-[Wrong tap and intended target](tests/game.spec.ts-snapshots/race-wrong-darwin.png) ·
-[Hold cue](tests/reaction.spec.ts-snapshots/race-hold-darwin.png) ·
-[Eight shared winners](tests/reaction.spec.ts-snapshots/race-results-eight-darwin.png)
+[Wrong tap and intended target (macOS)](tests/game.spec.ts-snapshots/race-wrong-darwin.png) ·
+[Hold cue](tests/reaction.spec.ts-snapshots/race-hold-linux.png) ·
+[Eight shared winners](tests/reaction.spec.ts-snapshots/race-results-eight-linux.png)
 
 ## Shared Lights
 

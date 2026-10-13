@@ -1,3 +1,4 @@
+import { seatGuidance } from "./gameCatalog";
 import { GameSurface, GameHelp, AppPanel } from "./AppLayout";
 import { useEffect, useRef, useState } from "react";
 import { arenaWinner, sideNames, viewPosition } from "../games/arena";
@@ -91,7 +92,9 @@ export function ArenaGame({
         : game.phase === "serve"
           ? "Get ready…"
           : game.phase === "ready"
-            ? "Defend your side. Last paddle standing wins."
+            ? session.role === "host"
+              ? seatGuidance(players, seats, 3, session.me.id)
+              : "The host picks 3–4 players; others watch."
             : side < 0
               ? "You’re watching. The host picks the players."
               : !alive
@@ -259,7 +262,11 @@ export function ArenaGame({
           </div>
         )}
       </div>
-      <p className="game-status arena-status" aria-live="polite">
+      <p
+        id="arena-start-guidance"
+        className="game-status arena-status"
+        aria-live="polite"
+      >
         {(miss && game.phase === "serve"
           ? `${name(game.seats[effect.side])}${effect.kind === "out" ? " is out · side becomes a wall" : " lost a life"}`
           : status) ||
@@ -448,7 +455,7 @@ export function ArenaGame({
         </div>
       )}
       <div className="arena-footer">
-        <GameHelp label="How to play">
+        <GameHelp>
           {side >= 0 && (
             <>
               <p>
@@ -494,8 +501,18 @@ export function ArenaGame({
             >
               Players & lives
             </button>
+            {game.phase === "finished" && !valid && (
+              <p id="arena-rematch-guidance" className="arena-waiting">
+                {seatGuidance(players, seats, 3, session.me.id)}
+              </p>
+            )}
             <button
-              disabled={!valid}
+              aria-describedby={
+                game.phase === "finished" && !valid
+                  ? "arena-rematch-guidance"
+                  : "arena-start-guidance"
+              }
+              disabled={!connected || !valid}
               onClick={() => session.startPong(selected, startingLives)}
             >
               {game.phase === "finished"

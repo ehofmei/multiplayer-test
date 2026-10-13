@@ -1,3 +1,4 @@
+import { seatGuidance } from "./gameCatalog";
 import { useEffect, useId, useRef, useState } from "react";
 import { GameHelp, GameSurface } from "./AppLayout";
 import { PaddleColors } from "./ArenaGame";
@@ -537,15 +538,15 @@ export function BreakoutGame({
               </label>
             ))}
           </div>
-          {!valid && (
-            <p className="breakout-setup-hint">
-              Choose different teammates. Fill seats in order.
-            </p>
-          )}
+          <p id="breakout-start-guidance" className="breakout-setup-hint">
+            {!connected
+              ? "Host disconnected"
+              : seatGuidance(players, seats, 1, session.me.id)}
+          </p>
         </div>
       )}
       <div className="breakout-footer">
-        <GameHelp label="How to play">
+        <GameHelp>
           <p>
             Your paddle is always at the bottom. Drag left/right on the court or
             the strip below it, use the slider, or press ← / →.
@@ -592,6 +593,9 @@ export function BreakoutGame({
         {session.role === "host" ? (
           configure ? (
             <button
+              aria-describedby={
+                session.role === "host" ? "breakout-start-guidance" : undefined
+              }
               disabled={!valid || !connected}
               onClick={() => session.startPong(selected)}
             >

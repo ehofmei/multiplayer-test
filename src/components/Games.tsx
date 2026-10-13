@@ -1,3 +1,12 @@
+import {
+  seatGuidance,
+  gameCatalog,
+  libraryPage,
+  playerBadge,
+  rosterRequirement,
+  type LibraryGame,
+} from "./gameCatalog";
+import { GameMark } from "./GameMark";
 import { GameSurface, GameHelp } from "./AppLayout";
 import { PaddleColors } from "./ArenaGame";
 import { paddleHex } from "../games/colors";
@@ -6,169 +15,122 @@ import { useEffect, useRef, useState } from "react";
 import {
   clampPaddle,
   raceHitPoints,
-  type GameKind,
   type PongState,
   type RaceState,
 } from "../games/model";
 import type { Player } from "../network/protocol";
 import type { Session } from "../network/session";
 
-const choices: {
-  kind: GameKind;
-  title: string;
-  detail: string;
-  mark: string;
-}[] = [
-  {
-    kind: "sumo",
-    title: "Sumo Bumpers",
-    detail: "2–8 bumpers. Dash, bump, and stay inside the shrinking ring.",
-    mark: "◎",
-  },
-  {
-    kind: "cycle",
-    title: "Light-cycle Arena",
-    detail: "2–8 riders. Leave a trail. Cut them off. Last survivor wins.",
-    mark: "↱",
-  },
-  {
-    kind: "ship",
-    title: "Spaceship Panic",
-    detail: "Call out pictures. Work your panels. Chase a team high score.",
-    mark: "✧",
-  },
-  {
-    kind: "breakout",
-    title: "Co-op Breakout",
-    detail: "One team, five shared lives. Clear three levels together.",
-    mark: "▤",
-  },
-  {
-    kind: "pong",
-    title: "Pong",
-    detail: "Two paddles. First to seven. Everyone else can watch.",
-    mark: "↔",
-  },
-  {
-    kind: "arena",
-    title: "Arena Pong",
-    detail: "Three or four paddles. Five lives. Last player standing wins.",
-    mark: "□",
-  },
-  {
-    kind: "reaction",
-    title: "Reaction Race",
-    detail: "Six targets, ten rounds. Stay sharp when the rule changes.",
-    mark: "✦",
-  },
-  {
-    kind: "lights",
-    title: "Shared Lights",
-    detail: "The original shared board. Tap and experiment together.",
-    mark: "▦",
-  },
-  {
-    kind: "bakery",
-    title: "Midnight Bakery",
-    detail: "Pick, reveal, pass. Bake silly treats and dodge spoon gremlins.",
-    mark: "♧",
-  },
-  {
-    kind: "minigolf",
-    title: "Meteor Minigolf",
-    detail: "2–8 golfers. One shot each. Five cosmic greens. Aim together.",
-    mark: "⚑",
-  },
-  {
-    kind: "treasure",
-    title: "Treasure Dive",
-    detail: "2–8 divers. Bank your haul or brave one more sunken room.",
-    mark: "⚓",
-  },
-  {
-    kind: "picnic",
-    title: "Patchwork Picnic",
-    detail:
-      "2–8 puzzlers. Fit food shapes, match neighbors, and fill your blanket.",
-    mark: "▧",
-  },
-  {
-    kind: "seek",
-    title: "Light Seek",
-    detail: "Two players. Hide five glowing shapes. Find every tile.",
-    mark: "✚",
-  },
-  {
-    kind: "glow",
-    title: "Glow Clash",
-    detail:
-      "3–8 players. Pick three secret tiles. Unique claims glow; collisions clash.",
-    mark: "▩",
-  },
-];
-export function GamePicker({ session }: { session: Session }) {
-  const [page, setPage] = useState(0);
+export function GamePicker({
+  session,
+  players,
+  position,
+  onPosition,
+  returnTo,
+  onSelect,
+}: {
+  session: Session;
+  players: Player[];
+  position: number;
+  onPosition: (index: number) => void;
+  returnTo: LibraryGame | null;
+  onSelect: (kind: LibraryGame) => void;
+}) {
+  const root = useRef<HTMLElement>(null);
   const [compact, setCompact] = useState(
     () => matchMedia("(max-width: 650px), (max-height: 550px)").matches,
   );
   useEffect(() => {
     const media = matchMedia("(max-width: 650px), (max-height: 550px)");
-    const change = () => {
-      setCompact(media.matches);
-      setPage(0);
-    };
+    const change = () => setCompact(media.matches);
     media.addEventListener("change", change);
     return () => media.removeEventListener("change", change);
   }, []);
   const pageSize = compact ? 4 : 6;
-  const pages = Math.ceil(choices.length / pageSize);
+  const page = libraryPage(position, pageSize);
+  const pages = Math.ceil(gameCatalog.length / pageSize);
+  useEffect(() => {
+    if (returnTo)
+      root.current
+        ?.querySelector<HTMLButtonElement>(`[data-game="${returnTo}"]`)
+        ?.focus();
+  }, [returnTo]);
   return (
-    <section className="games-card game-library" aria-label="Game picker">
+    <section
+      ref={root}
+      className="games-card game-library"
+      aria-label="Game picker"
+    >
       <p className="eyebrow">WHAT SHALL WE PLAY?</p>
       <h2>
         {session.role === "host"
           ? "Choose a game"
           : "The host is choosing a game"}
       </h2>
-      <p className="muted">Pair once. Play as many games as you like.</p>
+      <p className="muted">
+        {players.length} connected · Pair once. Play together.
+      </p>
       <div className="game-choices">
-        {choices.slice(page * pageSize, (page + 1) * pageSize).map((c) => (
-          <button
-            key={c.kind}
-            aria-label={c.title}
-            className="game-choice"
-            disabled={session.role !== "host"}
-            onClick={() => session.selectGame(c.kind)}
-          >
-            <span className="game-mark" aria-hidden="true">
-              {c.mark}
-            </span>
-            <strong>{c.title}</strong>
-            <small>{c.detail}</small>
-          </button>
-        ))}
+        {gameCatalog.slice(page * pageSize, (page + 1) * pageSize).map((c) => {
+          const requirement = rosterRequirement(c, players.length);
+          return (
+            <button
+              key={c.kind}
+              data-game={c.kind}
+              aria-label={c.title}
+              aria-describedby={`card-${c.kind}`}
+              className="game-choice"
+              disabled={session.role !== "host"}
+              onClick={() => onSelect(c.kind)}
+            >
+              <span className="game-mark" aria-hidden="true">
+                <GameMark kind={c.kind} />
+              </span>
+              <strong>{c.title}</strong>
+              <span id={`card-${c.kind}`} className="game-card-detail">
+                <span className="game-badges">
+                  <span>{playerBadge(c)}</span>
+                  <span>{c.category}</span>
+                  {c.solo && <span>{c.solo}</span>}
+                </span>
+                <small className="card-description">{c.detail}</small>
+                {c.selectedSeats && (
+                  <small className="seat-policy">
+                    Host picks seats · Others watch
+                  </small>
+                )}
+                {requirement && (
+                  <small className="card-requirement">{requirement}</small>
+                )}
+              </span>
+            </button>
+          );
+        })}
       </div>
-      {pages > 1 && (
-        <nav className="library-pages" aria-label="Game library pages">
-          <button
-            className="quiet"
-            disabled={page === 0}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-          >
-            Previous games
-          </button>
-          <span>
-            {page + 1} / {pages}
+      <nav className="library-pages" aria-label="Game library pages">
+        <button
+          className="quiet"
+          disabled={page === 0}
+          onClick={() => onPosition((page - 1) * pageSize)}
+        >
+          Previous games
+        </button>
+        <span aria-live="polite" aria-atomic="true">
+          Page {page + 1} of {pages}
+          <span className="page-dots" aria-hidden="true">
+            {Array.from({ length: pages }, (_, i) => (
+              <i key={i} data-current={i === page} />
+            ))}
           </span>
-          <button
-            className="quiet"
-            disabled={page === pages - 1}
-            onClick={() => setPage((p) => Math.min(pages - 1, p + 1))}
-          >
-            More games
-          </button>
-        </nav>
-      )}
+        </span>
+        <button
+          className="quiet"
+          disabled={page === pages - 1}
+          onClick={() => onPosition((page + 1) * pageSize)}
+        >
+          Next games
+        </button>
+      </nav>
     </section>
   );
 }
@@ -242,7 +204,7 @@ export function PongGame({
   const status = !connected
     ? "Host disconnected"
     : game.phase === "ready"
-      ? "Choose two players to start."
+      ? seatGuidance(players, seats, 2, session.me.id)
       : game.phase === "finished"
         ? `${playerName(players, game.seats[game.score[0] === 7 ? 0 : 1])} wins!`
         : game.phase === "paused"
@@ -259,7 +221,12 @@ export function PongGame({
       <div className="game-score" aria-label="Pong score">
         {[0, 1].map((i) => (
           <div key={i}>
-            <span>{playerName(players, game.seats[i])}</span>
+            <span>
+              {playerName(
+                players,
+                game.phase === "ready" ? seats[i] : game.seats[i],
+              )}
+            </span>
             <strong
               key={game.score[i]}
               className={game.score[i] > 0 ? "pong-point" : undefined}
@@ -270,7 +237,7 @@ export function PongGame({
           </div>
         ))}
       </div>
-      <p className="game-status" aria-live="polite">
+      <p id="pong-start-guidance" className="game-status" aria-live="polite">
         {status}
       </p>
       <GameSurface ratio={650 / 1000}>
@@ -432,11 +399,18 @@ export function PongGame({
               </label>
             ))}
           </div>
-          {players.length < 2 && (
-            <p className="muted">Add another player to play Pong.</p>
+          {game.phase === "finished" && !validSeats && (
+            <p id="pong-rematch-guidance" className="muted">
+              {seatGuidance(players, seats, 2, session.me.id)}
+            </p>
           )}
           <button
-            disabled={!validSeats}
+            aria-describedby={
+              game.phase === "finished" && !validSeats
+                ? "pong-rematch-guidance"
+                : "pong-start-guidance"
+            }
+            disabled={!connected || !validSeats}
             onClick={() => session.startPong(seats)}
           >
             {game.phase === "finished" ? "Play Again" : "Start Pong"}

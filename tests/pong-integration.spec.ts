@@ -29,7 +29,7 @@ test("host picks games, assigns two Pong players, spectators watch, and switchin
     await host.getByRole("button", { name: "Sound", exact: true }).click();
     await expect.poll(() => audioStarts(host)).toBeGreaterThan(0);
     const beforePong = await audioStarts(host);
-    await emma.getByRole("button", { name: "More games", exact: true }).click();
+    await emma.getByRole("button", { name: "Next games", exact: true }).click();
     await expect(
       emma.getByRole("button", { name: "Pong", exact: true }),
     ).toBeDisabled();

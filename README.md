@@ -87,14 +87,23 @@ The app uses a viewport-filling shell with safe-area padding plus clearance belo
 (24px in the installed app, 12px in the browser). Home, the game
 library, pairing, setup, and play are focused views rather than a long page.
 Phones and short windows show four games per library page across four pages; larger iPad windows
-show six games per page across three pages. During games, courts fit their remaining space without changing
+show six games per page across three pages. Cards use local illustrations with player-count, Competitive/Cooperative/Shared toy
+badges and explicit solo support. Roster guidance updates when players join or
+leave; unavailable games can still be opened for setup and Help. Light Seek needs
+exactly two connected players. Pong, Arena Pong and Breakout use selected seats,
+with everyone else watching. Setup explains missing or duplicate seats before Start.
+Previous games / Next games show the current page. Choose Game restores the last
+selected card and keyboard focus; resizing keeps the remembered game visible.
+A new room starts on page one. On short screens, flavor descriptions give way to
+player requirements and seat guidance.
+During games, courts fit their remaining space without changing
 the game geometry. Landscape layouts place courts beside controls; very short
 setup screens omit the court preview to keep assignments and Start reachable.
 
 Menu (or the player-count button) opens the roster, connection details,
 installation help, app build/update controls, and Return Home. Add Player is
 available in the lobby; during games use Menu → Invite Player, which retains the
-existing pause/stop behavior before pairing. Each game's Controls & help panel
+existing pause/stop behavior before pairing. Each game's Help button opens the Controls & help panel, which
 contains instructions and, for paddle games, color choices and an alternative
 slider. Pause/stop, essential status, and touch controls stay on the play screen.
 Detailed rider/bumper lists move into Help while playing and appear with results.

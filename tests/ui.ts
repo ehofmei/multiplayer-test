@@ -31,7 +31,7 @@ export async function chooseGame(page: Page, name: string) {
       exact: true,
     });
     while (await previous.isEnabled()) await previous.click();
-    const more = page.getByRole("button", { name: "More games", exact: true });
+    const more = page.getByRole("button", { name: "Next games", exact: true });
     while (!(await choice.count()) && (await more.isEnabled()))
       await more.click();
   }

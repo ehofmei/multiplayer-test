@@ -1,3 +1,4 @@
+import { startRequirement } from "./gameCatalog";
 import { useEffect, useRef, useState } from "react";
 import { AppPanel, GameHelp } from "./AppLayout";
 import {
@@ -84,10 +85,11 @@ export function TreasureGame({
     me?.status === "exploring" &&
     !me.locked;
   const explorers = game.divers.filter((d) => d.status === "exploring");
-  const status = !connected
+  const gameStatus = !connected
     ? "Host disconnected"
     : ready
-      ? "Three dives. One shield each dive. How far will you go?"
+      ? startRequirement("treasure", players.length) ||
+        "Three dives. One shield each dive. How far will you go?"
       : game.phase === "paused"
         ? "Dive paused · your haul and choices are safe."
         : game.phase === "countdown" || game.phase === "reorient"
@@ -107,6 +109,13 @@ export function TreasureGame({
                     : me.locked
                       ? `Choice confirmed · waiting · ${explorers.filter((d) => d.locked).length}/${explorers.length} locked`
                       : "Bank your haul, or risk one more room?";
+  const rematchRequirement =
+    game.phase === "finished" && connected
+      ? startRequirement("treasure", players.length)
+      : "";
+  const status = rematchRequirement
+    ? `${gameStatus} · ${rematchRequirement}`
+    : gameStatus;
   const standings = (detailed: boolean) => (
     <ol className="dive-scores" aria-label="Banked standings">
       {[...game.divers]
@@ -145,7 +154,7 @@ export function TreasureGame({
     </ol>
   );
   const help = (
-    <GameHelp label="Help">
+    <GameHelp>
       <p>
         2–8 divers explore three dives, up to six doors each. Select a choice
         and Lock choice. Use Tab and Enter on a keyboard.
@@ -264,7 +273,11 @@ export function TreasureGame({
           )}
         </div>
         <div className="dive-decision">
-          <p className="dive-status" aria-live="polite">
+          <p
+            id="treasure-start-guidance"
+            className="dive-status"
+            aria-live="polite"
+          >
             {status}
           </p>
           {results ? (
@@ -396,7 +409,8 @@ export function TreasureGame({
           <>
             {ready || finished ? (
               <button
-                disabled={players.length < 2}
+                aria-describedby="treasure-start-guidance"
+                disabled={!connected || players.length < 2}
                 onClick={() => session.startTreasure()}
               >
                 {finished ? "Dive Again" : "Start Dive"}

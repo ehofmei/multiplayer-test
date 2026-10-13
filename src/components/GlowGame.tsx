@@ -1,3 +1,4 @@
+import { startRequirement } from "./gameCatalog";
 import { useEffect, useState, type CSSProperties } from "react";
 import { AppPanel, GameHelp } from "./AppLayout";
 import {
@@ -67,10 +68,11 @@ export function GlowGame({
   const winners = sorted.filter((s) => glowTotal(s) === glowTotal(sorted[0]));
   const selected = me?.locked ? (me.picks ?? []) : draft;
   const locked = game.seats.filter((s) => s.locked).length;
-  const status = !connected
+  const gameStatus = !connected
     ? "Host disconnected"
     : ready
-      ? "Pick a color. Claim three tiles nobody else picks."
+      ? startRequirement("glow", players.length) ||
+        "Pick a color. Claim three tiles nobody else picks."
       : game.phase === "paused"
         ? "Paused · picks and scores are safe."
         : game.phase === "countdown" || game.phase === "reorient"
@@ -90,6 +92,13 @@ export function GlowGame({
                   : me.locked
                     ? `Picks confirmed · waiting for players · ${locked}/${game.seats.length} locked`
                     : `${draft.length} of 3 selected · ${locked}/${game.seats.length} locked`;
+  const rematchRequirement =
+    game.phase === "finished" && connected
+      ? startRequirement("glow", players.length)
+      : "";
+  const status = rematchRequirement
+    ? `${gameStatus} · ${rematchRequirement}`
+    : gameStatus;
   const toggle = (cell: number) => {
     if (short && !boardOpen) {
       setBoardOpen(true);
@@ -170,7 +179,7 @@ export function GlowGame({
       {revealed && !finished && (
         <div className="glow-mini-scores">{roster(false, true)}</div>
       )}
-      <GameHelp label="Help">
+      <GameHelp>
         <p>
           3–8 players, four columns and one row per starting player. Pick
           exactly three different tiles; tap again to deselect. Clear resets
@@ -216,7 +225,8 @@ export function GlowGame({
         (ready || finished ? (
           <>
             <button
-              disabled={players.length < 3 || players.length > 8}
+              aria-describedby="glow-start-guidance"
+              disabled={!connected || players.length < 3 || players.length > 8}
               onClick={() => session.startGlow()}
             >
               {finished ? "Clash Again" : "Start Clash"}
@@ -394,7 +404,7 @@ export function GlowGame({
             : `${me ? glowTotal(me) : 0} pts${revealed && !finished ? ` · ${Math.ceil(game.remaining / 1000)}s` : ""}`}
         </span>
       </div>
-      <p className="glow-status" aria-live="polite">
+      <p id="glow-start-guidance" className="glow-status" aria-live="polite">
         {game.phase === "reveal" && me ? (
           <>
             <strong className="glow-round-gain" key={game.round}>

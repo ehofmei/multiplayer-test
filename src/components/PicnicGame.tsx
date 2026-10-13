@@ -1,3 +1,4 @@
+import { startRequirement } from "./gameCatalog";
 import { useEffect, useRef, useState } from "react";
 import { AppPanel, GameHelp } from "./AppLayout";
 import {
@@ -220,10 +221,11 @@ export function PicnicGame({
         .length
     : null;
   const locked = game.picnickers.filter((p) => p.locked).length;
-  const status = !connected
+  const gameStatus = !connected
     ? "Host disconnected"
     : ready
-      ? "Fit food. Match neighbors. Complete rows."
+      ? startRequirement("picnic", players.length) ||
+        "Fit food. Match neighbors. Complete rows."
       : finished
         ? winners.length > 1
           ? `${winners.length} picnickers share the win!`
@@ -247,6 +249,13 @@ export function PicnicGame({
                       : fits
                         ? "It fits! Place it to lock your choice."
                         : "Blocked or off the blanket · move or rotate.";
+  const rematchRequirement =
+    game.phase === "finished" && connected
+      ? startRequirement("picnic", players.length)
+      : "";
+  const status = rematchRequirement
+    ? `${gameStatus} · ${rematchRequirement}`
+    : gameStatus;
   const reset = () => {
     setOption(null);
     setAnchor(null);
@@ -489,7 +498,11 @@ export function PicnicGame({
           )}
         </div>
         <div className="picnic-controls">
-          <p className="picnic-status" aria-live="polite">
+          <p
+            id="picnic-start-guidance"
+            className="picnic-status"
+            aria-live="polite"
+          >
             {status}
           </p>
           {ready ? (
@@ -536,7 +549,7 @@ export function PicnicGame({
         </div>
       </div>
       <div className="picnic-footer">
-        <GameHelp label="Help">
+        <GameHelp>
           <p>
             Choose one of the three pieces, tap a top-left anchor, Rotate, then
             Place. Reset clears your preview. Skip keeps your blanket unchanged.
@@ -580,7 +593,8 @@ export function PicnicGame({
         {session.role === "host" &&
           (ready || finished ? (
             <button
-              disabled={players.length < 2}
+              aria-describedby="picnic-start-guidance"
+              disabled={!connected || players.length < 2}
               onClick={() => session.startPicnic()}
             >
               {finished ? "Picnic Again" : "Start Picnic"}

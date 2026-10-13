@@ -59,7 +59,7 @@ test("home, paged library, settings and all game setups fit the primary screen",
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
     await expectScreenFits(page);
-    const more = page.getByRole("button", { name: "More games", exact: true });
+    const more = page.getByRole("button", { name: "Next games", exact: true });
     if (await more.count()) {
       await more.click();
       await expect(

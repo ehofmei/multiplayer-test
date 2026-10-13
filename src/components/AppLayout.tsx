@@ -56,7 +56,7 @@ export function AppPanel({
 
 export function GameHelp({
   children,
-  label = "Controls & help",
+  label = "Help",
 }: {
   children: ReactNode;
   label?: string;
