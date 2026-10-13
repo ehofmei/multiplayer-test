@@ -135,6 +135,9 @@ test("Spaceship quiet command attention, deadlines, mistakes and milestones rema
   await expect(
     page.getByRole("meter", { name: "Command deadline" }),
   ).toHaveAttribute("value", "5000");
+  await expect(
+    page.getByRole("meter", { name: "Command deadline" }),
+  ).toHaveAttribute("aria-valuetext", "5 seconds left");
   await snapshot(page, "urgent");
   await fit(page, "urgent");
   await page.clock.runFor(5000);

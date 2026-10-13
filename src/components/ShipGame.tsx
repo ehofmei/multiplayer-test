@@ -144,6 +144,7 @@ export function ShipGame({
               max={26000}
               value={order.remaining}
               aria-label="Command deadline"
+              aria-valuetext={`${Math.ceil(order.remaining / 1000)} seconds left`}
             />
           </div>
         )}

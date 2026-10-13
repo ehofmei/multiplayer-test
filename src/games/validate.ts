@@ -346,7 +346,7 @@ export function validRoom(v: unknown): v is Room {
         !record(event) ||
         !integer(event.sequence, 1, s.mistakes as number) ||
         event.sequence !== s.mistakes ||
-        !["wrong", "missed"].includes(String(event.kind)) ||
+        (event.kind !== "wrong" && event.kind !== "missed") ||
         !(s.crew as string[]).includes(event.caller as string) ||
         !integer(event.control, 0, s.controls.length - 1) ||
         (event.kind === "wrong" &&

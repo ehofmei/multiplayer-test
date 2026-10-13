@@ -442,7 +442,9 @@ team streak progression, deadline urgency, Help/Escape, pause/resume, zero/score
 results, rematch, late spectator privacy and switching to Shared Lights were
 exercised. Reviewed 402×874 phone and 1180×820 landscape-iPad views, then the
 final compact fix at 320×568 and 844×390 with actual bounds/overflow measurements.
-The final matching runtime build was `20261013T231820Z`; physical Safari/touch
+The matching layout/control build was `20261013T231820Z`; a final semantic pass
+on `20261013T233641Z` verified the deadline's seconds-based accessible label.
+Physical Safari/touch
 and simultaneous-device listening are not established by this desktop pass.
 
 Physical acceptance: installed-PWA usable space, safe areas, phone rotation,
