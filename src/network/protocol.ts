@@ -1,4 +1,7 @@
 import { validShipSetting } from "../games/ship-controls";
+// Ship rules 2 optionally carry per-caller order generations and one latest
+// sequenced wrong/missed event. Inputs and scoring are unchanged. Old rules-2
+// hosts omit these fields; update all devices for precise attention/error cues.
 import { glowInt, validGlowPicks } from "../games/glow";
 import { validSeekLayout, seekInteger } from "../games/seek";
 import { validPlacement } from "../games/picnic";

@@ -19,6 +19,7 @@ class Context {
   currentTime = 0;
   destination = {};
   voices: Oscillator[] = [];
+  peaks: number[] = [];
   constructor() {
     Context.instances.push(this);
   }
@@ -40,7 +41,7 @@ class Context {
     return {
       gain: {
         setValueAtTime: vi.fn(),
-        linearRampToValueAtTime: vi.fn(),
+        linearRampToValueAtTime: vi.fn((peak: number) => this.peaks.push(peak)),
         exponentialRampToValueAtTime: vi.fn(),
       },
       connect: vi.fn(),
@@ -53,6 +54,34 @@ afterEach(() => {
   Context.instances = [];
 });
 describe("sound lifecycle", () => {
+  it("keeps distinct Ship cues quiet, brief and within the voice limit", async () => {
+    vi.stubGlobal("window", { AudioContext: Context });
+    const sounds = new Sounds();
+    sounds.setEnabled(true);
+    await sounds.unlock();
+    const c = Context.instances[0];
+    for (const cue of [
+      "ship-command",
+      "ship-wrong",
+      "ship-missed",
+      "ship-streak",
+      "ship-success",
+    ] as const)
+      sounds.play(cue);
+    expect(c.voices.map((v) => v.frequency.value)).toEqual([
+      700, 310, 240, 210, 520, 780, 620, 830,
+    ]);
+    expect(c.peaks).toEqual(Array(8).fill(0.035));
+    sounds.play("ship-command");
+    expect(c.voices).toHaveLength(8);
+    sounds.setEnabled(false);
+    expect(
+      c.voices.every((v) =>
+        v.stop.mock.calls.some((args) => args.length === 0),
+      ),
+    ).toBe(true);
+    sounds.dispose();
+  });
   it("sweeps the optional dash swoosh and never plays it before unlocking", async () => {
     vi.stubGlobal("window", { AudioContext: Context });
     const sounds = new Sounds();

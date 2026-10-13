@@ -402,6 +402,27 @@ explicit off/on or closed/open choices. Every setting takes one tap. Local SVGs
 match between commands and panels; selected settings have an outline and check.
 No external assets or additional dependencies are required.
 
+The cockpit groups the request, deadline and your three panel bays. Tall phones
+use larger pictures; landscape iPads use the command beside a larger two-row
+setting grid. Short screens retain compact controls with 44px targets. The
+deadline meter uses a fixed 26-second scale; at five seconds, an amber outline
+and “Time low” label emphasize urgency without ticking or flashing. Wrong
+settings keep a reserved “Wrong setting · try another” hint on the owner's panel;
+missed callers see “Time ran out,” a streak reset and confirmation that points
+are kept. Results retain team score, completed commands and best streak.
+
+Optional quiet sounds announce your new request, your wrong setting or your
+missed order. Caller/panel-owner success gets a short cue; new best streaks of
+5 and 10 have visual celebrations for the crew and a host-only chime. At most
+one Ship cue plays for a snapshot, with finish and relevant mistakes ahead of
+command attention, milestones and success. Timer updates stay silent. Late
+joins, pause/resume and background recovery do not replay old cues; sound starts
+muted. Order generation numbers and one latest sequenced mistake record provide
+bounded feedback without changing inputs or scoring. Rules-2 hosts without
+these optional fields still work, with conservative feedback; update all
+devices for the complete polish. Panel artwork remains unchanged pending the
+family's Door/Window/Airlock recognition check.
+
 Call out your panel name and setting, listen for yours, and match the pictures.
 The host randomly chooses another player's available panel (your own in solo;
 the other player's in two-player missions), reserving controls to prevent

@@ -1,4 +1,9 @@
 export type Cue =
+  | "ship-command"
+  | "ship-wrong"
+  | "ship-missed"
+  | "ship-streak"
+  | "ship-success"
   | "cycle-crash"
   | "arena-miss"
   | "arena-out"
@@ -49,6 +54,20 @@ export type Cue =
   | "finish";
 type Note = [frequency: number, duration: number, delay?: number];
 const notes: Record<Cue, Note[]> = {
+  "ship-command": [[700, 0.065]],
+  "ship-wrong": [
+    [310, 0.055],
+    [240, 0.065, 0.055],
+  ],
+  "ship-missed": [[210, 0.12]],
+  "ship-streak": [
+    [520, 0.055],
+    [780, 0.085, 0.065],
+  ],
+  "ship-success": [
+    [620, 0.055],
+    [830, 0.065, 0.055],
+  ],
   "cycle-crash": [[180, 0.045]],
   "arena-miss": [
     [310, 0.07],
@@ -264,7 +283,7 @@ export class Sounds {
         const quietSwitch =
           cue === "on" || cue === "off" || cue === "lights-switch";
         gain.gain.linearRampToValueAtTime(
-          quietSwitch ? 0.045 : 0.09,
+          cue.startsWith("ship-") ? 0.035 : quietSwitch ? 0.045 : 0.09,
           at + 0.006,
         );
         gain.gain.exponentialRampToValueAtTime(0.001, at + duration);

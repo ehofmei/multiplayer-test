@@ -1,6 +1,6 @@
 import { newSumo } from "../games/sumo";
 import { newCycle } from "../games/cycle";
-import { launchShip } from "../games/ship";
+import { launchShip, newShip, setShipControl, stepShip } from "../games/ship";
 import { newBreakout } from "../games/breakout";
 import { newGolf, physicsGolf, type GolfState } from "../games/minigolf";
 import { describe, expect, it } from "vitest";
@@ -258,8 +258,14 @@ describe("game sound transitions", () => {
     s.room = newRoom("ship", 1);
     s.room.ship = launchShip(["a"]);
     let before = frame(s);
-    s.room.ship.completed++;
-    expect(soundEvents(before, frame(s))).toEqual(["success"]);
+    s.room.ship = setShipControl(
+      s.room.ship,
+      "a",
+      s.room.ship.orders[0].control,
+      s.room.ship.orders[0].value,
+      0,
+    );
+    expect(soundEvents(before, frame(s))).toEqual(["ship-success"]);
     before = frame(s);
     s.room.ship.mistakes++;
     expect(soundEvents(before, frame(s))).toEqual(["wrong"]);
@@ -310,6 +316,80 @@ describe("game sound transitions", () => {
     const last = frame(s);
     expect(soundEvents(before, last)).toEqual(["win"]);
     expect(soundEvents(last, last)).toEqual([]);
+  });
+});
+
+describe("Ship quiet cue priority and lifecycle", () => {
+  it("announces an observed launch across exactly one epoch, never a fresh join or changed session", () => {
+    const s = snapshot();
+    s.room = newRoom("ship", 1);
+    s.room.ship = newShip(["a"]);
+    const before = frame(s);
+    s.room.epoch++;
+    s.room.ship = launchShip(["a"], () => 0);
+    expect(soundEvents(before, frame(s))).toEqual(["ship-command"]);
+    expect(soundEvents(null, frame(s))).toEqual([]);
+    expect(soundEvents({ ...before, session: "other" }, frame(s))).toEqual([]);
+    expect(soundEvents({ ...before, epoch: 0 }, frame(s))).toEqual([]);
+    expect(
+      soundEvents(
+        { ...before, ship: { ...before.ship!, phase: "paused" } },
+        frame(s),
+      ),
+    ).toEqual([]);
+    expect(
+      soundEvents(
+        soundFrame(
+          { ...s, room: { ...s.room, ship: newShip(["a"]) } },
+          "spectator",
+          "session",
+        ),
+        soundFrame(s, "spectator", "session"),
+      ),
+    ).toEqual([]);
+  });
+  it("prioritizes local mistakes, command attention and host milestones without remote alarms", () => {
+    const s = snapshot();
+    s.room = newRoom("ship", 1);
+    s.room.ship = launchShip(["a", "b"], () => 0);
+    let before = frame(s);
+    s.room.ship = setShipControl(s.room.ship, "a", 0, 2, 0);
+    s.room.ship = setShipControl(s.room.ship, "b", 3, 1, 0);
+    expect(soundEvents(before, frame(s))).toEqual(["ship-wrong"]);
+    s.room.ship = launchShip(["a", "b"], () => 0);
+    const beforeClient = soundFrame(s, "b", "session");
+    before = frame(s);
+    s.room.ship = stepShip(s.room.ship, 18000, () => 0);
+    expect(soundEvents(beforeClient, soundFrame(s, "b", "session"))).toEqual([
+      "ship-missed",
+    ]);
+    expect(soundEvents(before, frame(s))).toEqual([]);
+    before = frame(s);
+    s.room.ship = stepShip(s.room.ship, 2000, () => 0);
+    expect(soundEvents(before, frame(s))).toEqual(["ship-command"]);
+    before = frame(s);
+    s.room.ship.bestStreak = 10;
+    expect(soundEvents(before, frame(s))).toEqual(["ship-streak"]);
+    const clientBefore = soundFrame(
+      { ...s, room: { ...s.room, ship: { ...s.room.ship, bestStreak: 0 } } },
+      "b",
+      "session",
+    );
+    expect(soundEvents(clientBefore, soundFrame(s, "b", "session"))).toEqual(
+      [],
+    );
+    expect(soundEvents(frame(s), frame(s))).toEqual([]);
+    expect(
+      soundEvents(
+        { ...before, ship: { ...before.ship!, phase: "paused" } },
+        frame(s),
+      ),
+    ).toEqual([]);
+    expect(soundEvents(before, soundFrame(s, "watcher", "session"))).toEqual(
+      [],
+    );
+    s.room.ship.phase = "finished";
+    expect(soundEvents(before, frame(s))).toEqual(["win"]);
   });
 });
 

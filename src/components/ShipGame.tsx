@@ -1,5 +1,6 @@
 import { GameHelp } from "./AppLayout";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { shipFeedback, shipFrame, shipUrgent } from "../games/ship-feedback";
 import {
   shipDuration,
   shipPanels,
@@ -33,6 +34,39 @@ export function ShipGame({
   const order = game.orders.find((o) => o.caller === session.me.id);
   const pending = active && order?.status === "pending";
   const panel = order ? shipPanels[order.control] : null;
+  const previous = useRef<ReturnType<typeof shipFrame> | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [feedback, setFeedback] = useState({ attention: false, milestone: 0 });
+  useEffect(() => {
+    const reset = () => {
+      previous.current = null;
+      clearTimeout(timer.current);
+      setFeedback({ attention: false, milestone: 0 });
+    };
+    document.addEventListener("visibilitychange", reset);
+    window.addEventListener("pageshow", reset);
+    return () => {
+      clearTimeout(timer.current);
+      document.removeEventListener("visibilitychange", reset);
+      window.removeEventListener("pageshow", reset);
+    };
+  }, []);
+  useEffect(() => {
+    const next = shipFrame(game, session.me.id);
+    const event = shipFeedback(previous.current, next);
+    previous.current = connected && !document.hidden ? next : null;
+    if (!active || document.hidden) {
+      clearTimeout(timer.current);
+      setFeedback({ attention: false, milestone: 0 });
+    } else if (event.attention || event.milestone) {
+      clearTimeout(timer.current);
+      setFeedback({ attention: event.attention, milestone: event.milestone });
+      timer.current = setTimeout(
+        () => setFeedback({ attention: false, milestone: 0 }),
+        1800,
+      );
+    }
+  }, [game, session.me.id, connected, active]);
   const status = !connected
     ? "Host disconnected"
     : game.phase === "ready"
@@ -46,7 +80,7 @@ export function ShipGame({
             : order?.status === "done"
               ? `Order complete! +${order.award} points`
               : order?.status === "missed"
-                ? "Order missed · new start!"
+                ? "Time ran out · next command soon"
                 : `${panel?.name}: ${panel?.settings[order?.value ?? 0]}!`;
   return (
     <section
@@ -68,12 +102,23 @@ export function ShipGame({
           <span data-testid="ship-streak">Streak {game.streak}</span>
         </div>
       )}
-      <div className={`ship-order ${active ? (order?.status ?? "") : ""}`}>
+      <div
+        className={`ship-order ${active ? (order?.status ?? "") : ""}`}
+        data-urgent={Boolean(pending && order && shipUrgent(order.remaining))}
+        data-new={active && feedback.attention}
+      >
+        {configure && (
+          <span className="ship-mission-mark" aria-hidden="true">
+            <ShipPanelPicture control={3} value={0} />
+          </span>
+        )}
         {active && (
-          <span className="ship-order-heading">
-            {game.crew.length === 1
-              ? "SOLO · YOUR OWN PANEL"
-              : "CALL THIS OUT TO YOUR CREW"}
+          <span className="ship-order-heading" aria-live="polite">
+            {feedback.milestone
+              ? `CREW STREAK ${feedback.milestone}!`
+              : game.crew.length === 1
+                ? "SOLO · YOUR OWN PANEL"
+                : "CALL THIS OUT TO YOUR CREW"}
           </span>
         )}
         <div className="ship-callout">
@@ -89,9 +134,21 @@ export function ShipGame({
           </p>
         </div>
         {pending && order && (
-          <span className="ship-deadline" aria-label="Order time remaining">
-            {Math.ceil(order.remaining / 1000)}s left
-          </span>
+          <div className="ship-deadline" aria-label="Order time remaining">
+            <span>
+              {Math.ceil(order.remaining / 1000)}s left
+              {shipUrgent(order.remaining) && " · Time low"}
+            </span>
+            <meter
+              min={0}
+              max={26000}
+              value={order.remaining}
+              aria-label="Command deadline"
+            />
+          </div>
+        )}
+        {active && order?.status === "missed" && (
+          <small className="ship-reset">Streak reset · team score kept</small>
         )}
       </div>
       {crew && !configure && (
@@ -130,11 +187,9 @@ export function ShipGame({
                     </button>
                   ))}
                 </div>
-                {control.wrong && (
-                  <span className="ship-control-hint" role="status">
-                    Try another setting
-                  </span>
-                )}
+                <span className="ship-control-hint" role="status">
+                  {control.wrong ? "Wrong setting · try another" : "\u00a0"}
+                </span>
               </fieldset>
             ),
           )}
@@ -157,6 +212,7 @@ export function ShipGame({
             </p>
           </div>
           <small>
+            {crew ? "Your crew" : "Crew results"} ·{" "}
             {game.difficulty === "gentle" ? "Gentle" : "Standard"} ·{" "}
             {clock(game.duration)} mission
           </small>

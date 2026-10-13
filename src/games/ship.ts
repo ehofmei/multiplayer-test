@@ -15,6 +15,7 @@ export interface ShipControl {
   wrong: boolean;
 }
 export interface ShipOrder {
+  generation?: number;
   caller: string;
   control: number;
   value: number;
@@ -23,6 +24,12 @@ export interface ShipOrder {
   award: number;
 }
 export interface ShipState {
+  lastMistake?: {
+    sequence: number;
+    kind: "wrong" | "missed";
+    caller: string;
+    control: number;
+  };
   rules: 2;
   phase: "ready" | "playing" | "paused" | "finished";
   crew: string[];
@@ -84,6 +91,7 @@ function nextOrder(
   caller: string,
   reserved: ShipOrder[],
   random: () => number,
+  generation = 1,
 ): ShipOrder {
   const available = state.controls.flatMap((panel, i) =>
     (state.crew.length === 1 || panel.owner !== caller) &&
@@ -102,6 +110,7 @@ function nextOrder(
     (state.controls[control].value + 1 + Math.floor(random() * (count - 1))) %
     count;
   return {
+    generation,
     caller,
     control,
     value,
@@ -138,12 +147,19 @@ export function stepShip(
   const remaining = Math.max(0, state.remaining - milliseconds);
   if (!remaining) return { ...state, remaining, phase: "finished" };
   let mistakes = state.mistakes;
+  let lastMistake = state.lastMistake;
   const next = { ...state, remaining };
   const orders = state.orders.map((order) => {
     const left = Math.max(0, order.remaining - milliseconds);
     if (left > 0) return { ...order, remaining: left };
     if (order.status !== "pending") return null;
     mistakes++;
+    lastMistake = {
+      sequence: mistakes,
+      kind: "missed",
+      caller: order.caller,
+      control: order.control,
+    };
     return {
       ...order,
       remaining: shipFeedback(next),
@@ -158,6 +174,7 @@ export function stepShip(
       state.orders[i].caller,
       reserved,
       random,
+      (state.orders[i].generation ?? 0) + 1,
     );
     reserved.push(replacement);
     return replacement;
@@ -165,6 +182,7 @@ export function stepShip(
   return {
     ...next,
     mistakes,
+    lastMistake,
     streak: mistakes > state.mistakes ? 0 : state.streak,
     orders: renewed,
     controls: state.controls.map((c, i) =>
@@ -201,6 +219,14 @@ export function setShipControl(
   const award = correct ? 100 + 20 * Math.min(streak - 1, 10) : 0;
   return {
     ...state,
+    lastMistake: wrong
+      ? {
+          sequence: state.mistakes + 1,
+          kind: "wrong",
+          caller: order!.caller,
+          control,
+        }
+      : state.lastMistake,
     score: state.score + award,
     completed: state.completed + (correct ? 1 : 0),
     streak,

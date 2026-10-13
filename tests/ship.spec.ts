@@ -17,6 +17,10 @@ const sizes = [
   { width: 844, height: 390 },
   { width: 768, height: 1024 },
   { width: 1280, height: 720 },
+  { width: 402, height: 874 },
+  { width: 440, height: 956 },
+  { width: 1180, height: 820 },
+  { width: 1080, height: 810 },
 ];
 async function freeze(page: Page) {
   const start = new Date("2026-10-07T12:00:00Z");
@@ -85,6 +89,172 @@ async function answer(caller: Page, owner: Page) {
     .getByRole("button", { name: `${match![1]} ${match![2]}`, exact: true })
     .click();
 }
+test("Spaceship quiet command attention, deadlines, mistakes and milestones remain readable muted", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await create(page);
+  await freeze(page);
+  await page
+    .getByRole("button", { name: "Launch Mission", exact: true })
+    .click();
+  await expect(page.locator(".ship-command")).toHaveText("Lights: Blue!");
+  await page
+    .getByRole("button", { name: "Lights Yellow", exact: true })
+    .press("Enter");
+  await expect(
+    page.getByText("Wrong setting · try another", { exact: true }),
+  ).toBeVisible();
+  await snapshot(page, "wrong");
+  await page.getByRole("button", { name: "Lights Green", exact: true }).click();
+  await expect(page.getByTestId("ship-score")).toHaveText("0 points");
+  await page.clock.runFor(13000);
+  await expect(page.locator(".ship-order")).toHaveAttribute(
+    "data-urgent",
+    "true",
+  );
+  await expect(page.locator(".ship-deadline")).toContainText(
+    "5s left · Time low",
+  );
+  await expect(
+    page.getByRole("meter", { name: "Command deadline" }),
+  ).toHaveAttribute("value", "5000");
+  await snapshot(page, "urgent");
+  await fit(page, "urgent");
+  await page.clock.runFor(5000);
+  await expect(page.locator(".ship-command")).toHaveText(
+    "Time ran out · next command soon",
+  );
+  await expect(
+    page.getByText("Streak reset · team score kept", { exact: true }),
+  ).toBeVisible();
+  await snapshot(page, "missed");
+  await fit(page, "missed");
+  await page.clock.runFor(2000);
+  await expect(page.locator(".ship-order")).toHaveAttribute("data-new", "true");
+  for (let n = 1; n <= 10; n++) {
+    await answer(page, page);
+    await expect(page.getByTestId("ship-streak")).toHaveText(`Streak ${n}`);
+    if (n === 5 || n === 10) {
+      await expect(page.locator(".ship-order-heading")).toHaveText(
+        `CREW STREAK ${n}!`,
+      );
+      await snapshot(page, `milestone-${n}`);
+    }
+    await page.clock.runFor(2000);
+  }
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await page
+    .getByRole("button", { name: "Pause Mission", exact: true })
+    .click();
+  await expect(page.locator(".ship-order")).toHaveAttribute(
+    "data-new",
+    "false",
+  );
+  await expectScreenFits(page);
+  await expectStableScreenshot(
+    page,
+    ".ship-game-card",
+    `ship-ipad-cockpit-${process.platform}.png`,
+    { maxDiffPixels: 180 },
+  );
+  await page
+    .getByRole("button", { name: "Resume Mission", exact: true })
+    .click();
+  await expect(page.locator(".ship-order")).toHaveAttribute(
+    "data-new",
+    "false",
+  );
+  await showHelp(page);
+  await expect(
+    page.getByText(/Unrelated panels are safe to explore/),
+  ).toBeVisible();
+  await page
+    .getByRole("dialog", { name: "Controls & help", exact: true })
+    .press("Escape");
+  await expect(
+    page.getByRole("dialog", { name: "Controls & help", exact: true }),
+  ).not.toBeVisible();
+});
+
+test("Spaceship sounds announce local requests once and remain quiet across pause, background and rematch", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const state = window as typeof window & { shipNotes: number[] };
+    state.shipNotes = [];
+    const create = AudioContext.prototype.createOscillator;
+    AudioContext.prototype.createOscillator = function () {
+      const node = create.call(this);
+      const start = node.start.bind(node);
+      node.start = (...args) => {
+        state.shipNotes.push(node.frequency.value);
+        start(...args);
+      };
+      return node;
+    };
+  });
+  const notes = () =>
+    page.evaluate(
+      () => (window as typeof window & { shipNotes: number[] }).shipNotes,
+    );
+  await create(page);
+  await freeze(page);
+  await page.getByRole("button", { name: "Sound", exact: true }).click();
+  await expect.poll(notes).toEqual([740]);
+  await page
+    .getByRole("button", { name: "Launch Mission", exact: true })
+    .click();
+  await expect.poll(notes).toEqual([740, 700]);
+  await page.clock.runFor(1250);
+  expect(await notes()).toEqual([740, 700]);
+  await page
+    .getByRole("button", { name: "Pause Mission", exact: true })
+    .click();
+  await page.clock.runFor(5000);
+  await page
+    .getByRole("button", { name: "Resume Mission", exact: true })
+    .click();
+  expect(await notes()).toEqual([740, 700]);
+  await page
+    .getByRole("button", { name: "Lights Yellow", exact: true })
+    .click();
+  await expect.poll(notes).toEqual([740, 700, 310, 240]);
+  await page.clock.runFor(17000);
+  await expect.poll(notes).toEqual([740, 700, 310, 240, 210]);
+  await page.clock.runFor(2000);
+  await expect.poll(notes).toEqual([740, 700, 310, 240, 210, 700]);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: true,
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await expect(card(page)).toHaveAttribute("data-phase", "paused");
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: false,
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page
+    .getByRole("button", { name: "Resume Mission", exact: true })
+    .click();
+  expect(await notes()).toEqual([740, 700, 310, 240, 210, 700]);
+  await page.clock.runFor(120000);
+  await expect(card(page)).toHaveAttribute("data-phase", "finished");
+  const count = (await notes()).filter((n) => n === 700).length;
+  await page.getByRole("button", { name: "Launch Again", exact: true }).click();
+  await expect
+    .poll(async () => (await notes()).filter((n) => n === 700).length)
+    .toBe(count + 1);
+  await page.getByRole("button", { name: "Sound", exact: true }).click();
+  const muted = await notes();
+  await page.clock.runFor(21000);
+  expect(await notes()).toEqual(muted);
+});
 test("Spaceship pairs, matches pictures, scores, pauses, and handles spectators and disconnects", async ({
   page: host,
   browser,
@@ -124,7 +294,7 @@ test("Spaceship pairs, matches pictures, scores, pauses, and handles spectators 
       .press("Enter");
     await expect(host.getByTestId("ship-streak")).toHaveText("Streak 0");
     await expect(
-      client.getByText("Try another setting", { exact: true }),
+      client.getByText("Wrong setting · try another", { exact: true }),
     ).toBeVisible();
     await fit(client, "wrong-setting");
     await client.getByRole("button", { name: "Engine 1", exact: true }).tap();
@@ -132,7 +302,7 @@ test("Spaceship pairs, matches pictures, scores, pauses, and handles spectators 
       "Order complete! +100 points",
     );
     await expect(
-      client.getByText("Try another setting", { exact: true }),
+      client.getByText("Wrong setting · try another", { exact: true }),
     ).toHaveCount(0);
     await host
       .getByRole("button", { name: "Lights Blue", exact: true })

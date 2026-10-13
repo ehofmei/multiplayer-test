@@ -9,6 +9,7 @@ import { picnicScore } from "../games/picnic";
 import { arenaWinner } from "../games/arena";
 import type { Snapshot } from "../network/session";
 import type { Cue } from "./sounds";
+import { shipFeedback, shipFrame } from "../games/ship-feedback";
 // Copy primitive values: the host updates its room in place between snapshots.
 export function soundFrame(snapshot: Snapshot, me: string, session: string) {
   const { room, grid } = snapshot;
@@ -128,6 +129,8 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
         }
       : null,
     key: `${session}/${room.epoch}/${room.kind}`,
+    session,
+    epoch: room.epoch,
     kind: room.kind,
     golf: room.minigolf ? golfMotionFrame(room.minigolf) : null,
     seek: room.seek
@@ -188,11 +191,7 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
         }
       : null,
     ship: room.ship
-      ? {
-          phase: room.ship.phase,
-          completed: room.ship.completed,
-          mistakes: room.ship.mistakes,
-        }
+      ? shipFrame(room.ship, me, snapshot.players[0]?.id === me)
       : null,
     race: race
       ? {
@@ -210,7 +209,22 @@ export function soundEvents(
   before: SoundFrame | null,
   after: SoundFrame,
 ): Cue[] {
-  if (!before || before.key !== after.key) return [];
+  if (!before) return [];
+  if (before.key !== after.key) {
+    // Only an observed launch from Ship setup/results can cross this epoch.
+    if (
+      before.session === after.session &&
+      before.kind === "ship" &&
+      after.kind === "ship" &&
+      after.epoch === before.epoch + 1 &&
+      ["ready", "finished"].includes(before.ship?.phase ?? "") &&
+      after.ship?.phase === "playing" &&
+      after.ship.crew &&
+      after.ship.generation === 1
+    )
+      return ["ship-command"];
+    return [];
+  }
   const bakery = after.bakery,
     oldBakery = before.bakery;
   if (bakery && oldBakery) {
@@ -401,8 +415,20 @@ export function soundEvents(
   if (ship && previousShip) {
     if (ship.phase === "finished" && previousShip.phase !== "finished")
       return ["win"];
-    if (ship.completed > previousShip.completed) return ["success"];
-    if (ship.mistakes > previousShip.mistakes) return ["wrong"];
+    const feedback = shipFeedback(previousShip, ship);
+    if (feedback.mistake)
+      return [feedback.mistake === "wrong" ? "ship-wrong" : "ship-missed"];
+    if (feedback.attention) return ["ship-command"];
+    if (feedback.milestone && ship.host) return ["ship-streak"];
+    if (feedback.success) return ["ship-success"];
+    if (
+      previousShip.phase === "playing" &&
+      ship.phase === "playing" &&
+      ship.crew &&
+      !ship.mistake &&
+      ship.mistakes > previousShip.mistakes
+    )
+      return ["wrong"];
   }
   const a = after.pong,
     b = before.pong;

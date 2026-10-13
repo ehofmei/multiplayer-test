@@ -406,6 +406,35 @@ with the family. These checks remain pending.
 
 ## Spaceship Panic
 
+Task 11 coverage adds quiet command identity, local wrong/missed routing,
+five-second deadline urgency, once-per-mission best-streak thresholds 5/10,
+and a connected cockpit with larger pictures. The gameplay inventory below
+remains required. Unit tests cover bounded optional metadata and legacy rules-2
+snapshots, identical consecutive requests, repeated wrong attempts, simultaneous
+misses, role-specific successes/errors, priority, silent initialization,
+launch epochs and paused/recovered comparisons. A separate one-time test used
+the previous checkout's validator on actual new launch/wrong/missed/renewed
+states and confirmed additive compatibility.
+
+The Ship browser suite retains real WebRTC pairing and eight-player/all-panel
+coverage and adds controlled-clock low-deadline, wrong/missed, milestone and
+landscape-iPad states. Browser audio instrumentation checks neutral new-command
+notes, silent timer snapshots, distinct mistakes, pause/background recovery,
+rematch attention and mute. Synthesizer tests check the reduced Ship gain and
+shared voice bound. Fit checks retain prior bounds/clearance/44px assertions,
+with horizontal order/panel clearance for the intentional wide cockpit.
+Household 402×874, 440×956, 1180×820 and 1080×810 sizes supplement the existing
+viewport and taller-font matrix. New/changed platform images require genuine
+Darwin and Ubuntu review through the current reusable `review.yml` artifact route;
+the historical `codex/ship-controls` workflow below describes earlier coverage.
+
+Physical acceptance: installed-PWA usable space, safe areas, phone rotation,
+real-thumb comfort, young-player Door/Window/Airlock recognition, Safari audio
+unlock/recovery and busy multi-device listening remain manual. Check Standard
+and Gentle at early/late pressure; keep voices intelligible and no repeated
+alarms. Do not redraw similar panel pictures until the recognition check
+demonstrates a problem.
+
 - Inventory: host-selected 1/2/3-minute missions (2 recommended/default),
   Standard/Gentle pace, score/completed/current/best streak, all six setting
   families and 24 illustrated panels, command/panel picture matching, direct

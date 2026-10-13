@@ -88,7 +88,10 @@ export async function expectScreenFits(page: Page) {
     const order = (await page.locator(".ship-order").boundingBox())!;
     const legend = (await ship.locator("legend").first().boundingBox())!;
     const viewport = page.viewportSize()!;
-    if (viewport.width >= 500 && viewport.height <= 550) {
+    if (
+      (viewport.width >= 500 && viewport.height <= 550) ||
+      (viewport.width >= 1000 && viewport.height >= 651)
+    ) {
       const panels = (await ship.boundingBox())!;
       expect(
         panels.x,

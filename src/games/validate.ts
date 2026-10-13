@@ -18,7 +18,7 @@ import {
   cycleDirections,
 } from "./cycle";
 import { validShipDifficulty } from "./ship";
-import { validShipSetting } from "./ship-controls";
+import { shipPanels, validShipSetting } from "./ship-controls";
 import type { Room } from "./model";
 const record = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
@@ -340,10 +340,29 @@ export function validRoom(v: unknown): v is Room {
       (s.phase === "finished" ? s.remaining !== 0 : s.remaining === 0)
     )
       return false;
+    if (s.lastMistake !== undefined) {
+      const event = s.lastMistake;
+      if (
+        !record(event) ||
+        !integer(event.sequence, 1, s.mistakes as number) ||
+        event.sequence !== s.mistakes ||
+        !["wrong", "missed"].includes(String(event.kind)) ||
+        !(s.crew as string[]).includes(event.caller as string) ||
+        !integer(event.control, 0, s.controls.length - 1) ||
+        (event.kind === "wrong" &&
+          shipPanels[event.control as number].settings.length === 2) ||
+        (s.crew.length > 1 &&
+          (s.controls[event.control as number] as { owner: string }).owner ===
+            event.caller) ||
+        s.phase === "ready"
+      )
+        return false;
+    }
     return (
       s.orders.every(
         (o, i) =>
           record(o) &&
+          (o.generation === undefined || integer(o.generation, 1, 100_000)) &&
           o.caller === (s.crew as string[])[i] &&
           integer(o.control, 0, (s.controls as unknown[]).length - 1) &&
           ((s.crew as string[]).length === 1 ||

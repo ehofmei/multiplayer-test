@@ -61,7 +61,17 @@ Active mission · phone layout.
 ![Spaceship Panic active mission](tests/ship.spec.ts-snapshots/ship-active-linux.png)
 
 <details>
-<summary>Success feedback and mission results</summary>
+<summary>Deadline, recovery, crew rewards and mission results</summary>
+
+![Spaceship Panic low deadline](tests/ship.spec.ts-snapshots/ship-urgent-linux.png)
+
+![Spaceship Panic wrong-setting recovery](tests/ship.spec.ts-snapshots/ship-wrong-linux.png)
+
+![Spaceship Panic missed request](tests/ship.spec.ts-snapshots/ship-missed-linux.png)
+
+![Spaceship Panic crew streak](tests/ship.spec.ts-snapshots/ship-milestone-10-linux.png)
+
+![Spaceship Panic landscape iPad cockpit](tests/ship.spec.ts-snapshots/ship-ipad-cockpit-linux.png)
 
 ![Spaceship Panic command success](tests/ship.spec.ts-snapshots/ship-success-linux.png)
 

@@ -35,6 +35,54 @@ function seeded(seed = 29) {
   };
 }
 describe("Spaceship Panic score chase", () => {
+  it("validates bounded optional feedback while accepting old rules-2 snapshots", () => {
+    const start = launchShip(["a", "b"], random);
+    const wrong = setShipControl(start, "b", 3, 2, 0);
+    expect(validRoom(room(wrong))).toBe(true);
+    expect(
+      validRoom(
+        room({
+          ...wrong,
+          lastMistake: undefined,
+          orders: wrong.orders.map(({ generation: _generation, ...o }) => o),
+        }),
+      ),
+    ).toBe(true);
+    for (const generation of [0, -1, 100001, 1.5, null, "1"])
+      expect(
+        validRoom(
+          room({
+            ...start,
+            orders: start.orders.map((o) => ({ ...o, generation })),
+          } as unknown as ShipState),
+        ),
+      ).toBe(false);
+    for (const patch of [
+      { sequence: 0 },
+      { sequence: 2 },
+      { sequence: 1.5 },
+      { kind: "success" },
+      { caller: "stranger" },
+      { caller: "b" },
+      { control: 24 },
+      { control: 5 },
+      { control: -1 },
+      { control: 1.5 },
+    ])
+      expect(
+        validRoom(
+          room({
+            ...wrong,
+            lastMistake: { ...wrong.lastMistake, ...patch },
+          } as unknown as ShipState),
+        ),
+      ).toBe(false);
+    const paused = { ...wrong, phase: "paused" as const };
+    expect(validRoom(room(paused))).toBe(true);
+    expect(stepShip(paused, 1000)).toBe(paused);
+    expect(launchShip(["a", "b"], random).lastMistake).toBeUndefined();
+    expect(start.orders.every((o) => o.generation === 1)).toBe(true);
+  });
   it("defaults to two minutes and gives every crew member a mixed, uniquely named set", () => {
     expect(newShip().duration).toBe(120_000);
     expect(new Set(shipPanels.map((p) => p.name)).size).toBe(24);

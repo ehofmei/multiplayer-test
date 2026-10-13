@@ -8586,3 +8586,177 @@ input.golf-power-input {
     line-height: 1.2;
   }
 }
+
+/* Task 11: the command and local bays belong to one quiet cockpit. */
+.app-shell .ship-game-card[data-phase="ready"] .ship-config {
+  margin: 16px 0;
+}
+.app-shell .ship-game-card {
+  background: linear-gradient(155deg, #f6f7ed, #e7eee7);
+  border-color: #b8c9c2;
+}
+.app-shell .ship-game-card .ship-order {
+  box-shadow:
+    inset 0 0 0 1px #36594e,
+    0 3px 0 #c2d2c8;
+}
+.app-shell .ship-game-card .ship-panels {
+  flex: 0;
+  align-content: start;
+  margin-top: 8px;
+}
+.ship-order[data-new="true"] {
+  outline: 2px solid #668d72;
+  outline-offset: 2px;
+}
+.ship-order[data-urgent="true"] {
+  box-shadow: inset 0 0 0 2px #f5c953 !important;
+}
+.ship-deadline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 13px;
+}
+.ship-deadline > span {
+  flex: none;
+}
+.ship-deadline meter {
+  flex: 1;
+  min-width: 0;
+  height: 10px;
+  accent-color: #b6e2cb;
+}
+.ship-deadline meter::-webkit-meter-bar {
+  background: #35574d;
+  border: 0;
+}
+.ship-deadline meter::-webkit-meter-optimum-value {
+  background: #b6e2cb;
+}
+.ship-order[data-urgent="true"] meter::-webkit-meter-optimum-value {
+  background: #f5c953;
+}
+.ship-reset {
+  display: block;
+  margin-top: 6px;
+  color: #fff1c6;
+}
+.ship-panel {
+  box-shadow:
+    inset 0 0 0 2px #fffdf5,
+    0 3px 0 #c5d3ca;
+}
+.ship-control-hint {
+  position: static;
+  display: block;
+  min-height: 14px;
+  margin-top: 3px;
+  padding: 0;
+  font-size: 11px;
+  line-height: 14px;
+  background: transparent;
+}
+.ship-panel[data-wrong="true"] {
+  box-shadow: inset 0 0 0 1px #a74936;
+}
+.ship-mission-mark {
+  float: left;
+  margin-right: 10px;
+}
+.ship-mission-mark .ship-art {
+  width: 32px;
+  height: 32px;
+}
+.app-shell
+  .ship-game-card:is([data-phase="ready"], [data-phase="finished"])
+  .ship-order {
+  display: flex;
+  align-items: center;
+  min-height: 54px;
+}
+@media (min-height: 701px) {
+  .ship-settings button .ship-art {
+    width: 42px;
+    height: 42px;
+  }
+  .ship-panel legend .ship-art {
+    width: 34px;
+    height: 34px;
+  }
+  .ship-panel .ship-settings button {
+    min-height: 76px;
+    font-size: 13px;
+  }
+  .app-shell .ship-game-card .ship-panels {
+    gap: 14px;
+  }
+}
+@media (min-width: 1000px) and (min-height: 651px) {
+  .app-shell .ship-game-card:is([data-phase="playing"], [data-phase="paused"]) {
+    display: grid;
+    grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1.65fr);
+    grid-template-rows: auto auto 1fr;
+    gap: 16px 24px;
+    align-content: start;
+  }
+  .app-shell .ship-game-card > .board-heading {
+    grid-column: 1 / -1;
+  }
+  .app-shell .ship-game-card > .ship-stats {
+    grid-column: 1;
+    grid-row: 2;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .app-shell .ship-game-card > .ship-order {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: start;
+  }
+  .app-shell .ship-game-card .ship-panels {
+    grid-column: 2;
+    grid-row: 2 / 4;
+    margin-top: 0;
+  }
+  .ship-panel .ship-settings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ship-panel .ship-settings button {
+    min-height: 100px;
+  }
+  .ship-settings button .ship-art {
+    width: 52px;
+    height: 52px;
+  }
+}
+@media (max-height: 650px) {
+  .app-shell .ship-game-card .ship-panels {
+    margin-top: 0;
+    gap: 4px;
+  }
+  .ship-control-hint {
+    min-height: 12px;
+    margin-top: 1px;
+    font-size: 10px;
+    line-height: 12px;
+  }
+  .ship-deadline {
+    font-size: 11px;
+    margin-top: 3px;
+    gap: 6px;
+  }
+  .ship-reset {
+    font-size: 11px;
+    margin-top: 3px;
+  }
+  .app-shell .ship-game-card .ship-order {
+    min-height: 82px;
+  }
+  .app-shell
+    .ship-game-card:is([data-phase="ready"], [data-phase="finished"])
+    .ship-order {
+    min-height: 44px;
+  }
+}

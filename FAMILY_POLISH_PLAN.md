@@ -376,6 +376,9 @@ court proportions; effects cannot imply a new collision or obscure a warning.
 
 ### 11. Spaceship Panic: improve command attention without drowning out voices
 
+Implementation plan: [Spaceship Panic polish plan](SPACESHIP_PANIC_POLISH_PLAN.md).
+Status: planned; see the refined plan for scope, feedback decisions and verification gates.
+
 **Observed gap:** illustrated settings and team scoring are already strong.
 The order and panels are separated by a large plain gap in the sampled layouts;
 audio only reports team success/mistakes/finish, rather than a new local order.
