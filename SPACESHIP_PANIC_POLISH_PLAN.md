@@ -1,6 +1,7 @@
 # Spaceship Panic polish plan — Task 11
 
-Status: implementation in progress; final automated and physical-device acceptance remain.
+Status: implemented; physical-device acceptance remains. Automated acceptance uses
+the complete local and exact-final Ubuntu review gates below.
 This refines [Task 11 of the family polish plan](FAMILY_POLISH_PLAN.md#11-spaceship-panic-improve-command-attention-without-drowning-out-voices).
 
 ## Outcome and boundaries
@@ -24,7 +25,8 @@ The cockpit uses the existing palette and pictures, a fixed 26-second deadline
 meter and a five-second static urgency threshold. Wide screens use a command
 column beside three panel bays with two-row settings; taller portrait phones
 enlarge pictures and short screens retain their compact layout. Error hints
-reserve space so attempts do not move buttons. Setup groups its controls beneath
+reserve a row on roomy screens and short landscape, and share the legend row on
+short portrait phones so attempts do not move buttons. Setup groups its controls beneath
 the mission instruction; the finale retains the existing shared statistics.
 
 Optional order generations and one latest mistake record supply bounded identity

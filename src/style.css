@@ -8601,7 +8601,7 @@ input.golf-power-input {
     0 3px 0 #c2d2c8;
 }
 .app-shell .ship-game-card .ship-panels {
-  flex: 0;
+  flex: 0 0 auto;
   align-content: start;
   margin-top: 8px;
 }
@@ -8731,14 +8731,21 @@ input.golf-power-input {
     height: 52px;
   }
 }
-@media (max-height: 650px) {
+@media (max-height: 700px) {
+  .app-shell .games-card.ship-game-card {
+    gap: 4px;
+  }
   .app-shell .ship-game-card .ship-panels {
     margin-top: 0;
     gap: 4px;
   }
   .ship-control-hint {
+    position: absolute;
+    right: 6px;
+    top: -14px;
+    bottom: auto;
     min-height: 12px;
-    margin-top: 1px;
+    margin-top: 0;
     font-size: 10px;
     line-height: 12px;
   }
@@ -8758,5 +8765,11 @@ input.golf-power-input {
     .ship-game-card:is([data-phase="ready"], [data-phase="finished"])
     .ship-order {
     min-height: 44px;
+  }
+}
+@media (max-height: 550px) and (min-width: 500px) {
+  .ship-control-hint {
+    position: static;
+    margin-top: 2px;
   }
 }

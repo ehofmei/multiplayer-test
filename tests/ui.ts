@@ -87,6 +87,18 @@ export async function expectScreenFits(page: Page) {
   if (await ship.count()) {
     const order = (await page.locator(".ship-order").boundingBox())!;
     const legend = (await ship.locator("legend").first().boundingBox())!;
+    const panelBounds = (await ship.boundingBox())!;
+    expect(
+      panelBounds.height,
+      "Ship panel container must own its content height",
+    ).toBeGreaterThan(44);
+    for (const panel of await ship.locator("fieldset").all()) {
+      const bounds = (await panel.boundingBox())!;
+      expect(
+        bounds.y + bounds.height,
+        "Ship panels must fit inside their container",
+      ).toBeLessThanOrEqual(panelBounds.y + panelBounds.height + 1);
+    }
     const viewport = page.viewportSize()!;
     if (
       (viewport.width >= 500 && viewport.height <= 550) ||

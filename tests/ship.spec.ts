@@ -21,6 +21,8 @@ const sizes = [
   { width: 440, height: 956 },
   { width: 1180, height: 820 },
   { width: 1080, height: 810 },
+  { width: 874, height: 402 },
+  { width: 956, height: 440 },
 ];
 async function freeze(page: Page) {
   const start = new Date("2026-10-07T12:00:00Z");
@@ -47,27 +49,41 @@ async function fit(page: Page, state: string) {
               content: ":root{font-family:serif;line-height:1.6}",
             })
           : null;
+      await page.screenshot({
+        path: `test-results/ship-${state}-${size.width}x${size.height}-${font}.png`,
+      });
       await expectScreenFits(page);
-      for (const button of await card(page).locator("button:visible").all()) {
-        const r = (await button.boundingBox())!;
+      const [buttons, hints] = await Promise.all([
+        card(page)
+          .locator("button:visible")
+          .evaluateAll((els) =>
+            els.map((el) => el.getBoundingClientRect().toJSON()),
+          ),
+        page.locator('.ship-panel[data-wrong="true"]').evaluateAll((els) =>
+          els.map((el) => ({
+            hint: el
+              .querySelector(".ship-control-hint")!
+              .getBoundingClientRect()
+              .toJSON(),
+            legend: el
+              .querySelector("legend")!
+              .getBoundingClientRect()
+              .toJSON(),
+          })),
+        ),
+      ]);
+      for (const r of buttons) {
         expect(r.width).toBeGreaterThanOrEqual(44);
         expect(r.height).toBeGreaterThanOrEqual(44);
         expect(r.y + r.height).toBeLessThanOrEqual(size.height - 8);
       }
-      for (const panel of await page
-        .locator('.ship-panel[data-wrong="true"]')
-        .all()) {
-        const hint = (await panel.locator(".ship-control-hint").boundingBox())!;
-        const legend = (await panel.locator("legend").boundingBox())!;
+      for (const { hint, legend } of hints) {
         expect(
           hint.x >= legend.x + legend.width ||
             hint.y >= legend.y + legend.height ||
             hint.y + hint.height <= legend.y,
         ).toBe(true);
       }
-      await page.screenshot({
-        path: `test-results/ship-${state}-${size.width}x${size.height}-${font}.png`,
-      });
       await style?.evaluate((el) => el.remove());
     }
   }

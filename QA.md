@@ -424,9 +424,26 @@ rematch attention and mute. Synthesizer tests check the reduced Ship gain and
 shared voice bound. Fit checks retain prior bounds/clearance/44px assertions,
 with horizontal order/panel clearance for the intentional wide cockpit.
 Household 402×874, 440×956, 1180×820 and 1080×810 sizes supplement the existing
-viewport and taller-font matrix. New/changed platform images require genuine
+viewport and taller-font matrix; 874×402/956×440 retain phone rotation coverage.
+The panel container must own its actual height and contain every fieldset;
+short portrait error hints share the legend row, while short landscape reserves
+a row beneath settings. New/changed platform images require genuine
 Darwin and Ubuntu review through the current reusable `review.yml` artifact route;
 the historical `codex/ship-controls` workflow below describes earlier coverage.
+All 20 Ship platform states were visually reviewed on Darwin and Ubuntu, including
+the eight panel sets and landscape-iPad cockpit. The genuine Ubuntu images came
+from the scoped [Task 11 evidence run](https://github.com/ehofmei/multiplayer-test/actions/runs/38482690393);
+its generation success does not substitute for exact-final verification.
+
+The Task 11 persistent in-app-browser pass checked matching production builds
+on stable 4174 host/client and 4175 spectator identities, applying waiting updates
+from Home. Normal text pairing, caller/owner keyboard answers, wrong recovery,
+team streak progression, deadline urgency, Help/Escape, pause/resume, zero/scored
+results, rematch, late spectator privacy and switching to Shared Lights were
+exercised. Reviewed 402×874 phone and 1180×820 landscape-iPad views, then the
+final compact fix at 320×568 and 844×390 with actual bounds/overflow measurements.
+The final matching runtime build was `20261013T231820Z`; physical Safari/touch
+and simultaneous-device listening are not established by this desktop pass.
 
 Physical acceptance: installed-PWA usable space, safe areas, phone rotation,
 real-thumb comfort, young-player Door/Window/Airlock recognition, Safari audio

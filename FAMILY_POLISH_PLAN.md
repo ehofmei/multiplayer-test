@@ -3,7 +3,7 @@
 This follow-up plan was created as the final deliverable of
 [FAMILY_PLAYTEST_PLAN.md](FAMILY_PLAYTEST_PLAN.md). **Implementation is in progress:**
 Tasks 1–2 and 4 are implemented; Task 3 is implemented with live QA pending;
-Tasks 5–8 are implemented with physical-device QA pending; Tasks 9–10 are implemented with physical-device QA pending; Tasks 11–15 remain planned. Read
+Tasks 5–8 are implemented with physical-device QA pending; Tasks 9–11 are implemented with physical-device QA pending; Tasks 12–15 remain planned. Read
 [AGENTS.md](AGENTS.md) before implementing. Each remaining numbered task can be
 assigned to a separate Codex session.
 
@@ -21,7 +21,7 @@ assigned to a separate Codex session.
 | 8    | Shared Lights            | Implemented; physical-device QA pending            |
 | 9    | Library and shared shell | Implemented; physical-device QA pending            |
 | 10   | Pong                     | Implemented; physical-device QA pending            |
-| 11   | Spaceship Panic          | Planned                                            |
+| 11   | Spaceship Panic          | Implemented; physical-device QA pending            |
 | 12   | Meteor Minigolf          | Planned                                            |
 | 13   | Glow Clash               | Planned                                            |
 | 14   | Sumo Bumpers             | Planned                                            |
@@ -377,7 +377,7 @@ court proportions; effects cannot imply a new collision or obscure a warning.
 ### 11. Spaceship Panic: improve command attention without drowning out voices
 
 Implementation plan: [Spaceship Panic polish plan](SPACESHIP_PANIC_POLISH_PLAN.md).
-Status: planned; see the refined plan for scope, feedback decisions and verification gates.
+Status: implemented; physical-device acceptance remains. See the refined plan for feedback decisions and verification gates.
 
 **Observed gap:** illustrated settings and team scoring are already strong.
 The order and panels are separated by a large plain gap in the sampled layouts;
