@@ -236,11 +236,47 @@ test("Pong confirms contacts, labels points and both match points, finishes and 
         content: ":root{font-family:serif;line-height:1.6}",
       });
       await expectScreenFits(host);
+      const picker = (await host.locator(".seat-picker").boundingBox())!;
+      for (const name of ["Play Again", "Controls & help"]) {
+        const button = (await host
+          .getByRole("button", { name, exact: true })
+          .boundingBox())!;
+        expect(button.y - picker.y - picker.height).toBeGreaterThanOrEqual(12);
+      }
       await host.screenshot({
         path: `test-results/pong-finale-${size.width}x${size.height}.png`,
       });
       await style.evaluate((el) => el.remove());
+      if (size.width === 844) {
+        await expectStableScreenshot(
+          host,
+          ".pong-game-card",
+          `pong-finale-landscape-${process.platform}.png`,
+          { maxDiffPixels: 180 },
+        );
+      }
     }
+    await host.setViewportSize({ width: 844, height: 390 });
+    await host
+      .getByLabel("Player 2", { exact: true })
+      .selectOption({ label: "Alexandra the Champion" });
+    await expect(
+      host.getByRole("button", { name: "Play Again", exact: true }),
+    ).toBeDisabled();
+    await expect(host.locator("#pong-rematch-guidance")).toHaveText(
+      "Choose different players for each seat.",
+    );
+    await expect(host.locator(".spectator-status")).toHaveCount(0);
+    await expectScreenFits(host);
+    await expectStableScreenshot(
+      host,
+      ".pong-game-card",
+      `pong-invalid-rematch-landscape-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
+    await host
+      .getByLabel("Player 2", { exact: true })
+      .selectOption({ label: "Emmanuel the Challenger" });
     await showHelp(two);
     await closePanels(two);
     await expect(

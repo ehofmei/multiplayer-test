@@ -2620,8 +2620,16 @@ main.app-shell {
   }
 }
 @media (max-height: 550px) and (min-width: 500px) {
-  .app-shell .pong-game-card[data-phase="finished"] {
+  .app-shell
+    .games-card.pong-game-card[data-phase="finished"]:not(.game-library) {
+    display: grid;
     grid-template-rows: auto auto 44px 44px;
+  }
+  .app-shell .games-card.pong-game-card[data-phase="finished"] > button {
+    position: static;
+    max-width: none;
+    align-self: stretch;
+    order: initial;
   }
   .app-shell .pong-game-card[data-phase="finished"] > .pong-scoreboard {
     display: none;

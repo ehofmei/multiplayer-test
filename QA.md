@@ -1635,7 +1635,7 @@ selected client seats when the host watches.
 
 Reviewed visual states cover confirmed contact, mirrored client identity, warning,
 bumper impact/four bumpers, scorer/next serve, mirrored match point, phone/iPad
-finale and setup/insets. Keep separate genuine Darwin/Linux images, bundled fonts,
+finale, short-landscape finale with explicit 12px control separation, and setup/insets. Keep separate genuine Darwin/Linux images, bundled fonts,
 strict dimensions and existing budgets. The contact/rally states use deliberate
 fixed steps; comparison states use Reduce Motion to remove time-dependent trails.
 A separate normal-motion assertion verifies trail presence and pause cleanup.
@@ -1648,6 +1648,16 @@ viewport screenshots/bounds. Include current-build phone (402×874, 440×956,
 320×568), short landscape (844×390), landscape iPad (1180×820/1080×810) and desktop
 inspection; CDP device metrics must be checked against actual inner dimensions.
 Use full-viewport captures rather than cropped native Retina surfaces.
+The final live pass uses ordinary controls and `screenshot({fullPage:true})`;
+raw CDP can request full-DevTools permission separately for each origin. Prefer
+project Playwright for viewport/capture work when that extra permission is unwanted.
+A long permission wait interrupted the QA links; fresh text pairing restored them.
+Do not count that wait as game execution or bypass the permission safeguard.
+
+The first genuine Ubuntu images came from
+[scoped Pong evidence](https://github.com/ehofmei/multiplayer-test/actions/runs/38401283773)
+for `f13f62f`; every changed image was visually reviewed. An additional scoped
+run supplies the short-landscape result added after live overlap discovery.
 
 The new review branch uses `review.yml`'s read-only, explicitly scoped Linux
 baseline artifact route. Review every changed Darwin and genuine Ubuntu image,

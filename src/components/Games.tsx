@@ -312,7 +312,7 @@ export function PongGame({
         ))}
       </div>
       <p id="pong-start-guidance" className="game-status" aria-live="polite">
-        {game.phase === "serve" ? (
+        {connected && game.phase === "serve" ? (
           <>
             <span>
               {point
@@ -504,11 +504,18 @@ export function PongGame({
           />
         </label>
       )}
-      {game.seats.length === 2 && seat < 0 && (
-        <p className="spectator-status">
-          You’re watching this match. The host can choose you for the next one.
-        </p>
-      )}
+      {game.seats.length === 2 &&
+        seat < 0 &&
+        !(
+          session.role === "host" &&
+          game.phase === "finished" &&
+          !validSeats
+        ) && (
+          <p className="spectator-status">
+            You’re watching this match. The host can choose you for the next
+            one.
+          </p>
+        )}
       <GameHelp>
         {game.seats.length === 2 && seat >= 0 && (
           <p className="muted">
