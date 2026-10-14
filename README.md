@@ -27,7 +27,9 @@ playtest starting points, not hard limits.
 
 ## Run and verify
 
-Use Node 22 or newer.
+Use Node 22, matching the Ubuntu review workflow. For reproducible verification,
+match its reported Node patch release; validate newer majors before using them
+as the local acceptance environment.
 
 ```sh
 npm ci

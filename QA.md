@@ -72,6 +72,15 @@ same machine/worker count and report failures separately from passing timings.
 Setup and permissions before runner startup are manual measurements, not included
 in those files. Retain before/after reports outside the disposable output folder.
 
+Use Node 22 for local acceptance, matching the review workflow; record `node -v`
+and compare its patch release with the run's setup-node log when diagnosing
+cross-platform failures. Keep `npm ci` and the locked Playwright/browser versions.
+If clock-driven tests time out across several unrelated games, preserve traces
+and timings, reproduce with the CI runtime, and run the complete local gate
+again. A focused pass or Ubuntu success does not replace that local gate. Avoid
+raising timeouts or changing game simulation merely to accommodate an unverified
+newer Node major.
+
 Shared protocol/session changes need network smoke plus affected multiplayer
 specs; storage/audio/lifecycle changes need the matching shared-file tests and
 `updates.spec.ts`; global CSS needs `app-layout.spec.ts` and affected game/layout
