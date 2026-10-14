@@ -83,17 +83,33 @@ export async function expectScreenFits(page: Page) {
   }
 
   // Check the real content boxes, not just a body whose overflow is suppressed.
-  const ship = page.locator(".ship-panels:visible");
-  if (await ship.count()) {
-    const order = (await page.locator(".ship-order").boundingBox())!;
-    const legend = (await ship.locator("legend").first().boundingBox())!;
-    const panelBounds = (await ship.boundingBox())!;
+  const ship = await page
+    .locator(".ship-panels:visible")
+    .evaluateAll((elements) => {
+      const panels = elements[0];
+      if (!panels) return null;
+      return {
+        order: document
+          .querySelector(".ship-order")!
+          .getBoundingClientRect()
+          .toJSON(),
+        legend: panels
+          .querySelector("legend")!
+          .getBoundingClientRect()
+          .toJSON(),
+        bounds: panels.getBoundingClientRect().toJSON(),
+        children: Array.from(panels.querySelectorAll("fieldset"), (panel) =>
+          panel.getBoundingClientRect().toJSON(),
+        ),
+      };
+    });
+  if (ship) {
+    const { order, legend, bounds: panelBounds, children } = ship;
     expect(
       panelBounds.height,
       "Ship panel container must own its content height",
     ).toBeGreaterThan(44);
-    for (const panel of await ship.locator("fieldset").all()) {
-      const bounds = (await panel.boundingBox())!;
+    for (const bounds of children) {
       expect(
         bounds.y + bounds.height,
         "Ship panels must fit inside their container",
@@ -104,9 +120,8 @@ export async function expectScreenFits(page: Page) {
       (viewport.width >= 500 && viewport.height <= 550) ||
       (viewport.width >= 1000 && viewport.height >= 651)
     ) {
-      const panels = (await ship.boundingBox())!;
       expect(
-        panels.x,
+        panelBounds.x,
         "landscape ship panels must clear the order horizontally",
       ).toBeGreaterThanOrEqual(order.x + order.width);
     } else {

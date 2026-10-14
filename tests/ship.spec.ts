@@ -274,6 +274,57 @@ test("Spaceship sounds announce local requests once and remain quiet across paus
   await page.clock.runFor(21000);
   expect(await notes()).toEqual(muted);
 });
+// Each full viewport/font matrix gets its own unchanged test budget.
+for (const state of ["ready", "wrong-setting", "active", "paused"] as const) {
+  test(`Spaceship paired ${state} layout fits every viewport and font`, async ({
+    page: host,
+    browser,
+  }) => {
+    const context = await browser.newContext({
+      viewport: sizes[2],
+      hasTouch: true,
+      reducedMotion: "reduce",
+    });
+    try {
+      const client = await context.newPage();
+      await create(host);
+      await join(host, client, "Emma with a long family name");
+      await freeze(host);
+      if (state !== "ready") {
+        await host
+          .getByRole("button", { name: "Launch Mission", exact: true })
+          .click();
+        await expect(host.locator(".ship-command")).toHaveText("Engine: 1!");
+        await expect(client.locator(".ship-command")).toHaveText(
+          "Lights: Blue!",
+        );
+      }
+      if (state === "wrong-setting") {
+        await client
+          .getByRole("button", { name: "Engine 2", exact: true })
+          .press("Enter");
+        await expect(
+          client.getByText("Wrong setting · try another", { exact: true }),
+        ).toBeVisible();
+      }
+      if (state === "paused") {
+        await host
+          .getByRole("button", { name: "Pause Mission", exact: true })
+          .click();
+        await expect(client.locator(".ship-command")).toHaveText(
+          "Mission paused · take a breath.",
+        );
+      }
+      await fit(
+        state === "active" || state === "wrong-setting" ? client : host,
+        state,
+      );
+    } finally {
+      await context.close();
+    }
+  });
+}
+
 test("Spaceship pairs, matches pictures, scores, pauses, and handles spectators and disconnects", async ({
   page: host,
   browser,
@@ -297,7 +348,6 @@ test("Spaceship pairs, matches pictures, scores, pauses, and handles spectators 
       client.getByRole("button", { name: "Launch Mission", exact: true }),
     ).toHaveCount(0);
     await snapshot(host, "ready");
-    await fit(host, "ready");
     await host
       .getByRole("button", { name: "Launch Mission", exact: true })
       .click();
@@ -315,7 +365,6 @@ test("Spaceship pairs, matches pictures, scores, pauses, and handles spectators 
     await expect(
       client.getByText("Wrong setting · try another", { exact: true }),
     ).toBeVisible();
-    await fit(client, "wrong-setting");
     await client.getByRole("button", { name: "Engine 1", exact: true }).tap();
     await expect(host.locator(".ship-command")).toHaveText(
       "Order complete! +100 points",
@@ -333,7 +382,6 @@ test("Spaceship pairs, matches pictures, scores, pauses, and handles spectators 
     await snapshot(host, "success");
     await host.clock.runFor(2000);
     await snapshot(host, "active");
-    await fit(client, "active");
     await host
       .getByRole("button", { name: "Pause Mission", exact: true })
       .click();
@@ -343,7 +391,6 @@ test("Spaceship pairs, matches pictures, scores, pauses, and handles spectators 
     await expect(
       client.getByRole("button", { name: "Engine 2", exact: true }),
     ).toBeDisabled();
-    await fit(host, "paused");
     await snapshot(host, "paused");
     await host.clock.runFor(10000);
     await expect(client.getByTestId("ship-clock")).toHaveText("1:58");

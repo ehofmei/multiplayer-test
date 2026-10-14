@@ -425,7 +425,10 @@ landscape-iPad states. Each mission duration has an independent
 30-second test budget with complete scoring assertions. Keep independent mission
 lengths in separate tests so accumulated browser work does not exhaust a shared
 budget; diagnose timeouts from traces before changing limits. Existing journeys
-retain rematch coverage. Browser audio instrumentation checks neutral new-command
+retain rematch coverage. Each paired state's full viewport/font matrix also runs
+in its own case, leaving the pairing journey focused on input and lifecycle.
+Containment geometry is collected in one read-only evaluation with unchanged
+assertions. Browser audio instrumentation checks neutral new-command
 notes, silent timer snapshots, distinct mistakes, pause/background recovery,
 rematch attention and mute. Synthesizer tests check the reduced Ship gain and
 shared voice bound. Fit checks retain prior bounds/clearance/44px assertions,
