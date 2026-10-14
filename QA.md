@@ -414,11 +414,18 @@ snapshots, identical consecutive requests, repeated wrong attempts, simultaneous
 misses, role-specific successes/errors, priority, silent initialization,
 launch epochs and paused/recovered comparisons. A separate one-time test used
 the previous checkout's validator on actual new launch/wrong/missed/renewed
-states and confirmed additive compatibility.
+states and confirmed additive compatibility. Strict event-kind validation rejects
+array/object lookalikes rather than coercing unknown wire values to strings.
+Deadline accessibility exposes seconds while the fixed meter uses milliseconds;
+its ticking value is not a live-region announcement.
 
 The Ship browser suite retains real WebRTC pairing and eight-player/all-panel
 coverage and adds controlled-clock low-deadline, wrong/missed, milestone and
-landscape-iPad states. Browser audio instrumentation checks neutral new-command
+landscape-iPad states. Each mission duration has an independent
+30-second test budget with complete scoring assertions. Keep independent mission
+lengths in separate tests so accumulated browser work does not exhaust a shared
+budget; diagnose timeouts from traces before changing limits. Existing journeys
+retain rematch coverage. Browser audio instrumentation checks neutral new-command
 notes, silent timer snapshots, distinct mistakes, pause/background recovery,
 rematch attention and mute. Synthesizer tests check the reduced Ship gain and
 shared voice bound. Fit checks retain prior bounds/clearance/44px assertions,
@@ -444,8 +451,8 @@ exercised. Reviewed 402×874 phone and 1180×820 landscape-iPad views, then the
 final compact fix at 320×568 and 844×390 with actual bounds/overflow measurements.
 The matching layout/control build was `20261013T231820Z`; a final semantic pass
 on `20261013T233641Z` verified the deadline's seconds-based accessible label.
-Physical Safari/touch
-and simultaneous-device listening are not established by this desktop pass.
+Physical Safari/touch and simultaneous-device listening are not established
+by this desktop pass.
 
 Physical acceptance: installed-PWA usable space, safe areas, phone rotation,
 real-thumb comfort, young-player Door/Window/Airlock recognition, Safari audio

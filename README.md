@@ -407,8 +407,8 @@ use larger pictures; landscape iPads use the command beside a larger two-row
 setting grid. Short screens retain compact controls with 44px targets. The
 deadline meter uses a fixed 26-second scale; at five seconds, an amber outline
 and “Time low” label emphasize urgency without ticking or flashing. Its accessible
-value uses seconds. Wrong
-settings keep a reserved “Wrong setting · try another” hint on the owner's panel;
+value uses seconds. Wrong settings keep a reserved “Wrong setting · try another”
+hint on the owner's panel;
 missed callers see “Time ran out,” a streak reset and confirmation that points
 are kept. Results retain team score, completed commands and best streak.
 

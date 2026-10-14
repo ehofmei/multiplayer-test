@@ -424,12 +424,12 @@ test("Spaceship completes unattended missions, resets scores on rematch and paus
   await expect(card(page)).toHaveAttribute("data-phase", "playing");
 });
 
-test("Spaceship completes every duration with shared score and capped streak bonuses", async ({
-  page,
-}) => {
-  await create(page);
-  await freeze(page);
-  for (const minutes of [1, 2, 3]) {
+for (const minutes of [1, 2, 3]) {
+  test(`Spaceship completes ${minutes} minute missions with shared score and capped streak bonuses`, async ({
+    page,
+  }) => {
+    await create(page);
+    await freeze(page);
     await page
       .getByRole("button", {
         name: `${minutes} minute${minutes === 1 ? "" : "s"}`,
@@ -438,7 +438,7 @@ test("Spaceship completes every duration with shared score and capped streak bon
       .click();
     await page
       .getByRole("button", {
-        name: minutes === 1 ? "Launch Mission" : "Launch Again",
+        name: "Launch Mission",
         exact: true,
       })
       .click();
@@ -471,8 +471,8 @@ test("Spaceship completes every duration with shared score and capped streak bon
       }),
     ).toHaveAttribute("aria-pressed", "true");
     if (minutes === 1) await snapshot(page, "scored-results");
-  }
-});
+  });
+}
 
 test("Spaceship all eight panel sets support direct settings with matching SVGs and comfortable targets", async ({
   page: host,
