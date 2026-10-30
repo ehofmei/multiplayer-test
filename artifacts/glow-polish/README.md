@@ -17,3 +17,6 @@ dense phone standings move into Players & scores to preserve board space.
 [Landscape iPad reward](../../tests/glow.spec.ts-snapshots/glow-mixed-ipad-darwin.png)
 · [Full compact picker](../../tests/glow.spec.ts-snapshots/glow-eight-picker-darwin.png)
 · [Three unique claims](../../tests/glow.spec.ts-snapshots/glow-unique-darwin.png)
+
+[Eight shared winners on a short phone](../../tests/glow.spec.ts-snapshots/glow-eight-results-short-darwin.png)
+retains every row and total without reducing type size.

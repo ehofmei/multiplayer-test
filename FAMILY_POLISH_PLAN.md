@@ -3,7 +3,7 @@
 This follow-up plan was created as the final deliverable of
 [FAMILY_PLAYTEST_PLAN.md](FAMILY_PLAYTEST_PLAN.md). **Implementation is in progress:**
 Tasks 1–2 and 4 are implemented; Task 3 is implemented with live QA pending;
-Tasks 5–8 are implemented with physical-device QA pending; Tasks 9–12 are implemented with physical-device QA pending; Task 13 is in progress; Tasks 14–15 remain planned. Read
+Tasks 5–8 are implemented with physical-device QA pending; Tasks 9–13 are implemented with physical-device QA pending; Tasks 14–15 remain planned. Read
 [AGENTS.md](AGENTS.md) before implementing. Each remaining numbered task can be
 assigned to a separate Codex session.
 
@@ -23,7 +23,7 @@ assigned to a separate Codex session.
 | 10   | Pong                     | Implemented; physical-device QA pending            |
 | 11   | Spaceship Panic          | Implemented; physical-device QA pending            |
 | 12   | Meteor Minigolf          | Implemented; physical-device QA pending            |
-| 13   | Glow Clash               | In progress; verification pending                  |
+| 13   | Glow Clash               | Implemented; physical-device QA pending            |
 | 14   | Sumo Bumpers             | Planned                                            |
 | 15   | Co-op Breakout           | Planned                                            |
 
@@ -427,7 +427,8 @@ reduced-motion effects remain correct; no physics retuning without new family fe
 ### 13. Glow Clash: give the reveal its own sound and pacing
 
 Implementation plan: [Glow Clash polish plan](GLOW_CLASH_POLISH_PLAN.md).
-Status: implementation in progress; verification pending.
+Status: implemented; physical-device acceptance remains. See the refined plan for
+feedback decisions and verification gates.
 
 **Already strong:** color identity, accessible symbols, large point gains,
 persistent final rankings and winner celebration. Generic result sounds still

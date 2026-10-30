@@ -1357,9 +1357,34 @@ Keep the 180-pixel screenshot budget, bundled font fixture and genuine Darwin/
 Linux pairs for the mixed phone/iPad, unique reward, all-clash and compact-picker
 states; preserve existing secret, settling and final-result coverage.
 
-Implementation verification is in progress. Complete local verification,
-exact-final Ubuntu verification, all changed platform image reviews and the
-persistent live pass must finish before automated acceptance. Physical follow-up:
+Persistent live QA paired three independent current-build identities at the
+stable 4174 host/client origins. The usual 4175 third-player port belonged to an
+unrelated process and returned 404 for the app; a dedicated 4176 preview was used
+for the third identity without stopping that process. Home-first updates and
+matching build IDs preceded pairing. A complete five-round match exercised
+keyboard input, fourth-pick rejection, Clear, private/compact locks, draft
+reopening and focus return, mixed 2/1/1 rewards, +3 and all-clash rounds, pause/
+resume, Help, tile ownership, per-round standings, retained 10/8/8 results,
+Inspect board, rematch and switching to synchronized Shared Lights. Sound was
+enabled and muted through the normal control; timbre/volume acceptance still
+requires household listening. CSS-pixel screenshots and actual bounds covered
+320×568, 402×874, 440×956, 844×390, 1180×820 and desktop. A normal screenshot
+API was used after verifying dimensions; native captures under emulation can
+show a scaled surface. All temporary viewport overrides and QA tabs were closed.
+
+Ubuntu's normal font metrics exposed short-phone gain/total wrapping and crowded
+final ranks. The total now moves beside the contributions at short heights;
+seven/eight-player short-phone final rows keep their type size with less padding
+and gap. Normal/taller-font enclosure assertions remain strict. Complete local
+`npm run verify` and ordinary Ubuntu verification of the exact final commit,
+with snapshot updates disabled, remain the acceptance gates.
+The six changed/new Darwin and genuine Ubuntu images (mixed phone, mixed iPad,
+unique claims, eight-way clashes, compact picker and short-phone shared winners)
+were visually reviewed. Ubuntu images came from the read-only
+[Task 13 evidence run](https://github.com/ehofmei/multiplayer-test/actions/runs/41135849089)
+for `ca6c974`; no Darwin images were copied to Linux paths and the 180-pixel
+budget is unchanged. Baseline generation is evidence only; the final ordinary
+verification must pass for the exact final commit. Physical follow-up:
 installed household iPhones and landscape iPads, safe areas, larger text,
 VoiceOver, bottom-row thumb reach, rotation, audio unlock/background recovery,
 and multi-device listening. Ask players to explain mixed gains and all-clash

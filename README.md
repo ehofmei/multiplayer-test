@@ -936,7 +936,9 @@ then a fresh board opens automatically. The compact round-score strip uses small
 color swatches beside names and totals, with space between its two columns.
 Numbered player identities remain in setup and detailed views. Short screens and
 crowded seven/eight-player phones use **Players & scores** for the complete
-standings, keeping the board and your three contributions comfortable.
+standings, keeping the board and your three contributions comfortable. The shortest
+portrait phones put the cumulative total beside those contributions; eight-player
+final rankings use tighter row spacing without smaller text.
 A brief local unique-claim glow or clash-border emphasis plays only on an observed
 new reveal; reduced motion retains the complete static explanation.
 After the last reveal, the main screen

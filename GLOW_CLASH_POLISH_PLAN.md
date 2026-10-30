@@ -1,6 +1,7 @@
 # Glow Clash polish plan — Task 13
 
-Status: implementation in progress; automated and physical acceptance pending. This refines
+Status: implemented; physical-device acceptance remains. Automated acceptance
+uses complete local and exact-final Ubuntu verification, as specified below. This refines
 [Task 13 of the family polish plan](FAMILY_POLISH_PLAN.md#13-glow-clash-give-the-reveal-its-own-sound-and-pacing).
 
 ## Outcome and boundaries
@@ -23,6 +24,21 @@ no network fields or protocol version change should be needed. Preserve room
 epochs, input sequencing, host authority, filtered views, participant-disconnect
 reset and late spectators. Do not infer opponents' picks from the host's private
 state before reveal. Saved identity and sound preference versions stay intact.
+
+## Implemented decisions
+
+The local summary uses a solid +1 or striped zero beside each coordinate, plus
+unique/clash counts. Short phones move the total beside those contributions;
+constrained and dense-phone layouts keep full standings in the existing dialog.
+Short dense final rankings retain their type size with tighter row spacing.
+All tile fills/bands and existing final rankings/celebration remain intact.
+
+A small primitive observation helper retains progress across stale snapshots.
+Personal reveal effects last 400ms and their trigger clears after 450ms; initial
+observation, pause/reorientation, viewer changes and lifecycle recovery establish
+a quiet baseline. Glow's single reveal phrase uses claim, mixed or all-clash
+identity, with accepted-lock and win/finish behavior preserved. No wire fields,
+protocol version, rules, duration, dependencies or saved storage versions changed.
 
 ## Evidence reviewed
 

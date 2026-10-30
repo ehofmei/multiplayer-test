@@ -349,6 +349,8 @@ accepted phone images.
 
 ![Glow Clash compact picker](tests/glow.spec.ts-snapshots/glow-eight-picker-linux.png)
 
+![Glow Clash shared winners on a short phone](tests/glow.spec.ts-snapshots/glow-eight-results-short-linux.png)
+
 ![Glow Clash secret choices](tests/glow.spec.ts-snapshots/glow-secret-linux.png)
 
 ![Glow Clash eight-player results](tests/glow.spec.ts-snapshots/glow-eight-results-linux.png)
