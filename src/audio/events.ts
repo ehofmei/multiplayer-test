@@ -132,6 +132,7 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
     session,
     epoch: room.epoch,
     kind: room.kind,
+    golfListener: { me, host: snapshot.players[0]?.id === me },
     golf: room.minigolf ? golfMotionFrame(room.minigolf) : null,
     seek: room.seek
       ? {
@@ -251,24 +252,58 @@ export function soundEvents(
       return ["bakery-pass"];
     return [];
   }
-  const golfCues: Cue[] = after.golf
-    ? [
-        ...new Set(
-          golfContacts(before.golf, after.golf).map(
-            (c) =>
-              (
-                ({
-                  launch: "golf-tap",
-                  wall: "golf-knock",
-                  mushroom: "golf-spring",
-                  meteor: "golf-meteor",
-                  cup: "golf-cup",
-                }) as const
-              )[c.kind],
-          ),
-        ),
-      ]
-    : [];
+  if (after.golf && before.golf) {
+    const g = after.golf,
+      old = before.golf;
+    const d = after.decision,
+      previous = before.decision;
+    if (
+      ["paused", "reorient"].includes(g.phase) ||
+      ["paused", "reorient"].includes(old.phase) ||
+      g.hole !== old.hole ||
+      g.ticks < old.ticks
+    )
+      return [];
+    if (g.phase === "finished" && old.phase !== "finished")
+      return [d?.winner ? "win" : "finish"];
+    const contacts = golfContacts(old, g);
+    const me = after.golfListener.me;
+    const own = g.balls.find((b) => b.id === me),
+      was = old.balls.find((b) => b.id === me);
+    if (contacts.some((c) => c.kind === "cup" && c.ball === me))
+      return ["golf-cup"];
+    if (
+      g.phase === "results" &&
+      old.phase === "rolling" &&
+      g.ticks - old.ticks <= 30 &&
+      own &&
+      was &&
+      !was.captured
+    )
+      return [
+        own.captured
+          ? "golf-cup"
+          : (d?.gain ?? 0) > 0
+            ? "golf-points"
+            : "golf-rest",
+      ];
+    if (contacts.some((c) => c.kind === "launch")) return ["golf-tap"];
+    if (
+      g.phase === "aiming" &&
+      old.phase === "aiming" &&
+      d?.locked &&
+      !previous?.locked
+    )
+      return ["golf-lock"];
+    if (contacts.some((c) => c.kind === "meteor")) return ["golf-meteor"];
+    if (contacts.some((c) => c.kind === "mushroom" && c.ball === me))
+      return ["golf-spring"];
+    if (contacts.some((c) => c.kind === "wall" && c.ball === me))
+      return ["golf-knock"];
+    if (after.golfListener.host && contacts.some((c) => c.kind === "cup"))
+      return ["golf-cup"];
+    return [];
+  }
   const d = after.decision,
     oldDecision = before.decision;
   if (d && oldDecision) {
@@ -326,24 +361,11 @@ export function soundEvents(
       return [];
     }
     if (d.result && d.result !== oldDecision.result)
-      return [
-        ...golfCues,
-        ...(golfCues.includes("golf-cup")
-          ? []
-          : [
-              d.gain > 0
-                ? ("point" as const)
-                : d.gain < 0
-                  ? ("miss" as const)
-                  : ("success" as const),
-            ]),
-      ];
-    if (d.phase === "rolling" && oldDecision.phase === "aiming")
-      return golfCues.length ? golfCues : ["go"];
+      return [d.gain > 0 ? "point" : d.gain < 0 ? "miss" : "success"];
+    if (d.phase === "rolling" && oldDecision.phase === "aiming") return ["go"];
     if (d.turn === oldDecision.turn && d.locked && !oldDecision.locked)
       return ["success"];
   }
-  if (golfCues.length) return golfCues;
   if (after.seek && before.seek) {
     const next = after.seek,
       old = before.seek;

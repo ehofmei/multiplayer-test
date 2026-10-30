@@ -125,6 +125,34 @@ describe("sound lifecycle", () => {
     ).toBe(true);
     sounds.dispose();
   });
+  it("lets Golf rewards interrupt contact voices and throttles repeated knocks without queueing", async () => {
+    vi.stubGlobal("window", { AudioContext: Context });
+    const sounds = new Sounds();
+    sounds.setEnabled(true);
+    await sounds.unlock();
+    const c = Context.instances[0];
+    sounds.play("golf-spring");
+    sounds.play("golf-meteor");
+    sounds.play("golf-knock");
+    const contacts = [...c.voices];
+    c.currentTime = 0.1;
+    sounds.play("golf-knock");
+    expect(c.voices).toHaveLength(6);
+    sounds.play("golf-cup");
+    expect(c.voices).toHaveLength(9);
+    expect(
+      contacts.every((v) =>
+        v.stop.mock.calls.some((args) => args.length === 0),
+      ),
+    ).toBe(true);
+    expect(c.voices.slice(-3).map((v) => v.frequency.value)).toEqual([
+      280, 660, 880,
+    ]);
+    sounds.play("win");
+    expect(c.voices).toHaveLength(12);
+    expect(c.peaks.slice(0, 6).every((p) => p <= 0.055)).toBe(true);
+    sounds.dispose();
+  });
   it("starts silent, requires unlocking, bounds rapid audio, and stops on mute/background/dispose", async () => {
     vi.stubGlobal("window", { AudioContext: Context });
     const sounds = new Sounds();

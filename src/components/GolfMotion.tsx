@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { golfLabels } from "../games/golf-presentation";
 import { GolfBallArtwork } from "./GolfCourseArtwork";
 import type { GolfState } from "../games/minigolf";
 import {
@@ -20,6 +21,7 @@ export function GolfMotion({
   revealed,
   results,
   connected,
+  scale,
 }: {
   game: GolfState;
   me: string;
@@ -28,8 +30,10 @@ export function GolfMotion({
   revealed: boolean;
   results: boolean;
   connected: boolean;
+  scale: number;
 }) {
   const root = useRef<SVGGElement>(null);
+  const labels = useRef(new Map<string, SVGGElement>());
   const bodies = useRef(new Map<string, SVGGElement>());
   const rolls = useRef(new Map<string, SVGPathElement>());
   const drops = useRef(new Map<string, SVGGElement>());
@@ -168,6 +172,42 @@ export function GolfMotion({
         visual?.setAttribute("transform", `scale(${1 - drop * 0.85})`);
         visual?.setAttribute("opacity", String(1 - drop));
       });
+      labels.current.forEach((node) =>
+        node.setAttribute("visibility", "hidden"),
+      );
+      const placed = golfLabels(
+        game.balls.map((b) => ({ ...b, ...(drawn.current.get(b.id) ?? b) })),
+        me,
+        portrait,
+        scale,
+      );
+      for (const label of placed) {
+        const node = labels.current.get(label.id);
+        if (!node) continue;
+        node.setAttribute("visibility", "visible");
+        node.setAttribute("transform", `translate(${label.x} ${label.y})`);
+        node.setAttribute("data-local", String(label.local));
+        node.setAttribute("data-members", label.members.join(" "));
+        node.setAttribute(
+          "aria-label",
+          label.members
+            .map(
+              (id) =>
+                `Ball ${game.balls.findIndex((b) => b.id === id) + 1}${id === me ? ", you" : ""}`,
+            )
+            .join("; "),
+        );
+        const rect = node.querySelector("rect")!;
+        rect.setAttribute("x", String(-label.width / 2));
+        rect.setAttribute("width", String(label.width));
+        node.querySelector("text")!.textContent = label.text;
+        node
+          .querySelector("path")!
+          .setAttribute(
+            "d",
+            `M0 0L${label.ballX - label.x} ${label.ballY - label.y}`,
+          );
+      }
       mushrooms.forEach((m) => m.removeAttribute("transform"));
       for (const effect of effects.current) {
         const p = Math.min(
@@ -227,6 +267,8 @@ export function GolfMotion({
     portrait,
     reduced,
     visible,
+    scale,
+    me,
   ]);
   return (
     <g
@@ -300,83 +342,99 @@ export function GolfMotion({
         ))}
       </g>
       {revealed &&
-        game.balls.map((b, i) => {
-          const nearby = game.balls.filter(
-            (other) => Math.hypot(other.x - b.x, other.y - b.y) < 40,
-          );
-          const slot = nearby.findIndex((other) => other.id === b.id);
-          const labelX =
-            (nearby.length > 1
-              ? Math.min(
-                  960 - (nearby.length - 1) * 48,
-                  Math.max(40, b.x - (nearby.length - 1) * 24),
-                ) +
-                slot * 48
-              : Math.max(24, Math.min(976, b.x))) - b.x;
-          const labelY = Math.max(32, b.y - 28) - b.y;
-          const scoreY = b.y > 620 ? -70 : 60;
-          return (
-            <g
-              key={b.id}
-              ref={(node) => {
-                if (node) bodies.current.set(b.id, node);
-                else bodies.current.delete(b.id);
-              }}
-              data-golf-ball={b.id}
-              data-golf-captured={b.captured}
-              data-target-x={b.x}
-              data-target-y={b.y}
-              transform={`translate(${b.x} ${b.y})`}
-              opacity={b.skipped ? 0.4 : 1}
-            >
+        [...game.balls]
+          .sort((a, b) => Number(a.id === me) - Number(b.id === me))
+          .map((b) => {
+            const i = game.balls.findIndex((ball) => ball.id === b.id);
+            return (
               <g
-                data-golf-ball-visual={b.id}
+                key={b.id}
                 ref={(node) => {
-                  if (node) drops.current.set(b.id, node);
-                  else drops.current.delete(b.id);
+                  if (node) bodies.current.set(b.id, node);
+                  else bodies.current.delete(b.id);
                 }}
-                opacity={b.captured ? 0 : 1}
+                data-golf-ball={b.id}
+                data-golf-captured={b.captured}
+                data-target-x={b.x}
+                data-target-y={b.y}
+                transform={`translate(${b.x} ${b.y})`}
+                opacity={b.skipped ? 0.4 : 1}
               >
-                <GolfBallArtwork
-                  x={0}
-                  y={0}
-                  radius={b.id === me ? 15 : 10}
-                  color={colors[i]}
-                  rollingRef={(node) => {
-                    if (node) rolls.current.set(b.id, node);
-                    else rolls.current.delete(b.id);
+                <g
+                  data-golf-ball-visual={b.id}
+                  ref={(node) => {
+                    if (node) drops.current.set(b.id, node);
+                    else drops.current.delete(b.id);
                   }}
+                  opacity={b.captured ? 0 : 1}
+                >
+                  {b.id === me && (
+                    <circle
+                      className="golf-local-ring"
+                      r="23"
+                      fill="none"
+                      stroke="#fbffd9"
+                      strokeWidth="2.5"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  )}
+                  <GolfBallArtwork
+                    x={0}
+                    y={0}
+                    radius={b.id === me ? 15 : 10}
+                    color={colors[i]}
+                    rollingRef={(node) => {
+                      if (node) rolls.current.set(b.id, node);
+                      else rolls.current.delete(b.id);
+                    }}
+                  />
+                </g>
+              </g>
+            );
+          })}
+      {revealed && (
+        <g
+          className="golf-label-layer"
+          transform={portrait ? "translate(1000 0) rotate(90)" : undefined}
+          pointerEvents="none"
+        >
+          <g transform={`scale(${1 / Math.max(0.1, scale)})`}>
+            {game.balls.map((b) => (
+              <g
+                key={b.id}
+                className="golf-ball-label"
+                data-golf-label={b.id}
+                visibility="hidden"
+                ref={(node) => {
+                  if (node) labels.current.set(b.id, node);
+                  else labels.current.delete(b.id);
+                }}
+              >
+                <path
+                  fill="none"
+                  stroke="#fffde3"
+                  strokeOpacity=".6"
+                  strokeWidth="1"
+                />
+                <rect
+                  y="-10"
+                  height="20"
+                  rx="10"
+                  fill="#173d33"
+                  stroke="#a8c8b3"
+                />
+                <text
+                  textAnchor="middle"
+                  y="4"
+                  fill="#f8ffdb"
+                  fontSize="12"
+                  fontWeight="bold"
                 />
               </g>
-              <text
-                transform={
-                  portrait ? `rotate(90 ${labelX} ${labelY})` : undefined
-                }
-                x={labelX}
-                y={labelY}
-                textAnchor="middle"
-                fill={colors[i]}
-                fontSize="32"
-                fontWeight="bold"
-              >
-                {i + 1}
-              </text>
-              {results && b.id === me && (
-                <text
-                  transform={portrait ? `rotate(90 0 ${scoreY})` : undefined}
-                  x={0}
-                  y={scoreY}
-                  textAnchor="middle"
-                  fill={colors[i]}
-                  fontSize="34"
-                  fontWeight="bold"
-                >
-                  +{b.scores[game.hole - 1]}
-                </text>
-              )}
-            </g>
-          );
-        })}
+            ))}
+          </g>
+        </g>
+      )}
     </g>
   );
 }

@@ -4222,7 +4222,7 @@ main.app-shell {
 }
 .golf-aim {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 1fr 1fr;
   gap: 6px 12px;
 }
 .golf-aim label {
@@ -8771,5 +8771,47 @@ input.golf-power-input {
   .ship-control-hint {
     position: static;
     margin-top: 2px;
+  }
+}
+
+/* Golf feedback stays on the green; full explanations live in Help. */
+.golf-weather {
+  position: relative;
+  padding-left: 30px;
+}
+.golf-wind-pointer {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  color: #e4edaa;
+}
+.golf-ball-label[data-local="true"] rect {
+  fill: #f1f5be;
+  stroke: #173d33;
+  stroke-width: 2px;
+}
+.golf-ball-label[data-local="true"] text {
+  fill: #173d33;
+}
+.golf-aim-preview {
+  display: block;
+  width: 100%;
+  height: 130px;
+  border-radius: 12px;
+  background: radial-gradient(ellipse at center, #367b58, #173d33);
+  color: #e4edaa;
+}
+@media (min-width: 651px) and (min-height: 551px),
+  (max-width: 650px) and (min-height: 900px) {
+  .golf-aim {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-height: 650px) {
+  .golf-aim-preview {
+    height: 96px;
   }
 }

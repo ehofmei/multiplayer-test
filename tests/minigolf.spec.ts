@@ -77,6 +77,19 @@ async function fit(page: Page, label: string) {
       );
       expect(m.scrollWidth).toBeLessThanOrEqual(m.width + 1);
     }
+    const enclosed = await page.locator(".golf-controls").evaluate((e) => {
+      const parent = e.getBoundingClientRect();
+      return Array.from(e.children).every((child) => {
+        const b = child.getBoundingClientRect();
+        return (
+          b.left >= parent.left &&
+          b.right <= parent.right + 1 &&
+          b.top >= parent.top &&
+          b.bottom <= parent.bottom + 1
+        );
+      });
+    });
+    expect(enclosed).toBe(true);
     const boxes = await page
       .locator(".golf-course, .golf-controls, .golf-footer")
       .evaluateAll((es) => es.map((e) => e.getBoundingClientRect().toJSON()));
@@ -93,6 +106,31 @@ async function fit(page: Page, label: string) {
       path: `test-results/golf-${label}-${size.width}x${size.height}.png`,
     });
     await style.evaluate((e) => e.remove());
+  }
+}
+async function readableLabels(page: Page, count: number) {
+  const course = (await page.locator(".golf-course").boundingBox())!;
+  const labels = await page
+    .locator('.golf-ball-label[visibility="visible"]')
+    .evaluateAll((es) =>
+      es.map((e) => ({
+        members: e.getAttribute("data-members")!.split(" "),
+        box: e.querySelector("rect")!.getBoundingClientRect().toJSON(),
+      })),
+    );
+  expect(new Set(labels.flatMap((l) => l.members)).size).toBe(count);
+  for (const { box: a } of labels) {
+    expect(a.x).toBeGreaterThanOrEqual(course.x);
+    expect(a.y).toBeGreaterThanOrEqual(course.y);
+    expect(a.x + a.width).toBeLessThanOrEqual(course.x + course.width);
+    expect(a.y + a.height).toBeLessThanOrEqual(course.y + course.height);
+    for (const { box: b } of labels.filter((l) => l.box !== a))
+      expect(
+        a.x + a.width <= b.x ||
+          b.x + b.width <= a.x ||
+          a.y + a.height <= b.y ||
+          b.y + b.height <= a.y,
+      ).toBe(true);
   }
 }
 async function ready(page: Page, touch = false) {
@@ -168,7 +206,7 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
     await expect(
       host.getByRole("button", { name: "Ready", exact: true }),
     ).toBeEnabled();
-    const guide = host.locator(".golf-aim-guide line").last();
+    const guide = host.locator(".golf-course .golf-guide-track");
     const suggestedEnd = await guide.getAttribute("x2");
     await host.getByRole("slider", { name: "Shot power" }).fill("0");
     await expect(
@@ -184,8 +222,14 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
       `golf-zero-power-${process.platform}.png`,
       { maxDiffPixels: 180 },
     );
+    await expect(
+      host.locator(".golf-course .golf-guide-power"),
+    ).toHaveAttribute("stroke-dasharray", "0 100");
     await host.getByRole("slider", { name: "Shot power" }).fill("100");
     await expect(guide).toHaveAttribute("x2", suggestedEnd!);
+    await expect(
+      host.locator(".golf-course .golf-guide-power"),
+    ).toHaveAttribute("stroke-dasharray", "100 100");
     await expect(
       host.getByRole("slider", { name: "Shot power" }),
     ).toHaveAttribute("aria-valuetext", "100% · Strong");
@@ -344,6 +388,22 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
       `golf-tablet-${process.platform}.png`,
       { maxDiffPixels: 180 },
     );
+    for (const size of [
+      { width: 402, height: 874 },
+      { width: 440, height: 956 },
+      { width: 1180, height: 820 },
+      { width: 1080, height: 810 },
+    ]) {
+      await host.setViewportSize(size);
+      await expectScreenFits(host);
+      if (size.width === 1180)
+        await expectStableScreenshot(
+          host,
+          ".golf-game-card",
+          `golf-landscape-ipad-${process.platform}.png`,
+          { maxDiffPixels: 180 },
+        );
+    }
     await host.setViewportSize(sizes[2]);
     await client.setViewportSize(sizes[2]);
     await expectStableScreenshot(
@@ -470,6 +530,7 @@ test("eight golfers fit; late arrivals watch, background pauses, and participant
     await host
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
+    await host.emulateMedia({ reducedMotion: "reduce" });
     const clients = await Promise.all(contexts.map((c) => c.newPage()));
     for (const [i, c] of clients.entries())
       await join(host, c, `${i}ABCDEFGHIJKLMNOPQRSTUVWXYZ12345`);
@@ -479,6 +540,10 @@ test("eight golfers fit; late arrivals watch, background pauses, and participant
     await host.getByRole("button", { name: "Start Golf", exact: true }).click();
     await host.clock.runFor(7000);
     await fit(host, "eight-aiming");
+    for (const p of clients) {
+      await p.clock.install();
+      await p.clock.pauseAt(new Date(Date.now() + 1000));
+    }
     for (let hole = 1; hole <= 5; hole++) {
       for (const p of [host, ...clients]) {
         await p.setViewportSize(sizes[2]);
@@ -490,17 +555,56 @@ test("eight golfers fit; late arrivals watch, background pauses, and participant
       }
       await expect(game(host)).toHaveAttribute("data-phase", "rolling");
       if (hole === 1) {
+        await host.clock.runFor(16);
+        for (const p of clients) await p.clock.runFor(16);
         await expect(host.locator("[data-golf-ball]")).toHaveCount(8);
-        await expect(host.locator("[data-golf-ball] > text")).toHaveText([
-          "1",
-          "2",
-          "3",
-          "4",
-          "5",
-          "6",
-          "7",
-          "8",
-        ]);
+        await expect(
+          host.locator('.golf-ball-label[visibility="visible"] text'),
+        ).toHaveText(["1 · You", "+7"]);
+        await expect(
+          clients[6].locator('.golf-ball-label[data-local="true"] text'),
+        ).toHaveText("8 · You");
+        for (const p of [host, clients[6]]) {
+          await expect(
+            p.locator("[data-golf-ball]").last().locator(".golf-local-ring"),
+          ).toHaveCount(1);
+          const labels = await p
+            .locator('.golf-ball-label[visibility="visible"]')
+            .evaluateAll((es) =>
+              es.map((e) => ({
+                members: e.getAttribute("data-members")!.split(" "),
+                box: e.querySelector("rect")!.getBoundingClientRect().toJSON(),
+              })),
+            );
+          expect(new Set(labels.flatMap((l) => l.members)).size).toBe(8);
+          const [a, b] = labels.map((l) => l.box);
+          expect(
+            a.x + a.width <= b.x ||
+              b.x + b.width <= a.x ||
+              a.y + a.height <= b.y ||
+              b.y + b.height <= a.y,
+          ).toBe(true);
+          await expect(p.locator(".golf-motion")).toHaveAttribute(
+            "data-ticks",
+            (await host
+              .locator(".golf-motion")
+              .getAttribute("data-ticks")) as string,
+          );
+        }
+        // Freeze the shared launch before any physics step; the cropped green
+        // excludes independently timed controls and contains exact positions.
+        await expectStableScreenshot(
+          host,
+          ".golf-course",
+          `golf-eight-launch-${process.platform}.png`,
+          { maxDiffPixels: 180 },
+        );
+        await expectStableScreenshot(
+          clients[6],
+          ".golf-course",
+          `golf-eight-local-eight-${process.platform}.png`,
+          { maxDiffPixels: 180 },
+        );
         for (
           let i = 0;
           i < 80 &&
@@ -544,6 +648,65 @@ test("eight golfers fit; late arrivals watch, background pauses, and participant
     await host.getByRole("button", { name: "Standings", exact: true }).click();
     await expect(host.getByRole("dialog").locator("li")).toHaveCount(8);
     await closePanels(host);
+    await host.getByRole("button", { name: "Play Again", exact: true }).click();
+    await host.clock.runFor(7000);
+    await host.setViewportSize({ width: 1180, height: 820 });
+    for (const [index, p] of [host, ...clients].entries()) {
+      const portrait =
+        (await p.locator(".golf-course").getAttribute("data-layout")) ===
+        "portrait";
+      await p
+        .getByRole("slider", { name: "Shot angle", exact: true })
+        .fill(String((index * 45 + (portrait ? 270 : 0)) % 360));
+      await p
+        .getByRole("slider", { name: "Shot power", exact: true })
+        .fill("70");
+      await p.getByRole("button", { name: "Ready", exact: true }).click();
+    }
+    await host.clock.runFor(500);
+    await host.getByRole("button", { name: "Pause", exact: true }).click();
+    for (const p of [host, clients[6]]) {
+      await expect(game(p)).toHaveAttribute("data-phase", "paused");
+      await expect(p.locator(".golf-motion")).toHaveAttribute(
+        "data-ticks",
+        (await host
+          .locator(".golf-motion")
+          .getAttribute("data-ticks")) as string,
+      );
+      expect(
+        await p
+          .locator("[data-golf-ball]")
+          .evaluateAll((es) =>
+            es
+              .map((e) => [
+                e.getAttribute("data-golf-ball"),
+                e.getAttribute("data-target-x"),
+                e.getAttribute("data-target-y"),
+              ])
+              .sort(),
+          ),
+      ).toEqual(
+        await host
+          .locator("[data-golf-ball]")
+          .evaluateAll((es) =>
+            es
+              .map((e) => [
+                e.getAttribute("data-golf-ball"),
+                e.getAttribute("data-target-x"),
+                e.getAttribute("data-target-y"),
+              ])
+              .sort(),
+          ),
+      );
+      await readableLabels(p, 8);
+    }
+    await expectStableScreenshot(
+      host,
+      ".golf-game-card",
+      `golf-eight-dispersed-ipad-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
+    await host.getByRole("button", { name: "Stop", exact: true }).click();
     await returnHome(clients[6]);
     await host.getByRole("button", { name: "Start Golf", exact: true }).click();
     await clients[6].setViewportSize(sizes[0]);

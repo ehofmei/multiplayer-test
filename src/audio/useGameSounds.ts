@@ -29,7 +29,8 @@ export function useGameSounds(
     };
     const visibility = () => {
       if (previous.current?.kind === "lights") previous.current = null;
-      if (previous.current?.kind === "ship") previous.current = null;
+      if (["ship", "minigolf"].includes(previous.current?.kind ?? ""))
+        previous.current = null;
       if (document.hidden) sounds.suspend();
     };
     document.addEventListener("pointerdown", unlock, true);

@@ -1,3 +1,4 @@
+import { golfContacts } from "../games/golf-motion";
 import { newSumo } from "../games/sumo";
 import { newCycle } from "../games/cycle";
 import { launchShip, newShip, setShipControl, stepShip } from "../games/ship";
@@ -501,7 +502,9 @@ it("announces decision locks, launches, scores and results once without replayin
     };
     let before = frame(s);
     choose("a");
-    expect(soundEvents(before, frame(s))).toEqual(["success"]);
+    expect(soundEvents(before, frame(s))).toEqual([
+      kind === "minigolf" ? "golf-lock" : "success",
+    ]);
     before = frame(s);
     choose("b");
     expect(soundEvents(before, frame(s))).toEqual([
@@ -514,7 +517,8 @@ it("announces decision locks, launches, scores and results once without replayin
     if (s.room.minigolf) {
       before = frame(s);
       s.room.minigolf = stepGolf(s.room.minigolf, 3000);
-      expect(soundEvents(before, frame(s))).toEqual(["point"]);
+      // A three-second gap does not reconstruct a missed Golf reward.
+      expect(soundEvents(before, frame(s))).toEqual([]);
     }
     before = frame(s);
     if (s.room.minigolf)
@@ -543,7 +547,9 @@ it("announces decision locks, launches, scores and results once without replayin
         resumePhase: null,
       };
     const after = frame(s);
-    expect(soundEvents(before, after)).toEqual(["win"]);
+    expect(soundEvents(before, after)).toEqual(
+      kind === "minigolf" ? [] : ["win"],
+    );
     expect(soundEvents(after, after)).toEqual([]);
     expect(soundEvents(null, after)).toEqual([]);
     s.room.epoch++;
@@ -932,4 +938,105 @@ it("confirms Seek readiness, announces a new local turn, and prioritizes victory
   expect(soundEvents({ ...before, key: "other epoch" }, after)).toEqual([]);
   s.room.seek.winner = "b";
   expect(soundEvents(before, frame(s))).toEqual(["finish"]);
+});
+
+describe("Golf personal cue priority", () => {
+  const setup = () => {
+    const s = snapshot();
+    s.room = newRoom("minigolf", 1);
+    s.room.minigolf = {
+      ...newGolf(["a", "b"], () => 0),
+      phase: "rolling",
+      ticks: 100,
+    };
+    return s;
+  };
+  it("prioritizes your points over another capture and does not repeat your earlier cup reward", () => {
+    const s = setup(),
+      g = s.room.minigolf!;
+    const before = frame(s);
+    g.ticks += 6;
+    g.phase = "results";
+    g.balls[0].scores[0] = 42;
+    g.balls[1].captured = true;
+    expect(soundEvents(before, frame(s))).toEqual(["golf-points"]);
+    g.balls[0].scores[0] = 0;
+    expect(soundEvents(before, frame(s))).toEqual(["golf-rest"]);
+    g.balls[0].captured = true;
+    g.balls[0].scores[0] = 100;
+    const captured = {
+      ...before,
+      golf: {
+        ...before.golf!,
+        balls: before.golf!.balls.map((b) => ({ ...b, captured: true })),
+      },
+    };
+    expect(soundEvents(captured, frame(s))).toEqual([]);
+  });
+  it("plays local contacts, routes remote cups only to the host, and keeps spectators neutral", () => {
+    const s = setup(),
+      g = s.room.minigolf!;
+    const before = frame(s);
+    g.ticks += 6;
+    g.balls[1].captured = true;
+    expect(soundEvents(before, frame(s))).toEqual(["golf-cup"]);
+    const remote = (me: string, old: typeof before) => ({
+      ...old,
+      golfListener: { me, host: false },
+    });
+    expect(
+      soundEvents(remote("watcher", before), remote("watcher", frame(s))),
+    ).toEqual([]);
+    expect(soundEvents(remote("b", before), remote("b", frame(s)))).toEqual([
+      "golf-cup",
+    ]);
+    const next = frame(s);
+    expect(soundEvents(next, next)).toEqual([]);
+    expect(soundEvents(next, before)).toEqual([]);
+    expect(soundEvents(null, next)).toEqual([]);
+    expect(
+      soundEvents(
+        { ...before, golf: { ...before.golf!, phase: "paused" } },
+        next,
+      ),
+    ).toEqual([]);
+    expect(soundEvents({ ...before, key: "old epoch" }, next)).toEqual([]);
+  });
+  it("does not play somebody else's wall contact on a golfer or spectator", () => {
+    const s = setup(),
+      g = s.room.minigolf!;
+    g.balls[1].x = 988;
+    g.balls[1].vx = 400;
+    const before = frame(s);
+    s.room.minigolf = physicsGolf(g);
+    expect(
+      golfContacts(before.golf, frame(s).golf!).some(
+        (c) => c.kind === "wall" && c.ball === "b",
+      ),
+    ).toBe(true);
+    expect(soundEvents(before, frame(s))).toEqual([]);
+    expect(
+      soundEvents(
+        { ...before, golfListener: { me: "b", host: false } },
+        { ...frame(s), golfListener: { me: "b", host: false } },
+      ),
+    ).toEqual(["golf-knock"]);
+  });
+  it("chooses your cup ahead of meteor, a delayed capture stays silent, and finish wins", () => {
+    const s = setup(),
+      g = s.room.minigolf!;
+    g.hole = 4;
+    const before = frame(s);
+    g.ticks += 6;
+    g.impacted = true;
+    g.balls[0].captured = true;
+    expect(soundEvents(before, frame(s))).toEqual(["golf-cup"]);
+    g.ticks += 60;
+    expect(soundEvents(before, frame(s))).toEqual([]);
+    g.hole = 5;
+    g.phase = "finished";
+    expect(
+      soundEvents({ ...before, golf: { ...before.golf!, hole: 5 } }, frame(s)),
+    ).toEqual(["win"]);
+  });
 });

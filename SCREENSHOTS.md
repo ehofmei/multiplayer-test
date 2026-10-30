@@ -180,6 +180,16 @@ Player's hand · phone layout. Rule hints stay visible; collection and passing a
 
 ## Meteor Minigolf
 
+Task 12 aiming, ball identity and landscape-iPad evidence:
+
+![Minigolf landscape iPad aiming](tests/minigolf.spec.ts-snapshots/golf-landscape-ipad-linux.png)
+
+![Eight-ball launch with local identity](tests/minigolf.spec.ts-snapshots/golf-eight-launch-linux.png)
+
+![Ball eight remains identifiable](tests/minigolf.spec.ts-snapshots/golf-eight-local-eight-linux.png)
+
+![Eight dispersed balls on landscape iPad](tests/minigolf.spec.ts-snapshots/golf-eight-dispersed-ipad-linux.png)
+
 Mixed course · desktop playing surface.
 
 ![Meteor Minigolf mixed course](tests/minigolf.spec.ts-snapshots/golf-mixed-desktop-linux.png)

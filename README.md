@@ -706,7 +706,8 @@ when the available space makes it meaningfully larger, keeping labels and the fl
 upright and the whole course visible. Short phones retain a wide green and open sliders
 with Adjust aim. Angles and wind directions follow the screen (0° right, 90° down);
 turning the view preserves the same shot and shared world on every device.
-Weather feedback uses plain language; detailed rules remain in Help.
+A compass-style pointer and direction words follow the displayed course. Weather
+feedback uses plain language; detailed rules remain in Help.
 
 Two to eight players each take one simultaneous shot on five fixed cosmic greens:
 Open green, Bank shot, Mushrooms, Meteor, and Mixed course. Balls pass through one
@@ -714,9 +715,12 @@ another. Drag from your numbered ball toward the desired direction; distance set
 power, with the same drag distance giving the same power on every screen. A suggested
 direction appears immediately. Release keeps the preview; cancelling restores the
 previous aim. The numbered ball has a bright outline and a generous grab area.
-The power meter marks Gentle, Medium and Strong; 0% cannot be confirmed.
+The arrow has a high-contrast direction head and a power-filled shaft. Its reach
+adapts to the displayed scale; power changes its fill, not its endpoint. The power
+meter marks Gentle, Medium and Strong; 0% cannot be confirmed.
 Angle and Power sliders offer touch and
-keyboard alternatives (0° right, 90° down); short phones open them with Adjust aim. Tap Ready to commit; the host confirms
+keyboard alternatives (0° right, 90° down); short phones open them with Adjust aim, including a small graphical shot preview.
+Closing the panel preserves the draft; Ready remains on the course screen. Tap Ready to commit; the host confirms
 the lock, and shots stay private until launch. Aiming has no deadline. The last
 Ready launches everyone together; no shot is skipped automatically. Readiness
 counts stay visible, and Standings identifies who is still choosing.
@@ -739,6 +743,11 @@ keep a resting ball drifting indefinitely. Meteor holes show a radius-90
 warning; the shared impact occurs between 4–5.5 seconds and pushes balls outward
 by 120 units/s. Captured balls ignore later forces. The arrow previews direction,
 not an exact trajectory or distance; its length stays fixed when power changes.
+A permanent local ring and number/You badge keep your rolling ball above other
+balls. Nearby opponents share a compact +N badge when crowded; separated balls
+retain their numbers. Labels stay upright and inside the green, with full ball
+identities in the accessible course summary and numbered Standings. Ball bodies
+always retain their confirmed positions; overlapping balls still pass through.
 
 Moving balls keep their shading and contact shadows, with a subtle rolling seam.
 The renderer smooths confirmed snapshots over 50ms, passing through detected
@@ -754,7 +763,13 @@ confirmed velocity changes, existing mushroom cooldowns and the impact flag;
 contacts missed during a longer network gap are omitted instead of replayed.
 Impact effects last at most 450ms, share a pulse for simultaneous hits at the same spot,
 and are capped at 16. Sounds use the existing local synthesizer, voice limit,
-gesture unlock and saved mute preference. Sound stays off by default.
+gesture unlock and saved mute preference. Sound stays off by default. Golf selects at most one cue per snapshot, prioritizing
+finish, your capture/reward, launch/lock, meteor and your contacts. Quiet local
+lock, distance-point and neutral zero-point cues complement the cup chime.
+Ordinary contacts sound only for their golfer; remote cup captures sound on the
+host. Shared launch/meteor/finish remain audible to spectators. Cup/points/finish
+can interrupt Golf contact voices; already observed cup rewards do not repeat
+as points at settling, and missed events are not replayed after recovery.
 
 On a newly confirmed capture, the ball shrinks into the recessed cup over 350ms,
 with a small sparkle lasting up to 650ms and an optional plop/chime. Ball numbers

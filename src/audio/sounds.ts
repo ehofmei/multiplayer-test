@@ -25,6 +25,9 @@ export type Cue =
   | "breakout-clear"
   | "sumo-hit"
   | "sumo-dash"
+  | "golf-lock"
+  | "golf-points"
+  | "golf-rest"
   | "golf-cup"
   | "golf-tap"
   | "golf-knock"
@@ -153,6 +156,12 @@ const notes: Record<Cue, Note[]> = {
     [180, 0.075],
     [360, 0.045],
   ],
+  "golf-lock": [[580, 0.055]],
+  "golf-points": [
+    [620, 0.07],
+    [830, 0.1, 0.07],
+  ],
+  "golf-rest": [[360, 0.08]],
   "golf-cup": [
     [280, 0.08],
     [660, 0.1, 0.1],
@@ -239,6 +248,7 @@ export class Sounds {
   private enabled = false;
   private disposed = false;
   private voices = new Set<OscillatorNode>();
+  private golfVoices = new Set<OscillatorNode>();
   private played = new Map<Cue, number>();
   setEnabled(enabled: boolean) {
     this.enabled = enabled;
@@ -264,7 +274,22 @@ export class Sounds {
     const context = this.context;
     if (!this.enabled || this.disposed || context?.state !== "running") return;
     const now = context.currentTime;
-    if (now - (this.played.get(cue) ?? -Infinity) < 0.06) return;
+    const gap =
+      cue === "golf-knock" ? 0.18 : cue === "golf-spring" ? 0.15 : 0.06;
+    if (now - (this.played.get(cue) ?? -Infinity) < gap) return;
+    if (
+      ["golf-cup", "golf-points", "golf-rest", "win", "finish"].includes(cue)
+    ) {
+      for (const voice of this.golfVoices) {
+        try {
+          voice.stop();
+        } catch {
+          /* Already ended. */
+        }
+        this.voices.delete(voice);
+      }
+      this.golfVoices.clear();
+    }
     this.played.set(cue, now);
     for (const [frequency, duration, delay = 0] of notes[cue]) {
       if (this.voices.size >= 8) break;
@@ -283,15 +308,23 @@ export class Sounds {
         const quietSwitch =
           cue === "on" || cue === "off" || cue === "lights-switch";
         gain.gain.linearRampToValueAtTime(
-          cue.startsWith("ship-") ? 0.035 : quietSwitch ? 0.045 : 0.09,
+          cue.startsWith("ship-") || cue === "golf-knock" || cue === "golf-lock"
+            ? 0.035
+            : cue.startsWith("golf-")
+              ? 0.055
+              : quietSwitch
+                ? 0.045
+                : 0.09,
           at + 0.006,
         );
         gain.gain.exponentialRampToValueAtTime(0.001, at + duration);
         oscillator.connect(gain);
         gain.connect(context.destination);
         this.voices.add(oscillator);
+        if (cue.startsWith("golf-")) this.golfVoices.add(oscillator);
         oscillator.onended = () => {
           this.voices.delete(oscillator);
+          this.golfVoices.delete(oscillator);
           oscillator.disconnect();
           gain.disconnect();
         };
@@ -311,6 +344,7 @@ export class Sounds {
       }
     }
     this.voices.clear();
+    this.golfVoices.clear();
     this.played.clear();
   }
   suspend() {

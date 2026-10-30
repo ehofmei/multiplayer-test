@@ -401,6 +401,9 @@ Ship styles, `src/audio/events.ts`, `tests/ship.spec.ts`.
 
 ### 12. Meteor Minigolf: refine aiming and crowded-ball readability
 
+Implementation plan: [Meteor Minigolf polish plan](METEOR_MINIGOLF_POLISH_PLAN.md).
+Status: planned; see the refined plan for scope, evidence and acceptance checks.
+
 **Already strong:** course surfaces, impact motion/sounds, power feedback, cup
 celebrations and final rankings. Focus on playing comfort rather than another art pass.
 

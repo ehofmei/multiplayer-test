@@ -7,6 +7,8 @@ import {
   type PointerEvent,
 } from "react";
 import { AppPanel, GameHelp, GameSurface } from "./AppLayout";
+import { GolfGuide } from "./GolfGuide";
+import { golfGuideLength, golfScreenAngle } from "../games/golf-presentation";
 import { GolfMotion } from "./GolfMotion";
 import { GolfResults } from "./GolfResults";
 import { GolfBallArtwork, GolfCourseArtwork } from "./GolfCourseArtwork";
@@ -55,18 +57,21 @@ export function MinigolfGame({
   const board = useRef<HTMLDivElement>(null);
   const courseLayer = useRef<SVGGElement>(null);
   const [portrait, setPortrait] = useState(false);
+  const [courseScale, setCourseScale] = useState(1);
   useEffect(() => {
     const observer = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
       const wideScale = Math.min(width / 1000, height / 700);
       const tallScale = Math.min(width / 700, height / 1000);
       // Rotate only for a meaningful scale gain and a readable narrow dimension.
-      setPortrait(tallScale * 700 >= 216 && tallScale > wideScale * 1.08);
+      const tall = tallScale * 700 >= 216 && tallScale > wideScale * 1.08;
+      setPortrait(tall);
+      setCourseScale(tall ? tallScale : wideScale);
     });
     observer.observe(board.current!);
     return () => observer.disconnect();
   }, []);
-  const screenAngle = (aim.angle + (portrait ? 270 : 0)) % 360;
+  const screenAngle = golfScreenAngle(aim.angle, portrait);
   const [scoresOpen, setScoresOpen] = useState(false);
   const [aimOpen, setAimOpen] = useState(false);
   const [compactAim, setCompactAim] = useState(
@@ -184,9 +189,7 @@ export function MinigolfGame({
       drafted: true,
     });
   };
-  // A fixed-length guide shows direction only; the meter shows shot strength.
-  const arrowLength = 180;
-  const radians = (aim.angle * Math.PI) / 180;
+  const arrowLength = golfGuideLength(courseScale);
   const powerPercent = Math.round(aim.power * 100);
   const powerName =
     aim.power === 0
@@ -206,6 +209,7 @@ export function MinigolfGame({
         <input
           type="range"
           aria-label="Shot angle"
+          aria-valuetext={`${screenAngle} degrees · 0 right, 90 down`}
           min="0"
           max="359"
           step="1"
@@ -262,6 +266,7 @@ export function MinigolfGame({
           <li key={b.id}>
             <span>
               <b>
+                {game.balls.findIndex((ball) => ball.id === b.id) + 1}.{" "}
                 {name(b.id)}
                 {b.id === session.me.id ? " · You" : ""}
               </b>
@@ -325,7 +330,7 @@ export function MinigolfGame({
               className="golf-course"
               viewBox={portrait ? "0 0 700 1000" : "0 0 1000 700"}
               role="img"
-              aria-label={`${course.name} course. Drag from the tee toward your shot, or use the Angle and Power controls.`}
+              aria-label={`${course.name} course. ${revealed ? game.balls.map((b, i) => `Ball ${i + 1}: ${name(b.id)}${b.id === session.me.id ? ", you" : ""}${b.captured ? ", in the cup" : ""}`).join(". ") : "Drag from the tee toward your shot, or use the Angle and Power controls."}`}
               data-aiming={active}
               data-layout={portrait ? "portrait" : "landscape"}
               onPointerDown={(event) => {
@@ -353,19 +358,6 @@ export function MinigolfGame({
               onPointerCancel={cancelDrag}
               onLostPointerCapture={cancelDrag}
             >
-              <defs>
-                <marker
-                  id="golf-arrow"
-                  viewBox="0 0 10 10"
-                  refX="8"
-                  refY="5"
-                  markerWidth="5"
-                  markerHeight="5"
-                  orient="auto-start-reverse"
-                >
-                  <path d="M0 0L10 5L0 10Z" fill="#ffffff" />
-                </marker>
-              </defs>
               <g
                 ref={courseLayer}
                 transform={
@@ -417,24 +409,16 @@ export function MinigolfGame({
                         className="golf-aim-guide"
                         opacity={aim.drafted ? 1 : 0.75}
                       >
-                        <line
-                          x1={course.tee[0] + Math.cos(radians) * 36}
-                          y1={course.tee[1] + Math.sin(radians) * 36}
-                          x2={course.tee[0] + Math.cos(radians) * arrowLength}
-                          y2={course.tee[1] + Math.sin(radians) * arrowLength}
-                          stroke="#0a302c"
-                          strokeWidth="9"
-                        />
-                        <line
-                          x1={course.tee[0] + Math.cos(radians) * 36}
-                          y1={course.tee[1] + Math.sin(radians) * 36}
-                          x2={course.tee[0] + Math.cos(radians) * arrowLength}
-                          y2={course.tee[1] + Math.sin(radians) * arrowLength}
-                          stroke="#fff"
-                          strokeWidth="5"
-                          strokeDasharray="12 10"
-                          markerEnd="url(#golf-arrow)"
-                        />
+                        <g
+                          transform={`translate(${course.tee[0]} ${course.tee[1]})`}
+                        >
+                          <GolfGuide
+                            angle={aim.angle}
+                            power={aim.power}
+                            length={arrowLength}
+                            color={powerColor}
+                          />
+                        </g>
                       </g>
                     )}
                   </>
@@ -447,6 +431,7 @@ export function MinigolfGame({
                   revealed={revealed}
                   results={results}
                   connected={connected}
+                  scale={courseScale}
                 />
               </g>
             </svg>
@@ -478,6 +463,29 @@ export function MinigolfGame({
             {status}
           </p>
           <p className="golf-weather">
+            <svg
+              className="golf-wind-pointer"
+              viewBox="0 0 32 32"
+              aria-hidden="true"
+            >
+              <circle
+                cx="16"
+                cy="16"
+                r="14"
+                fill="none"
+                stroke="currentColor"
+                strokeOpacity=".3"
+              />
+              <path
+                transform={`rotate(${golfScreenAngle(game.wind * 90, portrait)} 16 16)`}
+                d="M6 16h19m-8-7 8 7-8 7"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             Wind {windNames[(game.wind + (portrait ? 3 : 0)) % 4]} ·{" "}
             {game.conditions
               ? ["Still air", "Light gust", "Strong gust"][
@@ -600,14 +608,14 @@ export function MinigolfGame({
             boost; walls and edges bounce.
           </p>
           <p>
-            The dashed guide shows direction, not distance or a predicted path.
-            The meter marks gentle, medium and strong power; zero does not
-            launch and cannot be confirmed. Lower power gives finer control,
-            while strong shots retain travel after a bank. Everyone sees the
-            wind direction; the host draws a shared strength of 0, 12 or 24.
-            Meteor warnings have radius 90 and impact between 4 and 5.5 seconds,
-            pushing uncaptured balls outward. Actual conditions appear at
-            launch.
+            The arrow shows direction; its fill shows power, not distance or a
+            predicted path. The meter marks gentle, medium and strong power;
+            zero does not launch and cannot be confirmed. Lower power gives
+            finer control, while strong shots retain travel after a bank.
+            Everyone sees the wind direction; the host draws a shared strength
+            of 0, 12 or 24. Meteor warnings have radius 90 and impact between 4
+            and 5.5 seconds, pushing uncaptured balls outward. Actual conditions
+            appear at launch.
           </p>
           <p>
             Each hole has 4 seconds to preview and 3 for scores. Aiming has no
@@ -637,7 +645,35 @@ export function MinigolfGame({
         open={aimOpen}
         onClose={() => setAimOpen(false)}
       >
-        <p>Adjust angle and power, then close this panel and tap Ready.</p>
+        <svg
+          className="golf-aim-preview"
+          viewBox="0 0 240 180"
+          role="img"
+          aria-label={`Shot preview: ${screenAngle} degrees, ${powerPercent}% power`}
+        >
+          <g transform="translate(120 90)">
+            <circle
+              r="64"
+              fill="none"
+              stroke="currentColor"
+              strokeOpacity=".15"
+              strokeDasharray="3 8"
+            />
+            <circle
+              r="13"
+              fill={colors[Math.max(0, myIndex)]}
+              stroke="#173d33"
+              strokeWidth="3"
+            />
+            <g transform="scale(.48)">
+              <GolfGuide
+                angle={screenAngle}
+                power={aim.power}
+                color={powerColor}
+              />
+            </g>
+          </g>
+        </svg>
         <div className="golf-aim-dialog">{aimFields}</div>
       </AppPanel>
       <AppPanel

@@ -954,8 +954,12 @@ Inventory for 2–8 players on desktop, iPad, and narrow iPhones:
   Compare equal drag distances on phone, tablet and desktop: 120 CSS pixels from
   the tee means 100% on each. Ready stays disabled while dragging. Check the meter
   at 0%, gentle, medium and 100%, including keyboard steps and visible focus. Zero
-  power blocks Ready, and changing power never changes the direction-guide length.
-  At short portrait heights use Adjust aim; close the dialog before Ready.
+  power blocks Ready. Changing power fills the direction guide without moving its
+  endpoint; the guide adapts only to available display scale. Inspect its contrast
+  on every green, and the screen-relative wind pointer before/after launch.
+  At short portrait heights use Adjust aim: its small graphic must match the
+  course direction and power. Close/Escape retains the draft without firing and
+  returns focus; Ready stays on the course screen.
 - Turn between a tall phone, short phone, landscape and tablet. The course should
   turn upright only when it becomes larger and stays readable. The cup's flagpole
   stays upright with its flag pointing right in both orientations. Tee numbers, cup
@@ -1011,6 +1015,22 @@ Inventory for 2–8 players on desktop, iPad, and narrow iPhones:
   eight golfers, taller font metrics, and reduced motion. Keep the full green,
   essential controls and results on-screen, with 44px buttons and no overlapping
   footer. Help, Standings and Adjust shot retain scrolling, Escape and focus return.
+
+Task 12 adds a persistent local-ball ring/badge, deterministic screen-space labels
+and +N opponent clusters. Check eight coincident launches, partially overlapping
+chains, dispersed shots, all edges/corners and ball 8 on both course orientations.
+Numbers and badges must remain upright, nonoverlapping and inside the green;
+ball positions must never shift for label placement. Captured balls release label
+slots. Match numbers to names in Standings; spectators must have no You badge.
+The accessible course summary retains each ball identity, including captures.
+
+Listen for your quiet lock, your cup versus distance/zero reward, and your own
+contacts. A remote capture must not suppress your points, and an earlier local
+cup must not repeat at settling. Shared launch/meteor/finish remain available to
+spectators; remote cups sound only on the host. Repeated contacts are bounded,
+with one selected cue per snapshot; reward/finish can interrupt contact voices.
+Check mute, gesture unlock, duplicate/stale/gapped frames, pause/resume and Safari
+background recovery. Multi-device balance still requires family listening.
 
 Regression coverage lives in `src/games/minigolf.test.ts`, the Golf session tests,
 and `tests/minigolf.spec.ts`. It covers fixed-step scheduling, cup speed thresholds,
