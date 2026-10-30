@@ -565,6 +565,14 @@ test("eight colors stripe together, ties fit and late spectators do not resize t
       Array(8).fill("0 pts"),
     );
     await snapshot(host, "eight-results");
+    await host.setViewportSize(sizes[0]);
+    await expectStableScreenshot(
+      host,
+      ".glow-game-card",
+      `glow-eight-results-short-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
+    await host.setViewportSize(sizes[2]);
     await fit(host, "eight-results");
     await host
       .getByRole("button", { name: "Players & scores", exact: true })
