@@ -202,6 +202,7 @@ export function GlowGame({
           ? "All 3 picks clashed"
           : `${outcome.unique} unique · ${outcome.clashes} ${outcome.clashes === 1 ? "clash" : "clashes"}`}
       </p>
+      <span className="glow-summary-total">{me ? glowTotal(me) : 0} total</span>
       <ul>
         {outcome.picks.map((pick) => (
           <li
