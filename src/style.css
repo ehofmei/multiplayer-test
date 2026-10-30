@@ -8815,3 +8815,118 @@ input.golf-power-input {
     height: 96px;
   }
 }
+
+/* Personal reveal explanation uses the control space, keeping the board intact. */
+.glow-reward-details {
+  order: -1;
+  grid-column: 1 / -1;
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+.glow-pick-summary {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid #655087;
+  border-radius: 9px;
+  background: #1b1530;
+  color: #eee9ff;
+}
+.glow-pick-summary p {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.25;
+}
+.glow-pick-summary ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.glow-pick-summary li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.25;
+}
+.glow-pick-summary i {
+  width: 10px;
+  height: 14px;
+  flex-shrink: 0;
+  border: 1px solid #f7eeff;
+  border-radius: 3px;
+  background: var(--glow-accent, #00cfff);
+}
+.glow-pick-summary [data-clash="true"] i {
+  background: repeating-linear-gradient(135deg, #f3dcff 0 2px, #493260 2px 4px);
+}
+.glow-pick-summary strong {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+.glow-round-gain {
+  animation: none;
+}
+@media (max-width: 650px) and (max-height: 759px) {
+  .glow-pick-summary {
+    padding: 5px;
+  }
+  .glow-pick-summary ul {
+    grid-template-columns: 1fr;
+  }
+  .glow-reward-details:has(.glow-pick-summary) .glow-mini-scores {
+    display: none;
+  }
+}
+@media (max-height: 450px) and (min-width: 651px) {
+  .glow-reward-details:has(.glow-pick-summary) .glow-mini-scores {
+    display: none;
+  }
+}
+.panel-content .glow-pick-summary {
+  margin-top: 12px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .glow-game-card[data-reveal-effect="true"] .glow-workspace .glow-round-gain,
+  .glow-game-card[data-reveal-effect="true"] > .glow-status .glow-round-gain {
+    animation: glow-score-arrive 400ms ease-out;
+  }
+  .glow-game-card[data-reveal-effect="true"]
+    .glow-workspace
+    .glow-cell[data-own-pick="true"]:not([data-collision="true"]) {
+    animation: glow-claim-arrive 400ms ease-out;
+  }
+  .glow-game-card[data-reveal-effect="true"]
+    .glow-workspace
+    .glow-cell[data-own-pick="true"][data-collision="true"] {
+    animation: glow-clash-arrive 400ms ease-out;
+  }
+}
+@keyframes glow-claim-arrive {
+  40% {
+    box-shadow:
+      0 0 16px var(--tile-neon),
+      inset 0 0 10px #ffffff24;
+  }
+}
+@keyframes glow-clash-arrive {
+  40% {
+    border-color: white;
+    box-shadow: 0 0 12px #dcc3ff;
+  }
+}
+
+.glow-reward-details .glow-mini-scores {
+  order: 0;
+}
+@media (max-width: 650px) {
+  .glow-game-card[data-dense="true"]
+    .glow-reward-details:has(.glow-pick-summary)
+    .glow-mini-scores {
+    display: none;
+  }
+}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Snapshot } from "../network/session";
+import { glowObservation } from "../games/glow-feedback";
 import { Sounds, type Cue } from "./sounds";
 import { soundEvents, soundFrame, type SoundFrame } from "./events";
 const storageKey = "p2p-game-lab-sound-v1";
@@ -29,7 +30,7 @@ export function useGameSounds(
     };
     const visibility = () => {
       if (previous.current?.kind === "lights") previous.current = null;
-      if (["ship", "minigolf"].includes(previous.current?.kind ?? ""))
+      if (["ship", "minigolf", "glow"].includes(previous.current?.kind ?? ""))
         previous.current = null;
       if (document.hidden) sounds.suspend();
     };
@@ -53,7 +54,15 @@ export function useGameSounds(
       return;
     }
     const next = soundFrame(snapshot, me, session);
-    if (previous.current?.key !== next.key) audio.current?.stop();
+    if (next.glow && previous.current?.key === next.key)
+      next.glow = glowObservation(previous.current.glow, next.glow);
+    if (
+      previous.current?.key !== next.key ||
+      (next.glow &&
+        (next.glow.viewer !== previous.current?.glow?.viewer ||
+          ["paused", "reorient"].includes(next.glow.phase)))
+    )
+      audio.current?.stop();
     const cues = soundEvents(previous.current, next);
     previous.current = next;
     if (!document.hidden) for (const cue of cues) audio.current?.play(cue);

@@ -217,3 +217,26 @@ describe("sound lifecycle", () => {
     vi.restoreAllMocks();
   });
 });
+
+it("keeps Glow phrases quiet, short, bounded and subject to mute/unlock", async () => {
+  vi.stubGlobal("window", { AudioContext: Context });
+  const sounds = new Sounds();
+  sounds.play("glow-claim");
+  expect(Context.instances).toHaveLength(0);
+  sounds.setEnabled(true);
+  await sounds.unlock();
+  const c = Context.instances[0];
+  for (const cue of ["glow-claim", "glow-mixed", "glow-clash"] as const)
+    sounds.play(cue);
+  expect(c.voices).toHaveLength(7);
+  expect(c.peaks).toEqual(Array(7).fill(0.035));
+  for (const voice of c.voices)
+    expect(voice.stop.mock.calls[0][0]).toBeLessThan(0.4);
+  sounds.play("glow-clash");
+  expect(c.voices).toHaveLength(7);
+  sounds.setEnabled(false);
+  expect(
+    c.voices.every((v) => v.stop.mock.calls.some((args) => args.length === 0)),
+  ).toBe(true);
+  sounds.dispose();
+});

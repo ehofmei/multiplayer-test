@@ -334,12 +334,20 @@ Full search board and a tiled collection that lights up only for completed piece
 
 ## Glow Clash
 
-Round rewards · phone layout.
+Round rewards · phone layout. Task 13 adds individual pick contributions;
+[before/after comparisons](artifacts/glow-polish/README.md) preserve the previous
+accepted phone images.
 
 ![Glow Clash round rewards](tests/glow.spec.ts-snapshots/glow-mixed-linux.png)
 
 <details>
 <summary>Secret choices and eight-player results</summary>
+
+![Glow Clash landscape iPad reward](tests/glow.spec.ts-snapshots/glow-mixed-ipad-linux.png)
+
+![Glow Clash all-clash reward](tests/glow.spec.ts-snapshots/glow-eight-stripes-linux.png)
+
+![Glow Clash compact picker](tests/glow.spec.ts-snapshots/glow-eight-picker-linux.png)
 
 ![Glow Clash secret choices](tests/glow.spec.ts-snapshots/glow-secret-linux.png)
 

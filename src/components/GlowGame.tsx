@@ -1,5 +1,5 @@
 import { startRequirement } from "./gameCatalog";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { AppPanel, GameHelp } from "./AppLayout";
 import {
   glowColors,
@@ -10,8 +10,14 @@ import {
 } from "../games/glow";
 import type { Player } from "../network/protocol";
 import type { Session } from "../network/session";
-const coordinate = (cell: number) =>
-  `${"ABCD"[cell % 4]}${Math.floor(cell / 4) + 1}`;
+import {
+  glowCoordinate as coordinate,
+  glowFrame,
+  glowOutcome,
+  glowObservation,
+  glowRevealed,
+  type GlowFrame,
+} from "../games/glow-feedback";
 // One broad, equal-width band per player spans the entire tile at any size.
 export function glowStripes(colors: string[]) {
   const band = 100 / colors.length;
@@ -28,6 +34,40 @@ export function GlowGame({
   session: Session;
   connected: boolean;
 }) {
+  const previousReveal = useRef<GlowFrame | null>(null);
+  const [revealEffect, setRevealEffect] = useState(false);
+  useEffect(() => {
+    const next = glowObservation(
+      previousReveal.current,
+      glowFrame(game, session.me.id),
+    );
+    if (!connected || document.hidden) {
+      previousReveal.current = null;
+      setRevealEffect(false);
+      return;
+    }
+    if (glowRevealed(previousReveal.current, next)) setRevealEffect(true);
+    else if (next.phase !== "reveal") setRevealEffect(false);
+    previousReveal.current = next;
+  });
+  useEffect(() => {
+    if (!revealEffect) return;
+    const timer = window.setTimeout(() => setRevealEffect(false), 450);
+    return () => window.clearTimeout(timer);
+  }, [revealEffect]);
+  useEffect(() => {
+    const reset = () => {
+      previousReveal.current = null;
+      setRevealEffect(false);
+    };
+    document.addEventListener("visibilitychange", reset);
+    window.addEventListener("pageshow", reset);
+    return () => {
+      document.removeEventListener("visibilitychange", reset);
+      window.removeEventListener("pageshow", reset);
+    };
+  }, []);
+  const outcome = glowOutcome(game, session.me.id);
   const [draft, setDraft] = useState<number[]>([]),
     [focus, setFocus] = useState(0),
     [scoresOpen, setScoresOpen] = useState(false),
@@ -146,6 +186,37 @@ export function GlowGame({
       ))}
     </ol>
   );
+  const pickSummary = outcome ? (
+    <div
+      className="glow-pick-summary"
+      role="group"
+      aria-label="Your picks"
+      style={
+        {
+          "--glow-accent": me ? glowColors[me.color].hex : "#00cfff",
+        } as CSSProperties
+      }
+    >
+      <p>
+        {outcome.unique === 0
+          ? "All 3 picks clashed"
+          : `${outcome.unique} unique · ${outcome.clashes} ${outcome.clashes === 1 ? "clash" : "clashes"}`}
+      </p>
+      <ul>
+        {outcome.picks.map((pick) => (
+          <li
+            key={pick.cell}
+            data-clash={pick.points === 0}
+            aria-label={`${pick.coordinate}, ${pick.points ? "unique claim, 1 point" : `clash with ${pick.claimants} players, 0 points`}`}
+          >
+            <i aria-hidden="true" />
+            <span>{pick.coordinate}</span>
+            <strong>{pick.points ? "+1" : "0"}</strong>
+          </li>
+        ))}
+      </ul>
+    </div>
+  ) : null;
   const controls = (
     <div className="glow-controls">
       {short && ready && (
@@ -177,7 +248,10 @@ export function GlowGame({
         </>
       )}
       {revealed && !finished && (
-        <div className="glow-mini-scores">{roster(false, true)}</div>
+        <div className="glow-reward-details">
+          {pickSummary}
+          <div className="glow-mini-scores">{roster(false, true)}</div>
+        </div>
       )}
       <GameHelp>
         <p>
@@ -201,7 +275,9 @@ export function GlowGame({
           round starts automatically. Highest total wins; ties share victory.
           Final rankings stay until the host chooses Clash Again or Back to
           setup. Inspect board keeps the final tiles available. Your picks
-          retain an outline.
+          retain an outline. Your picks shows each unique +1 or striped zero;
+          all three clashing means +0, with no points lost. Optional sounds
+          distinguish unique, mixed and all-clash outcomes.
         </p>
         <p>
           Choose any unused neon color before Start. A taken color keeps its
@@ -387,6 +463,8 @@ export function GlowGame({
       className="games-card glow-game-card"
       data-phase={game.phase}
       data-short={short}
+      data-dense={game.seats.length >= 7}
+      data-reveal-effect={revealEffect && game.phase === "reveal"}
       aria-label="Glow Clash"
       style={
         {
@@ -401,7 +479,7 @@ export function GlowGame({
         <span>
           {ready
             ? "3–8 players"
-            : `${me ? glowTotal(me) : 0} pts${revealed && !finished ? ` · ${Math.ceil(game.remaining / 1000)}s` : ""}`}
+            : `${me ? `${glowTotal(me)} pts` : "Watching"}${revealed && !finished ? ` · ${Math.ceil(game.remaining / 1000)}s` : ""}`}
         </span>
       </div>
       <p id="glow-start-guidance" className="glow-status" aria-live="polite">
@@ -495,6 +573,7 @@ export function GlowGame({
       >
         <p>{status}</p>
         {board}
+        {boardOpen && revealed && pickSummary}
         {!revealed && (
           <div className="glow-panel-actions">
             <button

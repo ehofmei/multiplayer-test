@@ -927,11 +927,18 @@ player number. Tap any revealed tile for full names, numbered identities, color
 names and its score explanation.
 
 Reveals show a clear **+0–3 points** gain and your cumulative total above the
-board. Your three picks retain an inset outline, including collisions; keyboard
+board. A compact **Your picks** explanation connects each coordinate to a solid
+**+1** unique claim or striped **0** clash. It reports the unique/clash count,
+or **All 3 picks clashed** for a zero round; no points are lost. Your three picks
+retain an inset outline, including collisions; keyboard
 focus has an outer outline. Reveals last six seconds after the settling beat,
 then a fresh board opens automatically. The compact round-score strip uses small
 color swatches beside names and totals, with space between its two columns.
-Numbered player identities remain in setup and detailed views.
+Numbered player identities remain in setup and detailed views. Short screens and
+crowded seven/eight-player phones use **Players & scores** for the complete
+standings, keeping the board and your three contributions comfortable.
+A brief local unique-claim glow or clash-border emphasis plays only on an observed
+new reveal; reduced motion retains the complete static explanation.
 After the last reveal, the main screen
 shows ranked totals, an explicit winner or shared winners, and your **You** row.
 A brief celebratory glow respects reduced motion. Final rankings wait for the host;
@@ -955,7 +962,11 @@ arrivals spectate without resizing the board; a participant leaving resets setup
 and releases their color while retaining everyone else's assignments. All devices
 must update before playing the revised Glow Clash; older apps reject the new
 settling phase. Locally synthesized lock, scoring and result cues use the existing
-muted-by-default sound setting and do not replay on resume.
+muted-by-default sound setting. Unique claims, mixed rewards and all-clash zero
+rounds have separate short, quiet phrases. Spectators receive no personal reward
+cue or fabricated zero total. Repeated/stale snapshots, initial observation,
+pause/resume, panel reopening and background recovery do not replay effects.
+These feedback refinements do not add wire fields or change game timing.
 Saved identity and sound settings keep their existing versions. Match length
 follows the group's pace because choosing is deliberately untimed.
 

@@ -582,10 +582,22 @@ it("plays Glow locks, gains, zero gains and shared victory once, without replay 
   expect(soundEvents(before, frame(s))).toEqual([]);
   before = frame(s);
   const beforeZero = soundFrame(s, "b", "session");
-  s.room.glow = stepGlow(s.room.glow, 1500);
-  expect(soundEvents(before, frame(s))).toEqual(["point"]);
-  expect(soundEvents(beforeZero, soundFrame(s, "b", "session"))).toEqual([
+  const lastLocker = {
+    ...before,
+    glow: {
+      ...before.glow!,
+      viewer: "c",
+      phase: "choosing" as const,
+      locked: false,
+    },
+  };
+  expect(soundEvents(lastLocker, soundFrame(s, "c", "session"))).toEqual([
     "success",
+  ]);
+  s.room.glow = stepGlow(s.room.glow, 1500);
+  expect(soundEvents(before, frame(s))).toEqual(["glow-mixed"]);
+  expect(soundEvents(beforeZero, soundFrame(s, "b", "session"))).toEqual([
+    "glow-clash",
   ]);
   before = frame(s);
   s.room.glow = stepGlow(resumeGlow(pauseGlow(s.room.glow)), 3000);
@@ -1039,4 +1051,69 @@ describe("Golf personal cue priority", () => {
       soundEvents({ ...before, golf: { ...before.golf!, hole: 5 } }, frame(s)),
     ).toEqual(["win"]);
   });
+});
+
+it("gives Glow one personal reveal phrase, suppresses recovery and prioritizes finish", async () => {
+  const {
+    glowRoster,
+    newGlow,
+    startGlow,
+    stepGlow,
+    commitGlow,
+    pauseGlow,
+    resumeGlow,
+  } = await import("../games/glow");
+  const s = snapshot();
+  s.room = newRoom("glow", 1);
+  for (const unique of [0, 1, 2, 3]) {
+    s.room.glow = stepGlow(
+      startGlow(glowRoster(newGlow(5), ["a", "b", "c"])),
+      3000,
+    );
+    s.room.glow = commitGlow(s.room.glow, "a", 1, [0, 1, 2]);
+    const other = [
+      [0, 1, 2],
+      [0, 1, 3],
+      [0, 3, 4],
+      [3, 4, 5],
+    ][unique];
+    s.room.glow = commitGlow(s.room.glow, "b", 1, other);
+    s.room.glow = commitGlow(
+      s.room.glow,
+      "c",
+      1,
+      unique === 3 ? [6, 7, 8] : other,
+    );
+    const before = frame(s),
+      watcher = soundFrame(s, "watcher", "session");
+    s.room.glow = stepGlow(s.room.glow, 1700);
+    const after = frame(s);
+    expect(soundEvents(before, after)).toEqual([
+      unique === 3 ? "glow-claim" : unique === 0 ? "glow-clash" : "glow-mixed",
+    ]);
+    expect(soundEvents(watcher, soundFrame(s, "watcher", "session"))).toEqual(
+      [],
+    );
+    expect(soundEvents(before, soundFrame(s, "b", "session"))).toEqual([]);
+    expect(soundEvents(after, after)).toEqual([]);
+    expect(soundEvents(after, before)).toEqual([]);
+    expect(soundEvents(null, after)).toEqual([]);
+    expect(soundEvents({ ...before, key: "other epoch" }, after)).toEqual([]);
+    s.room.glow = stepGlow(s.room.glow, 200);
+    expect(soundEvents(after, frame(s))).toEqual([]);
+    for (const phase of ["paused", "reorient"] as const) {
+      const suspended = { ...before, glow: { ...before.glow!, phase } };
+      expect(soundEvents(suspended, after)).toEqual([]);
+      expect(
+        soundEvents(before, { ...after, glow: { ...after.glow!, phase } }),
+      ).toEqual([]);
+    }
+    s.room.glow = stepGlow(resumeGlow(pauseGlow(s.room.glow)), 3000);
+    expect(soundEvents(after, frame(s))).toEqual([]);
+    s.room.glow = { ...s.room.glow, phase: "finished" };
+    expect(soundEvents(before, frame(s))).toEqual(["win"]);
+    expect(soundEvents(watcher, soundFrame(s, "watcher", "session"))).toEqual([
+      "finish",
+    ]);
+  }
 });

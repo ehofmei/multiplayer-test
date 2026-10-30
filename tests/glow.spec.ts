@@ -7,6 +7,7 @@ import {
   returnHome,
   showHelp,
 } from "./ui";
+import { audioStarts, monitorAudio } from "./audio";
 import { expectStableScreenshot } from "./screenshot";
 const sizes = [
   { width: 320, height: 568 },
@@ -15,6 +16,12 @@ const sizes = [
   { width: 844, height: 390 },
   { width: 768, height: 1024 },
   { width: 1280, height: 720 },
+  { width: 402, height: 874 },
+  { width: 440, height: 956 },
+  { width: 1180, height: 820 },
+  { width: 1080, height: 810 },
+  { width: 874, height: 402 },
+  { width: 956, height: 440 },
 ];
 const game = (p: Page) => p.locator(".glow-game-card");
 async function fit(p: Page, label: string) {
@@ -24,53 +31,85 @@ async function fit(p: Page, label: string) {
       "data-short",
       String(size.height <= 450 && size.width >= 651),
     );
-    const style = await p.addStyleTag({
-      content: ":root {font-family:serif;line-height:1.6}",
-    });
-    await expectScreenFits(p);
-    for (const selector of [
-      ".glow-game-card",
-      ".glow-workspace",
-      ".glow-setup",
-      ".glow-controls",
-      ".glow-mini-scores",
-      ".glow-results",
-      ".glow-final-ranking",
-    ]) {
-      for (const m of await p.locator(selector).evaluateAll((es) =>
-        es.map((e) => ({
-          h: e.clientHeight,
-          sh: e.scrollHeight,
-          w: e.clientWidth,
-          sw: e.scrollWidth,
-        })),
-      )) {
-        expect(
-          m.sh,
-          `${label} ${size.width} ${selector} vertical`,
-        ).toBeLessThanOrEqual(m.h + 1);
-        expect(
-          m.sw,
-          `${label} ${size.width} ${selector} horizontal`,
-        ).toBeLessThanOrEqual(m.w + 1);
+    for (const taller of [false, true]) {
+      const style = taller
+        ? await p.addStyleTag({
+            content: ":root {font-family:serif;line-height:1.6}",
+          })
+        : null;
+      await expectScreenFits(p);
+      const metrics = await game(p).evaluate((root) => {
+        const selectors = [
+          ".glow-game-card",
+          ".glow-workspace",
+          ".glow-setup",
+          ".glow-controls",
+          ".glow-mini-scores",
+          ".glow-results",
+          ".glow-final-ranking",
+          ".glow-reward-details",
+          ".glow-pick-summary",
+          ".glow-board",
+        ];
+        return {
+          containers: selectors.flatMap((selector) =>
+            [
+              ...(root.matches(selector)
+                ? [root]
+                : root.querySelectorAll(selector)),
+            ]
+              .filter((e) => e.getBoundingClientRect().width > 0)
+              .map((e) => ({
+                selector,
+                h: e.clientHeight,
+                sh: e.scrollHeight,
+                w: e.clientWidth,
+                sw: e.scrollWidth,
+                box: e.getBoundingClientRect().toJSON(),
+                children: [...e.children]
+                  .filter((c) => c.getBoundingClientRect().width > 0)
+                  .map((c) => c.getBoundingClientRect().toJSON()),
+              })),
+          ),
+          buttons: [...root.querySelectorAll("button")]
+            .map((b) => ({
+              box: b.getBoundingClientRect().toJSON(),
+              cell: b.classList.contains("glow-cell"),
+            }))
+            .filter((b) => b.box.width > 0),
+        };
+      });
+      for (const m of metrics.containers) {
+        const tag = `${label} ${size.width} taller=${taller} ${m.selector}`;
+        expect(m.sh, `${tag} vertical`).toBeLessThanOrEqual(m.h + 1);
+        expect(m.sw, `${tag} horizontal`).toBeLessThanOrEqual(m.w + 1);
+        for (const child of m.children) {
+          expect(child.left, `${tag} child left`).toBeGreaterThanOrEqual(
+            m.box.left - 1,
+          );
+          expect(child.right, `${tag} child right`).toBeLessThanOrEqual(
+            m.box.right + 1,
+          );
+          expect(child.top, `${tag} child top`).toBeGreaterThanOrEqual(
+            m.box.top - 1,
+          );
+          expect(child.bottom, `${tag} child bottom`).toBeLessThanOrEqual(
+            m.box.bottom + 1,
+          );
+        }
       }
+      for (const { box: b, cell } of metrics.buttons) {
+        if (size.height <= 450 && size.width >= 651 && cell) continue;
+        expect(b.width, `${label} button width`).toBeGreaterThanOrEqual(44);
+        expect(b.height, `${label} button height`).toBeGreaterThanOrEqual(44);
+        expect(b.y + b.height).toBeLessThan(size.height - 4);
+      }
+      if (taller)
+        await p.screenshot({
+          path: `test-results/glow-${label}-${size.width}x${size.height}.png`,
+        });
+      await style?.evaluate((e) => e.remove());
     }
-    for (const button of await game(p).getByRole("button").all()) {
-      const b = (await button.boundingBox())!;
-      if (
-        button &&
-        size.height === 390 &&
-        (await button.getAttribute("class")) === "glow-cell"
-      )
-        continue;
-      expect(b.width, `${label} button width`).toBeGreaterThanOrEqual(44);
-      expect(b.height, `${label} button height`).toBeGreaterThanOrEqual(44);
-      expect(b.y + b.height).toBeLessThan(size.height - 4);
-    }
-    await p.screenshot({
-      path: `test-results/glow-${label}-${size.width}x${size.height}.png`,
-    });
-    await style.evaluate((e) => e.remove());
   }
   await p.setViewportSize(sizes[2]);
 }
@@ -107,11 +146,14 @@ test("three players choose colors, lock privately, reveal, finish, rematch and s
     ),
   );
   try {
+    await monitorAudio(host);
     await host.addInitScript(() => {
       Math.random = () => 0;
     });
     await host.goto("./");
     await host.getByLabel("Your name").fill("Alex");
+    await host.getByRole("button", { name: "Sound", exact: true }).click();
+    await expect.poll(() => audioStarts(host)).toBeGreaterThan(0);
     await host
       .getByRole("button", { name: "Create Game", exact: true })
       .click();
@@ -211,6 +253,10 @@ test("three players choose colors, lock privately, reveal, finish, rematch and s
     await expect(clients[1].locator(".glow-top")).toContainText("0 pts");
     await snapshot(host, "settling");
     await fit(host, "settling");
+    const beforeRevealSound = await audioStarts(host);
+    await expect(
+      host.getByRole("group", { name: "Your picks", exact: true }),
+    ).toHaveCount(0);
     await host.clock.runFor(1400);
     await expect(game(host)).toHaveAttribute("data-phase", "settling");
     await host.clock.runFor(100);
@@ -239,7 +285,23 @@ test("three players choose colors, lock privately, reveal, finish, rematch and s
     await expect(
       game(clients[1]).locator('.glow-cell[data-own-pick="true"]'),
     ).toHaveCount(3);
+    await expect.poll(() => audioStarts(host)).toBe(beforeRevealSound + 3);
+    await expect(game(host).locator(".glow-pick-summary li")).toHaveCount(3);
+    await expect(
+      game(host).locator(".glow-pick-summary li").first(),
+    ).toHaveAttribute("aria-label", "A1, clash with 3 players, 0 points");
+    await expect(game(host).locator(".glow-pick-summary p")).toHaveText(
+      "2 unique · 1 clash",
+    );
     await snapshot(host, "mixed");
+    await host.setViewportSize({ width: 1180, height: 820 });
+    await expectStableScreenshot(
+      host,
+      ".glow-game-card",
+      `glow-mixed-ipad-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
+    await host.setViewportSize(sizes[2]);
     await fit(host, "mixed");
     await host
       .getByRole("button", {
@@ -259,6 +321,18 @@ test("three players choose colors, lock privately, reveal, finish, rematch and s
         exact: true,
       }),
     ).toBeFocused();
+    expect(await audioStarts(host)).toBe(beforeRevealSound + 3);
+    await host.clock.runFor(500);
+    await expect(game(host)).toHaveAttribute("data-reveal-effect", "false");
+    await host.getByRole("button", { name: "Pause", exact: true }).click();
+    await host.getByRole("button", { name: "Resume", exact: true }).click();
+    await host.clock.runFor(3000);
+    expect(await audioStarts(host)).toBe(beforeRevealSound + 3);
+    await expect(game(host)).toHaveAttribute("data-reveal-effect", "false");
+    await host.evaluate(() => window.dispatchEvent(new Event("pageshow")));
+    await host.clock.runFor(100);
+    expect(await audioStarts(host)).toBe(beforeRevealSound + 3);
+    await expect(game(host)).toHaveAttribute("data-reveal-effect", "false");
     for (let round = 2; round <= 5; round++) {
       await host.clock.runFor(6000);
       await expect(game(host)).toHaveAttribute("data-phase", "choosing");
@@ -322,6 +396,19 @@ test("three players choose colors, lock privately, reveal, finish, rematch and s
       .getByRole("button", { name: "Start Clash", exact: true })
       .click();
     await host.clock.runFor(3000);
+    await picks(host, [0, 1, 2]);
+    await picks(clients[0], [3, 4, 5]);
+    await picks(clients[1], [6, 7, 8]);
+    await expect(game(host)).toHaveAttribute("data-phase", "settling");
+    const beforeUnique = await audioStarts(host);
+    await host.clock.runFor(1500);
+    await expect(host.locator(".glow-round-gain")).toHaveText("+3 points");
+    await expect(game(host).locator(".glow-pick-summary p")).toHaveText(
+      "3 unique · 0 clashes",
+    );
+    await expect.poll(() => audioStarts(host)).toBe(beforeUnique + 2);
+    await snapshot(host, "unique");
+    await host.clock.runFor(6000);
     await host.setViewportSize(sizes[3]);
     await host.getByRole("button", { name: "Pick tiles", exact: true }).click();
     await host
@@ -364,10 +451,12 @@ test("eight colors stripe together, ties fit and late spectators do not resize t
     ),
   );
   try {
+    await monitorAudio(host);
     await host.addInitScript(() => {
       Math.random = () => 0;
     });
     await host.goto("./");
+    await host.getByRole("button", { name: "Sound", exact: true }).click();
     await host.getByLabel("Your name").fill("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456");
     await host
       .getByRole("button", { name: "Create Game", exact: true })
@@ -394,16 +483,55 @@ test("eight colors stripe together, ties fit and late spectators do not resize t
       .click();
     await host.clock.runFor(3000);
     await fit(host, "eight-secret");
+    await host.setViewportSize(sizes[3]);
+    await host.getByRole("button", { name: "Pick tiles", exact: true }).click();
+    const picker = host.getByRole("dialog", {
+      name: "Clash board",
+      exact: true,
+    });
+    for (const cell of ["D8", "C8", "B8", "A8"])
+      await picker.getByRole("button", { name: cell, exact: true }).click();
+    await expect(picker.locator('[aria-pressed="true"]')).toHaveCount(3);
+    await picker
+      .getByRole("button", { name: "Close", exact: true })
+      .press("Escape");
+    await expect(
+      host.getByRole("button", { name: "Pick tiles", exact: true }),
+    ).toBeFocused();
+    await host.getByRole("button", { name: "Pick tiles", exact: true }).click();
+    await expect(picker.locator('[aria-pressed="true"]')).toHaveCount(3);
+    await expectStableScreenshot(
+      host,
+      ".app-panel[open]",
+      `glow-eight-picker-${process.platform}.png`,
+      { maxDiffPixels: 180 },
+    );
+    for (const button of await picker.locator("button").all()) {
+      const b = (await button.boundingBox())!;
+      expect(b.width).toBeGreaterThanOrEqual(44);
+      expect(b.height).toBeGreaterThanOrEqual(44);
+    }
+    await picker.getByRole("button", { name: "Clear", exact: true }).click();
+    await picker.getByRole("button", { name: "Close", exact: true }).click();
+    await host.setViewportSize(sizes[2]);
     for (let r = 1; r <= 5; r++) {
       for (const p of [host, ...clients]) await picks(p, [0, 1, 2]);
       await expect(game(host)).toHaveAttribute("data-phase", "settling");
+      const beforeClashSound = await audioStarts(host);
       await host.clock.runFor(1500);
+      await expect.poll(() => audioStarts(host)).toBe(beforeClashSound + 2);
       await expect(game(host)).toHaveAttribute("data-phase", "reveal");
       if (r === 1) {
         await expect(host.locator(".glow-game-card .glow-cell")).toHaveText(
           Array(32).fill(""),
         );
         await expect(host.locator(".glow-round-gain")).toHaveText("+0 points");
+        await expect(game(host).locator(".glow-pick-summary p")).toHaveText(
+          "All 3 picks clashed",
+        );
+        await expect(
+          game(clients[6]).locator(".glow-pick-summary li"),
+        ).toHaveCount(3);
         await snapshot(host, "eight-stripes");
         await fit(host, "eight-stripes");
         const backgrounds = await host
@@ -459,8 +587,20 @@ test("eight colors stripe together, ties fit and late spectators do not resize t
     await host.clock.runFor(3000);
     await expect(clients[6].locator(".glow-status")).toContainText("Watching");
     await expect(host.locator(".glow-game-card .glow-cell")).toHaveCount(28);
+    await expect(
+      game(clients[6]).getByRole("group", { name: "Your picks", exact: true }),
+    ).toHaveCount(0);
+    for (const player of [host, ...clients.slice(0, 6)])
+      await picks(player, [0, 1, 2]);
+    await expect(game(host)).toHaveAttribute("data-phase", "settling");
+    await host.clock.runFor(1500);
+    await expect(game(clients[6])).toHaveAttribute("data-phase", "reveal");
+    await expect(
+      game(clients[6]).getByRole("group", { name: "Your picks", exact: true }),
+    ).toHaveCount(0);
+    await expect(clients[6].locator(".glow-top")).toContainText("Watching");
     await returnHome(clients[6]);
-    await expect(game(host)).toHaveAttribute("data-phase", "choosing");
+    await expect(game(host)).toHaveAttribute("data-phase", "reveal");
     await host.evaluate(() => {
       Object.defineProperty(document, "hidden", {
         configurable: true,

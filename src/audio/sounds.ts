@@ -1,4 +1,7 @@
 export type Cue =
+  | "glow-claim"
+  | "glow-mixed"
+  | "glow-clash"
   | "ship-command"
   | "ship-wrong"
   | "ship-missed"
@@ -57,6 +60,19 @@ export type Cue =
   | "finish";
 type Note = [frequency: number, duration: number, delay?: number];
 const notes: Record<Cue, Note[]> = {
+  "glow-claim": [
+    [660, 0.08],
+    [990, 0.12, 0.08],
+  ],
+  "glow-mixed": [
+    [440, 0.08],
+    [550, 0.08],
+    [880, 0.12, 0.09],
+  ],
+  "glow-clash": [
+    [440, 0.12],
+    [550, 0.12],
+  ],
   "ship-command": [[700, 0.065]],
   "ship-wrong": [
     [310, 0.055],
@@ -308,7 +324,10 @@ export class Sounds {
         const quietSwitch =
           cue === "on" || cue === "off" || cue === "lights-switch";
         gain.gain.linearRampToValueAtTime(
-          cue.startsWith("ship-") || cue === "golf-knock" || cue === "golf-lock"
+          cue.startsWith("ship-") ||
+            cue.startsWith("glow-") ||
+            cue === "golf-knock" ||
+            cue === "golf-lock"
             ? 0.035
             : cue.startsWith("golf-")
               ? 0.055

@@ -1339,6 +1339,33 @@ players. Desktop Chromium touch emulation does not certify Safari/iPadOS behavio
 
 ## Glow Clash
 
+### Task 13 reveal feedback
+
+Inventory: host/client/spectator; private choosing and accepted locks; the private
+1.5-second settling beat; +0/+1/+2/+3 contributions; tile ownership and per-round
+standings; full eight-row compact picking; pause/recovery; single/shared final
+rankings, retained board, rematch and game switching.
+
+The focused browser journeys now cover the three-pick explanation, independent
+host/client totals, separate unique/mixed/all-clash audio, timer/panel/pageshow
+and pause deduplication, local seat 8, a late spectator's reveal without personal
+feedback, and the complete compact picker draft/clear/reopen/lock flow. Every
+state's normal/taller-font measurements include actual-child enclosure,
+viewport overflow and touch targets. The household phone/rotation and landscape
+iPad inventory supplements the existing small-phone/tablet/desktop matrix.
+Keep the 180-pixel screenshot budget, bundled font fixture and genuine Darwin/
+Linux pairs for the mixed phone/iPad, unique reward, all-clash and compact-picker
+states; preserve existing secret, settling and final-result coverage.
+
+Implementation verification is in progress. Complete local verification,
+exact-final Ubuntu verification, all changed platform image reviews and the
+persistent live pass must finish before automated acceptance. Physical follow-up:
+installed household iPhones and landscape iPads, safe areas, larger text,
+VoiceOver, bottom-row thumb reach, rotation, audio unlock/background recovery,
+and multi-device listening. Ask players to explain mixed gains and all-clash
+zero rounds without Help. Do not retune the existing reveal duration without
+family evidence.
+
 QA inventory:
 
 - Find Glow Clash through the paged library; Start requires 3–8 players. Verify

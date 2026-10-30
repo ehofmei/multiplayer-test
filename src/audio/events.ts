@@ -1,6 +1,7 @@
 import { bakeryScore } from "../games/bakery";
 import { changedLights } from "../game/lights-feedback";
 import { bakeryReward } from "../games/bakery-feedback";
+import { glowFrame, glowRevealed } from "../games/glow-feedback";
 import { glowTotal } from "../games/glow";
 import { golfContacts, golfMotionFrame } from "../games/golf-motion";
 import { golfTotal } from "../games/minigolf";
@@ -68,6 +69,7 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
       );
   }
   return {
+    glow: room.glow ? glowFrame(room.glow, me) : null,
     picnic: room.picnic
       ? {
           phase: room.picnic.resumePhase ?? room.picnic.phase,
@@ -307,6 +309,37 @@ export function soundEvents(
   const d = after.decision,
     oldDecision = before.decision;
   if (d && oldDecision) {
+    if (after.glow && before.glow) {
+      const g = after.glow,
+        old = before.glow;
+      if (
+        g.viewer !== old.viewer ||
+        ["paused", "reorient"].includes(g.phase) ||
+        ["paused", "reorient"].includes(old.phase) ||
+        g.round < old.round
+      )
+        return [];
+      if (g.phase === "finished" && old.phase !== "finished")
+        return [d.winner ? "win" : "finish"];
+      if (glowRevealed(old, g))
+        return [
+          g.unique === 3
+            ? "glow-claim"
+            : g.unique === 0
+              ? "glow-clash"
+              : "glow-mixed",
+        ];
+      if (
+        (g.phase === "choosing" || g.phase === "settling") &&
+        old.phase === "choosing" &&
+        g.round === old.round &&
+        g.participant &&
+        g.locked &&
+        !old.locked
+      )
+        return ["success"];
+      return [];
+    }
     if (d.phase === "finished" && oldDecision.phase !== "finished")
       return [d.winner ? "win" : "finish"];
     if (after.picnic && before.picnic) {
