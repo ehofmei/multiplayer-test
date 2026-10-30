@@ -651,6 +651,10 @@ test("eight golfers fit; late arrivals watch, background pauses, and participant
     await host.getByRole("button", { name: "Play Again", exact: true }).click();
     await host.clock.runFor(7000);
     await host.setViewportSize({ width: 1180, height: 820 });
+    await expect(host.locator(".golf-course")).toHaveAttribute(
+      "data-layout",
+      "landscape",
+    );
     for (const [index, p] of [host, ...clients].entries()) {
       const portrait =
         (await p.locator(".golf-course").getAttribute("data-layout")) ===

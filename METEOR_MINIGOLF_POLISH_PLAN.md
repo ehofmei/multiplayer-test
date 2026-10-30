@@ -1,7 +1,7 @@
 # Meteor Minigolf polish plan — Task 12
 
-Status: implementation in progress; final local/Linux verification and physical
-device acceptance remain pending.
+Status: implemented; physical-device acceptance remains. Automated acceptance
+uses complete local and exact-final Ubuntu verification, as specified below.
 This refines [Task 12 of the family polish plan](FAMILY_POLISH_PLAN.md#12-meteor-minigolf-refine-aiming-and-crowded-ball-readability).
 
 ## Outcome and boundaries

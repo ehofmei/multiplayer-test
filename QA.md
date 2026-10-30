@@ -1032,6 +1032,34 @@ with one selected cue per snapshot; reward/finish can interrupt contact voices.
 Check mute, gesture unlock, duplicate/stale/gapped frames, pause/resume and Safari
 background recovery. Multi-device balance still requires family listening.
 
+Task 12 automated coverage also includes `src/games/golf-presentation.test.ts`
+for rotation, scale-aware guides, stable clusters, ball 8, spectators, corner
+bounds and avoiding the local ball. Audio tests cover local routing, simultaneous
+cup/score/meteor priority, zero rewards, duplicate/stale/gapped frames and reward
+voice preemption. Paired visual states add eight identical launches, ball 8 and a
+dispersed eight-player landscape-iPad shot, explicitly waiting for the intended
+course orientation before choosing shots. Controls are checked for child
+enclosure as well as viewport fit. Household 402×874/440×956 and landscape
+1180×820/1080×810 bounds supplement the existing viewport/font checks.
+
+All new/changed Darwin and actual Ubuntu images were visually reviewed at their
+original dimensions with unchanged comparison budgets. Genuine Ubuntu images
+came from the [scoped Task 12 evidence run](https://github.com/ehofmei/multiplayer-test/actions/runs/41058739888)
+for `6b39217`; the ordinary final verification must independently pass without
+snapshot-update flags. Local acceptance uses Node 22.23.4.
+
+Persistent live QA paired the stable 4174 host/client origins, applying waiting
+updates from Home and checking matching builds. It exercised direct dragging,
+keyboard power endpoints/angle steps, zero-power blocking, private Ready locking,
+shared launch, pause/resume, numbered Standings, Help/Escape, sound toggling,
+a natural five-hole match, synchronized final totals and rematch. A final-build
+pass on `20261030T125002Z · local` re-paired and checked exact paused positions,
+local badges and accessible ball identities on both devices, plus screenshots
+and actual element bounds. These live checks used desktop Chromium; household
+phone/iPad dimensions and the compact dialog are automated screenshot/viewport
+coverage. Physical installed-PWA safe areas, rotation, thumb comfort and Safari
+multi-device listening remain pending.
+
 Regression coverage lives in `src/games/minigolf.test.ts`, the Golf session tests,
 and `tests/minigolf.spec.ts`. It covers fixed-step scheduling, cup speed thresholds,
 bounce components and separation, cooldowns, shared/exact-center meteor effects,

@@ -3,7 +3,7 @@
 This follow-up plan was created as the final deliverable of
 [FAMILY_PLAYTEST_PLAN.md](FAMILY_PLAYTEST_PLAN.md). **Implementation is in progress:**
 Tasks 1–2 and 4 are implemented; Task 3 is implemented with live QA pending;
-Tasks 5–8 are implemented with physical-device QA pending; Tasks 9–11 are implemented with physical-device QA pending; Tasks 12–15 remain planned. Read
+Tasks 5–8 are implemented with physical-device QA pending; Tasks 9–12 are implemented with physical-device QA pending; Tasks 13–15 remain planned. Read
 [AGENTS.md](AGENTS.md) before implementing. Each remaining numbered task can be
 assigned to a separate Codex session.
 
@@ -22,7 +22,7 @@ assigned to a separate Codex session.
 | 9    | Library and shared shell | Implemented; physical-device QA pending            |
 | 10   | Pong                     | Implemented; physical-device QA pending            |
 | 11   | Spaceship Panic          | Implemented; physical-device QA pending            |
-| 12   | Meteor Minigolf          | Planned                                            |
+| 12   | Meteor Minigolf          | Implemented; physical-device QA pending            |
 | 13   | Glow Clash               | Planned                                            |
 | 14   | Sumo Bumpers             | Planned                                            |
 | 15   | Co-op Breakout           | Planned                                            |
@@ -402,7 +402,8 @@ Ship styles, `src/audio/events.ts`, `tests/ship.spec.ts`.
 ### 12. Meteor Minigolf: refine aiming and crowded-ball readability
 
 Implementation plan: [Meteor Minigolf polish plan](METEOR_MINIGOLF_POLISH_PLAN.md).
-Status: planned; see the refined plan for scope, evidence and acceptance checks.
+Status: implemented; physical-device acceptance remains. See the refined plan for
+feedback decisions, evidence and verification gates.
 
 **Already strong:** course surfaces, impact motion/sounds, power feedback, cup
 celebrations and final rankings. Focus on playing comfort rather than another art pass.
