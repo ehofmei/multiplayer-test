@@ -1034,7 +1034,8 @@ background recovery. Multi-device balance still requires family listening.
 
 Task 12 automated coverage also includes `src/games/golf-presentation.test.ts`
 for rotation, scale-aware guides, stable clusters, ball 8, spectators, corner
-bounds and avoiding the local ball. Audio tests cover local routing, simultaneous
+bounds and avoiding the local ball. A seeded crowded-edge regression checks that
+blocked nearby slots fall back without dropping identities. Audio tests cover local routing, simultaneous
 cup/score/meteor priority, zero rewards, duplicate/stale/gapped frames and reward
 voice preemption. Paired visual states add eight identical launches, ball 8 and a
 dispersed eight-player landscape-iPad shot, explicitly waiting for the intended
@@ -1053,7 +1054,7 @@ updates from Home and checking matching builds. It exercised direct dragging,
 keyboard power endpoints/angle steps, zero-power blocking, private Ready locking,
 shared launch, pause/resume, numbered Standings, Help/Escape, sound toggling,
 a natural five-hole match, synchronized final totals and rematch. A final-build
-pass on `20261030T125002Z · local` re-paired and checked exact paused positions,
+pass on `20261030T130558Z · local` re-paired and checked exact paused positions,
 local badges and accessible ball identities on both devices, plus screenshots
 and actual element bounds. These live checks used desktop Chromium; household
 phone/iPad dimensions and the compact dialog are automated screenshot/viewport

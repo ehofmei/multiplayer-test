@@ -206,6 +206,12 @@ test("Golf pairs, drags and cancels, locks privately, pauses, scores five holes,
     await expect(
       host.getByRole("button", { name: "Ready", exact: true }),
     ).toBeEnabled();
+    // Rotation and scale are delivered together by ResizeObserver. Establish
+    // the real phone composition before comparing power-only edits.
+    await expect(host.locator(".golf-course")).toHaveAttribute(
+      "data-layout",
+      "portrait",
+    );
     const guide = host.locator(".golf-course .golf-guide-track");
     const suggestedEnd = await guide.getAttribute("x2");
     await host.getByRole("slider", { name: "Shot power" }).fill("0");
@@ -628,8 +634,13 @@ test("eight golfers fit; late arrivals watch, background pauses, and participant
     await expect(
       host.locator('.golf-ranking > li[data-winner="true"]'),
     ).toHaveCount(8);
+    // Settle the preceding End/resize before starting the opposite native
+    // scroll. Advancing the installed clock keeps the frozen match unchanged.
+    await host.clock.runFor(300);
     await host.locator(".golf-ranking-scroll").focus();
-    await host.keyboard.press("Home");
+    await expect(host.locator(".golf-ranking-scroll")).toBeFocused();
+    await host.locator(".golf-ranking-scroll").press("Home");
+    await host.clock.runFor(300);
     await expect
       .poll(() =>
         host.locator(".golf-ranking-scroll").evaluate((e) => e.scrollTop),

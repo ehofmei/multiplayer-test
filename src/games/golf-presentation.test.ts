@@ -101,6 +101,52 @@ describe("Golf screen presentation", () => {
       ).toBe(true);
     }
   });
+  it("retains every ball when a crowded edge blocks all nearby slots", () => {
+    const b = balls([
+      [791, 10],
+      [848, 10],
+      [929, 117],
+      [898, 10],
+      [990, 10],
+      [990, 46],
+      [808, 100],
+      [857, 139],
+    ]);
+    for (const portrait of [false, true]) {
+      const l = golfLabels(b, "8", portrait, 0.4);
+      expect(l.flatMap((a) => a.members).sort()).toEqual(b.map((a) => a.id));
+      separated(
+        l,
+        (portrait ? 700 : 1000) * 0.4,
+        (portrait ? 1000 : 700) * 0.4,
+      );
+    }
+  });
+  it("keeps all identities in seeded crowded and dispersed eight-ball arrangements", () => {
+    let seed = 48112;
+    const random = () =>
+      (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296;
+    for (let k = 0; k < 400; k++) {
+      const cx = 10 + random() * 980,
+        cy = 10 + random() * 680;
+      const b = balls(
+        Array.from({ length: 8 }, () => [
+          Math.max(10, Math.min(990, cx + (random() - 0.5) * 300)),
+          Math.max(10, Math.min(690, cy + (random() - 0.5) * 300)),
+        ]),
+      );
+      const portrait = k % 2 === 0,
+        scale = [0.22, 0.4, 0.8][k % 3];
+      const l = golfLabels(b, "8", portrait, scale);
+      expect(l.flatMap((a) => a.members).sort()).toEqual(b.map((a) => a.id));
+      expect(l.some((a) => a.local)).toBe(true);
+      separated(
+        l,
+        (portrait ? 700 : 1000) * scale,
+        (portrait ? 1000 : 700) * scale,
+      );
+    }
+  });
   it("removes captured and skipped balls without renumbering remaining identities", () => {
     const b = balls([
       [200, 350],

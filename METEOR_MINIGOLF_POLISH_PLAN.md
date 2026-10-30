@@ -33,7 +33,8 @@ separate rows are reserved for taller phones and wide control panels. The compac
 Aim dialog replaces its instruction paragraph with a graphical preview.
 
 Labels use deterministic screen-space overlap groups and bounded nearby slots,
-placing the local identity first. Crowded opponents share +N; their complete
+placing the local identity first. A bounded nearest-free grid handles packed
+edges when nearby slots are blocked. Crowded opponents share +N; their complete
 identities remain in the accessible course summary and numbered Standings.
 Physics, calibration and the wire protocol are unchanged. Golf audio chooses one
 relevant cue per snapshot, with personal rewards ahead of impacts; reward/finish

@@ -89,6 +89,28 @@ export function golfLabels(
   for (const { ball, members, text } of pending) {
     const w = ball.id === me ? 49 : text.length > 1 ? 28 : 18;
     let chosen: GolfLabel | undefined;
+    const available = (x: number, y: number) =>
+      !live.some((b) => {
+        const radius = (b.id === me ? 23 : 10) * s + 3;
+        return (
+          Math.abs(b.x - x) < w / 2 + radius && Math.abs(b.y - y) < 10 + radius
+        );
+      }) &&
+      !labels.some(
+        (l) =>
+          Math.abs(l.x - x) < (l.width + w) / 2 + 4 && Math.abs(l.y - y) < 24,
+      );
+    const placed = (x: number, y: number): GolfLabel => ({
+      id: ball.id,
+      text,
+      members,
+      local: ball.id === me,
+      x,
+      y,
+      width: w,
+      ballX: ball.x,
+      ballY: ball.y,
+    });
     // Stable nearby slots, then a bounded wider search for corner clusters.
     for (const distance of [23, 43, 63, 83]) {
       for (const [dx, dy] of [
@@ -107,38 +129,26 @@ export function golfLabels(
         );
         const y = Math.max(13, Math.min(height - 13, ball.y + dy * distance));
         // An edge-clamped badge must not sit over a ball, especially yours.
-        if (
-          live.some((b) => {
-            const radius = (b.id === me ? 23 : 10) * s + 3;
-            return (
-              Math.abs(b.x - x) < w / 2 + radius &&
-              Math.abs(b.y - y) < 10 + radius
-            );
-          })
-        )
-          continue;
-        if (
-          labels.some(
-            (l) =>
-              Math.abs(l.x - x) < (l.width + w) / 2 + 4 &&
-              Math.abs(l.y - y) < 24,
-          )
-        )
-          continue;
-        chosen = {
-          id: ball.id,
-          text,
-          members,
-          local: ball.id === me,
-          x,
-          y,
-          width: w,
-          ballX: ball.x,
-          ballY: ball.y,
-        };
+        if (!available(x, y)) continue;
+        chosen = placed(x, y);
         break;
       }
       if (chosen) break;
+    }
+    if (!chosen) {
+      // Rare packed edges can block every nearby slot. Search a bounded screen
+      // grid, nearest first, rather than silently losing an opponent group.
+      const grid: GolfPoint[] = [];
+      for (let y = 13; y <= height - 13; y += 24)
+        for (let x = w / 2 + 3; x <= width - w / 2 - 3; x += w + 4)
+          grid.push({ x, y });
+      grid.sort(
+        (a, b) =>
+          Math.hypot(a.x - ball.x, a.y - ball.y) -
+          Math.hypot(b.x - ball.x, b.y - ball.y),
+      );
+      const slot = grid.find((p) => available(p.x, p.y));
+      if (slot) chosen = placed(slot.x, slot.y);
     }
     if (chosen) labels.push(chosen);
   }
