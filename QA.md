@@ -382,6 +382,10 @@ with the family. These checks remain pending.
   centers the paddle through Help and asserts a known serve ball before phone/
   iPad screenshots. Four real players establish centered paddles and a fixed
   initial rally pose for landscape-iPad evidence. No game state is injected.
+  Centering moves the Help slider away from 50 and back: a fractional court
+  position can already display rounded 50, making an unchanged range fill a
+  no-op. A focused regression starts from 49.9% and retains exact paddle-pose
+  assertions, input flushing, screenshot dimensions and pixel budgets.
 - The four-player viewport/font matrix includes the household phones, phone
   rotations, primary/secondary landscape iPads and existing small-phone/tablet/
   desktop sizes, with actual-child enclosure as well as overflow, safe-area

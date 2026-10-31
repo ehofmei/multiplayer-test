@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
   chooseGame,
   expectScreenFits,
@@ -8,6 +8,16 @@ import {
 } from "./ui";
 import { expectStableScreenshot } from "./screenshot";
 import { audioStarts, monitorAudio } from "./audio";
+
+async function centerPaddle(page: Page) {
+  await showHelp(page);
+  const slider = page.getByRole("slider", { name: "Your paddle" });
+  // A fractional court position can already display rounded 50. Move away and
+  // back so the normal range control emits input even when 50 looks unchanged.
+  await slider.fill("49");
+  await slider.fill("50");
+  await closePanels(page);
+}
 
 // QA inventory: ready/setup; rotated real pairing; local pointer/keyboard/deck;
 // confirmed brick/paddle feedback; pause/resume; help/roster/palette; spectators;
@@ -65,9 +75,7 @@ test("Breakout last target stays clear in a deliberate solo serve", async ({
       await expect(page.getByLabel("Team progress")).toContainText(
         "4 shared lives",
       );
-      await showHelp(page);
-      await page.getByRole("slider", { name: "Your paddle" }).fill("50");
-      await closePanels(page);
+      await centerPaddle(page);
       await page.clock.runFor(100);
       prepared = true;
       break;
@@ -278,6 +286,24 @@ test("Breakout arcade screen fits and confirms paired hits, controls and pause",
       );
     }
     await client.setViewportSize({ width: 390, height: 844 });
+    const hostCourt = (await host.locator(".breakout-court").boundingBox())!;
+    await host.mouse.click(
+      hostCourt.x + hostCourt.width * 0.499,
+      hostCourt.y + hostCourt.height - 25,
+    );
+    await expect(host.getByTestId("arena-paddle-0")).not.toHaveAttribute(
+      "x",
+      "380",
+    );
+    await showHelp(host);
+    await expect(host.getByRole("slider", { name: "Your paddle" })).toHaveValue(
+      "50",
+    );
+    await centerPaddle(host);
+    await expect(host.getByTestId("arena-paddle-0")).toHaveAttribute(
+      "x",
+      "380",
+    );
     await client
       .getByRole("group", { name: "Breakout court", exact: true })
       .press("ArrowRight");
@@ -541,9 +567,7 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
         // WebRTC timing. Establish a deliberate pose through the real sliders
         // and confirm the remote paddle before comparing the entire screen.
         for (const player of [host, client]) {
-          await showHelp(player);
-          await player.getByRole("slider", { name: "Your paddle" }).fill("50");
-          await closePanels(player);
+          await centerPaddle(player);
         }
         // Cover the 33ms input queue and the next 50ms snapshot broadcast.
         // A 50ms advance can end after local input but before remote delivery.
@@ -600,9 +624,7 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
         // The ball is clear of both occupied paddles. Center them through normal
         // controls before the last brick can end play and disable those controls.
         for (const player of [host, client]) {
-          await showHelp(player);
-          await player.getByRole("slider", { name: "Your paddle" }).fill("50");
-          await closePanels(player);
+          await centerPaddle(player);
         }
         await advance(100);
         await expect(host.getByTestId("arena-paddle-1")).toHaveAttribute(
