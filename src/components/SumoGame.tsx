@@ -58,6 +58,7 @@ export function SumoGame({
   const me = game.bumpers.find((b) => b.id === session.me.id);
   const seat = game.bumpers.indexOf(me!);
   const active = connected && game.phase === "playing" && !!me?.alive;
+  const steering = active && Math.hypot(stick.x, stick.y) >= 0.1;
   const configure = game.phase === "ready" || game.phase === "finished";
   const send = (x: number, y: number) => {
     const length = Math.max(1, Math.hypot(x, y));
@@ -325,6 +326,14 @@ export function SumoGame({
                   alive={b.alive}
                   paint={paint}
                 />
+                {b.id === session.me.id && steering && (
+                  <g
+                    className="sumo-aim"
+                    transform={`rotate(${(Math.atan2(stick.y, stick.x) * 180) / Math.PI})`}
+                  >
+                    <path d="m40-10 12 10-12 10" />
+                  </g>
+                )}
               </g>
             ))}
             <SumoEffects game={game} connected={connected} />
@@ -446,6 +455,7 @@ export function SumoGame({
           className="sumo-stick"
           role="group"
           aria-label="Movement thumb pad"
+          aria-describedby={`${paint}-steering`}
           aria-disabled={!active}
           data-active={active}
           onPointerDown={(e) => {
@@ -507,7 +517,7 @@ export function SumoGame({
           </svg>
           <button
             aria-label="Dash"
-            aria-describedby={`${paint}-charge`}
+            aria-describedby={`${paint}-charge ${paint}-steering`}
             disabled={!active || !!me?.cooldown}
             onPointerDown={(e) => {
               dashTouch.current = e.pointerType === "touch";
@@ -528,9 +538,11 @@ export function SumoGame({
               ? `${(me.cooldown / SUMO_HZ).toFixed(1)}s recharge`
               : !active
                 ? "Move + dash"
-                : Math.hypot(stick.x, stick.y) >= 0.1
-                  ? "Ready!"
-                  : "Steer to dash"}
+                : "Dash ready"}
+          </span>
+          <span id={`${paint}-steering`} className="sr-only">
+            Steer first. The white arrow on your bumper shows your dash
+            direction. Release the thumb pad to brake.
           </span>
         </div>
       </div>
@@ -538,10 +550,11 @@ export function SumoGame({
         <GameHelp>
           <p className="muted sumo-help">
             Drag the thumb pad to move; release to brake. Move and tap Dash to
-            burst forward (2s recharge). The light around Dash fills as it
-            recharges. Keyboard: arrows / WASD + Space. Your center crossing the
-            shrinking edge means you’re out. Last survivor wins. The ring keeps
-            closing; after a minute the final squeeze speeds up.
+            burst forward (2s recharge). Your white arrow shows the dash
+            direction; the light around Dash fills until Dash ready appears.
+            Keyboard: arrows / WASD + Space. Your center crossing the shrinking
+            edge means you’re out. Last survivor wins. The ring keeps closing;
+            after a minute the final squeeze speeds up.
           </p>
           {roster}
         </GameHelp>

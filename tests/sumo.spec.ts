@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { chooseGame, expectScreenFits, join, showHelp } from "./ui";
 import { expectStableScreenshot } from "./screenshot";
 
@@ -6,6 +6,47 @@ import { expectStableScreenshot } from "./screenshot";
 // marker; pause/resume; help/roster focus return; reduced motion; short phone,
 // portrait tablet, landscape and desktop fit. The existing game.spec covers
 // physical-style two-thumb input, eight players, spectators and disconnects.
+async function expectSumoComposition(page: Page, wide: boolean) {
+  await expectScreenFits(page);
+  const bounds = await page.evaluate(() => {
+    const rect = (selector: string) =>
+      document.querySelector(selector)!.getBoundingClientRect().toJSON();
+    return {
+      card: rect(".sumo-game-card"),
+      stage: rect(".sumo-game-card > .game-surface"),
+      ring: rect(".sumo-court"),
+      controls: rect(".sumo-controls"),
+      pad: rect(".sumo-stick"),
+      dash: rect(".sumo-dash-control"),
+      button: rect(".sumo-dash-control button"),
+      footer: rect(".sumo-footer"),
+    };
+  });
+  for (const [parent, children] of [
+    [bounds.card, [bounds.stage, bounds.controls, bounds.footer]],
+    [bounds.stage, [bounds.ring]],
+    [bounds.controls, [bounds.pad, bounds.dash]],
+    [bounds.dash, [bounds.button]],
+  ] as const) {
+    for (const child of children) {
+      expect(child.x).toBeGreaterThanOrEqual(parent.x - 1);
+      expect(child.y).toBeGreaterThanOrEqual(parent.y - 1);
+      expect(child.right).toBeLessThanOrEqual(parent.right + 1);
+      expect(child.bottom).toBeLessThanOrEqual(parent.bottom + 1);
+    }
+  }
+  expect(bounds.controls.bottom).toBeLessThanOrEqual(bounds.footer.y);
+  expect(bounds.button.width).toBeGreaterThanOrEqual(90);
+  expect(bounds.button.height).toBeGreaterThanOrEqual(72);
+  expect(bounds.pad.width).toBeGreaterThanOrEqual(96);
+  expect(bounds.ring.width).toBeCloseTo(bounds.ring.height, 0);
+  if (wide) {
+    expect(bounds.pad.right).toBeLessThan(bounds.ring.x);
+    expect(bounds.dash.x).toBeGreaterThan(bounds.ring.right);
+    expect(bounds.ring.width).toBeGreaterThan(500);
+  }
+}
+
 test("Sumo artwork and arcade composition fit phones, tablets and desktop", async ({
   page: host,
   browser,
@@ -65,9 +106,19 @@ test("Sumo artwork and arcade composition fit phones, tablets and desktop", asyn
       ["tablet", { width: 768, height: 1024 }],
       ["desktop", { width: 1280, height: 900 }],
       ["landscape", { width: 844, height: 390 }],
+      ["iphone-pro", { width: 402, height: 874 }],
+      ["iphone-max", { width: 440, height: 956 }],
+      ["ipad-air", { width: 1180, height: 820 }],
+      ["ipad-secondary", { width: 1080, height: 810 }],
     ] as const) {
       await client.setViewportSize(viewport);
-      await expectScreenFits(client);
+      const wide = viewport.width >= 1000;
+      await expectSumoComposition(client, wide);
+      const tallerFont = await client.addStyleTag({
+        content: ":root { font-family: Arial, sans-serif; line-height: 1.3; }",
+      });
+      await expectSumoComposition(client, wide);
+      await tallerFont.evaluate((element) => element.remove());
       const ring = (await client.locator(".sumo-court").boundingBox())!;
       expect(ring.width).toBeGreaterThan(name === "landscape" ? 180 : 290);
       expect(ring.height).toBeCloseTo(ring.width, 0);
@@ -172,6 +223,14 @@ test("Sumo dash confirms a burst, fills recharge and keeps playing past sixty se
       .getByRole("button", { name: "Start Bumpers", exact: true })
       .click();
     await host.clock.runFor(3050);
+    await expect(host.locator(".sumo-dash-control")).toHaveAttribute(
+      "data-ready",
+      "true",
+    );
+    await expect(host.locator(".sumo-dash-control > span").first()).toHaveText(
+      "Dash ready",
+    );
+    await expect(host.locator(".sumo-aim")).toHaveCount(0);
     await host.locator(".sumo-court").focus();
     // A stationary dash neither fires nor consumes charge.
     await host.keyboard.press("Space");
@@ -180,6 +239,11 @@ test("Sumo dash confirms a burst, fills recharge and keeps playing past sixty se
       "0",
     );
     await host.keyboard.down("ArrowRight");
+    await expect(host.locator(".sumo-aim")).toHaveAttribute(
+      "transform",
+      "rotate(0)",
+    );
+    await expect(client.locator(".sumo-aim")).toHaveCount(0);
     await host.keyboard.press("Space");
     await host.clock.runFor(100);
     await expect(host.getByTestId("sumo-bumper-0")).toHaveAttribute(
@@ -209,6 +273,7 @@ test("Sumo dash confirms a burst, fills recharge and keeps playing past sixty se
     await expect(host.locator(".sumo-dash-trail")).toBeHidden();
     await host.emulateMedia({ reducedMotion: "no-preference" });
     await host.keyboard.up("ArrowRight");
+    await expect(host.locator(".sumo-aim")).toHaveCount(0);
     await host.clock.runFor(2050);
     await expect(
       host.getByRole("button", { name: "Dash", exact: true }),
@@ -217,6 +282,42 @@ test("Sumo dash confirms a burst, fills recharge and keeps playing past sixty se
       "stroke-dasharray",
       "1 1",
     );
+    await expect(host.locator(".sumo-dash-control")).toHaveAttribute(
+      "data-ready",
+      "true",
+    );
+    await expect(host.locator(".sumo-dash-control > span").first()).toHaveText(
+      "Dash ready",
+    );
+    await expectStableScreenshot(
+      host,
+      ".sumo-game-card",
+      `sumo-recharged-phone-${process.platform}.png`,
+      { maxDiffPixels: 160 },
+    );
+    await host.setViewportSize({ width: 1180, height: 820 });
+    await host.locator(".sumo-court").focus();
+    await host.keyboard.down("ArrowUp");
+    await expect(host.locator(".sumo-aim")).toHaveAttribute(
+      "transform",
+      "rotate(-90)",
+    );
+    await expect(
+      host.locator('.sumo-bot-art[data-local="true"] .sumo-local-marker'),
+    ).toBeHidden();
+    await expectSumoComposition(host, true);
+    await expectStableScreenshot(
+      host,
+      ".sumo-game-card",
+      `sumo-aim-ipad-${process.platform}.png`,
+      { maxDiffPixels: 160 },
+    );
+    await host.keyboard.up("ArrowUp");
+    await expect(host.locator(".sumo-aim")).toHaveCount(0);
+    await expect(
+      host.locator('.sumo-bot-art[data-local="true"] .sumo-local-marker'),
+    ).toBeVisible();
+    await host.setViewportSize({ width: 390, height: 844 });
     // Bring the other bumper inward using actual paired keyboard input.
     await client.locator(".sumo-court").focus();
     await client.keyboard.down("ArrowLeft");

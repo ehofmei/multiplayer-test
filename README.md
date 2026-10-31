@@ -336,6 +336,10 @@ rims, visors and ground shadows on a raised, tiled arena. A white halo and
 chevron mark your bumper; the illuminated cyan ring is the actual elimination
 boundary, and striped amber flooring marks the area outside it. The compact HUD,
 thumb deck and footer leave the square arena as much viewport space as possible.
+On wide landscape screens, including both household iPads, the movement pad sits
+to the left of the larger arena and Dash sits to the right. Portrait phones and
+short landscape screens retain their compact control deck. Ready and result
+screens reclaim the side-control space for the arena.
 Ready screens preview the connected players; countdown and pause messages appear
 on the arena. **Help** opens the instructions and full player roster,
 including names truncated in the HUD. The surrounding room controls share the
@@ -349,8 +353,17 @@ and the knob stays inside the pad even when your thumb moves beyond it. While
 moving, tap Dash with your other thumb for a stronger forward burst; it recharges
 in two seconds. A light around Dash fills during recharge; the remaining time
 stays visible. Confirmed bursts show a colored trail and an optional descending
-swoosh. Reduced motion hides trails while keeping recharge feedback. On a keyboard, focus the ring and hold arrows/WASD, with Space to
-dash. The second thumb works while movement remains held.
+swoosh. Reduced motion hides trails while keeping recharge feedback. On a keyboard,
+focus the ring and hold arrows/WASD, with Space to dash. The second thumb works
+while movement remains held.
+
+During steering, a small white arrow replaces your bumper's identification
+chevron and points in the requested dash direction; releasing restores the
+chevron. This local preview does not reveal another player's input or predict
+collisions. **Dash ready** and a brighter recharge outline show when the charge
+is available; steering is still required to dash. Thumb-pad dead zone, travel,
+release braking and physics retain their existing tuning pending real-device
+play. No additional dash-ready sound is emitted.
 
 Bumpers transfer momentum on contact. Your center crossing the bright ring edge
 eliminates you; eliminated bumpers stop colliding. The ring shrinks continuously

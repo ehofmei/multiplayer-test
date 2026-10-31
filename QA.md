@@ -673,6 +673,28 @@ remain useful; browser emulation does not establish device performance or latenc
 
 ## Sumo Bumpers
 
+Task 14 composition and feedback inventory:
+
+- Review the paired active-phone, household iPhone, landscape iPad, desktop,
+  steering-arrow, recharged-dash and eight-player iPad screenshots in the Sumo
+  specs. The simulation clock fixes deliberate states after normal pairing and
+  game controls; no incidental live pose is used for comparison.
+- At 1180×820, 1080×810 and wide desktop sizes, the thumb pad and Dash flank the
+  square arena. Check each control's actual bounds inside its container and
+  outside the arena; retain footer clearance, touch-target sizes, normal/taller
+  fonts and existing portrait/short-landscape checks. Ready and finished screens
+  reclaim the unused side space.
+- Steering shows a local-only white direction arrow in place of the fixed
+  identification chevron, avoiding overlapping markers. Release, pause and
+  backgrounding clear the arrow; spectators and remote players do not receive
+  this input preview. Recharged Dash has a readable label and brighter outline,
+  including reduced-motion play. Keyboard focus and stationary-dash rejection
+  remain covered alongside real two-thumb input.
+- Physical-device follow-up is deliberately deferred: installed household
+  iPhone/iPad safe areas, landscape grip/reach, release/cancel behavior and Safari
+  lifecycle checks still need real hands. Keep the current dead zone, travel,
+  braking and sound cues until that evidence justifies a tuning change.
+
 Feedback and results checks:
 
 - Dash two paired bumpers into each other. Both devices should show brief contact

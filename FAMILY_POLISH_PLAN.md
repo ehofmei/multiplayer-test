@@ -3,7 +3,7 @@
 This follow-up plan was created as the final deliverable of
 [FAMILY_PLAYTEST_PLAN.md](FAMILY_PLAYTEST_PLAN.md). **Implementation is in progress:**
 Tasks 1–2 and 4 are implemented; Task 3 is implemented with live QA pending;
-Tasks 5–8 are implemented with physical-device QA pending; Tasks 9–13 are implemented with physical-device QA pending; Tasks 14–15 remain planned. Read
+Tasks 5–8 are implemented with physical-device QA pending; Tasks 9–14 are implemented with physical-device QA pending; Task 15 remains planned. Read
 [AGENTS.md](AGENTS.md) before implementing. Each remaining numbered task can be
 assigned to a separate Codex session.
 
@@ -24,7 +24,7 @@ assigned to a separate Codex session.
 | 11   | Spaceship Panic          | Implemented; physical-device QA pending            |
 | 12   | Meteor Minigolf          | Implemented; physical-device QA pending            |
 | 13   | Glow Clash               | Implemented; physical-device QA pending            |
-| 14   | Sumo Bumpers             | Planned                                            |
+| 14   | Sumo Bumpers             | Implemented; physical-device QA pending            |
 | 15   | Co-op Breakout           | Planned                                            |
 
 For completed tasks, [README.md](README.md) describes the implemented behavior,
@@ -450,6 +450,13 @@ motion remain correct. Preserve match lengths and the existing final celebration
 `tests/glow.spec.ts`.
 
 ### 14. Sumo Bumpers: tune the new controls on actual devices
+
+Implemented presentation: wide landscape play places the larger arena between
+the movement pad and Dash, while portrait phones retain the control deck. Local
+steering previews its direction with a white arrow; recharge completion shows
+Dash ready. Thumb-pad tuning and any additional ready sound are deferred until
+physical-device play provides evidence. See README for behavior and QA for the
+screenshot inventory and remaining household checks.
 
 **Already strong:** bumper artwork, collision/ring-out effects, dash trail/sound,
 thumb pad, arena pressure and winner/draw treatment. The sampled wide desktop

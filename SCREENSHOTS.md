@@ -34,9 +34,14 @@ Illustrated cards, roster guidance and selected-seat spectators · Linux baselin
 
 ## Sumo Bumpers
 
-Arena · Linux baseline.
+Landscape iPad with eight bumpers and controls beside the arena · Linux baseline.
 
-![Sumo Bumpers arena](tests/sumo-integration.spec.ts-snapshots/sumo-court-linux.png)
+![Sumo Bumpers on a landscape iPad](tests/sumo-integration.spec.ts-snapshots/sumo-eight-ipad-linux.png)
+
+[Portrait phone](tests/sumo.spec.ts-snapshots/sumo-active-iphone-pro-linux.png) ·
+[Steering direction](tests/sumo.spec.ts-snapshots/sumo-aim-ipad-linux.png) ·
+[Recharged dash](tests/sumo.spec.ts-snapshots/sumo-recharged-phone-linux.png) ·
+[Desktop](tests/sumo.spec.ts-snapshots/sumo-active-desktop-linux.png).
 
 ## Light-cycle Arena
 

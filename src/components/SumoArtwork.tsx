@@ -187,6 +187,7 @@ export function SumoBumperArtwork({
             strokeDasharray="6 5"
           />
           <path
+            className="sumo-local-marker"
             d="m-9-58 9 10 9-10"
             fill="none"
             stroke="#fff"

@@ -219,6 +219,7 @@ test("Sumo Bumpers pairs, moves by thumb pad and keyboard, dashes, pauses, finis
     // Pairing during live play pauses; a late arrival watches this round.
     await join(host, late, "Sam");
     await expect(late.locator(".sumo-feedback")).toContainText("watching");
+    await expect(late.locator(".sumo-aim")).toHaveCount(0);
     await expect(
       late.getByRole("button", { name: "Dash", exact: true }),
     ).toBeDisabled();
@@ -326,9 +327,25 @@ test("eight Sumo bumpers fit narrow phones, clear movement on background and han
       fullPage: true,
     });
     await host.clock.runFor(3050);
+    await client.setViewportSize({ width: 1180, height: 820 });
+    await expect(client.locator(".sumo-status")).toContainText(
+      "8 bumpers remain",
+    );
+    await expectScreenFits(client);
+    await expectStableScreenshot(
+      client,
+      ".sumo-game-card",
+      `sumo-eight-ipad-${process.platform}.png`,
+      { maxDiffPixels: 160 },
+    );
+    await client.setViewportSize({ width: 320, height: 700 });
     await host.locator(".sumo-court").focus();
     await host.keyboard.down("w");
     await host.clock.runFor(100);
+    await expect(host.locator(".sumo-aim")).toHaveAttribute(
+      "transform",
+      "rotate(-90)",
+    );
     await host.evaluate(() => {
       Object.defineProperty(document, "hidden", {
         configurable: true,
@@ -338,6 +355,7 @@ test("eight Sumo bumpers fit narrow phones, clear movement on background and han
     });
     await host.keyboard.up("w");
     await expect(client.locator(".sumo-status")).toHaveText("Ring paused");
+    await expect(host.locator(".sumo-aim")).toHaveCount(0);
     await expect(host.getByTestId("sumo-bumper-0")).toHaveAttribute(
       "data-dy",
       "0",

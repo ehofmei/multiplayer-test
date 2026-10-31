@@ -6706,6 +6706,101 @@ input.golf-power-input {
 .sumo-game-card .sumo-stick-knob {
   transition: none;
 }
+.sumo-aim {
+  pointer-events: none;
+}
+.sumo-bot-art:has(+ .sumo-aim) .sumo-local-marker {
+  visibility: hidden;
+}
+.sumo-aim path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 2px #081325);
+}
+.sumo-dash-control[data-ready="true"] button {
+  box-shadow:
+    0 5px 0 #8f513e,
+    0 0 12px #91efdb60;
+}
+.sumo-game-card .sumo-dash-control[data-ready="true"] > span {
+  color: #a7f3e0;
+  font-weight: 750;
+}
+.sumo-game-card .sumo-dash-control .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+/* On wide screens both thumbs flank the ring instead of taking a row from it.
+   The control container encloses its children; its empty center passes input
+   through to the focusable arena. Portrait and short landscape keep their deck. */
+@media (min-width: 1000px) and (min-height: 551px) and (orientation: landscape) {
+  .app-shell .games-card.sumo-game-card:not(.game-library) {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr) 132px;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    column-gap: 12px;
+  }
+  .sumo-heading,
+  .sumo-hud,
+  .sumo-footer {
+    grid-column: 1 / -1;
+  }
+  .sumo-heading {
+    grid-row: 1;
+  }
+  .sumo-hud {
+    grid-row: 2;
+  }
+  .sumo-footer {
+    grid-row: 4;
+  }
+  .app-shell .sumo-game-card > .game-surface {
+    grid-column: 2;
+    grid-row: 3;
+    min-height: 0;
+  }
+  .app-shell .sumo-game-card .sumo-controls {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr) 132px;
+    column-gap: 12px;
+    align-items: center;
+    justify-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    pointer-events: none;
+  }
+  .sumo-controls > .sumo-stick {
+    grid-column: 1;
+    pointer-events: auto;
+  }
+  .sumo-controls > .sumo-dash-control {
+    grid-column: 3;
+    pointer-events: auto;
+  }
+  .app-shell
+    .sumo-game-card:is([data-phase="ready"], [data-phase="finished"])
+    > .game-surface {
+    grid-column: 1 / -1;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .sumo-dash-trail {
     display: none;
