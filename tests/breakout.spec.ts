@@ -314,6 +314,9 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
       const level = frame.level;
       if (level > 1 && !captured.has(level)) {
         captured.add(level);
+        // The local core can change between 50ms broadcasts. With the host
+        // clock frozen, wall-clock polling cannot deliver that next snapshot.
+        await advance(100);
         await expect(client.locator(".breakout-level small")).toContainText(
           `0${level} / 03`,
         );

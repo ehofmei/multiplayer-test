@@ -1743,6 +1743,12 @@ clock advancement used 79.6/84.9 seconds, DOM reads 8.1/8.2 seconds, input deliv
 those phase totals. Simulation still dominates, so this is a modest optimization,
 not a demonstrated dramatic speedup. Do not replace it with injected game state.
 
+Breakout core transitions can render locally between the host's 50ms snapshot
+broadcasts. The victory fixture advances the controlled host clock through the
+next broadcast before requiring the client to show the new core; wall-clock
+polling alone cannot deliver it while that clock is paused. Core, paddle, serve
+pose and screenshot assertions retain their existing deadlines and budgets.
+
 Game integration flows are split from `game.spec.ts` into explicit per-game files
 for selection and file-level scheduling. All 64 tests remain. Seventeen existing
 baseline files moved with their tests and retain identical image bytes.
