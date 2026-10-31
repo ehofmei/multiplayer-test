@@ -695,6 +695,15 @@ Task 14 composition and feedback inventory:
   lifecycle checks still need real hands. Keep the current dead zone, travel,
   braking and sound cues until that evidence justifies a tuning change.
 
+Persistent live-browser QA at the stable 4174 host/client origins applied waiting
+updates from Home and confirmed matching builds before manual text pairing.
+Normal controls covered start, stationary-dash rejection, thumb-pad movement and
+release, synchronized pause/resume, updated Help and Escape focus return. The
+wide-screen screenshot and actual control bounds were inspected; deterministic
+screenshots supply the household phone/iPad, eight-player and steering poses.
+This complements the automated touch coverage and does not certify physical iOS
+comfort or installed-PWA behavior.
+
 Feedback and results checks:
 
 - Dash two paired bumpers into each other. Both devices should show brief contact
