@@ -6,6 +6,11 @@ import { brickBounds, BREAKOUT_BRICKS } from "../games/breakout";
 import {
   breakoutContacts,
   breakoutPaddleContact,
+  breakoutFrame,
+  breakoutObservation,
+  breakoutProgress,
+  breakoutTransition,
+  type BreakoutFrame,
   type BrickContact,
 } from "../games/breakout-feedback";
 import { sideNames, viewPosition } from "../games/arena";
@@ -37,12 +42,17 @@ export function BreakoutGame({
   const tail = useRef<SVGLineElement>(null);
   const court = useRef<HTMLDivElement>(null);
   const drawn = useRef({ x: game.ball.x, y: game.ball.y });
-  const previous = useRef<PongState | null>(null);
+  const previous = useRef<BreakoutFrame | null>(null);
   const effectTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
   const [effects, setEffects] = useState<BrickContact[]>([]);
   const [paddleHit, setPaddleHit] = useState<number | null>(null);
+  const [transition, setTransition] = useState<"loss" | "core" | null>(null);
+  const [lostPips, setLostPips] = useState<number[]>([]);
+  const lossTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   const side = game.seats.indexOf(session.me.id);
   const controllable =
     connected && side >= 0 && ["playing", "serve"].includes(game.phase);
@@ -57,7 +67,7 @@ export function BreakoutGame({
     players.find((p) => p.id === id)?.name ?? "Waiting";
   const color = (i: number) =>
     paddleHex(players.find((p) => p.id === game.seats[i])?.color, i);
-  const remaining = team.bricks.filter(Boolean).length;
+  const { remaining, hits } = breakoutProgress(team.bricks);
   const cleared =
     (team.level - 1) * BREAKOUT_BRICKS + BREAKOUT_BRICKS - remaining;
   const gameStatus = !connected
@@ -72,9 +82,13 @@ export function BreakoutGame({
           ? session.role === "host"
             ? seatGuidance(players, seats, 1, session.me.id)
             : "The host picks 1–4 players; others watch."
-          : game.phase === "serve"
-            ? `Level ${team.level} · Get ready…`
-            : "Clear the core. Save the next rebound.";
+          : transition === "loss"
+            ? `Team life lost · ${team.lives} left`
+            : transition === "core"
+              ? `Core ${team.level - 1} cleared · Get ready…`
+              : game.phase === "serve"
+                ? `Core ${team.level} of 3 · Get ready…`
+                : "Clear the core. Save the next rebound.";
   const status =
     connected && session.role === "host" && game.phase === "finished" && !valid
       ? `${gameStatus} · ${seatGuidance(players, seats, 1, session.me.id)}`
@@ -90,13 +104,61 @@ export function BreakoutGame({
     if (game.phase === "serve") court.current?.focus({ preventScroll: true });
   }, [game.phase]);
   useEffect(() => {
-    const contacts = breakoutContacts(previous.current, game);
-    const hit = breakoutPaddleContact(previous.current, game);
-    previous.current = game;
-    if (!connected || game.phase === "paused" || game.phase === "ready") {
+    const reset = () => {
+      previous.current = null;
+      clearTimeout(effectTimer.current);
+      clearTimeout(lossTimer.current);
+      setEffects([]);
+      setPaddleHit(null);
+      setTransition(null);
+      setLostPips([]);
+    };
+    document.addEventListener("visibilitychange", reset);
+    window.addEventListener("pageshow", reset);
+    reset();
+    return () => {
+      clearTimeout(effectTimer.current);
+      clearTimeout(lossTimer.current);
+      document.removeEventListener("visibilitychange", reset);
+      window.removeEventListener("pageshow", reset);
+    };
+  }, [connected, session]);
+  useEffect(() => {
+    if (!connected || document.hidden) {
+      previous.current = null;
+      return;
+    }
+    const before = previous.current;
+    const next = breakoutObservation(before, breakoutFrame(game));
+    if (next === before) return;
+    const event = breakoutTransition(before, next);
+    const contacts = breakoutContacts(before, next);
+    const hit = breakoutPaddleContact(before, next);
+    previous.current = next;
+    if (game.phase !== "playing" || event) {
       clearTimeout(effectTimer.current);
       setEffects([]);
       setPaddleHit(null);
+    }
+    if (game.phase !== "serve") {
+      clearTimeout(lossTimer.current);
+      setTransition(null);
+      setLostPips([]);
+    }
+    if (event === "loss" && game.phase === "serve") {
+      setTransition("loss");
+      setLostPips(
+        Array.from(
+          { length: before!.breakout!.lives - team.lives },
+          (_, i) => team.lives + i,
+        ),
+      );
+      clearTimeout(lossTimer.current);
+      lossTimer.current = setTimeout(() => {
+        setLostPips([]);
+      }, 400);
+    } else if (event === "core" && game.phase === "serve") {
+      setTransition("core");
     } else if (contacts.length || hit !== null) {
       clearTimeout(effectTimer.current);
       setEffects(contacts);
@@ -107,7 +169,6 @@ export function BreakoutGame({
       }, 280);
     }
   }, [game, connected]);
-  useEffect(() => () => clearTimeout(effectTimer.current), []);
   useEffect(() => {
     const from = drawn.current;
     const start = performance.now();
@@ -176,17 +237,26 @@ export function BreakoutGame({
           <small>CORE {String(team.level).padStart(2, "0")} / 03</small>
           <strong>{levelNames[team.level - 1]}</strong>
         </div>
-        <div className="breakout-health">
+        <div className="breakout-health" data-loss={lostPips.length > 0}>
           <span className="breakout-life-dots" aria-hidden="true">
             {Array.from({ length: 5 }, (_, i) => (
-              <i key={i} data-filled={i < team.lives} />
+              <i
+                key={i}
+                data-filled={i < team.lives}
+                data-lost={lostPips.includes(i)}
+              />
             ))}
           </span>
-          <span>{team.lives} shared lives</span>
+          <span>
+            {team.lives} shared {team.lives === 1 ? "life" : "lives"}
+          </span>
         </div>
-        <div className="breakout-brick-count">
+        <div
+          className="breakout-brick-count"
+          aria-label={`${remaining} ${remaining === 1 ? "brick" : "bricks"} left, ${hits} ${hits === 1 ? "hit" : "hits"} remaining`}
+        >
           <strong>{remaining}</strong>
-          <small>bricks left</small>
+          <small>{remaining === 1 ? "brick" : "bricks"} left</small>
         </div>
       </div>
       <p
@@ -362,6 +432,7 @@ export function BreakoutGame({
                     data-hp={hp}
                     className="breakout-brick"
                     data-hit={effects.some((e) => e.index === i)}
+                    data-last={remaining <= 5}
                   >
                     <rect
                       x={x}

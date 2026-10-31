@@ -1,4 +1,4 @@
-import { join, chooseGame, returnHome } from "./ui";
+import { join, chooseGame, returnHome, expectScreenFits } from "./ui";
 import { expect, test } from "@playwright/test";
 import { expectStableScreenshot } from "./screenshot";
 
@@ -171,9 +171,12 @@ test("four Breakout teammates fit narrow phones with long names and taller fonts
     for (const [i, client] of clients.entries())
       await join(host, client, ["Emma", "Sam", "Lee"][i]);
     await chooseGame(host, "Co-op Breakout");
+    await host.clock.install();
+    await host.clock.pauseAt(new Date(Date.now() + 1000));
     await host
       .getByRole("button", { name: "Start Co-op Breakout", exact: true })
       .click();
+    await host.clock.runFor(1150);
     for (const [i, client] of clients.entries()) {
       await expect(client.locator(".arena-court svg > g")).toHaveAttribute(
         "transform",
@@ -183,9 +186,114 @@ test("four Breakout teammates fit narrow phones with long names and taller fonts
         client.getByLabel("Your paddle", { exact: true }),
       ).toBeEnabled();
     }
+    await host.setViewportSize({ width: 1180, height: 820 });
+    await host.emulateMedia({ reducedMotion: "reduce" });
+    for (const player of [host, ...clients]) {
+      await expect(player.locator(".breakout-game-card")).toHaveAttribute(
+        "data-phase",
+        "playing",
+      );
+      await expect(player.getByTestId("arena-paddle-0")).toHaveAttribute(
+        "x",
+        "380",
+      );
+      await expect(player.getByTestId("arena-paddle-1")).toHaveAttribute(
+        "y",
+        "380",
+      );
+      await expect(player.getByTestId("arena-paddle-2")).toHaveAttribute(
+        "x",
+        "380",
+      );
+      await expect(player.getByTestId("arena-paddle-3")).toHaveAttribute(
+        "y",
+        "380",
+      );
+    }
+    await expectStableScreenshot(
+      host,
+      ".breakout-game-card",
+      `breakout-four-ipad-${process.platform}.png`,
+      { maxDiffPixels: 160 },
+    );
     await host
       .getByRole("button", { name: "Pause Breakout", exact: true })
       .click();
+    for (const [width, height] of [
+      [402, 874],
+      [440, 956],
+      [874, 402],
+      [956, 440],
+      [1180, 820],
+      [1080, 810],
+      [390, 844],
+      [320, 700],
+      [320, 568],
+      [844, 390],
+      [768, 1024],
+      [1280, 720],
+    ]) {
+      await host.setViewportSize({ width, height });
+      for (const taller of [false, true]) {
+        const style = taller
+          ? await host.addStyleTag({
+              content:
+                ":root{font-family:Arial,sans-serif;line-height:1.3;--safe-area-bottom:20px}",
+            })
+          : null;
+        await expectScreenFits(host);
+        const measures = await host.evaluate(() => {
+          const rect = (e: Element) => {
+            const r = e.getBoundingClientRect();
+            return {
+              left: r.left,
+              top: r.top,
+              right: r.right,
+              bottom: r.bottom,
+              width: r.width,
+              height: r.height,
+            };
+          };
+          return [
+            ".breakout-game-card",
+            ".breakout-hud",
+            ".breakout-level",
+            ".breakout-health",
+            ".breakout-footer",
+            ".breakout-message",
+          ].map((selector) => {
+            const parent = document.querySelector(selector)!;
+            return {
+              selector,
+              parent: rect(parent),
+              children: [...parent.children].map(rect),
+            };
+          });
+        });
+        for (const { selector, parent, children } of measures) {
+          expect(parent.left, selector).toBeGreaterThanOrEqual(0);
+          expect(parent.right, selector).toBeLessThanOrEqual(width);
+          expect(parent.bottom, selector).toBeLessThanOrEqual(height);
+          for (const child of children) {
+            expect(child.left, selector).toBeGreaterThanOrEqual(
+              parent.left - 1,
+            );
+            expect(child.right, selector).toBeLessThanOrEqual(parent.right + 1);
+            expect(child.top, selector).toBeGreaterThanOrEqual(parent.top - 1);
+            expect(child.bottom, selector).toBeLessThanOrEqual(
+              parent.bottom + 1,
+            );
+          }
+        }
+        for (const button of await host
+          .locator(".breakout-footer button")
+          .all())
+          expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(
+            44,
+          );
+        await style?.evaluate((e) => e.remove());
+      }
+    }
     await host.setViewportSize({ width: 320, height: 700 });
     await host.addStyleTag({
       content: ":root {font-family:Arial,sans-serif;line-height:1.3}",

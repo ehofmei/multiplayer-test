@@ -7,11 +7,218 @@ import {
   closePanels,
 } from "./ui";
 import { expectStableScreenshot } from "./screenshot";
+import { audioStarts, monitorAudio } from "./audio";
 
 // QA inventory: ready/setup; rotated real pairing; local pointer/keyboard/deck;
 // confirmed brick/paddle feedback; pause/resume; help/roster/palette; spectators;
 // three levels and persistent results/rematch; phones/tablet/desktop/landscape;
 // taller fonts, long names, reduced motion and offline reload.
+test("Breakout last target stays clear in a deliberate solo serve", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 402, height: 874 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("./");
+  await page.getByRole("button", { name: "Create Game", exact: true }).click();
+  await chooseGame(page, "Co-op Breakout");
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
+  await page
+    .getByRole("button", { name: "Start Co-op Breakout", exact: true })
+    .click();
+  await page.clock.runFor(1150);
+  const court = (await page.locator(".breakout-court").boundingBox())!;
+  let prepared = false;
+  for (let tick = 0; tick < 1800; tick++) {
+    const visible = await page.locator(".breakout-game-card").evaluate((e) => {
+      const ball = e.querySelector(".breakout-court svg circle:last-child")!;
+      return {
+        remaining: e.querySelectorAll(".breakout-brick").length,
+        level: e.querySelector(".breakout-level small")!.textContent!,
+        phase: e.getAttribute("data-phase"),
+        x: Number(ball.getAttribute("cx")) / 1000,
+        y: Number(ball.getAttribute("cy")) / 1000,
+        vx: Number(ball.getAttribute("data-vx")),
+        vy: Number(ball.getAttribute("data-vy")),
+      };
+    });
+    if (!visible.level.includes("01 / 03")) break;
+    const incoming = visible.vy > 0 && visible.y > 0.69;
+    const arrival = visible.x + (visible.vx * (0.935 - visible.y)) / visible.vy;
+    if (visible.remaining === 1 && incoming) {
+      // Deliberately miss in the clear outer lane, then capture the known serve
+      // pose, rather than a timing-dependent ball position from an active rally.
+      await page.mouse.click(
+        court.x + (arrival > 0.5 ? 0.12 : 0.88) * court.width,
+        court.y + court.height - 25,
+      );
+      for (let step = 0; step < 80; step++) {
+        await page.clock.runFor(20);
+        if (
+          (await page
+            .locator(".breakout-game-card")
+            .getAttribute("data-phase")) === "serve"
+        )
+          break;
+      }
+      await expect(page.getByLabel("Team progress")).toContainText(
+        "4 shared lives",
+      );
+      await showHelp(page);
+      await page.getByRole("slider", { name: "Your paddle" }).fill("50");
+      await closePanels(page);
+      await page.clock.runFor(100);
+      prepared = true;
+      break;
+    }
+    if (incoming) {
+      const target = Math.max(
+        0.12,
+        Math.min(0.88, arrival + Math.sin(tick / 12) * 0.05),
+      );
+      await page.mouse.click(
+        court.x + target * court.width,
+        court.y + court.height - 25,
+      );
+    }
+    await page.clock.runFor(200);
+  }
+  expect(prepared).toBe(true);
+  await expect(page.locator(".breakout-game-card")).toHaveAttribute(
+    "data-phase",
+    "serve",
+  );
+  await expect(page.locator(".breakout-brick[data-last=true]")).toHaveCount(1);
+  await expect(page.getByTestId("brick-13")).toHaveAttribute("data-hp", "1");
+  await expect(page.locator(".breakout-brick-count")).toHaveAttribute(
+    "aria-label",
+    "1 brick left, 1 hit remaining",
+  );
+  await expect(page.getByTestId("arena-paddle-0")).toHaveAttribute("x", "380");
+  await expect(
+    page.locator(".breakout-court svg circle").last(),
+  ).toHaveAttribute("cx", "500");
+  await expect(
+    page.locator(".breakout-court svg circle").last(),
+  ).toHaveAttribute("cy", "800");
+  for (const [name, viewport] of [
+    ["phone", { width: 402, height: 874 }],
+    ["ipad", { width: 1180, height: 820 }],
+  ] as const) {
+    await page.setViewportSize(viewport);
+    await expectScreenFits(page);
+    await expectStableScreenshot(
+      page,
+      ".breakout-game-card",
+      `breakout-last-target-${name}-${process.platform}.png`,
+      { maxDiffPixels: 160 },
+    );
+  }
+});
+
+test("Breakout shares one life-loss cue, resets the serve and recovers quietly", async ({
+  page: host,
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
+  try {
+    const client = await context.newPage();
+    await monitorAudio(host);
+    await host.setViewportSize({ width: 390, height: 844 });
+    await host.emulateMedia({ reducedMotion: "reduce" });
+    await host.goto("./");
+    await host
+      .getByRole("button", { name: "Create Game", exact: true })
+      .click();
+    await host.getByRole("button", { name: "Sound", exact: true }).click();
+    await join(host, client, "Emma");
+    await chooseGame(host, "Co-op Breakout");
+    await host.clock.install();
+    await host.clock.pauseAt(new Date(Date.now() + 1000));
+    await host
+      .getByRole("button", { name: "Start Co-op Breakout", exact: true })
+      .click();
+    await host.clock.runFor(1150);
+    for (let step = 0; step < 1200; step++) {
+      if (
+        (await host.locator(".breakout-health").getAttribute("data-loss")) ===
+        "true"
+      )
+        break;
+      await host.clock.runFor(50);
+    }
+    await expect(host.locator(".breakout-status")).toHaveText(
+      "Team life lost · 4 left",
+    );
+    await host.clock.runFor(50); // Deliver the reset through a real host broadcast.
+    for (const player of [host, client]) {
+      await expect(player.getByLabel("Team progress")).toContainText(
+        "4 shared lives",
+      );
+      await expect(
+        player.locator(".breakout-life-dots i[data-lost=true]"),
+      ).toHaveCount(1);
+      await expect(player.locator(".breakout-game-card")).toHaveAttribute(
+        "data-phase",
+        "serve",
+      );
+      await expect(player.locator(".breakout-break")).toHaveCount(0);
+      await expect(
+        player.locator(".breakout-court svg circle").last(),
+      ).toHaveAttribute("cx", "800");
+      await expect(
+        player.locator(".breakout-court svg circle").last(),
+      ).toHaveAttribute("cy", "500");
+    }
+    await expectStableScreenshot(
+      host,
+      ".breakout-game-card",
+      `breakout-life-loss-phone-${process.platform}.png`,
+      { maxDiffPixels: 160 },
+    );
+    const heard = await audioStarts(host);
+    await host.clock.runFor(100);
+    expect(await audioStarts(host)).toBe(heard);
+    await host.clock.runFor(350);
+    await expect(host.locator(".breakout-health")).toHaveAttribute(
+      "data-loss",
+      "false",
+    );
+    await host
+      .getByRole("button", { name: "Pause Breakout", exact: true })
+      .click();
+    await host
+      .getByRole("button", { name: "Resume Breakout", exact: true })
+      .click();
+    await expect(host.locator(".breakout-status")).toHaveText(
+      "Core 1 of 3 · Get ready…",
+    );
+    await expect(
+      host.locator(".breakout-life-dots i[data-lost=true]"),
+    ).toHaveCount(0);
+    const resumed = await audioStarts(host);
+    await host.evaluate(() => window.dispatchEvent(new Event("pageshow")));
+    await host.clock.runFor(100);
+    expect(await audioStarts(host)).toBe(resumed);
+    await expect(host.locator(".breakout-status")).not.toContainText(
+      "life lost",
+    );
+    await host.clock.runFor(1100);
+    await expect(host.locator(".breakout-game-card")).toHaveAttribute(
+      "data-phase",
+      "playing",
+    );
+    await expect(
+      host.locator(".breakout-life-dots i[data-lost=true]"),
+    ).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
+});
+
 test("Breakout arcade screen fits and confirms paired hits, controls and pause", async ({
   page: host,
   browser,
@@ -280,6 +487,7 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
     ];
     const bounds = await Promise.all(courts.map((c) => c.boundingBox()));
     const captured = new Set<number>();
+    const sparse = new Set<number>();
     const targets = [0.5, 0.5];
     // Normal pointer/touch input follows the incoming ball and varies paddle contact.
     // Predict only in the clear outer lanes, where no brick can change its path.
@@ -312,6 +520,15 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
         }),
       );
       const level = frame.level;
+      if (frame.remaining > 0 && frame.remaining <= 5) {
+        sparse.add(frame.remaining);
+        await expect(
+          host.locator(".breakout-brick[data-last=true]"),
+        ).toHaveCount(frame.remaining);
+        await expect(host.locator(".breakout-brick-count small")).toHaveText(
+          frame.remaining === 1 ? "brick left" : "bricks left",
+        );
+      }
       if (level > 1 && !captured.has(level)) {
         captured.add(level);
         // The local core can change between 50ms broadcasts. With the host
@@ -435,6 +652,7 @@ test("paired Breakout teammates clear three cores and keep a shared victory", as
       "data-result",
       "win",
     );
+    expect([...sparse]).toEqual(expect.arrayContaining([5, 3, 1]));
     await expect(client.locator(".breakout-overlay")).toHaveAttribute(
       "data-result",
       "win",

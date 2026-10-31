@@ -265,6 +265,9 @@ export class Sounds {
   private disposed = false;
   private voices = new Set<OscillatorNode>();
   private golfVoices = new Set<OscillatorNode>();
+  private breakoutVoices = new Set<OscillatorNode>();
+  private breakoutContactAt = -Infinity;
+  private breakoutPriorityUntil = -Infinity;
   private played = new Map<Cue, number>();
   setEnabled(enabled: boolean) {
     this.enabled = enabled;
@@ -286,13 +289,36 @@ export class Sounds {
       return false;
     }
   }
-  play(cue: Cue) {
+  play(cue: Cue, game?: "breakout") {
     const context = this.context;
     if (!this.enabled || this.disposed || context?.state !== "running") return;
     const now = context.currentTime;
+    const breakout = game === "breakout";
+    const priority =
+      breakout && ["miss", "breakout-clear", "win", "finish"].includes(cue);
+    if (breakout && !priority) {
+      if (
+        now < this.breakoutPriorityUntil ||
+        now - this.breakoutContactAt < 0.1
+      )
+        return;
+      this.breakoutContactAt = now;
+    }
     const gap =
       cue === "golf-knock" ? 0.18 : cue === "golf-spring" ? 0.15 : 0.06;
     if (now - (this.played.get(cue) ?? -Infinity) < gap) return;
+    if (priority) {
+      for (const voice of this.breakoutVoices) {
+        try {
+          voice.stop();
+        } catch {
+          /* Already ended. */
+        }
+        this.voices.delete(voice);
+      }
+      this.breakoutVoices.clear();
+      this.breakoutPriorityUntil = now + 0.35;
+    }
     if (
       ["golf-cup", "golf-points", "golf-rest", "win", "finish"].includes(cue)
     ) {
@@ -324,26 +350,32 @@ export class Sounds {
         const quietSwitch =
           cue === "on" || cue === "off" || cue === "lights-switch";
         gain.gain.linearRampToValueAtTime(
-          cue.startsWith("ship-") ||
-            cue.startsWith("glow-") ||
-            cue === "golf-knock" ||
-            cue === "golf-lock"
-            ? 0.035
-            : cue.startsWith("golf-")
+          breakout
+            ? priority
               ? 0.055
-              : quietSwitch
-                ? 0.045
-                : 0.09,
+              : 0.035
+            : cue.startsWith("ship-") ||
+                cue.startsWith("glow-") ||
+                cue === "golf-knock" ||
+                cue === "golf-lock"
+              ? 0.035
+              : cue.startsWith("golf-")
+                ? 0.055
+                : quietSwitch
+                  ? 0.045
+                  : 0.09,
           at + 0.006,
         );
         gain.gain.exponentialRampToValueAtTime(0.001, at + duration);
         oscillator.connect(gain);
         gain.connect(context.destination);
         this.voices.add(oscillator);
+        if (breakout) this.breakoutVoices.add(oscillator);
         if (cue.startsWith("golf-")) this.golfVoices.add(oscillator);
         oscillator.onended = () => {
           this.voices.delete(oscillator);
           this.golfVoices.delete(oscillator);
+          this.breakoutVoices.delete(oscillator);
           oscillator.disconnect();
           gain.disconnect();
         };
@@ -363,6 +395,9 @@ export class Sounds {
       }
     }
     this.voices.clear();
+    this.breakoutVoices.clear();
+    this.breakoutContactAt = -Infinity;
+    this.breakoutPriorityUntil = -Infinity;
     this.golfVoices.clear();
     this.played.clear();
   }

@@ -11,6 +11,13 @@ import { arenaWinner } from "../games/arena";
 import type { Snapshot } from "../network/session";
 import type { Cue } from "./sounds";
 import { shipFeedback, shipFrame } from "../games/ship-feedback";
+import {
+  breakoutFrame,
+  breakoutContacts,
+  breakoutPaddleContact,
+  breakoutTransition,
+  breakoutObservation,
+} from "../games/breakout-feedback";
 // Copy primitive values: the host updates its room in place between snapshots.
 export function soundFrame(snapshot: Snapshot, me: string, session: string) {
   const { room, grid } = snapshot;
@@ -69,6 +76,7 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
       );
   }
   return {
+    breakout: room.kind === "breakout" && pong ? breakoutFrame(pong) : null,
     glow: room.glow ? glowFrame(room.glow, me) : null,
     picnic: room.picnic
       ? {
@@ -159,16 +167,9 @@ export function soundFrame(snapshot: Snapshot, me: string, session: string) {
           arenaContact: room.kind === "arena" ? pong.arenaContact : undefined,
           lives: room.kind === "arena" ? pong.lives : undefined,
           bumperHits: pong.bumpers?.reduce((sum, b) => sum + b.hits, 0) ?? 0,
-          x: pong.ball.x,
-          y: pong.ball.y,
-          brickCount: pong.breakout?.bricks.filter(Boolean).length,
-          occupiedSides: pong.seats.length,
           vx: pong.ball.vx,
           vy: pong.ball.vy,
           score: pong.score.reduce((a, b) => a + b, 0),
-          teamLives: pong.breakout?.lives,
-          bricks: pong.breakout?.bricks.reduce((a, b) => a + b, 0),
-          level: pong.breakout?.level,
           winner: pong.breakout
             ? pong.breakout.lives > 0
             : (pong.lives
@@ -487,6 +488,39 @@ export function soundEvents(
   }
   const a = after.pong,
     b = before.pong;
+  if (after.kind === "breakout") {
+    const next = after.breakout,
+      previous = before.breakout;
+    if (
+      !next ||
+      !previous ||
+      !["playing", "serve"].includes(previous.phase) ||
+      !["playing", "serve", "finished"].includes(next.phase)
+    )
+      return [];
+    if (breakoutObservation(previous, next) === previous) return [];
+    const event = breakoutTransition(previous, next);
+    if (event === "finish") return [next.breakout!.lives ? "win" : "finish"];
+    if (event === "loss") return ["miss"];
+    if (event === "core") return ["breakout-clear"];
+    const contacts = breakoutContacts(previous, next);
+    if (contacts.some((c) => c.broken)) return ["breakout-break"];
+    if (contacts.length) return ["breakout-hit"];
+    if (next.phase === "playing" && previous.phase === "serve")
+      return ["serve"];
+    if (next.phase === "playing" && previous.phase === "playing") {
+      const side = breakoutPaddleContact(previous, next);
+      if (side !== null) return ["paddle"];
+      const a = next.ball,
+        b = previous.ball;
+      if (
+        (a.vy * b.vy < 0 && (a.y > 0.9 || a.y < 0.1)) ||
+        (a.vx * b.vx < 0 && (a.x > 0.9 || a.x < 0.1))
+      )
+        return ["wall"];
+    }
+    return [];
+  }
   if (a && b) {
     if (after.kind === "arena") {
       if (a.phase === "paused" || b.phase === "paused" || b.phase === "ready")
@@ -522,42 +556,9 @@ export function soundEvents(
       return [];
     if (a.phase === "finished" && b.phase !== "finished")
       return [a.winner ? "win" : "finish"];
-    if (a.level !== undefined && (a.phase === "paused" || b.phase === "paused"))
-      return [];
-    if (
-      a.teamLives !== undefined &&
-      b.teamLives !== undefined &&
-      a.teamLives < b.teamLives
-    )
-      return ["miss"];
-    if (a.level !== undefined && b.level !== undefined && a.level > b.level)
-      return ["breakout-clear"];
-    if (
-      a.brickCount !== undefined &&
-      b.brickCount !== undefined &&
-      a.brickCount < b.brickCount
-    )
-      return ["breakout-break"];
-    if (a.bricks !== undefined && b.bricks !== undefined && a.bricks < b.bricks)
-      return ["breakout-hit"];
     if (a.score > b.score) return ["point"];
     if (a.phase === "playing" && b.phase === "serve") return ["serve"];
     if (a.phase === "playing" && b.phase === "playing") {
-      if (a.level !== undefined) {
-        const side =
-          a.vy * b.vy < 0 && a.y > 0.9
-            ? 0
-            : a.vx * b.vx < 0 && a.x > 0.9
-              ? 1
-              : a.vy * b.vy < 0 && a.y < 0.1
-                ? 2
-                : a.vx * b.vx < 0 && a.x < 0.1
-                  ? 3
-                  : null;
-        return side === null
-          ? []
-          : [side < a.occupiedSides ? "paddle" : "wall"];
-      }
       if (a.bumperHits > b.bumperHits) return ["bumper"];
       if (a.pongContact)
         return a.pongContact.sequence > (b.pongContact?.sequence ?? 0)

@@ -54,6 +54,47 @@ afterEach(() => {
   Context.instances = [];
 });
 describe("sound lifecycle", () => {
+  it("keeps Breakout rallies quiet and admits team outcomes through saturated contacts", async () => {
+    vi.stubGlobal("window", { AudioContext: Context });
+    const sounds = new Sounds();
+    sounds.setEnabled(true);
+    await sounds.unlock();
+    const c = Context.instances[0];
+    for (let i = 0; i < 4; i++) {
+      c.currentTime += 0.11;
+      sounds.play("breakout-break", "breakout");
+      sounds.play("paddle", "breakout"); // Same observation window stays quiet.
+    }
+    expect(c.voices).toHaveLength(8);
+    expect(c.peaks).toEqual(Array(8).fill(0.035));
+    const contacts = [...c.voices];
+    sounds.play("breakout-clear", "breakout");
+    expect(c.voices.slice(-3).map((v) => v.frequency.value)).toEqual([
+      660, 880, 1320,
+    ]);
+    expect(
+      contacts.every((v) =>
+        v.stop.mock.calls.some((args) => args.length === 0),
+      ),
+    ).toBe(true);
+    expect(c.peaks.slice(-3)).toEqual([0.055, 0.055, 0.055]);
+    c.currentTime += 0.11;
+    sounds.play("breakout-hit", "breakout");
+    expect(c.voices).toHaveLength(11); // No contact over the clear phrase.
+    sounds.play("miss", "breakout");
+    expect(c.voices).toHaveLength(12);
+    sounds.play("finish", "breakout");
+    expect(c.voices).toHaveLength(14);
+    sounds.setEnabled(false);
+    expect(
+      c.voices.every((v) =>
+        v.stop.mock.calls.some((args) => args.length === 0),
+      ),
+    ).toBe(true);
+    sounds.play("breakout-clear", "breakout");
+    expect(c.voices).toHaveLength(14);
+    sounds.dispose();
+  });
   it("keeps distinct Ship cues quiet, brief and within the voice limit", async () => {
     vi.stubGlobal("window", { AudioContext: Context });
     const sounds = new Sounds();

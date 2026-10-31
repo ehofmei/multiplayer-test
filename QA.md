@@ -362,6 +362,34 @@ with the family. These checks remain pending.
 
 ## Co-op Breakout
 
+- Task 15 feedback: the last five surviving bricks have a static outline; one
+  target uses singular text and accessible progress distinguishes targets from
+  remaining hits. Life loss explains the new shared total during the next serve
+  and marks emptied pips for 400ms. Core-clear status names the completed core;
+  the compact serve banner retains the next core's full name. Reduced contact
+  brightness/shard expansion keeps the white ball foremost. Rules, reaction
+  lanes, speed, controls, protocol and saved preferences are unchanged.
+- Copied feedback observations retain monotonic progress within an epoch.
+  Unit/audio coverage checks host mutation, coalesced HP drops, duplicate/stale
+  snapshots, team-outcome priority, initial/late observations, pause/recovery
+  and rotated occupied versus empty edges. Breakout sound uses quiet supporting
+  cues at most every 100ms; important team cues release its own prior voices
+  and reserve 350ms free of new contact cues, within the eight-voice cap.
+- New browser evidence: a paired natural loss confirms the decrement/reset on
+  both devices, an emptied pip, expiry, audio deduplication and quiet pageshow/
+  resume. The full paired victory checks sparse 5/3/1 targets. A solo steering
+  fixture deliberately misses in a clear lane after one target remains, then
+  centers the paddle through Help and asserts a known serve ball before phone/
+  iPad screenshots. Four real players establish centered paddles and a fixed
+  initial rally pose for landscape-iPad evidence. No game state is injected.
+- The four-player viewport/font matrix includes the household phones, phone
+  rotations, primary/secondary landscape iPads and existing small-phone/tablet/
+  desktop sizes, with actual-child enclosure as well as overflow, safe-area
+  and footer-target assertions. Task 15's persistent live inventory includes
+  Home-first updates/build checks, manual text pairing, late spectator, rotated
+  keyboard/strip input, Help/palette/Escape/focus, pause/resume, duplicate seats
+  and phone/landscape-iPad/desktop visual inspection. Physical touch and Safari
+  audio/lifecycle acceptance remain separate from desktop emulation.
 - Inventory: 1–4 contiguous, distinct seats; ready core preview; 25-brick central
   grid; five shared lives; three named cores and reinforcement; own paddle at
   bottom; court/steering-strip pointer and touch, keyboard and help slider;
@@ -397,9 +425,10 @@ with the family. These checks remain pending.
   and strip input, pause/resume, slider, palette and help focus return. Explore
   rapid pause/resume and invalid duplicate/noncontiguous team choices. Inspect
   desktop/phone/tablet/landscape screenshots and actual element bounds.
-- New baselines have reviewed Darwin/Linux pairs. Obtain genuine Linux renders
-  with `.github/workflows/breakout-review.yml` on `codex/breakout-reaction-space`;
-  after reviewing every returned image, remove generation/return steps and run
+- Task 15 uses `.github/workflows/review.yml` on `codex/breakout-polish`, with
+  explicitly scoped read-only baseline artifacts for the two Breakout specs.
+  Review actual Darwin/Linux pairs for life loss, last-target phone/iPad,
+  four-player iPad and changed core-transition text. After reviewing images, run
   complete local and exact-final-commit Ubuntu `npm run verify` with snapshot
   updates disabled. No Pages deployment belongs in that review workflow.
 - Physical device checks remain essential: install/update every iPhone/iPad,

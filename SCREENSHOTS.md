@@ -99,6 +99,11 @@ Active phone · Linux baseline. Broad reaction lanes around the compact core.
 [Team results](tests/breakout.spec.ts-snapshots/breakout-results-phone-linux.png) ·
 [Team victory](tests/breakout.spec.ts-snapshots/breakout-victory-phone-linux.png).
 
+[Shared life lost](tests/breakout.spec.ts-snapshots/breakout-life-loss-phone-linux.png) ·
+[Last target, phone](tests/breakout.spec.ts-snapshots/breakout-last-target-phone-linux.png) ·
+[Last target, landscape iPad](tests/breakout.spec.ts-snapshots/breakout-last-target-ipad-linux.png) ·
+[Four-player landscape iPad](tests/breakout-integration.spec.ts-snapshots/breakout-four-ipad-linux.png).
+
 ## Pong
 
 Bumper warning · phone layout.

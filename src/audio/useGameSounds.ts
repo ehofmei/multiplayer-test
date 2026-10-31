@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Snapshot } from "../network/session";
 import { glowObservation } from "../games/glow-feedback";
+import { breakoutObservation } from "../games/breakout-feedback";
 import { Sounds, type Cue } from "./sounds";
 import { soundEvents, soundFrame, type SoundFrame } from "./events";
 const storageKey = "p2p-game-lab-sound-v1";
@@ -29,8 +30,13 @@ export function useGameSounds(
       if (preference.current) void sounds.unlock();
     };
     const visibility = () => {
+      if (previous.current?.kind === "breakout") sounds.stop();
       if (previous.current?.kind === "lights") previous.current = null;
-      if (["ship", "minigolf", "glow"].includes(previous.current?.kind ?? ""))
+      if (
+        ["ship", "minigolf", "glow", "breakout"].includes(
+          previous.current?.kind ?? "",
+        )
+      )
         previous.current = null;
       if (document.hidden) sounds.suspend();
     };
@@ -56,8 +62,14 @@ export function useGameSounds(
     const next = soundFrame(snapshot, me, session);
     if (next.glow && previous.current?.key === next.key)
       next.glow = glowObservation(previous.current.glow, next.glow);
+    if (next.breakout && previous.current?.key === next.key)
+      next.breakout = breakoutObservation(
+        previous.current.breakout,
+        next.breakout,
+      );
     if (
       previous.current?.key !== next.key ||
+      next.breakout?.phase === "paused" ||
       (next.glow &&
         (next.glow.viewer !== previous.current?.glow?.viewer ||
           ["paused", "reorient"].includes(next.glow.phase)))
@@ -65,7 +77,12 @@ export function useGameSounds(
       audio.current?.stop();
     const cues = soundEvents(previous.current, next);
     previous.current = next;
-    if (!document.hidden) for (const cue of cues) audio.current?.play(cue);
+    if (!document.hidden)
+      for (const cue of cues)
+        audio.current?.play(
+          cue,
+          next.kind === "breakout" ? "breakout" : undefined,
+        );
   }, [snapshot, me, session, visible]);
   const toggle = async () => {
     const next = !preference.current;

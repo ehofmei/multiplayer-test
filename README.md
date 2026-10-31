@@ -316,8 +316,19 @@ between cores. A one-second serve follows a miss, cleared core or host resume;
 new serves after misses/core clears rotate between teammates and reset the ramp.
 
 Confirmed hits flash, destroyed bricks shatter briefly, and paddle saves light
-up the paddle. Optional local sounds distinguish hits, breaks and core clears;
-sound remains muted by default. Reduced motion uses static flashes and removes
+up the paddle with restrained brightness so the white ball stays prominent.
+The last five surviving targets have a static light outline; the counter says
+“1 brick left” for the last target, and accessible progress distinguishes bricks
+from hits remaining. Amber + bricks still take two hits. A shared-life loss
+briefly marks the emptied pip and explains the new total during the next serve;
+core transitions name the cleared core while the next core's full name stays
+visible. No extra serve time or physics changes are introduced.
+
+Optional local sounds distinguish hits, breaks and core clears. Breakout's quiet
+rally cues are bounded and never queue; life loss, core clear and the team finale
+take priority over contact voices. Sound remains muted by default, and recovery
+from pause/background or a late join does not replay old outcomes.
+Reduced motion uses static flashes and removes
 the ball trail and result entrance motion. Pause and connection messages appear
 on the court; team victory/loss stays visible with total cleared bricks and
 remaining lives until the host chooses to play again. Late arrivals watch until

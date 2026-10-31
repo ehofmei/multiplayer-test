@@ -7011,6 +7011,13 @@ input.golf-power-input {
   border-color: #a3ffe0;
   box-shadow: 0 0 10px #70e6bf33;
 }
+.breakout-life-dots i[data-lost="true"] {
+  background: #725041;
+  border: 2px solid #ffe2b2;
+}
+.breakout-health[data-loss="true"] {
+  color: #ffe2b2;
+}
 .breakout-brick-count {
   text-align: right;
 }
@@ -7162,10 +7169,14 @@ input.golf-power-input {
   color: #ffd9ad;
 }
 .breakout-brick[data-hit="true"] {
-  filter: brightness(1.7);
+  filter: brightness(1.3);
+}
+.breakout-brick[data-last="true"] > rect:nth-child(2) {
+  stroke: #f0fff8;
+  stroke-width: 3;
 }
 .breakout-paddle[data-hit="true"] {
-  filter: brightness(1.7);
+  filter: brightness(1.3);
 }
 .breakout-break {
   animation: breakout-shatter 280ms ease-out both;
@@ -7175,7 +7186,7 @@ input.golf-power-input {
 @keyframes breakout-shatter {
   to {
     opacity: 0;
-    scale: 1.65;
+    scale: 1.3;
   }
 }
 @keyframes breakout-victory {

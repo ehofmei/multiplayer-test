@@ -19,6 +19,56 @@ const snapshot = (): Snapshot => ({
   error: "",
 });
 const frame = (s: Snapshot) => soundFrame(s, "a", "session");
+it("prioritizes Breakout team outcomes over coalesced hits and establishes quiet recovery baselines", () => {
+  const s = snapshot();
+  s.room = newRoom("breakout", 1);
+  s.room.pong = { ...newBreakout(["a", "b", "c", "d"]), phase: "playing" };
+  const before = frame(s);
+  s.room.pong.breakout!.bricks[0] = 0;
+  s.room.pong.breakout!.bricks[1] = 0;
+  expect(soundEvents(before, frame(s))).toEqual(["breakout-break"]);
+  expect(before.breakout!.breakout!.bricks).toEqual(Array(25).fill(1));
+  s.room.pong.breakout!.lives = 4;
+  s.room.pong.phase = "serve";
+  const lost = frame(s);
+  expect(soundEvents(before, lost)).toEqual(["miss"]);
+  expect(soundEvents(lost, lost)).toEqual([]);
+  expect(soundEvents(lost, before)).toEqual([]);
+  expect(soundEvents(null, lost)).toEqual([]);
+  expect(soundEvents({ ...before, key: "old epoch" }, lost)).toEqual([]);
+  const paused = {
+    ...before,
+    breakout: { ...before.breakout!, phase: "paused" as const },
+  };
+  expect(soundEvents(paused, lost)).toEqual([]);
+  const resumed = {
+    ...lost,
+    breakout: { ...lost.breakout!, phase: "playing" as const },
+  };
+  expect(soundEvents(lost, resumed)).toEqual(["serve"]);
+  s.room.pong.breakout!.level = 2;
+  s.room.pong.breakout!.bricks = Array(25).fill(2);
+  expect(soundEvents(lost, frame(s))).toEqual(["breakout-clear"]);
+  expect(soundEvents(null, frame(s))).toEqual([]);
+  s.room.pong.phase = "finished";
+  expect(soundEvents(before, frame(s))).toEqual(["win"]);
+  s.room.pong.breakout!.lives = 0;
+  expect(soundEvents(before, frame(s))).toEqual(["finish"]);
+  // Spectators receive the same shared outcome, never a personal scoring cue.
+  expect(
+    soundEvents(
+      soundFrame(
+        {
+          ...s,
+          room: { ...s.room, pong: { ...s.room.pong, phase: "playing" } },
+        },
+        "watcher",
+        "session",
+      ),
+      soundFrame(s, "watcher", "session"),
+    ),
+  ).toEqual(["finish"]);
+});
 it("uses confirmed Pong contacts once without velocity guessing, and prioritizes point/finish/bumper", () => {
   const s = snapshot();
   s.room = newRoom("pong", 1);

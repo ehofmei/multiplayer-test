@@ -3,7 +3,7 @@
 This follow-up plan was created as the final deliverable of
 [FAMILY_PLAYTEST_PLAN.md](FAMILY_PLAYTEST_PLAN.md). **Implementation is in progress:**
 Tasks 1–2 and 4 are implemented; Task 3 is implemented with live QA pending;
-Tasks 5–8 are implemented with physical-device QA pending; Tasks 9–14 are implemented with physical-device QA pending; Task 15 remains planned. Read
+Tasks 5–15 are implemented with physical-device QA pending. Read
 [AGENTS.md](AGENTS.md) before implementing. Each remaining numbered task can be
 assigned to a separate Codex session.
 
@@ -25,7 +25,7 @@ assigned to a separate Codex session.
 | 12   | Meteor Minigolf          | Implemented; physical-device QA pending            |
 | 13   | Glow Clash               | Implemented; physical-device QA pending            |
 | 14   | Sumo Bumpers             | Implemented; physical-device QA pending            |
-| 15   | Co-op Breakout           | Planned                                            |
+| 15   | Co-op Breakout           | Implemented; physical-device QA pending            |
 
 For completed tasks, [README.md](README.md) describes the implemented behavior,
 [SCREENSHOTS.md](SCREENSHOTS.md) links reviewed visual states, and [QA.md](QA.md)
@@ -478,6 +478,9 @@ only with tests and physical-device evidence.
 `src/audio/events.ts`, `tests/sumo.spec.ts` and Sumo feedback tests.
 
 ### 15. Co-op Breakout: finish feedback balance and last-brick clarity
+
+Implementation plan: [Co-op Breakout polish plan](BREAKOUT_POLISH_PLAN.md).
+Status: implemented; physical-device acceptance remains. See the refined plan for feedback decisions and verification gates.
 
 **Already strong:** generous reaction lanes, small central core, reinforced-brick
 identity, steering strip, distinct hit/break/core sounds and team finale.
