@@ -76,6 +76,24 @@ code, dependencies, build configuration, workflows, tests, or baselines change.
 
 ## Efficient iteration
 
+- For browser tests launched by Codex on macOS, use normal application scheduling:
+  `taskpolicy -a -l 0 -t 0 npm run verify` (or the relevant guarded package command),
+  with the project's Node 22 runtime on PATH. Inherited background scheduling has
+  made clock-driven tests hit their deadlines on otherwise passing code. Apply
+  this only to the test command and its children; do not change system settings
+  or stop unrelated processes. Use ordinary package commands on Linux.
+- When unrelated clock-driven tests become unusually slow, inspect
+  `test-results/checks-timing.json`, `test-results/browser-timing.json` and a
+  representative failure trace before repeating the full suite. Preserve failure
+  evidence before another run overwrites it. Check runtime/dependency parity and
+  scheduling, then rerun affected tests with unchanged assertions and deadlines;
+  do not assume every timeout is an infrastructure issue.
+- Avoid redundant verification and inspection: retain results by commit and
+  platform, use bounded waits for running checks, and repeat checks when changes
+  or unresolved failures justify them. Complete both required final gates after
+  the last substantive fix; overlapping local/CI durations are not additive when
+  reporting elapsed time. Report unavailable usage attribution as unknown rather
+  than estimating per-step token costs.
 - Check GitHub CLI authentication and the review workflow/artifact route at the
   start of implementation, before adding platform-specific screenshot states.
   Continue independent local work while resolving missing Linux access.
